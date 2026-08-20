@@ -1,0 +1,201 @@
+idx,verdict,note
+1,WRONG,Cony High School (public) matched to the middle-school parent group
+2,CORRECT,suffix only
+3,CORRECT,Woodrow Wilson International Center for Scholars
+4,CORRECT,spelling variant
+5,CORRECT,J F Shea Therapeutic Riding Center
+6,CORRECT,Gentle Giants Draft Horse Rescue
+7,WRONG,school matched to its foundation; the school is the runner-up
+8,CORRECT,Alpha Omega Alpha Honor Medical Society
+9,CORRECT,Andrew Keegan Theatre
+10,CORRECT,same org
+11,WRONG,vocational district matched to the college foundation
+12,CORRECT,Louis J Koch Family Childrens Museum
+13,CORRECT,J F Shea Therapeutic Riding Center
+14,WRONG,Methodist church matched to a Church of God
+15,AMBIGUOUS,home vs its foundation
+16,CORRECT,Stanford Health Care
+17,CORRECT,Franklin Pierce College renamed University
+18,CORRECT,named scholarship prefix on University of New England
+19,WRONG,college matched to its foundation; the college is the runner-up
+20,CORRECT,LB = Long Beach BLAST
+21,CORRECT,city-specific parish
+22,CORRECT,same association
+23,AMBIGUOUS,exact-name candidate is the runner-up
+24,CORRECT,word order
+25,CORRECT,Jones Valley Urban Farm renamed Teaching Farm
+26,CORRECT,Lillie Russell Memorial Library of Lindale
+27,AMBIGUOUS,association vs foundation
+28,CORRECT,United States Olympic and Paralympic Committee
+29,WRONG,school district matched to an elementary PTA
+30,CORRECT,BMF typo Charties
+31,CORRECT,amfAR legal name
+32,CORRECT,Friends of the Grandville Library
+33,CORRECT,GBS CIDP Foundation International
+34,CORRECT,SUNY Purchase is public; the foundation is the payee
+35,CORRECT,NOVA is public; educational foundation is the payee
+36,CORRECT,All Five
+37,CORRECT,American National Red Cross legal name
+38,CORRECT,Southwestern Baptist Theological Seminary
+39,CORRECT,chamber renamed
+40,CORRECT,Jewel Charity Ball runs the Angel Program
+41,CORRECT,AmeriCares Foundation legal name
+42,AMBIGUOUS,arboretum vs foundation; society is the runner-up
+43,CORRECT,word order
+44,CORRECT,2nd and 7 Foundation
+45,WRONG,city government matched to a Bahai community
+46,AMBIGUOUS,filed name is the foundation; matched the hospital
+47,CORRECT,Forty Carrots of Sarasota
+48,CORRECT,Province of Saint Joseph of the Capuchin Order
+49,CORRECT,museum operated by the Council
+50,AMBIGUOUS,food bank vs foundation vs warehouse
+51,WRONG,UNICEF USA legal name is United States Fund for UNICEF; matched the Impact Fund
+52,WRONG,Methodist church matched to a Church of God
+53,CORRECT,NRA Foundation is the c3 arm
+54,CORRECT,Oxford Orphanage Masonic Home
+55,CORRECT,exact
+56,CORRECT,Berks County Association for the Blind
+57,WRONG,ministry matched to its foundation; the ministry is the runner-up
+58,CORRECT,same congregation
+59,WRONG,colon cancer research matched to a general cancer institute
+60,CORRECT,Plattsburgh College Foundation
+61,CORRECT,Saint Lukes Cornwall Hospital in Newburgh
+62,CORRECT,legal name of the church
+63,CORRECT,Montgomery Cancer Wellness Foundation
+64,CORRECT,United States Association for UNHCR
+65,AMBIGUOUS,national vs chapter
+66,CORRECT,Oholei Yakov
+67,WRONG,Federation matched to a publications entity
+68,CORRECT,American Society for Technion
+69,CORRECT,NAACP Legal Defense and Educational Fund
+70,CORRECT,Stephen Siller Tunnel to Towers Foundation
+71,WRONG,business school matched to a chapel congregation
+72,CORRECT,Bristol Hospital Development Foundation
+73,CORRECT,Torath Israel Sephardic Congregation
+74,WRONG,chamber matched to its foundation; the chamber is the runner-up
+75,AMBIGUOUS,theatre vs foundation
+76,CORRECT,public schools; foundation is the payee
+77,CORRECT,Childrens Discovery Center Honolulu
+78,CORRECT,middle-initial typo
+79,CORRECT,Tennessee Rep renamed Nashville Rep
+80,CORRECT,OIC = Opportunities Industrialization Center
+81,AMBIGUOUS,center vs foundation
+82,CORRECT,Greater Minneapolis Crisis Nursery
+83,CORRECT,exact
+84,CORRECT,fellowship renamed
+85,WRONG,matched to the Brazil affiliate
+86,CORRECT,spelling
+87,AMBIGUOUS,exact-name candidate is the runner-up
+88,WRONG,Early County 2055 matched to the county museum
+89,CORRECT,Gerard Place Housing Development Fund
+90,CORRECT,Families First of Palm Beach County Foundation
+91,CORRECT,Nativity Boston at the same ZIP
+92,WRONG,whaling museum matched to the art museum
+93,CORRECT,Kupath Ezrah of Rockland County
+94,CORRECT,NM Tech is public; foundation is the payee
+95,CORRECT,Saint Johns Episcopal Parish Day School
+96,CORRECT,Ruth and Norman Rales Jewish Family Service
+97,AMBIGUOUS,exact-name candidate is the runner-up
+98,CORRECT,Danville Library Foundation
+99,CORRECT,Friends Forever
+100,WRONG,town parks dept matched to a corporate foundation
+101,CORRECT,Eglevsky Ballet Company of LI
+102,CORRECT,Andrew Shaw Memorial
+103,CORRECT,municipal library; foundation is the payee
+104,CORRECT,Raymond F Kravis Center
+105,CORRECT,Hudson Area Association Library
+106,CORRECT,Alzheimers Drug Discovery Foundation
+107,CORRECT,Historic Kirkwood Train Station Foundation
+108,CORRECT,American Friends of Yeshivat Hesder Sderot
+109,CORRECT,Indiana Childrens Wish Fund renamed Indiana Wish
+110,CORRECT,zoo is city-owned; foundation is the operating nonprofit
+111,WRONG,parish food pantry matched to the Catholic academy
+112,CORRECT,Levine School of Music renamed Levine Music
+113,WRONG,law school fund matched to the prep school
+114,WRONG,Strong City Baltimore matched to Baltimore City College Foundation
+115,CORRECT,parish and school file together
+116,CORRECT,Congregation Emanu-El of the City of New York
+117,CORRECT,US friends organization is the payee
+118,CORRECT,Folds of Honor Foundation
+119,CORRECT,Congregation Machneh Rav Tov
+120,AMBIGUOUS,exact-name candidate is the runner-up
+121,CORRECT,word order
+122,WRONG,Year Up matched to an unrelated coaching body
+123,WRONG,school district matched to an athletics DBA
+124,CORRECT,Aurelia Osborn Fox Memorial Hospital
+125,CORRECT,Broome Community College Foundation
+126,AMBIGUOUS,exact-name candidate is the runner-up
+127,WRONG,Rowayton United Methodist matched to United Church of Rowayton
+128,CORRECT,Algonquin Arts
+129,CORRECT,Rutgers is public; foundation is the payee
+130,AMBIGUOUS,exact-name candidate is the runner-up
+131,WRONG,town government matched to a Bahai community
+132,AMBIGUOUS,temple vs its foundation
+133,CORRECT,Hanson Saint John Foundation
+134,CORRECT,KCKCC Foundation
+135,AMBIGUOUS,school vs its foundation
+136,CORRECT,Pope Memorial Humane Society Cocheco Valley
+137,CORRECT,American National Red Cross legal name
+138,WRONG,UNICEF USA matched to the Impact Fund
+139,CORRECT,Girls Incorporated of Carpinteria
+140,CORRECT,International Rett Syndrome Foundation
+141,CORRECT,YMCA of the Chesapeake
+142,CORRECT,Yo San University of Traditional Chinese Medicine
+143,CORRECT,NCF South Florida legal name
+144,CORRECT,A E Bean Backus Gallery and Museum
+145,CORRECT,GCSEN Foundation
+146,CORRECT,Immigrant and Refugee Community Organization
+147,WRONG,youth orchestra matched to the Urban League
+148,CORRECT,BSA Chattahoochee Council
+149,CORRECT,parish runs the food pantry
+150,WRONG,congregation programme matched to a historic-preservation friends group
+151,CORRECT,NOVA is public; educational foundation is the payee
+152,CORRECT,Huaxia Chinese School NY
+153,CORRECT,public schools; foundation is the payee
+154,CORRECT,California Mid State Heritage Foundation
+155,WRONG,UH Foundation matched to a childrens-center friends group
+156,CORRECT,Churchill Center and School
+157,CORRECT,Saint Louis Mercantile Library Association
+158,CORRECT,Los Angeles Philharmonic Association
+159,CORRECT,Massachusetts Biotechnology Education Foundation
+160,CORRECT,Friends of the Racine Public Library
+161,CORRECT,American National Red Cross legal name
+162,CORRECT,word order
+163,CORRECT,Flower and Fruit Mission of Saratoga
+164,CORRECT,Shelburne Farms
+165,CORRECT,Menifee County Animal Shelter
+166,CORRECT,United Way of Eastern Maine renamed Heart of Maine United Way
+167,CORRECT,public library; foundation is the payee
+168,WRONG,ranch matched to its foundation; the ranch is the runner-up
+169,WRONG,elementary school matched to a parents club in another town
+170,CORRECT,William Rainey Harper College Educational Foundation
+171,CORRECT,Poly Prep Country Day School
+172,CORRECT,spelling
+173,CORRECT,YMCA of the Sewickley Valley
+174,CORRECT,Hand Up for Women
+175,AMBIGUOUS,medical center vs health systems
+176,CORRECT,California Stormwater Quality Association
+177,CORRECT,public college; foundation is the payee
+178,CORRECT,Friends of Fisher House Puget Sound
+179,WRONG,high school matched to a historic-preservation friends group
+180,CORRECT,Wallis Annenberg Center for the Performing Arts
+181,WRONG,law school matched to the business school alumni association
+182,CORRECT,Center for Jewish Learning and Living
+183,CORRECT,Telshe Yeshiva Chicago Rabbinical College
+184,CORRECT,abbreviation
+185,CORRECT,Community and Technical College Foundation of Ashland
+186,CORRECT,museum operated by the Council
+187,CORRECT,Dominican Sisters of Mary Mother of the Eucharist
+188,CORRECT,Jewish Home and Senior Living Foundation
+189,WRONG,high school matched to its foundation; the school is the runner-up
+190,CORRECT,Humane Society of Broward County
+191,WRONG,arts garden matched to the dentistry alumni association
+192,CORRECT,Fontbonne Auxiliary of Saint John Hospital
+193,CORRECT,Saint Jude Childrens Research Hospital
+194,AMBIGUOUS,Brauser Maimonides vs Maimonides Shalom Academy
+195,CORRECT,truncated name
+196,WRONG,university matched to a technology park
+197,WRONG,Lions Club matched to an athletic booster club
+198,CORRECT,Raymond F Kravis Center for the Performing Arts
+199,AMBIGUOUS,two Catholic Charities Foundation candidates
+200,CORRECT,New Mexico Foundation for Dental Health

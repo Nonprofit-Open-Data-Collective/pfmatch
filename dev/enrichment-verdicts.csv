@@ -1,0 +1,57 @@
+idx,outcome,pick_ein_rank,evidence,note
+1,RESOLVED_NONE,,QUOTE,cand2 990 says it funds teams at Cony High and Middle Schools -- proves none of the five IS the school
+7,RESOLVED_ALT,2,QUOTE,pick's mission: strengthen the financial security of Eastern Virginia Medical School; cand2 is the school
+11,RESOLVED_PICK,1,QUOTE,pick's mission: for the benefit of Blackhawk Technical College District -- recipient IS the district education foundation
+14,SILENT,,NONE,no candidate has 990 text and no NTEE separates them
+15,RESOLVED_ALT,2,QUOTE,pick connects donors to the mission of CEDARS Youth Services; cand2 is CEDARS Youth Services
+19,HELPS,,INFER,purpose SCHOLARSHIPS and the foundation pays scholarships; college present as cand2
+23,RESOLVED_PICK,1,QUOTE,pick's mission begins The mission of Grand Central Station -- same city and ZIP
+27,HELPS,,INFER,no separate association among candidates; foundation may be the only extant entity
+29,RESOLVED_NONE,,INFER,all five are PTAs/unrelated; the district itself is absent
+42,RESOLVED_ALT,2,QUOTE,pick: SOLE PURPOSE is to hold assets to support Dallas Arboretum and Botanical Society; cand2 is the Society
+45,RESOLVED_NONE,,INFER,city government; no candidate is a municipality
+46,RESOLVED_NONE,,INFER,recipient is the Foundation; only the hospital is present
+50,RESOLVED_ALT,2,QUOTE,pick: fundraising and support organization for the Kansas Foodbank Warehouse; cand2 is the Warehouse
+51,RESOLVED_ALT,2,QUOTE,cand2's own mission text reads UNICEF USA ADVANCES -- it is the legal entity
+52,SILENT,,NONE,no candidate has text
+57,RESOLVED_ALT,2,QUOTE,pick: mission is to financially support Lighthouse Mission Ministries; cand2 is the Ministries
+59,RESOLVED_NONE,,INFER,no colon-cancer organization among the five
+65,RESOLVED_PICK,1,QUOTE,pick files a 990 at the exact city/ZIP with aviation mercy-flight programs; cand2 is a WV chapter
+67,RESOLVED_ALT,3,QUOTE,cand3's mission is the Jewish Community Federation and Endowment Fund; pick is a media publisher
+71,RESOLVED_NONE,,INFER,pick is a chapel congregation; Fordham-style university entity absent for Fuqua/Duke
+74,HELPS,,INFER,cand2 is a 501(c)(6) chamber; a PF grant more plausibly went to the c3 foundation
+75,RESOLVED_NONE,,QUOTE,pick supports Friends of the Cultural Center Inc -- the theatre's legal name -- which is not a candidate
+81,RESOLVED_ALT,2,QUOTE,pick is P11 single-org support; cand2 is the operating child abuse prevention and treatment center
+85,RESOLVED_NONE,,INFER,pick is the Brazil affiliate; no Hachnosas Kallah entity present
+87,RESOLVED_PICK,1,INFER,pick is the Appleton Catholic school system at the same city/ZIP; runner-up is in South Carolina
+88,RESOLVED_NONE,,INFER,Early County 2055 is a development nonprofit; only the museum/chamber/hoop club are present
+92,RESOLVED_NONE,,QUOTE,pick's mission is the New Bedford Art Museum; the whaling museum is absent
+97,RESOLVED_PICK,1,INFER,pick is the Cincinnati Adath Israel congregation at the same ZIP; runner-up is in San Francisco
+100,RESOLVED_NONE,,INFER,town parks department; no candidate is a municipal entity
+111,HELPS,,INFER,cand3 runs a food pantry but in a different Brooklyn ZIP; the parish pantry itself is absent
+113,RESOLVED_ALT,4,QUOTE,cand4 Fordham University is the legal entity that houses the law school
+114,RESOLVED_NONE,,INFER,Strong City Baltimore is absent; pick is an unrelated school foundation
+120,RESOLVED_PICK,1,QUOTE,pick's mission is a Denver Catholic education trust at the grant city/ZIP
+122,RESOLVED_NONE,,INFER,Year Up is absent; pick is a c6 coaching association
+123,RESOLVED_NONE,,INFER,purpose SCHOLARSHIPS; no Beekmantown scholarship or district entity present
+126,HELPS,,INFER,Saint Raphael Conference is a parish society at the same city/ZIP but not clearly the payee
+127,RESOLVED_NONE,,INFER,United Church of Rowayton is a different denomination; the UMC congregation is absent
+130,RESOLVED_PICK,1,QUOTE,pick's mission is education of women facing unplanned pregnancies at the grant city/ZIP
+131,RESOLVED_NONE,,INFER,town government; no candidate is a municipality
+132,HELPS,,NTEE,pick's NTEE X11 marks it a single-organization support arm; the Temple itself is absent
+135,RESOLVED_ALT,2,QUOTE,pick's mission is SUPPORT OF NOTRE DAME SCHOOL OF MILWAUKEE; cand2 is the school
+138,RESOLVED_ALT,2,QUOTE,same as 51 -- cand2 United States Fund for UNICEF is the legal entity
+147,RESOLVED_NONE,,QUOTE,pick's mission is community development (Urban League); no youth orchestra present
+150,RESOLVED_ALT,2,NTEE,pick is A82 historic preservation; cand2 is the X30 congregation at the same city/ZIP
+155,RESOLVED_NONE,,INFER,UH Foundation is absent; pick is a childrens-center friends group
+168,RESOLVED_ALT,2,QUOTE,pick: SUPPORTING AFFILIATE OF EAGLE RANCH INC; cand2 is Eagle Ranch
+169,HELPS,,INFER,pick is the parents club at the same ZIP; the school itself is absent
+175,RESOLVED_NONE,,QUOTE,pick's program text says it SUPPORTS UT Southwestern Medical Center; the Center is a state entity and absent
+179,RESOLVED_NONE,,INFER,pick is a historic-preservation friends group; the high school is absent
+181,RESOLVED_NONE,,QUOTE,pick's mission is Stanford GSB alumni; the law school is absent
+189,HELPS,,QUOTE,pick disburses to Mater Dei Catholic High School; purpose SCHOLARSHIPS makes the foundation defensible
+191,RESOLVED_NONE,,QUOTE,pick's mission is the dentistry alumni association; the sculpture garden is absent
+194,RESOLVED_PICK,1,QUOTE,pick's own mission text names THE LEON AND LEONA BRAUER MAIMONIDES ACADEMY -- same org renamed
+196,RESOLVED_ALT,2,QUOTE,cand2 UW Whitewater Foundation runs 400 scholarships; purpose is FOR SCHOLARSHIPS
+197,RESOLVED_NONE,,INFER,pick is an athletic booster club; the Lions Club is absent
+199,HELPS,,QUOTE,pick supports Catholic Charities of the Archdiocese of St Louis which is itself absent

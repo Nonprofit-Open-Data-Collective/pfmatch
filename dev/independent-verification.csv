@@ -1,0 +1,13 @@
+idx,my_label,check_result,truth,source,note
+11,WRONG,CONTRADICTED,CORRECT,guidestar,EIN 39-1391659 profile title is "Blackhawk Vocational Technical District Educational Foundation" -- the grant recipient name exactly
+19,WRONG,CONTRADICTED,AMBIGUOUS,charitynavigator+clcillinois,College of Lake County Foundation EIN 36-2852334 is a separate c3 that pays scholarships; purpose was SCHOLARSHIPS so the foundation is a live possibility
+46,AMBIGUOUS,CONTRADICTED,WRONG,guidestar,Anna Jaques Community Health Foundation has its own EIN 04-3318952; the pick was the hospital 04-2104338
+49,CORRECT,CONFIRMED,CORRECT,charitynavigator,EIN 52-1309391 is the US Holocaust Memorial Museum aka the Council
+59,WRONG,CONFIRMED,WRONG,search,no "Colon Cancer Research" org at NYC 10006; nearest is Colon Cancer Foundation in Port Chester
+76,CORRECT,CONTRADICTED,AMBIGUOUS,guidestar,South Haven Public Schools Foundation EIN 45-5146690 is a separate B12 entity; the district also exists as a governmental unit
+90,CORRECT,CONTRADICTED,WRONG,causeiq+propublica,picked EIN 45-5184288 is the Foundation; the named operating org Families First of Palm Beach County is EIN 65-0166352
+118,CORRECT,CONFIRMED,CORRECT,guidestar,EIN 46-5531485 is Folds of Honor Foundation - Minnesota Inc; grant named the Minnesota entity
+123,WRONG,CONFIRMED,WRONG,search,no Beekmantown scholarship fund or district entity found
+169,WRONG,CONTRADICTED,AMBIGUOUS,wccusd+valleyviewcommunity,Valley View Parents Club serves Valley View Elementary Richmond/El Sobrante at the same ZIP; plausible payee for a school program grant
+194,AMBIGUOUS,CONTRADICTED,CORRECT,charitynavigator+causeiq,EIN 65-0213879 carries both names -- Brauser Maimonides Academy and Maimonides-Shalom Academy Inc
+197,WRONG,CONFIRMED,WRONG,causeiq,Williams Bay Lions Club is EIN 39-6093897 a c4; not among the candidates

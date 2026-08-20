@@ -5,6 +5,15 @@
 ## usethis namespace: end
 NULL
 
+# `:=` and other data.table NSE only work inside a package whose namespace
+# data.table recognises. pfmatch has data.table under Imports but no
+# importFrom() directive, so `cedta()` fails and every `dt[, x := y]` inside a
+# package function raises "not data.table-aware". Declaring this fixes it for
+# the whole namespace; without it text.R, enrich.R, purpose.R and affiliation.R
+# all fail the moment they are called from the installed package rather than
+# from a script.
+.datatable.aware <- TRUE
+
 # data.table's non-standard evaluation makes column names look like undeclared
 # globals to R CMD check. Declaring them here silences the note without
 # suppressing genuine ones: anything added to a `[ ... ]` expression that is NOT

@@ -296,6 +296,42 @@ measurement.
 
 ### Still open
 
+* **The dev samples are random grants, not random filers.** Now the single
+  highest-leverage open item. Median grants per filer is 1 in both the 50k and
+  100k files, so every portfolio feature is untestable by construction:
+  funder-repeat separates candidates on 0 of 83 adjudicated grants, only 3
+  foundations in the whole 50k sample carry >=5 matched grantees at low entropy,
+  and 92% of funder-years hold exactly one grant so year-over-year persistence
+  is forced to zero. Suggested replacement: all grants from ~2,000 randomly
+  sampled filers (~40k grants, same cost, intact portfolios, multiple years).
+  See `dev/FEATURE-ENGINEERING.md` section 4 and
+  `dev/FUNDER-PROFILE-FINDINGS.md` section 6.
+
+* **A pairwise ranker over candidates is worth building; an accept/abstain
+  model is not, yet.** Silver labels are abundant (14,748 unambiguous YES
+  rows) but
+  gold labels with NONE as a class number 156 and survived independent
+  verification on ~5 of 12. `dev/FEATURE-ENGINEERING.md` has the feature table
+  and the design.
+
+* **`R/affiliation.R` is new and not yet wired into the cascade.** It detects
+  operating/fundraising-arm pairs in a candidate list, assigns a joint id from
+  Schedule A / Schedule R disclosures, and orders the members. The cascade
+  currently ranks the correct member first 27% of the time on these, so the
+  wiring is worth doing; `pf_cluster_arms()` needs to run between `np_select()`
+  and `np_tier()`. See `dev/AFFILIATION-FINDINGS.md`.
+* `pf_arm_order()`'s purpose-conditional policy rests on 15 adjudicated cases,
+  only one of which had a restricted-gift purpose. Labelling ~100 fresh
+  arm-pair cases would settle it; it governs ~13% of the MAYBE tier.
+
+* **`pf_candidate_frame()` does not attach candidate self-description text.**
+  This is now the highest-value open item on the project. The enriched packet
+  -- NTEEv2 description, 990 Part III mission and program descriptions for every
+  candidate, not just the pick -- resolves 45 of 56 hard MAYBE cases (80%) that
+  name and geography cannot close. `dev/build-enriched-hard.R` is the working
+  prototype; the joins it performs (`ORG-TEXT-BUNDLE.rds` by EIN, BMF NTEE via
+  `pf_ntee_text()`) belong inside `R/enrich.R`. See `dev/ENRICHMENT-FINDINGS.md`.
+
 * `vignettes/` — the plan proposed three; none were written. The findings
   documents are still plain markdown under `dev/`.
 * `tests/` covers `purpose.R` and `text.R` only (21 assertions). The five
@@ -310,12 +346,33 @@ Step 7 is a separate decision — see `dev/NPMATCH-PROMOTION-PLAN.md`.
 
 ## 8. What this plan does not do
 
-It does not fix the outstanding audit items — the apostrophe normalization bug,
-the OOS gating for `individual`/`government`, or the group-exemption collapse.
-Those are worth more to the match rate than packaging is (roughly +3 points
-combined, against 0 for packaging), and adjudicating the MAYBE tier is worth more
-than all of it (+11 to +14). Packaging is worth doing because it makes the code
-usable by someone other than its author and testable in CI — not because it
-improves anything measured.
+It does not fix the outstanding audit items, and it is not worth as much as they
+are. Packaging makes the code usable by someone other than its author and
+testable in CI; it improves nothing measured.
 
-If the two compete for the same day, do the audit items first.
+> **Updated 2026-08-20.** Three of the items this section originally listed as
+> outstanding have since been fixed, so the arithmetic below has changed. Fixed:
+> the apostrophe normalization bug (`npmatch` `.np_basic_clean()` spaced
+> punctuation the BMF deletes), the OOS gating that discarded `individual` and
+> `government` recipients unexamined, and — found later — city/ZIP3 geo credit
+> awarded without state agreement, plus a distinctive-name promotion that fired
+> on DBA matches justified by legal-name statistics
+> (`distinct_name_main_only`). Confirmed baseline after all of them: **2,821 YES
+> / 1,006 MAYBE / 1,093 NO / 80 OOS** on the 5,000-grant set, against 2,746 YES
+> and 373 discarded OOS at the start. See `dev/BENCHMARK-NOTES.md`.
+
+What remains genuinely outstanding, ranked:
+
+| item | worth | status |
+|---|---|---|
+| Adjudicate the MAYBE tier | **+11 to +14 points** | plan in `dev/ADJUDICATION-PLAN.md` |
+| Group-exemption collapse | ~+1 point | not started |
+| npmatch promotions | 0 points, structural | `dev/NPMATCH-PROMOTION-PLAN.md` |
+| Packaging leftovers (vignettes, test promotion) | 0 points | §7 above |
+
+Adjudicating MAYBE is worth more than everything else on this list combined, and
+a dollar-weighted read makes the case sharper still: **~740 reviews cover 70% of
+the recoverable unresolved grant dollars** (`dev/GRANT-DOLLARS-FINDINGS.md`).
+
+If packaging and the audit items compete for the same day, do the audit items
+first.
