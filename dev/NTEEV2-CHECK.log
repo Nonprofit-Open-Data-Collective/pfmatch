@@ -1,2 +1,84 @@
 sourced ../fiscal/R/nteev2.R 
 unified BMF: 3,687,435 rows 
+------------------------------------------------------------------------ 
+1. WHOLE-FIELD AGREEMENT with the stored `nteev2` 
+------------------------------------------------------------------------ 
+recomputed from ntee_code_raw   :  86.18% agree 
+recomputed from ntee_code_clean :  68.69% agree 
+------------------------------------------------------------------------ 
+2. COMPONENT-BY-COMPONENT (recomputed from ntee_code_raw) 
+------------------------------------------------------------------------ 
+nteev2_subsector vs get_industry()   :  99.28% agree 
+nteev2_code      vs get_clean_ntee() :  86.39% agree 
+nteev2_org_type  vs get_org_type()   : 100.00% agree 
+------------------------------------------------------------------------ 
+3. WHERE DO THEY DIVERGE? 
+------------------------------------------------------------------------ 
+disagreeing rows: 509,637 (13.82%) 
+ 
+by length of ntee_code_raw: 
+   raw_nchar   rows
+       <int>  <int>
+1:         2    251
+2:         3 433781
+3:         4  74674
+4:         5    931
+ 
+which component disagrees: 
+  subsector only : 7,733 
+  code only      : 483,072 
+  org_type only  : 0 
+  more than one  : 18,832 
+ 
+most common disagreements: 
+    ntee_code_raw     stored recomputed     N
+           <char>     <char>     <char> <int>
+ 1:           B11 EDU-B11-MS EDU-B00-MS 29490
+ 2:           B03 EDU-B03-PA EDU-B00-PA 16298
+ 3:           B12 EDU-B12-MM EDU-B00-MM 13707
+ 4:           P20 HMS-Z99-RG HMS-P20-RG 11685
+ 5:          B112 EDU-B11-MS EDU-B20-MS  9778
+ 6:           T12 PSB-T12-MM PSB-T00-MM  8456
+ 7:           E11 HEL-E11-MS HEL-E00-MS  7466
+ 8:           P12 HMS-P12-MM HMS-P00-MM  7303
+ 9:           B01 EDU-B01-AA EDU-B00-AA  7185
+10:           N12 HMS-N12-MM HMS-N00-MM  6928
+11:           X20 REL-Z99-RG REL-X20-RG  6694
+12:           O50 HMS-Z99-RG HMS-O50-RG  6111
+13:           N11 HMS-N11-MS HMS-N00-MS  5623
+14:           W12 PSB-W12-MM PSB-W00-MM  5111
+15:           O12 HMS-O12-MM HMS-O00-MM  5067
+16:           N60 HMS-Z99-RG HMS-N60-RG  4891
+17:           A12 ART-A12-MM ART-A00-MM  4572
+18:           I03 HMS-I03-PA HMS-I00-PA  4334
+19:           S01 PSB-S01-AA PSB-S00-AA  4283
+20:           B29 UNU-Z99-RG EDU-B29-RG  4145
+21:           D20 ENV-Z99-RG ENV-D20-RG  3873
+22:           B90 EDU-Z99-RG EDU-B90-RG  3726
+23:           E01 HEL-E01-AA HEL-E00-AA  3720
+24:           S03 PSB-S03-PA PSB-S00-PA  3633
+25:           B82 EDU-Z99-RG EDU-B82-RG  3571
+    ntee_code_raw     stored recomputed     N
+           <char>     <char>     <char> <int>
+------------------------------------------------------------------------ 
+4. SANITY: the documented examples 
+------------------------------------------------------------------------ 
+     input  clean industry org_type     nteev2
+    <char> <char>   <char>   <char>     <char>
+ 1:    B29    B29      EDU       RG EDU-B29-RG
+ 2:  B8443    B84      UNI       RG UNI-B84-RG
+ 3:  E0521    E21      HOS       RP HOS-E21-RP
+ 4:    B01    B00      EDU       AA EDU-B00-AA
+ 5:  B0129    B29      EDU       AA EDU-B29-AA
+ 6:    B40    B40      UNI       RG UNI-B40-RG
+ 7:    E22    E22      HOS       RG HOS-E22-RG
+ 8:           Z99      UNU       RG UNU-Z99-RG
+ 9:   A115    A50      ART       MS ART-A50-MS
+10:    Q12    Q00      IFA       MM IFA-Q00-MM
+------------------------------------------------------------------------ 
+5. VERDICT 
+------------------------------------------------------------------------ 
+stored nteev2 does NOT reproduce (86.18% agreement). 
+Review section 3 before overwriting: a disagreement can mean the stored 
+field is stale, or that it was built from a different input column. 
+wrote data-dev/NTEEV2-CHECK-unified.rds 

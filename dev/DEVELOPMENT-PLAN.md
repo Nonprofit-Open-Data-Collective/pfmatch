@@ -41,10 +41,43 @@ Findings that shape everything below, each with its own memo:
 **Exit criterion:** a clean tree and an installed `pfmatch` whose exported
 surface matches the memos.
 
+## Phase 0b — expand the reference before normalising
+
+Added 2026-08-20. The reference is the ceiling on recall: a name the BMF does
+not carry cannot be matched at any score. Three expansion stages, in order of
+measured value. See `dev/CODE-AUDIT.md` sections 4-5.
+
+| stage | source | adds | status |
+|---|---|---|---|
+| **1. Schedule I aliases** | `SI-P02-T01`, 2009-2024 | 2.45M observed names over 794,209 EINs; **+2.2 points** | **built** (`R/schedi.R`), not wired |
+| **2. Schedule I EINs absent from the BMF** | same | ~15,800 after gating on `files_990 OR n_filers >= 2` | not built |
+| **3. Form 990 filers absent from the BMF** | `F9-P00-T00-HEADER`, 2009-2024 | 22,604 in 2022 alone (4.1% of filers) | not built |
+
+Gating rules that must survive into the implementation:
+
+* **Corroboration is the only alias gate.** Precision runs 86.1% at one filer to
+  99.0% at twenty. A token-overlap gate looks sensible and is wrong -- it
+  discards acronyms and rebrands, which are the aliases worth having.
+* **Exclude single-filer, single-mention, non-filing EINs.** 80.4% of the
+  Schedule I EINs missing from the BMF are keying errors.
+* **Guard group-ruling parents.** Some aliases attach a chapter name to a
+  national EIN; `pf_group_siblings()` identifies those EINs and they need higher
+  corroboration.
+* **The alias justifies the match, not the name similarity.** The alias name
+  enters the reference as its own row and is resolved by the existing exact-name
+  pass. Scoring the query against the BMF *legal* name would veto the correct
+  answer.
+
+**Exit criterion:** one unified reference, with `row_source` recording where
+each row came from, and the 5k benchmark re-run against it.
+
 ## Phase 1 — the full-file production run
 
 Input: `~/Documents/grants/2025_08_29_All_Years_990PFPart14Grants3A.csv`,
 **12,559,051 grants**.
+
+**Depends on Phase 0b.** Running against the plain BMF forfeits the +2.2
+points the augmented reference already provides on disk.
 
 The naive cost is prohibitive — 33.5 s per 1,000 grants is **117 hours**
 single-threaded. Two levers make it tractable, and both must be measured rather
@@ -98,6 +131,9 @@ portfolios and every recipient's full appearance history.
    the YES partition, then use the cluster to propagate EINs into MAYBE and NO.
    This is the single most promising recall lever and it is only available at
    full scale.
+   Two `pf_dedup()` defects must be fixed first, both of which only bind at
+   full scale: `max_block = 2000` silently skips larger blocks (~500k of
+   3.38M keys), and the per-pair accumulator grows a vector quadratically.
 2. **Funder NTEE profiles with the entropy gate**, scored against a size-matched
    null rather than a flat threshold (`dev/FUNDER-PROFILE-FINDINGS.md` §2).
 3. **Persistence** — year-over-year grantee overlap per filer. Untestable until
