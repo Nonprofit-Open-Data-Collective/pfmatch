@@ -1,0 +1,9 @@
+^inputs$
+^data-dev$
+^dev$
+^\.Rproj\.user$
+^.*\.Rproj$
+^data-raw$
+^\.gitignore$
+^\.gitattributes$
+^\.git$

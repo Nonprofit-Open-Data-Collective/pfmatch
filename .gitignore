@@ -1,0 +1,48 @@
+# ---------------------------------------------------------------------------
+# pfmatch
+#
+# The working tree is ~6.9 GB; the package is ~1.1 MB. Everything large here is
+# either a public source file that can be re-downloaded or a derived artifact
+# that regenerates from inputs/ plus the BMF. What IS tracked is the code, the
+# small public fixtures, and the hand-adjudicated ground truth -- that last one
+# cannot be regenerated at any price.
+#
+# Note the `dir/*` form rather than `dir/`: git cannot re-include a file whose
+# parent directory is excluded, so the negations below only work this way.
+# ---------------------------------------------------------------------------
+
+# ---- derived artifacts, caches, checkpoints (6.3 GB) ----------------------
+data-dev/*
+# ... except the audit samples the verdicts in dev/maybe-verdicts.csv key to
+!data-dev/AUDIT-MAYBE-100.csv
+!data-dev/AUDIT-NO-100.csv
+!data-dev/AUDIT-NO-100-PROBE.csv
+!data-dev/AUDIT-OOS-100.csv
+
+# ---- source data (625 MB) --------------------------------------------------
+inputs/*
+# ... except the benchmark fixtures and the NTEE source, all small and public,
+# so that a clean clone can run the 1k benchmark and rebuild data/nteev2.rda
+!inputs/1k_grants_0*.csv
+!inputs/nteev2-descriptions.csv
+!inputs/nteev2-descriptions-tidy-format.csv
+!inputs/GTDC*.xlsx
+
+# The BMF (1.7 GB) lives in ../npmatch/data-raw and is never tracked here.
+# The 990 Part III extracts (525 MB) are re-downloadable from the GT 990 lake;
+# see dev/build-990-text-wide.R for the filenames.
+
+# ---- R build / session -----------------------------------------------------
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+*.tar.gz
+*.Rcheck/
+/data/*.rda.bak
+
+# ---- OS --------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini

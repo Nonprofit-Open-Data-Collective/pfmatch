@@ -1,0 +1,158 @@
+building the reference corpus ... 
+  544917 organizations 
+  IDF over 121895 distinct tokens / 544917 documents 
+training purpose -> NTEE naive Bayes ... 
+  major-group model: 337260 docs, 25 labels 
+  subsector  model: 376576 docs, 10 labels 
+  in-corpus top-1 accuracy on 1,500 missions (26 major groups): 
+    full mission      59.1% 
+    first 3 tokens    48.7% 
+    first 2 tokens    43.5% 
+    majority-class    15.4% 
+ 
+== SILVER (YES tier, contentful purpose) : 1345 grants, 2601 candidate rows == 
+       metric pair_auc n_pos fires n_fired  top1   mrr
+       <char>    <num> <num> <num>   <num> <num> <num>
+ 1:   cov_all    0.636  1344  0.54     210 0.676 0.819
+ 2:   cos_all    0.634  1344  0.56     218 0.505 0.723
+ 3:  nb_major    0.616   739  0.77     143 0.531 0.718
+ 4: nb_sector    0.604  1118  0.73     210 0.576 0.745
+ 5:  cov_prog    0.598  1063  0.61     108 0.713 0.845
+ 6:  cos_prog    0.591  1062  0.63     111 0.577 0.771
+ 7:   ng4_all    0.591  1344  0.96     373 0.418 0.629
+ 8:  ng4_prog    0.573  1062  0.94     167 0.527 0.741
+ 9:   cos_mis    0.563  1133  0.42      93 0.473 0.714
+10:   cov_mis    0.562  1136  0.41      90 0.556 0.763
+11:   ng4_mis    0.551  1133  0.90     200 0.480 0.705
+12:   ng4_act    0.533   776  0.65     122 0.426 0.682
+13:  cos_ntee    0.528  1012  0.31      93 0.355 0.642
+14:  cov_ntee    0.527  1012  0.31      93 0.409 0.673
+15:  cov_name    0.521  1345  0.08      31 0.645 0.797
+16:  cos_name    0.521  1344  0.12      47 0.383 0.626
+17:  ng4_ntee    0.516  1012  0.83     250 0.336 0.579
+18:  ng4_name    0.516  1344  0.41     159 0.308 0.579
+19:   cov_act    0.510   776  0.08      15 0.667 0.822
+20:   cos_act    0.510   776  0.09      17 0.471 0.701
+       metric pair_auc n_pos fires n_fired  top1   mrr
+       <char>    <num> <num> <num>   <num> <num> <num>
+  baseline, name/geo score alone: top1 = 1.000  mrr = 1.000  over 390 grants 
+ 
+== GOLD (adjudicated MAYBE, all) : 63 grants, 304 candidate rows == 
+       metric pair_auc n_pos fires n_fired  top1   mrr
+       <char>    <num> <num> <num>   <num> <num> <num>
+ 1:   ng4_all    0.679    29  1.00      28 0.429 0.661
+ 2:   cos_all    0.674    29  0.54      15 0.733 0.867
+ 3:   cov_all    0.665    29  0.50      14 0.929 1.000
+ 4:  cos_ntee    0.625    21  0.50      10 0.500 0.750
+ 5:  cov_ntee    0.621    21  0.45       9 0.556 0.778
+ 6:  ng4_ntee    0.618    21  0.95      19 0.368 0.604
+ 7:  ng4_name    0.618    29  0.61      17 0.588 0.730
+ 8:   ng4_mis    0.591    28  0.92      22 0.636 0.789
+ 9:  nb_major    0.586    32  0.86      25 0.440 0.687
+10: nb_sector    0.586    58  0.44      24 0.500 0.689
+11:  cos_prog    0.563    24  0.42       8 0.625 0.771
+12:  cov_prog    0.558    24  0.42       8 0.625 0.771
+13:   cos_mis    0.545    28  0.42      10 0.600 0.767
+14:   cov_mis    0.536    28  0.38       9 0.556 0.815
+15:  cos_name    0.534    29  0.07       2 1.000 1.000
+16:  cov_name    0.533    29  0.07       2 1.000 1.000
+17:  ng4_prog    0.523    24  0.95      18 0.500 0.708
+18:   cov_act    0.505    20  0.17       3 0.333 0.667
+19:   cos_act    0.505    20  0.17       3 0.333 0.667
+20:   ng4_act    0.451    20  0.78      14 0.286 0.607
+       metric pair_auc n_pos fires n_fired  top1   mrr
+       <char>    <num> <num> <num>   <num> <num> <num>
+  baseline, name/geo score alone: top1 = 0.783  mrr = 0.946  over 60 grants 
+ 
+== GOLD (adjudicated MAYBE, contentful purpose) : 29 grants, 141 candidate rows == 
+       metric pair_auc n_pos fires n_fired  top1   mrr
+       <char>    <num> <num> <num>   <num> <num> <num>
+ 1:   ng4_all    0.679    29  1.00      28 0.429 0.661
+ 2:   cos_all    0.674    29  0.54      15 0.733 0.867
+ 3:   cov_all    0.665    29  0.50      14 0.929 1.000
+ 4:  nb_major    0.644    16  0.93      13 0.538 0.718
+ 5:  cos_ntee    0.625    21  0.50      10 0.500 0.750
+ 6:  cov_ntee    0.621    21  0.45       9 0.556 0.778
+ 7:  ng4_ntee    0.618    21  0.95      19 0.368 0.604
+ 8:  ng4_name    0.618    29  0.61      17 0.588 0.730
+ 9: nb_sector    0.607    26  0.83      20 0.500 0.685
+10:   ng4_mis    0.591    28  0.92      22 0.636 0.789
+11:  cos_prog    0.563    24  0.42       8 0.625 0.771
+12:  cov_prog    0.558    24  0.42       8 0.625 0.771
+13:   cos_mis    0.545    28  0.42      10 0.600 0.767
+14:   cov_mis    0.536    28  0.38       9 0.556 0.815
+15:  cos_name    0.534    29  0.07       2 1.000 1.000
+16:  cov_name    0.533    29  0.07       2 1.000 1.000
+17:  ng4_prog    0.523    24  0.95      18 0.500 0.708
+18:   cov_act    0.505    20  0.17       3 0.333 0.667
+19:   cos_act    0.505    20  0.17       3 0.333 0.667
+20:   ng4_act    0.451    20  0.78      14 0.286 0.607
+       metric pair_auc n_pos fires n_fired  top1   mrr
+       <char>    <num> <num> <num>   <num> <num> <num>
+  baseline, name/geo score alone: top1 = 0.786  mrr = 0.982  over 28 grants 
+ 
+== combining with the name/geo score, GOLD contentful == 
+  cov_all   w=0.00  top1 = 0.786  (22/28) 
+  cov_all   w=0.05  top1 = 0.821  (23/28) 
+  cov_all   w=0.10  top1 = 0.821  (23/28) 
+  cov_all   w=0.20  top1 = 0.821  (23/28) 
+  cov_all   w=0.40  top1 = 0.821  (23/28) 
+  cos_all   w=0.00  top1 = 0.786  (22/28) 
+  cos_all   w=0.05  top1 = 0.857  (24/28) 
+  cos_all   w=0.10  top1 = 0.857  (24/28) 
+  cos_all   w=0.20  top1 = 0.857  (24/28) 
+  cos_all   w=0.40  top1 = 0.857  (24/28) 
+  cov_ntee  w=0.00  top1 = 0.786  (22/28) 
+  cov_ntee  w=0.05  top1 = 0.786  (22/28) 
+  cov_ntee  w=0.10  top1 = 0.786  (22/28) 
+  cov_ntee  w=0.20  top1 = 0.786  (22/28) 
+  cov_ntee  w=0.40  top1 = 0.786  (22/28) 
+  nb_major  w=0.00  top1 = 0.786  (22/28) 
+  nb_major  w=0.05  top1 = 0.786  (22/28) 
+  nb_major  w=0.10  top1 = 0.786  (22/28) 
+  nb_major  w=0.20  top1 = 0.714  (20/28) 
+  nb_major  w=0.40  top1 = 0.607  (17/28) 
+ 
+== the 8 hard GOLD cases (contentful purpose, correct NOT at rank 1) == 
+-- G004510  purpose: REACHING HIGHER TOGETHER CAMPAIGN 
+   filed: SANTA BARBARA COTTAGE HOSPITAL FOUNDATION (SANTA BARBARA CA) 
+     1 SANTA BARBARA COTTAGE HOSPITAL           ntee=INVALID   cov_all=0.00  cov_ntee= NA   nb_maj= NA    
+    *2 SANTA BARBARA COTTAGE HOSPITAL FOUNDATIO ntee=E20       cov_all=0.00  cov_ntee=0.00  nb_maj=-2.26  
+     3 Santa Barbara                            ntee=P82       cov_all=0.00  cov_ntee=0.00  nb_maj=-0.08  
+     4 Santa Barbara Pops Association           ntee=A69       cov_all=0.00  cov_ntee=0.00  nb_maj=-0.85  
+     5 SANTA BARBARA HOSPICE FOUNDATION         ntee=P74       cov_all=0.00  cov_ntee=0.00  nb_maj=-0.08  
+-- G001193  purpose: YOUTH DEVELOPMENT 
+   filed: BOYS AND GIRLS CLUB OF SALEM MARION POLK COUNT (SALEM OR) 
+     1 BOYS AND GIRLS CLUB OF SALEM MARION AND  ntee=UNDEFINED cov_all=1.00  cov_ntee=0.00  nb_maj= NA    
+    *2 BOYS AND GIRLS CLUB OF SALEM MARION AND  ntee=O23       cov_all=1.00  cov_ntee=1.00  nb_maj=1.70   
+     3 Boys & Girls Clubs Of Sonoma-Marin       ntee=Z99       cov_all=0.50  cov_ntee=0.00  nb_maj= NA    
+     4 Boys & Girls Club Of Chelsea             ntee=O23       cov_all=1.00  cov_ntee=1.00  nb_maj=1.70   
+     5 Boys And Girls Club Of Greater La C      ntee=O21       cov_all=1.00  cov_ntee=0.50  nb_maj=1.70   
+-- G001779  purpose: IN SUPPORT OF THE FIREWORKS PICNIC 
+   filed: SIGMA GAMMA ASSOCATION (GROSSE POINTE FARMS MI) 
+     1 SIGMA GAMMA FOUNDATION                   ntee=UNDEFINED cov_all=0.00  cov_ntee=0.00  nb_maj= NA    
+    *2 SIGMA GAMMA ASSOCIATION                  ntee=B83       cov_all=0.00  cov_ntee=0.00  nb_maj=-1.04  
+     3 Sigma Gamma                              ntee=UNDEFINED cov_all=0.00  cov_ntee=0.00  nb_maj= NA    
+     4 Sigma Gamma                              ntee=UNDEFINED cov_all=0.00  cov_ntee=0.00  nb_maj= NA    
+     5 SIGMA GAMMA SOROITY                      ntee=UNDEFINED cov_all=0.00  cov_ntee=0.00  nb_maj= NA    
+-- G004964  purpose: SUPPORT FOR CHILDREN ACTIVITIES AND EDUCATION 
+   filed: BIG BROTHERS BIG SISTERS LONE STAR (ABILENE TX) 
+     1 BIG BROTHERS BIG SISTERS LONE STAR FOUND ntee=T30       cov_all=0.00  cov_ntee=0.00  nb_maj=-0.24  
+    *2 BIG BROTHERS BIG SISTERS LONE STAR       ntee=INVALID   cov_all=0.57  cov_ntee= NA   nb_maj= NA    
+     3 BIG BROTHERS BIG SISTERS OF EL PASO      ntee=UNDEFINED cov_all=0.57  cov_ntee=0.00  nb_maj= NA    
+     4 BIG BROTHERS BIG SISTERS OF CENTRAL TEXA ntee=UNDEFINED cov_all=0.57  cov_ntee=0.00  nb_maj= NA    
+     5 BIG BROTHERS BIG SISTERS INTERNATIONAL   ntee=O31       cov_all=0.00  cov_ntee=0.00  nb_maj=0.01   
+-- G002178  purpose: TO FURTHER ONE OR MORE OF THE EXEMPT PURPOSES OF THE CHARITY 
+   filed: PLANNED PARENTHOOD FEDERATION OF AMERICA (WASHINGTON DC) 
+     1 PLANNED PARENTHOOD EXPOSED               ntee=B01       cov_all=0.00  cov_ntee=0.00  nb_maj=0.07   
+    *2 PLANNED PARENTHOOD FEDERATION OF         ntee=INVALID   cov_all=0.00  cov_ntee= NA   nb_maj= NA    
+     3 Planned Parenthood Advocates Mar Mo      ntee=R20       cov_all=0.00  cov_ntee=0.00  nb_maj=-0.94  
+     4 Planned Parenthood Of The Rocky Mtn      ntee=INVALID   cov_all=0.00  cov_ntee= NA   nb_maj= NA    
+     5 Planned Parenthood                       ntee=E40       cov_all=0.00  cov_ntee=0.00  nb_maj=0.02   
+-- G002440  purpose: EDUCATION 
+   filed: SUMMIT CHARTER SCHOOL FOUNDATION (CASHIERS NC) 
+     1 SUMMIT CHARTER SCHOOL                    ntee=B99       cov_all=1.00  cov_ntee=1.00  nb_maj=0.83   
+    *2 SUMMIT CHARTER SCHOOL FOUNDATION         ntee=INVALID   cov_all=1.00  cov_ntee=1.00  nb_maj= NA    
+     3 UNITY CHARTER SCHOOL                     ntee=INVALID   cov_all=1.00  cov_ntee= NA   nb_maj= NA    
+     4 MOT CHARTER SCHOOL                       ntee=B20       cov_all=1.00  cov_ntee=1.00  nb_maj=0.83   
+     5 SIUE CHARTER SCHOOL                      ntee=B25       cov_all=1.00  cov_ntee=1.00  nb_maj=0.83   

@@ -1,0 +1,30 @@
+Package: pfmatch
+Title: Match 990-PF Grant Recipients to the IRS Business Master File
+Version: 0.1.0
+Authors@R:
+    person("Jesse", "Lecy", email = "jdlecy@gmail.com", role = c("aut", "cre"))
+Description: Recovers recipient EINs for grants reported on Form 990-PF Part XIV
+    Table 3a. Standardizes the uncontrolled recipient-status field, resolves the
+    two-line recipient name, collapses repeated grant rows to distinct recipient
+    identities, and runs a staged, geography-aware blocking cascade against the
+    IRS Business Master File. The generic record-linkage machinery -
+    normalization, blocking, comparison, hierarchical scoring, vetoes, and
+    YES/MAYBE/NO tiering - is provided by 'npmatch'; this package holds only what
+    is specific to the 990-PF grant context.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends:
+    R (>= 4.1)
+Imports:
+    data.table,
+    stringi,
+    npmatch,
+    stats,
+    utils
+Suggests:
+    stringdist,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3

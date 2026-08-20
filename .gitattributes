@@ -1,0 +1,20 @@
+# Normalize line endings in the repository regardless of each collaborator's
+# local core.autocrlf setting. Without this, whether a file lands in the repo
+# as LF or CRLF depends on who committed it.
+* text=auto
+
+# Declare the binaries explicitly rather than relying on git's content
+# heuristic -- a mis-detected .rda would be silently corrupted by CRLF
+# conversion, and nothing would notice until pf_ntee_text() returned garbage.
+*.rda   binary
+*.rds   binary
+*.xlsx  binary
+*.RData binary
+
+# R sources and data keep LF, which is what R CMD build checks for.
+*.R     text eol=lf
+*.Rd    text eol=lf
+*.md    text eol=lf
+*.csv   text eol=lf
+DESCRIPTION text eol=lf
+NAMESPACE   text eol=lf
