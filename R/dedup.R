@@ -184,7 +184,21 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
       # organizations; merging them would lock one EIN across both.
       !identical(cand$aff_tok[a], cand$aff_tok[b])
     }
+    # Progress. The fuzzy pass is the longest single step in the pipeline and
+    # used to print nothing between "N blocks" and "done", which makes a
+    # full-file run unmanageable: there is no way to tell a slow pass from a
+    # hung one. Report every 5% of blocks with a running rate and an estimate.
+    n_blk <- length(grp)
+    step  <- max(1L, n_blk %/% 20L)
+    t_fz  <- proc.time()[["elapsed"]]
     for (ix in grp) {
+      if (verbose && bi %% step == 0L && bi > 0L) {
+        el <- proc.time()[["elapsed"]] - t_fz
+        say("  fuzzy %3.0f%%  %s/%s blocks  %.0f s elapsed, ~%.0f s left",
+            100 * bi / n_blk, format(bi, big.mark = ","),
+            format(n_blk, big.mark = ","), el, el * (n_blk - bi) / max(bi, 1L))
+        utils::flush.console()
+      }
       bi <- bi + 1L
       nm <- cand$name_key[ix]
       dm <- stringdist::stringdistmatrix(nm, nm, method = "jw", p = 0.1)
