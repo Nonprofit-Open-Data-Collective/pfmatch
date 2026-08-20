@@ -1,0 +1,60 @@
+downloading 2024-11-POL-ORGS-FM-8871.csv ... 
+downloading 2024-11-POL-ORGS-FM-8872.csv ... 
+8871 rows: 68,365 | 8872 rows: 50,904 
+distinct 527 EINs (8871 + 8872): 51,792 
+duckdb keeps downloaded extensions and secrets in a temporary directory:
+ℹ C:\Users\jlecy\AppData\Local\Temp\RtmpEL6QZZ/duckdb
+This is removed when the R session ends.
+• Extensions are re-downloaded each session.
+• Secrets are lost.
+ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+ℹ See ?duckdb_storage for details and alternatives.
+------------------------------------------------------------------------ 
+DO THE MISSING ALIAS EINs APPEAR IN THE 527 REGISTRY? 
+------------------------------------------------------------------------ 
+alias EINs not in the unified BMF : 279,845 
+  ... registered as a 527          : 1,334 (0.48%) 
+  ... filed a 990                  : 2,148 (0.77%) 
+  ... either                       : 3,472 (1.24%) 
+  ... still unaccounted for        : 276,373 (98.76%) 
+ 
+base rate check -- are 527s enriched among the missing? 
+  in-BMF alias EINs that are 527s  : 0.02% 
+  missing alias EINs that are 527s : 0.48% 
+ 
+how much of the 527 registry do the aliases touch at all? 
+  527 EINs seen anywhere in Schedule I : 1,439 of 51,792 (2.8%) 
+  527 EINs that ARE in the BMF          : 0.7% 
+------------------------------------------------------------------------ 
+MISSING EINs RECOVERED VIA THE 527 REGISTRY 
+------------------------------------------------------------------------ 
+                       schedi_name                       pac_name     st filers
+                            <char>                         <char> <char>  <num>
+ 1:       PLANNED PARENTHOOD VOTES       PLANNED PARENTHOOD VOTES     NY      9
+ 2: Republican Attorneys General A Republican Attorneys General A     DC      5
+ 3:      ALLIANCE FOR COMMON SENSE      Alliance for Common Sense     DC      5
+ 4: CASHIERS UNITED METHODIST CHUR Cashiers United Methodist Chur     NC      5
+ 5:            IBEW EDUCATION FUND     IBEW Educational Committee     DC      4
+ 6:       BETTER COLORADO ALLIANCE       Better Colorado Alliance     CO      4
+ 7: PROGRESS MICHIGAN POLITICAL AC    Progress Michigan Political     MI      4
+ 8:        MAKE ELECTIONS FAIR PAC        Make Elections Fair PAC     AZ      4
+ 9:  North Carolina Families First North Carolina Citizens for Pr     NC      4
+10:              Better Nevada PAC              Better Nevada PAC     NV      4
+11:                          GOPAC                      GOPAC INC     VA      3
+12:             WISCONSIN PROGRESS    Wisconsin Progress Conduit      WI      3
+13: PLANNED PARENTHOOD VIRGINIA PA Planned Parenthood In Virginia     VA      3
+14:   DEMOCRATIC PARTY OF ILLINOIS   Democratic Party of ILLInois     IL      3
+15:           COLORADO WAY FORWARD           COLORADO WAY FORWARD     CO      3
+16: FLORIDIANS PROTECTING FREEDOM  Floridians Protecting Freedom      FL      3
+17:       MILLIONS OF MICHIGANIANS       Millions of Michiganians     MI      3
+18:                FUTURE NOW FUND                Future Now Fund     DC      3
+19:       Bluegrass Freedom Action       Bluegrass Freedom Action     KY      3
+20: PEOPLE FOR FAIRNESS AND JUSTIC People for Fairness and Justic     OR      3
+21:               Reboot Louisiana               REBOOT LOUISIANA     LA      3
+22:         NEW FLORIDA VISION PAC         New Florida Vision PAC     FL      3
+23:   BETTER GOVERNMENT LEADERSHIP Better Government Leadership F     FL      3
+24:                ALL FOR JUSTICE                ALL FOR JUSTICE     IL      3
+25:      oklahoma state university Joe J. Hutchison Campaign Fund     OK      2
+                       schedi_name                       pac_name     st filers
+                            <char>                         <char> <char>  <num>

@@ -135,11 +135,39 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
     ok <- nzchar(d$blk) & !is.na(d$name_key) & nzchar(d$name_key)
     cand <- d[ok, , drop = FALSE]
     grp <- split(seq_len(nrow(cand)), cand$blk)
-    grp <- grp[lengths(grp) > 1L & lengths(grp) <= max_block]
+    # Blocks larger than max_block used to be dropped outright. At 100k rows
+    # that never binds; on the full 12.5M-grant file roughly 500k of 3.38M keys
+    # sit in state-level blocks over the cap, and they are the densest
+    # neighbourhoods -- exactly where fuzzy matching earns its keep. Sub-block
+    # them on the leading characters of the name key instead. Jaro-Winkler
+    # weights the common prefix heavily, so two names agreeing to within 0.08
+    # distance almost always share a first letter; splitting on it is close to
+    # lossless and bounds the O(k^2) comparison inside each block.
+    grp <- grp[lengths(grp) > 1L]
+    n_capped <- 0L
+    split_big <- function(ix, depth) {
+      if (length(ix) <= max_block) return(list(ix))
+      if (depth > 3L) { n_capped <<- n_capped + length(ix); return(list()) }
+      sub <- split(ix, substr(cand$name_key[ix], 1L, depth))
+      sub <- sub[lengths(sub) > 1L]
+      unlist(lapply(sub, split_big, depth = depth + 1L), recursive = FALSE)
+    }
+    big <- lengths(grp) > max_block
+    if (any(big)) {
+      grp <- c(grp[!big], unlist(lapply(grp[big], split_big, depth = 1L),
+                                 recursive = FALSE))
+      grp <- grp[lengths(grp) > 1L]
+    }
+    if (n_capped)
+      say("  %s keys left uncompared after 3 levels of sub-blocking",
+          format(n_capped, big.mark = ","))
     say("fuzzy pass: %s blocks with 2-%d members (%s keys eligible)",
         format(length(grp), big.mark = ","), max_block,
         format(sum(lengths(grp)), big.mark = ","))
-    ei <- integer(0); ej <- integer(0); n_veto <- 0L
+    # Accumulate into a list and flatten once. Appending with c() inside the
+    # per-pair loop costs O(L^2) element copies in the number of accepted
+    # joins, which is invisible at 100k and a real term at full scale.
+    acc <- vector("list", length(grp)); n_veto <- 0L; bi <- 0L
     conflict <- function(a, b) {
       # npmatch's hard veto predicates: disjoint embedded numbers ("Local 32" vs
       # "Local 45"), ordinals ("First" vs "Second"), or directions ("SW" vs "SE").
@@ -157,16 +185,23 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
       !identical(cand$aff_tok[a], cand$aff_tok[b])
     }
     for (ix in grp) {
+      bi <- bi + 1L
       nm <- cand$name_key[ix]
       dm <- stringdist::stringdistmatrix(nm, nm, method = "jw", p = 0.1)
       hit <- which(dm <= (1 - threshold) & upper.tri(dm), arr.ind = TRUE)
       if (!nrow(hit)) next
+      ea <- integer(nrow(hit)); eb <- integer(nrow(hit)); nn <- 0L
       for (r in seq_len(nrow(hit))) {
         a <- ix[hit[r, 1]]; b <- ix[hit[r, 2]]
         if (conflict(a, b)) { n_veto <- n_veto + 1L; next }
-        ei <- c(ei, a); ej <- c(ej, b)
+        nn <- nn + 1L; ea[nn] <- a; eb[nn] <- b
       }
+      if (nn) acc[[bi]] <- list(a = ea[seq_len(nn)], b = eb[seq_len(nn)])
     }
+    acc <- acc[!vapply(acc, is.null, logical(1))]
+    ei <- unlist(lapply(acc, `[[`, "a"), use.names = FALSE)
+    ej <- unlist(lapply(acc, `[[`, "b"), use.names = FALSE)
+    if (is.null(ei)) { ei <- integer(0); ej <- integer(0) }
     say("  %s fuzzy joins accepted, %s rejected by the number/ordinal/direction veto",
         format(length(ei), big.mark = ","), format(n_veto, big.mark = ","))
     comp <- .pf_components(nrow(cand), ei, ej)

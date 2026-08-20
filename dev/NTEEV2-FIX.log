@@ -1,0 +1,44 @@
+reading bmf_unified_geocoded.csv ... 
+  3,687,435 rows x 106 cols 
+------------------------------------------------------------------------ 
+CHANGES 
+------------------------------------------------------------------------ 
+nteev2                      : 509,637 rows changed (13.82%) 
+nteev2_code                 : 501,904 (13.61%) 
+nteev2_subsector            : 26,449 (0.72%) 
+nteev2_org_type             : 136 (0.00%)  [not rebuilt if 0] 
+nteev2_subsector_definition : 265,043 (7.19%) 
+ 
+writing bmf_unified_geocoded-nteev2fix.csv ... 
+  3737 MB 
+------------------------------------------------------------------------ 
+TOP CHANGES 
+------------------------------------------------------------------------ 
+    ntee_code_raw old_nteev2 new_nteev2     N
+           <char>     <char>     <char> <int>
+ 1:           B11 EDU-B11-MS EDU-B00-MS 29490
+ 2:           B03 EDU-B03-PA EDU-B00-PA 16298
+ 3:           B12 EDU-B12-MM EDU-B00-MM 13707
+ 4:           P20 HMS-Z99-RG HMS-P20-RG 11685
+ 5:          B112 EDU-B11-MS EDU-B20-MS  9778
+ 6:           T12 PSB-T12-MM PSB-T00-MM  8456
+ 7:           E11 HEL-E11-MS HEL-E00-MS  7466
+ 8:           P12 HMS-P12-MM HMS-P00-MM  7303
+ 9:           B01 EDU-B01-AA EDU-B00-AA  7185
+10:           N12 HMS-N12-MM HMS-N00-MM  6928
+11:           X20 REL-Z99-RG REL-X20-RG  6694
+12:           O50 HMS-Z99-RG HMS-O50-RG  6111
+13:           N11 HMS-N11-MS HMS-N00-MS  5623
+14:           W12 PSB-W12-MM PSB-W00-MM  5111
+15:           O12 HMS-O12-MM HMS-O00-MM  5067
+16:           N60 HMS-Z99-RG HMS-N60-RG  4891
+17:           A12 ART-A12-MM ART-A00-MM  4572
+18:           I03 HMS-I03-PA HMS-I00-PA  4334
+19:           S01 PSB-S01-AA PSB-S00-AA  4283
+20:           B29 UNU-Z99-RG EDU-B29-RG  4145
+    ntee_code_raw old_nteev2 new_nteev2     N
+           <char>     <char>     <char> <int>
+ 
+full change list: data-dev/NTEEV2-CHANGES-unified.csv (4,188 distinct patterns) 
+ 
+verify: PF_BMF=unified Rscript dev/check-nteev2.R  should now report ~100% 

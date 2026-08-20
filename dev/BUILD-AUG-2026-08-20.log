@@ -1,0 +1,20 @@
+base BMF: C:/Users/jlecy/Dropbox/00 - URBAN/00-GITHUB/npmatch/data-raw/bmf_unified_geocoded_2026-08-20.csv 
+========================================================================== 
+STAGE 1  download 
+========================================================================== 
+skipped (PF_SKIP_DOWNLOAD set) 
+========================================================================== 
+STAGE 2  DuckDB + alias table 
+========================================================================== 
+using existing schedi_grants.duckdb (delete to rebuild) 
+========================================================================== 
+STAGE 3  alias table, min_filers = 2 
+========================================================================== 
+duckdb keeps downloaded extensions and secrets in a temporary directory:
+ℹ C:\Users\jlecy\AppData\Local\Temp\RtmpSWbW6s/duckdb
+This is removed when the R session ends.
+• Extensions are re-downloaded each session.
+• Secrets are lost.
+ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+ℹ See ?duckdb_storage for details and alternatives.

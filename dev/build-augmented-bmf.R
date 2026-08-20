@@ -9,6 +9,7 @@
 #   PF_MIN_FILERS=2         corroboration floor       (1=86%, 2=95%, 5=98%)
 #   PF_GRANTS_DIR=<dir>     raw CSVs + duckdb         (default ~/Documents/grants)
 #   PF_SKIP_DOWNLOAD=1      assume the CSVs are there
+#   PF_BMF_CSV=<path>       explicit BMF path, overrides PF_BMF
 #
 # Writes data-dev/BMF-AUGMENTED-<base>.csv, which every later stage can use as a
 # drop-in replacement for the plain BMF.
@@ -32,7 +33,13 @@ BMF_CSV <- switch(BASE,
   active  = file.path(NPM, "data-raw", "bmf_2026_01_processed.csv"),
   unified = file.path(NPM, "data-raw", "bmf_unified_geocoded.csv"),
   stop("PF_BMF must be 'active' or 'unified'"))
-OUT <- file.path(PF, "data-dev", sprintf("BMF-AUGMENTED-%s.csv", BASE))
+if (nzchar(Sys.getenv("PF_BMF_CSV"))) {
+  BMF_CSV <- Sys.getenv("PF_BMF_CSV")
+  BASE <- tools::file_path_sans_ext(basename(BMF_CSV))
+}
+if (!file.exists(BMF_CSV)) stop("no BMF at ", BMF_CSV)
+say("base BMF: %s", BMF_CSV)
+OUT <- Sys.getenv("PF_AUG_OUT", file.path(PF, "data-dev", sprintf("BMF-AUGMENTED-%s.csv", BASE)))
 
 hr(); say("STAGE 1  download"); hr()
 if (Sys.getenv("PF_SKIP_DOWNLOAD", "") == "") {
