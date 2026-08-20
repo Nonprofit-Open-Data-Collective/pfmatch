@@ -1,0 +1,162 @@
+duckdb keeps downloaded extensions and secrets in a temporary directory:
+ℹ C:\Users\jlecy\AppData\Local\Temp\RtmpUxQ7f8/duckdb
+This is removed when the R session ends.
+• Extensions are re-downloaded each session.
+• Secrets are lost.
+ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+ℹ See ?duckdb_storage for details and alternatives.
+------------------------------------------------------------------------ 
+A. LENGTH OF THE RAW EIN FIELD (all 8.99M grant rows) 
+------------------------------------------------------------------------ 
+       label    rows    pct
+      <char>   <num>  <num>
+1:     blank  608501  6.772
+2: 9 (valid) 8377563 93.228
+ 
+non-numeric characters present in the raw field: 
+  rows_with_non_numeric
+1                     0
+ 
+reading unified BMF ... 
+alias rows: 2,454,925 | distinct EINs: 794,201 | EIN not in unified BMF: 35.2% of EINs 
+------------------------------------------------------------------------ 
+B. GOVERNMENT / OUT-OF-SCOPE HEURISTIC on the not-in-BMF set 
+------------------------------------------------------------------------ 
+not-in-BMF aliases matching a government pattern :  11.9% 
+in-BMF aliases matching the same pattern (base)  :   2.7% 
+ 
+most common not-in-BMF names (by filer corroboration): 
+                                   name  state filers    gov
+                                 <char> <char>  <num> <lgcl>
+ 1:            UNIVERSITY OF WASHINGTON     WA    312   TRUE
+ 2:     NORTH CAROLINA STATE UNIVERSITY     NC    170   TRUE
+ 3:            ARIZONA STATE UNIVERSITY     AZ    153   TRUE
+ 4: UNIVERSITY OF ALABAMA AT BIRMINGHAM     AL    153   TRUE
+ 5:           COLORADO STATE UNIVERSITY     CO    152   TRUE
+ 6:              UNIVERSITY OF MARYLAND     MD    149   TRUE
+ 7:            University of Washington     WA    141   TRUE
+ 8:           UNIVERSITY OF CONNECTICUT     CT    125   TRUE
+ 9:        UNIVERSITY OF SOUTH CAROLINA     SC    121   TRUE
+10:                UNIVERSITY OF HAWAII     HI    114   TRUE
+11:            UNIVERSITY OF WASHINGTON     WA    113   TRUE
+12:            UNIVERSITY OF NEW MEXICO     NM    108   TRUE
+13:             GEORGE MASON UNIVERSITY     VA    106  FALSE
+14:  OREGON HEALTH & SCIENCE UNIVERSITY     OR    105  FALSE
+15:            UNIVERSITY OF WASHINGTON     IL    100   TRUE
+16:               UNIVERSITY OF HOUSTON     TX     92   TRUE
+17:               UNIVERSITY OF GEORGIA     GA     91   TRUE
+18:         UNIVERSITY OF SOUTH FLORIDA     FL     86   TRUE
+19:                   AUBURN UNIVERSITY     AL     86  FALSE
+20:             OREGON STATE UNIVERSITY     OR     85   TRUE
+                                   name  state filers    gov
+                                 <char> <char>  <num> <lgcl>
+------------------------------------------------------------------------ 
+C. 1,000 SAMPLED CASES: is there a strong name match under a 
+   DIFFERENT EIN in the same ZIP3? 
+------------------------------------------------------------------------ 
+eligible (complete name + address): 480,680 alias rows 
+median ZIP3 block size: 6,278 
+ 
+distribution of best name similarity within the ZIP3 block: 
+         sim cases
+      <fctr> <int>
+1:     <0.80   300
+2: 0.80-0.90   531
+3: 0.90-0.95   112
+4: 0.95-0.99    22
+5: 0.99-1.00    35
+ 
+cases with a >=0.95 name match under a different EIN: 58 of 1000 (5.8%) 
+digit distance between the FILED EIN and the matched BMF EIN: 
+   digits_differing cases
+              <num> <int>
+1:                1    11
+2:                2     8
+3:                5     5
+4:                6     5
+5:                7     5
+6:                8    16
+7:                9     8
+ 
+  <=2 digits differ (a slip or transposition): 19 (32.8% of strong matches) 
+ 
+examples where the EIN is 1-2 digits off -- these are typos: 
+                        filed_name filed_ein   bmf_ein
+                            <char>    <char>    <char>
+ 1:             GRANITE UNITED WAY 260060330 026006033
+ 2: EAST MICHIGAN ENVIRONMENTAL AC 237231219 237241219
+ 3:      CHURCH OF GOD OF PROPHECY 611039690 611038692
+ 4: Montbello Organizing Committee 844339690 814339690
+ 5:         MASTER PLAN MINISTRIES 742408566 742408656
+ 6:           MOREHOUSE HEALTHCARE 581627800 581627802
+ 7:                      KOHO4HOPI 874485964 874485963
+ 8:            NUEVA ESPERANZA INC 042274010 042774010
+ 9:      Arrupe Jesuit High School 206288720 020628872
+10:           1000 FRIENDS OF IOWA 421484232 421474232
+11:                CITY OF WAVERLY 426000534 426005344
+12:   LIVING INDEPENDENCE EVERYONE 583720393 581720393
+13:        knowledge academies inc 270547273 270547275
+14: TRANSFORMATION CHURCH OF TENNE 206758760 020675876
+15:   NORTHWEST ARKANSAS FOOD BANK 710680803 710680830
+16:          VISUAL COMMUNICATIONS 337108393 237108393
+17: FIRST CONGREGATIONAL CHURCH OF 941249683 941243683
+18: CHILDRENS HOSPITAL LOS ANGELES 961690977 951690977
+19:           States United Action 861686291 861686219
+                          bmf_name   sim     d
+                            <char> <num> <num>
+ 1:             GRANITE UNITED WAY 1.000     2
+ 2: EAST MICHIGAN ENVIRONMENTAL AC 1.000     1
+ 3:      CHURCH OF GOD OF PROPHECY 1.000     2
+ 4: MONTBELLO ORGANIZING COMMITTEE 1.000     1
+ 5:         MASTER PLAN MINISTRIES 1.000     2
+ 6:           MOREHOUSE HEALTHCARE 1.000     1
+ 7:                      KOHO4HOPI 1.000     1
+ 8:                NUEVA ESPERANZA 0.958     1
+ 9:      ARRUPE JESUIT HIGH SCHOOL 1.000     2
+10:           1000 FRIENDS OF IOWA 1.000     1
+11:                CITY OF WAVERLY 1.000     2
+12: LIVING INDEPENDENCE FOR EVERYO 0.957     1
+13:            KNOWLEDGE ACADEMIES 0.965     1
+14: TRANSFORMATION CHURCH OF TENNE 1.000     2
+15:   NORTHWEST ARKANSAS FOOD BANK 1.000     2
+16:    VISUAL COMMUNICATIONS MEDIA 0.956     1
+17: FIRST CONGREGATIONAL CHURCH OF 1.000     1
+18: CHILDRENS HOSPITAL LOS ANGELES 0.971     1
+19:           STATES UNITED ACTION 1.000     2
+ 
+examples with a strong name match but a completely different EIN: 
+                        filed_name filed_ein   bmf_ein
+                            <char>    <char>    <char>
+ 1:           PINE LANE ELEMENTARY 846011446 474045792
+ 2:        Ferris State University 378581221 386005159
+ 3:        SAN FRANCISCO PLAYHOUSE 581276063 861089699
+ 4:       CONGREGATION BNAI SHLOMO 270240484 113437229
+ 5:          ONELIFE INSTITUTE INC 620630668 611525165
+ 6:  FRIENDS OF LINKS FOR LEARNING 204085391 934669426
+ 7: HAWAII FIRST COMMUNITY VENTURE 990092765 262128617
+ 8:     MCMINNVILLE DOWNTOWN ASSOC 271596222 930930394
+ 9:               JEFFERSON COUNTY 916001322 271780851
+10: Harmony Homestead Wholeness Ce 822361326 822830803
+11: ST ROSE PHILIPPINE DUCHESNE CA 320165304 933574221
+12: GREATER COLUMBUS COMMUNITY HEL 521409367 204176600
+13: Jewish United Fund of Metropol 000000000 362167034
+14:   ASBURY COMMUNITY DEVELOPMENT 470902841 454234550
+15:               GENERATION W INC 274494245 464832199
+                          bmf_name   sim     d    gov
+                            <char> <num> <num> <lgcl>
+ 1:       PINE LANE ELEMENTARY PTO 0.967     8  FALSE
+ 2:        FERRIS STATE UNIVERSITY 1.000     8   TRUE
+ 3:        SAN FRANCISCO PLAYHOUSE 1.000     8  FALSE
+ 4:       CONGREGATION BNEI SHALOM 0.962     9  FALSE
+ 5:              ONELIFE INSTITUTE 0.962     7  FALSE
+ 6:  FRIENDS OF LINKS FOR LEARNING 1.000     8  FALSE
+ 7: HAWAII FIRST COMMUNITY VENTURE 1.000     8  FALSE
+ 8: MCMINNVILLE DOWNTOWN ASSOCIATI 0.963     9  FALSE
+ 9:           JEFFERSON COUNTY 4-H 0.968     8  FALSE
+10: HARMONY HOMESTEAD & WHOLENESS  0.979     6  FALSE
+11: ST ROSE PHILIPPINE DUCHESNE CA 0.951     9  FALSE
+12: GREATER COLUMBUS COMMUNITY HEL 0.981     7  FALSE
+13: JEWISH UNITED FUND OF METROPOL 1.000     8  FALSE
+14:   ASBURY COMMUNITY DEVELOPMENT 1.000     8  FALSE
+15:                   GENERATION W 0.950     8  FALSE

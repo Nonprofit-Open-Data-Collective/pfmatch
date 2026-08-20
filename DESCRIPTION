@@ -16,6 +16,8 @@ Encoding: UTF-8
 Depends:
     R (>= 4.1)
 Imports:
+    DBI,
+    duckdb,
     data.table,
     stringi,
     npmatch,

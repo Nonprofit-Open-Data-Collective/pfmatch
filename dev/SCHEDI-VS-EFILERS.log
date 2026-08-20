@@ -1,0 +1,104 @@
+16 header files 
+duckdb keeps downloaded extensions and secrets in a temporary directory:
+ℹ C:\Users\jlecy\AppData\Local\Temp\RtmpwFz3ID/duckdb
+This is removed when the R session ends.
+• Extensions are re-downloaded each session.
+• Secrets are lost.
+ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+ℹ See ?duckdb_storage for details and alternatives.
+[1] 0
+loading header tables ... 
+[1] 0
+e-filer returns : 6,007,441 
+distinct e-filer EINs (2009-2024): 787,518 
+------------------------------------------------------------------------ 
+THE MISSING 35.2%, SPLIT BY WHETHER THEY EVER FILED A 990 
+------------------------------------------------------------------------ 
+alias EINs not in the unified BMF : 279,845 
+ 
+  ... that DID file a 990 (2009-2024) : 2,148 (0.8%) 
+  ... that NEVER filed                : 277,697 (99.2%) 
+ 
+weighted by filer corroboration (how much each matters): 
+  DID file   : 0.9% of missing-EIN filer-observations 
+  NEVER filed: 99.1% 
+------------------------------------------------------------------------ 
+CONTEXT: the e-file and BMF universes 
+------------------------------------------------------------------------ 
+distinct e-filer EINs      : 787,518 
+  ... in the unified BMF   :  97.9% 
+  ... NOT in the BMF       : 16,619 (2.1%) 
+unified BMF EINs           : 3,687,435 
+------------------------------------------------------------------------ 
+THE RECOVERABLE SET: missing from BMF, but a real 990 filer 
+------------------------------------------------------------------------ 
+recoverable EINs: 2,148 
+ 
+what forms do they file? 
+   efile_types     N
+        <char> <int>
+1:         990  1090
+2:       990EZ   534
+3:   990/990EZ   265
+4:   990EZ/990   259
+ 
+top recoverable organizations by corroboration: 
+                           schedi_name                     efile_name     st
+                                <char>                         <char> <char>
+ 1:     OHIO PROGRESSIVE COLLABORATIVE Ohio Progressive Collaborative     OH
+ 2:                   MAJORITY FORWARD               MAJORITY FORWARD     DC
+ 3:                   PICO ACTION FUND           FAITH IN ACTION FUND     DC
+ 4:             UNION VETERANS COUNCIL         UNION VETERANS COUNCIL     DC
+ 5:               GOPAC EDUCATION FUND       GOPAC EDUCATION FUND INC     VA
+ 6: CONSERVATIVES FOR A CLEAN ENERGY F CONSERVATIVES FOR A CLEAN ENER     MI
+ 7:            GROUNDSWELL ACTION FUND        Groundswell Action Fund     CA
+ 8:                        DALLAS HERO                    DALLAS HERO     TX
+ 9:        THE GOOD LAND COMMITTEE INC    The Good Land Committee Inc     WI
+10:        PROTECT COLORADO'S RECOVERY     PROTECT COLORADOS RECOVERY     CO
+11:         FOR OUR FUTURE ACTION FUND     FOR OUR FUTURE ACTION FUND     DC
+12: KANSANS FOR CONSTITUTIONAL FREEDOM KANSANS FOR CONSTITUTIONAL FRE     KS
+13:            PROJECT 26 PENNSYLVANIA        PROJECT 26 PENNSYLVANIA     PA
+14:               MICHIGAN MY MICHIGAN           MICHIGAN MY MICHIGAN     MI
+15:                    COUNTERACT FUND                CounterAct Fund     DC
+16:        CONGREGATION SONS OF ISRAEL CONGREGATION SONS OF ISRAEL OF     NY
+17:                         LUPE VOTES                     LUPE VOTES     TX
+18:     PLANNED PARENTHOOD TEXAS VOTES PLANNED PARENTHOOD TEXAS VOTES     TX
+19:           Citizens Not Politicians       Citizens Not Politicians     OH
+20:      NEVADANS FOR SECURE ELECTIONS  NEVADANS FOR SECURE ELECTIONS     NV
+21:          Road to Michigan's Future      ROAD TO MICHIGAN'S FUTURE     MI
+22:      AMERICANS FOR ECONOMIC GROWTH  AMERICANS FOR ECONOMIC GROWTH     DC
+23:              MALVERN RETREAT HOUSE        LAYMEN'S RETREAT LEAGUE     PA
+24:              AMPLIFY NEW HAMPSHIRE          AMPLIFY NEW HAMPSHIRE     NH
+25:              ONE PEOPLE'S CAMPAIGN           ONE Peoples Campaign     IL
+                           schedi_name                     efile_name     st
+                                <char>                         <char> <char>
+    filers returns   last
+     <num>   <num> <char>
+ 1:     16       7   2024
+ 2:     13       4   2023
+ 3:      8       7   2024
+ 4:      8       3   2023
+ 5:      7      14   2024
+ 6:      7       7   2024
+ 7:      7       9   2024
+ 8:      6       3   2024
+ 9:      6       1   2020
+10:      6       1   2020
+11:      6       6   2024
+12:      6       4   2024
+13:      6       1   2024
+14:      6       7   2023
+15:      6       4   2024
+16:      6       2   2024
+17:      6       4   2024
+18:      6       8   2024
+19:      6       2   2024
+20:      6       3   2020
+21:      5       6   2024
+22:      5       8   2022
+23:      5       1   2022
+24:      5       4   2024
+25:      5       6   2024
+    filers returns   last
+     <num>   <num> <char>

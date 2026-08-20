@@ -1,0 +1,101 @@
+duckdb keeps downloaded extensions and secrets in a temporary directory:
+ℹ C:\Users\jlecy\AppData\Local\Temp\RtmpG0YbuI/duckdb
+This is removed when the R session ends.
+• Extensions are re-downloaded each session.
+• Secrets are lost.
+ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+ℹ See ?duckdb_storage for details and alternatives.
+alias table: 2,454,949 rows, 794,209 distinct EINs 
+names that map to exactly one EIN: 1,320,784 of 1,464,115 (90.2%) 
+benchmark rows: 49,672 
+   status     N
+   <char> <int>
+1:    YES 25436
+2:     NO 13047
+3:  MAYBE 10898
+4:    OOS   291
+ 
+=== 1. PRECISION: does the alias agree with confident matches? === 
+YES grants with an alias hit: 9,417 
+  alias EIN == accepted EIN : 95.6% 
+   corroboration grants agree
+          <fctr>  <int> <num>
+1:       1 filer   1506  86.1
+2:           2-4   2406  95.4
+3:          5-19   3842  98.0
+4:           20+   1663  99.0
+ 
+=== 2. RECALL: does it reach the NO tier? === 
+   status grants alias_hit   pct
+   <char>  <int>     <int> <num>
+1:    YES  25436      9417  37.0
+2:     NO  13047      2364  18.1
+3:  MAYBE  10898      2349  21.6
+4:    OOS    291         9   3.1
+ 
+=== 3. are the surfaced EINs in the BMF? === 
+NO-tier grants with an alias EIN : 2,364 
+  ... whose EIN is in the BMF     : 74.5% 
+  ... corroborated by >1 filer    : 66.9% 
+  ... both                        : 52.2% 
+ 
+=== sample of NO-tier names the alias table resolves === 
+                            recip_name  state alias_ein filers
+                                <char> <char>    <char>  <num>
+ 1:      INJURED MARINE SEMPER FI FUND     CA 260086305    115
+ 2:      Injured Marine Semper Fi Fund     CA 260086305    115
+ 3:                       SHATTERPROOF     CT 454619712     68
+ 4:                       SHATTERPROOF     CT 454619712     68
+ 5:                       SHATTERPROOF     CT 454619712     68
+ 6: NATIONAL CENTER FOR TRANSGENDER EQ     DC 412090291     66
+ 7:                      USA FOR UNHCR     DC 521662800     65
+ 8:                      USA FOR UNHCR     DC 521662800     65
+ 9:  MAZON A JEWISH RESPONSE TO HUNGER     CA 222624532     64
+10:  MAZON A Jewish Response to Hunger     CA 222624532     64
+11: Mazon (A Jewish Response to Hunger     CA 222624532     64
+12:                            VOTEORG     CA 262094990     59
+13:            WORLD PEDIATRIC PROJECT     MO 541953305     55
+14:            WORLD PEDIATRIC PROJECT     MO 541953305     55
+15:                         CAMP KESEM     CA 510454157     51
+16:                         CAMP KESEM     CA 510454157     51
+17:                         CAMP KESEM     FL 510454157     51
+18:                         Camp Kesem     CA 510454157     51
+19:   FOUNDATION FOR NATIONAL PROGRESS     CA 942282759     49
+20:   Foundation for National Progress     CA 942282759     49
+21:   Foundation for National Progress     CA 942282759     49
+22:                    Lakeview Pantry     IL 362734184     45
+23:                    LAKEVIEW PANTRY     IL 362734184     45
+24:                    Lakeview Pantry     IL 362734184     45
+25:                   Little Kids Rock     NJ 943396568     42
+                            recip_name  state alias_ein filers
+                                <char> <char>    <char>  <num>
+                                    bmf_name
+                                      <char>
+ 1:                Semper Fi & Americas Fund
+ 2:                Semper Fi & Americas Fund
+ 3:                 Shatterproof A Nonprofit
+ 4:                 Shatterproof A Nonprofit
+ 5:                 Shatterproof A Nonprofit
+ 6: Advocates For Trans Equality Education F
+ 7:      United States Association For Unhcr
+ 8:      United States Association For Unhcr
+ 9:    Mazon Inc A Jewish Response To Hunger
+10:    Mazon Inc A Jewish Response To Hunger
+11:    Mazon Inc A Jewish Response To Hunger
+12:                                     Vote
+13:                         World Pediatrics
+14:                         World Pediatrics
+15:                      Camp Kesem National
+16:                      Camp Kesem National
+17:                      Camp Kesem National
+18:                      Camp Kesem National
+19:   The Center For Investigative Reporting
+20:   The Center For Investigative Reporting
+21:   The Center For Investigative Reporting
+22:                          Nourishing Hope
+23:                          Nourishing Hope
+24:                          Nourishing Hope
+25:                               Music Will
+                                    bmf_name
+                                      <char>
