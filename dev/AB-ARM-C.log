@@ -1,0 +1,24 @@
+﻿============================================================================== 
+ARM C 
+============================================================================== 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+loading REF-augmented.rds ... 
+  3,880,431 rows in 75.3 s 
+  resolving augmented-CSV provenance by row count ... 
+    BMF-AUGMENTED-bmf_unified_geocoded_2026-08-20.csv          3,891,187 rows 
+    BMF-AUGMENTED-unified-fixed.csv                            3,880,431 rows 
+  -> BMF-AUGMENTED-unified-fixed.csv 
+  EIN alignment reference vs CSV: 100.0000% 
+  variant classes: legal=3,687,435  observed=  192,996 
+  ARM C: promotion gated to variant_class == 'legal' 
+matching (11 passes) ... 
+  matched in 1138.8 s 
+wrote AB-ARM-C.rds (4793 identities, 0.6 MB) 
+
+MAYBE    NO   YES 
+ 1035   745  3013 
+       
+        legal observed <NA>
+  MAYBE   927      108    0
+  NO      683       57    5
+  YES    2565      448    0

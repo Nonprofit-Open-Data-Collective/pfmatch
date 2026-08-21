@@ -1,0 +1,12 @@
+﻿============================================================================== 
+ARM D 
+============================================================================== 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+loading BMF-REFERENCE-BUNDLE.rds ... 
+  1,924,822 rows in 38.0 s 
+matching (11 passes) ... 
+  matched in 560.7 s 
+wrote AB-ARM-D.rds (4733 identities, 0.6 MB) 
+
+MAYBE    NO   YES 
+ 1006   906  2821 

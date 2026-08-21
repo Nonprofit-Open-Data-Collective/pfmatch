@@ -1,0 +1,44 @@
+﻿identity universe: 4800 (A 4774, B 4793, C 4793, D 4733) 
+============================================================================== 
+VARIANT-CLASS A/B  |  4800 identities  |  distinct_name_maxfreq = 3 
+============================================================================== 
+  D  monthly active BMF              YES  2821   MAYBE  1006   NO   906   NONE   67 
+  A  unified (active + inactive)     YES  2816   MAYBE  1108   NO   850   NONE   26 
+  B  augmented unified               YES  3015   MAYBE  1041   NO   737   NONE    7 
+  C  augmented, legal-gated          YES  3013   MAYBE  1035   NO   745   NONE    7 
+ 
+  the published figure decomposes into three steps, not one: 
+    D -> A  inactive EIN tranche        -5 YES   +102 MAYBE 
+    A -> B  Schedule I aliases        +199 YES    -67 MAYBE 
+    B -> C  legal-gated promotion       -2 YES     -6 MAYBE 
+    ------------------------------------------------------ 
+    D -> B  as reported in REF-PERFORMANCE.md    +194 YES    +35 MAYBE 
+============================================================================== 
+the decomposition 
+============================================================================== 
+  1. YES gained, won on an ALIAS row            283 
+     YES gained, won on a LEGAL row               3  (blocking/geo side-effects) 
+  2. YES lost overall                            87 
+     ... attributable to name_freq inflation     19 
+     ... other                                   68 
+ 
+  so the net +199 = +283 gained(alias) +3 gained(legal) -87 lost 
+============================================================================== 
+6b: what legal-gating the promotion costs 
+============================================================================== 
+  3. YES in B, not YES in C                      19 
+     ... of which won on an ALIAS row            19 
+     ... of which won on a LEGAL row              0  (should be 0) 
+  4. alias YES in C meeting the predicate       350 
+     ... none of which was promoted (arm C excludes alias rows), so these 
+     cleared YES unaided -- eligibility overstates dependence by ~18x 
+ 
+  net alias contribution after gating: +264 YES 
+============================================================================== 
+promotion-eligible winners by arm and variant class 
+============================================================================== 
+  A  promotion-eligible YES:  2292   (alias    0 / legal 2292) 
+  B  promotion-eligible YES:  2440   (alias  370 / legal 2070) 
+  C  promotion-eligible YES:  2435   (alias  350 / legal 2085) 
+============================================================================== 
+Write-up: dev/VARIANT-CLASS-AB.md 
