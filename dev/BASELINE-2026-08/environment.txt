@@ -1,0 +1,16 @@
+built             2026-08-21
+R                 4.4.2
+platform          x86_64-w64-mingw32
+pfmatch           d02a458
+npmatch           d658486
+normalizer sig    v1-421e1e2a6afb024e
+
+package versions:
+  npmatch      0.0.0.9000
+  data.table   1.17.0
+  stringi      1.8.7
+  stringr      1.6.0
+  reclin2      0.6.0
+  stringdist   0.9.17
+  duckdb       1.2.0
+  DBI          1.2.3
