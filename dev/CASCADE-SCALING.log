@@ -1,0 +1,24 @@
+﻿recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+identity pool: 4,716 
+reference    : 1,924,822 rows 
+============================================================================== 
+COST AGAINST QUERY COUNT, one np_cascade call each 
+============================================================================== 
+ queries    seconds  s per 1,000        pairs 
+     100        206         2060        7,798 
+     250        337         1349       15,167 
+     500        735         1470       31,407 
+    1000       1218         1218       51,214 
+    2000       2650         1325      120,837 
+    4000       5342         1335      260,285 
+============================================================================== 
+IS IT FIXED COST? 
+============================================================================== 
+time = 15 s + 1.3243 s per query   (R2 = 0.999) 
+ 
+fixed component  : 15 s per np_cascade() call 
+marginal per 1k  : 1324.3 s 
+ 
+No large fixed cost. The scaling explanation is wrong too; look elsewhere. 
+ 
+wrote data-dev/CASCADE-SCALING.csv 

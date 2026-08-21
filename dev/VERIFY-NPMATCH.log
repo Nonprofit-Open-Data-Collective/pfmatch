@@ -1,0 +1,31 @@
+﻿============================================================================== 
+PROVENANCE 
+============================================================================== 
+npmatch loaded from : C:/Users/jdlec/AppData/Local/R/win-library/4.4 
+npmatch version     : 0.0.0.9000 
+np_cascade args     : query, reference, config, method, passes, verbose, query_map, reference_map, name_freq, token_idf, ref_index 
+  [PASS] np_cascade accepts the three batch parameters 
+============================================================================== 
+A REAL CASCADE THROUGH pf_match_grants() 
+============================================================================== 
+identities 195 | reference 1,924,822 rows 
+  [PASS] pf_match_grants() runs against the INSTALLED npmatch 
+  YES 110  MAYBE 43  NO 34 
+  [PASS] the cascade actually resolved matches 
+============================================================================== 
+ARE THE THREE ARGUMENTS ACTUALLY USED? 
+============================================================================== 
+with precomputed index : YES 110 MAYBE 43 NO 34 
+without                : YES 110 MAYBE 43 NO 34 (349 s) 
+  [PASS] results identical either way (the index is an optimisation, not a behaviour change) 
+============================================================================== 
+THE DYAD PATH, END TO END, ON THE INSTALLED npmatch 
+============================================================================== 
+collapsed identities: 5 
+  [PASS] pf_status() works after a collapse 
+============================================================================== 
+ALL CHECKS PASSED 
+ 
+NOTE: pfmatch itself is NOT installed -- `library(pfmatch)` would fail 
+outright. The Phase 1 scripts (dev/full-0*.R) call it. Installing npmatch 
+fixes half the problem. 

@@ -1,0 +1,27 @@
+﻿data.table threads: 14 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+queries: 1000 
+============================================================================== 
+CASCADE COST, all threads, idle machine 
+============================================================================== 
+reference                  passes           seconds   s per 1,000      pairs    YES  MAYBE 
+monthly BMF (1.92M)        9 (lean)             128           128     51,214    569    188 
+monthly BMF (1.92M)        11 (+recov)          149           149     52,210    569    193 
+augmented unified (3.89M)  9 (lean)             226           226    127,018    612    198 
+augmented unified (3.89M)  11 (+recov)          279           279    128,983    612    201 
+============================================================================== 
+WHAT THIS MEANS FOR PHASE 1 
+============================================================================== 
+The 50k run of 2026-08-19 recorded 35 s per 1,000 identities on the 
+monthly BMF with 9 passes, and budgeted 117 h for 12.56M grants. 
+ 
+reference                  passes           s per 1,000  12.56M grants 
+monthly BMF (1.92M)        9 (lean)                 128        445 h  (37 h on 12 shards) 
+monthly BMF (1.92M)        11 (+recov)              149        520 h  (43 h on 12 shards) 
+augmented unified (3.89M)  9 (lean)                 226        789 h  (66 h on 12 shards) 
+augmented unified (3.89M)  11 (+recov)              279        975 h  (81 h on 12 shards) 
+ 
+Dedup is the missing factor: this 5k sample collapses only 1.05x, but the 
+full file repeats grantees heavily and Phase 1.2 is what measures it. 
+ 
+wrote data-dev/CASCADE-COST-CLEAN.csv 

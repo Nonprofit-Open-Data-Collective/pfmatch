@@ -1,0 +1,41 @@
+﻿============================================================================== 
+CHECK 1  WHAT DOES EACH REFERENCE BUNDLE CARRY? 
+============================================================================== 
+REF-active.rds                  34 s to load 
+   components   : reference, name_freq, token_idf, ref_index, timing 
+   reference    : 1,924,822 rows, 35 cols 
+   ref_index    : present (np_ref_index) 
+   name_freq    : present, 1,513,854 entries 
+   token_idf    : present, 259,324 tokens 
+   name_acro    : present 
+BMF-REFERENCE-BUNDLE.rds        19 s to load 
+   components   : reference, name_freq, token_idf, ref_index, timing 
+   reference    : 1,924,822 rows, 32 cols 
+   ref_index    : present (np_ref_index) 
+   name_freq    : present, 1,513,854 entries 
+   token_idf    : present, 259,324 tokens 
+   name_acro    : NULL <- rebuilt per call 
+BMF-REF-AUG-2026-08-20.rds      59 s to load 
+   components   : reference, name_freq, token_idf, ref_index, timing 
+   reference    : 3,891,187 rows, 35 cols 
+   ref_index    : present (np_ref_index) 
+   name_freq    : present, 2,807,120 entries 
+   token_idf    : present, 398,999 tokens 
+   name_acro    : present 
+============================================================================== 
+CHECK 2  NINE PASSES VS ELEVEN, SAME BUNDLE, SAME QUERIES 
+============================================================================== 
+identities: 294 
+reference : 1,924,822 rows 
+------------------------------------------------------------------------------ 
+configuration              seconds         s/1k           pairs outcome 
+------------------------------------------------------------------------------ 
+9 passes (staged lean)         370 s      1259 s/1k     15,893 pairs  YES  174 MAYBE   57 
+11 passes (+ recovery)         423 s      1439 s/1k     16,207 pairs  YES  174 MAYBE   59 
+------------------------------------------------------------------------------ 
+recovery passes multiply the cost by 1.1x and add 314 candidate pairs 
+for +0 YES and +2 MAYBE. 
+ 
+If this ratio is near 1, the bundle is the problem, not the passes, and 
+the 44x sits in whatever REF-active.rds is missing. If it is large, the 
+recovery passes are the lever and D1-acronym is the first suspect. 
