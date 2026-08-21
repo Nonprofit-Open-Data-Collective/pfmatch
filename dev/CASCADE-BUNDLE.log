@@ -1,0 +1,12 @@
+﻿queries: 500   data.table threads: 14 
+============================================================================== 
+BUNDLE COMPARISON, identical queries and passes 
+============================================================================== 
+bundle                         seconds   s per 1,000        pairs      YES    MAYBE 
+BMF-REFERENCE-BUNDLE.rds           111           223       31,570      291       92 
+REF-active.rds                      96           192       31,570      291       92 
+ 
+The 50k run of 2026-08-19 recorded 35 s per 1,000 on the first of these. 
+If both are slow here, the bundle is not the difference and what changed 
+is npmatch itself between that run and now -- which is then worth a 
+git bisect, not more guessing. 
