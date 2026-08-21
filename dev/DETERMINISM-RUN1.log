@@ -1,0 +1,14 @@
+﻿========================================================================== 
+determinism run 1 | dt threads = 7 
+========================================================================== 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+grants: 5000 rows | 4920 in scope 
+reference: 1,924,822 rows loaded in 35.9 s 
+matching, 11 passes ... 
+matched in 452.1 s 
+wrote DET-RUN1.rds (4733 rows x 24 cols) 
+
+  YES MAYBE    NO 
+ 2821  1006   906 
+ 
+run the other half:  PF_DET_RUN=2 Rscript dev/probe-determinism.R 
