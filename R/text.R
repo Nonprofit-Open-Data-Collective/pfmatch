@@ -130,7 +130,16 @@ pf_build_org_text <- function(wide, bmf = NULL, ntee = NULL, cache = NULL) {
     if (!is.null(ntee)) {
       kv <- if ("nteev2" %in% names(b)) b$nteev2[i] else rep(NA_character_, nrow(d))
       kl <- if ("ntee_code_clean" %in% names(b)) b$ntee_code_clean[i] else rep(NA_character_, nrow(d))
-      j1 <- match(.pf_txt_sq(kv), ntee$by_v2$key)
+      kv <- .pf_txt_sq(kv)
+      j1 <- match(kv, ntee$by_v2$key)
+      # `fiscal::get_industry()` splits higher education and hospitals into their
+      # own subsectors (NTMAJ12), but the NCCS reference file is built on the
+      # 10-subsector vocabulary and has no UNI-/HOS- keys -- the same activity
+      # codes live under EDU-/HEL-. Retry there rather than losing the join:
+      # 49,321 unified-BMF rows, essentially all of the residual miss.
+      alt <- sub("^UNI-", "EDU-", sub("^HOS-", "HEL-", kv))
+      j1b <- match(alt, ntee$by_v2$key)
+      j1  <- data.table::fifelse(!is.na(j1), j1, j1b)
       j2 <- match(.pf_txt_sq(kl), ntee$by_legacy$key)
       ref <- data.table::fifelse(!is.na(j1), ntee$by_v2$ref[j1],
              data.table::fifelse(!is.na(j2), ntee$by_legacy$ref[j2], ""))

@@ -5,7 +5,7 @@
 suppressWarnings(suppressMessages(library(data.table)))
 STAGE <- "C:/Users/jlecy/Documents/grants/staging"
 N <- as.integer(Sys.getenv("PF_SHARDS", "10"))
-say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
+say <- function(...) message(sprintf(...))   # stderr is unbuffered
 
 prep <- readRDS(file.path(STAGE, "PREPARED-FULL.rds"))
 r <- as.data.frame(prep$recipients)

@@ -1,0 +1,140 @@
+﻿============================================================================== 
+A  DOES POOLING 2009-2024 RAISE THE SINGLE-YEAR DISCLOSURE RATE? 
+============================================================================== 
+distinct name-detected arm/operating pairs: 927 
+ 
+subset                  pairs   2022 (prior)         pooled           gain 
+all                       927      457    49%      481    52%       24    +3 pp 
+same state                752      451    60%      479    64%       28    +4 pp 
+same city                 688      441    64%      468    68%       27    +4 pp 
+ 
+pairs newly linked only because of pooling : 39 
+pairs the prior build had that pooling lost: 15 
+Schedule A states a direction for          : 314 of 481 linked (65%) 
+============================================================================== 
+B  ADJUDICATED CASES, JOINED ON AUDIT-TIME EINS 
+============================================================================== 
+cases with a recovered rank-1 EIN: 100 of 100 
+ 
+------------------------------------------------------------------------------ 
+CORRECT_DEEPER - the truth was in the list, below the top pick 
+------------------------------------------------------------------------------ 
+cases 10 ; truth EIN recovered 10 
+  top pick disclosed-related to the truth : 3 of 10 (7-65%) 
+Key: <grant_id>
+ grant_id            failure_mode                            top
+   <char>                  <char>                         <char>
+  G000114         tie_break_wrong FIRST PRESBYTERIAN CHURCH BOCA
+  G001193 foundation_vs_operating BOYS AND GIRLS CLUB OF SALEM M
+  G001779              self_match         SIGMA GAMMA FOUNDATION
+  G001981     truncated_reference      PLANNED PARENTHOOD GLOBAL
+  G002178        adversarial_name     PLANNED PARENTHOOD EXPOSED
+  G002487         tie_break_wrong  SUMMIT COUNTY MEDICAL SOCIETY
+  G003477 foundation_vs_operating UNIVERSITY OF WASHINGTON FOUND
+  G004540        adversarial_name                           Ncta
+  G004775        adversarial_name     PLANNED PARENTHOOD EXPOSED
+  G004964 foundation_vs_operating BIG BROTHERS BIG SISTERS LONE 
+                          truth linked
+                         <char> <lgcl>
+   BOCA RATON REGIONAL HOSPITAL  FALSE
+ BOYS AND GIRLS CLUB OF SALEM M   TRUE
+        SIGMA GAMMA ASSOCIATION  FALSE
+ PLANNED PARENTHOOD FEDERATION    TRUE
+ PLANNED PARENTHOOD FEDERATION   FALSE
+ SUMMIT COUNTY HISTORICAL SOCIE  FALSE
+ UNIVERSITY OF WASHINGTON FOUND  FALSE
+      NCTA EDUCATION FOUNDATION  FALSE
+ PLANNED PARENTHOOD FEDERATION   FALSE
+ BIG BROTHERS BIG SISTERS LONE    TRUE
+------------------------------------------------------------------------------ 
+AMBIGUOUS - the adjudicator could not choose 
+------------------------------------------------------------------------------ 
+cases 13 ; top two both recovered 13 
+  top two disclosed as related : 2 of 13 (2-45%) 
+Key: <grant_id>
+ grant_id            failure_mode                            top
+   <char>                  <char>                         <char>
+  G000185      group_subordinates              Purdue University
+  G000457      group_subordinates         Texas State University
+  G000799         duplicate_names        MEXICO MEDICAL MISSIONS
+  G001279              wrong_city            SAINT FRANCIS HOUSE
+  G001554      group_subordinates          Texas Tech University
+  G002930        related_entities    REAL LIFE MINISTRIES CONROE
+  G003070            generic_name       INTERNATIONAL FOUNDATION
+  G003258        related_entities CONNECTICUT INSTITUTE FOR THE 
+  G003768 foundation_vs_operating       THE BLUE CARD FOUNDATION
+  G003941 foundation_vs_operating CINCINNATI NATURE CENTER FOUND
+  G004000 foundation_vs_operating            LIVEONNY FOUNDATION
+  G004400 foundation_vs_operating   DENVER ART MUSEUM FOUNDATION
+  G004576      group_subordinates Univ Of North Carolina At Char
+                         runner linked
+                         <char> <lgcl>
+              Purdue University  FALSE
+         Texas State University  FALSE
+        MEXICO MEDICAL MISSIONS  FALSE
+       SAINT FRANCIS FOUNDATION  FALSE
+          Texas Tech University  FALSE
+     REAL LIFE MINISTRIES TEXAS  FALSE
+          INTERNATIONAL SOCIETY  FALSE
+ CONNECTICUT INSTITUTE FOR THE   FALSE
+                      BLUE CARD   TRUE
+ CINCINNATI NATURE CENTER ASSOC  FALSE
+                       LIVEONNY  FALSE
+              DENVER ART MUSEUM   TRUE
+ Univ Of North Carolina At Char  FALSE
+------------------------------------------------------------------------------ 
+CORRECT_TOP - the control group. A link here is a FALSE alarm risk 
+------------------------------------------------------------------------------ 
+cases 53 ; top two linked 11 (21%) - these are grants where the cascade 
+was already right and a cluster would merge the right answer with a relative. 
+ grant_id                              top                           runner
+   <char>                           <char>                           <char>
+  G000274              HERITAGE FOUNDATION               HERITAGE INSTITUTE
+  G000343       AMERICAN NURSES FOUNDATION      AMERICAN NURSES ASSOCIATION
+  G000565         CAFE MOMENTUM PITTSBURGH           Cafe Momentum National
+  G001000       MINNESOTA GOLF ASSOCIATION MINNESOTA GOLF ASSOCIATION FOUND
+  G002440            SUMMIT CHARTER SCHOOL SUMMIT CHARTER SCHOOL FOUNDATION
+  G002869              HERITAGE FOUNDATION               HERITAGE INSTITUTE
+  G003466 TEXAS SCOTTISH RITE HOSPITAL FOR TEXAS SCOTTISH RITE HOSPITAL FOR
+  G003556                  PROJECT RENEWAL             PROJECT RENEWAL FUND
+  G003613 WARREN HENDERSON FARM BUREAU FOU     WARREN HENDERSON FARM BUREAU
+  G003856 NEW YORK CITY HABITAT FOR HUMANI    HABITAT FOR HUMANITY NYC FUND
+  G004510   SANTA BARBARA COTTAGE HOSPITAL SANTA BARBARA COTTAGE HOSPITAL F
+------------------------------------------------------------------------------ 
+BY FAILURE MODE 
+------------------------------------------------------------------------------ 
+            failure_mode cases top2_linked truth_linked
+                  <char> <int>       <int>        <int>
+                  absent    13           0            0
+ foundation_vs_operating     7           4            2
+      group_subordinates     5           0            0
+        adversarial_name     3           0            0
+         tie_break_wrong     2           0            0
+         truncated_query     2           0            0
+           out_of_sample     2           0            0
+        related_entities     2           0            0
+         lockbox_address     1           0            0
+         duplicate_names     1           0            0
+              wrong_city     1           0            0
+              alias_name     1           0            0
+              self_match     1           0            0
+     truncated_reference     1           1            1
+                sub_unit     1           0            0
+           unusable_name     1           0            0
+            generic_name     1           0            0
+        data_entry_error     1           0            0
+         reference_typos     1           0            0
+============================================================================== 
+C  WHAT DOES 'EITHER MEMBER COUNTS' CHANGE ON THE LABELLED SET? 
+============================================================================== 
+adjudicated cases                       : 100 
+counted as an error today               : 47 (47%) 
+forgiven by a disclosed-pair rule       : 5 
+error rate after the relaxation         : 42 (42%) 
+ 
+of the 47 errors, how many are even the right SHAPE for this fix? 
+  NO_CORRECT (truth absent from the list) : 24 - unreachable 
+  CORRECT_DEEPER                          : 10 
+  AMBIGUOUS                               : 13 
+ 
+wrote data-dev/CLUSTER-LABELLED.rds 

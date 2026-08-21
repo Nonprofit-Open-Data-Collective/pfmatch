@@ -291,6 +291,110 @@ order of 0.2% of alias EINs, far too rare to justify a repair pass.
 
 ---
 
+## 6c. The 279,845 missing EINs are mostly transcription noise
+
+Four registry hypotheses were tested against the missing set. Together they
+account for roughly a tenth of it; the observation-frequency data explains the
+rest without needing a fifth.
+
+| hypothesis | result |
+|---|---|
+| format errors (too short / too long / non-numeric) | **0** — NCCS validates upstream |
+| churches (exempt without applying) | **rejected** — 11.6% of missing vs 12.8% of present, lift **0.9x** |
+| governments / public universities | ~9.6% by name pattern, undercounted |
+| filed a 990 but absent from the BMF (e-file headers, 16 yr) | 2,148 (**0.77%**) |
+| registered 527 political organizations (8871/8872) | 1,334 (**0.48%**) |
+| typos with a strong same-ZIP3 name match | ≥1.9% (a floor, not a ceiling) |
+| **accounted for in total** | **~12%** |
+
+The 527 result deserves a note: only 0.48% in absolute terms, but 527s are
+**24x enriched** among the missing (0.48% vs 0.02% of present EINs) and the name
+agreement is exact — `PLANNED PARENTHOOD VOTES`, `GOPAC`, `Republican Attorneys
+General Association`, `Democratic Party of Illinois`. The mechanism is real; the
+population is just small. Only 2.8% of the 51,792 registered 527s ever appear in
+Schedule I at all.
+
+### What the frequency data says
+
+| | missing | present |
+|---|---|---|
+| median grant observations per EIN | **1** | 4 |
+| seen exactly once | **57.8%** | 27.0% |
+| written by exactly one filer | **73.8%** | 38.1% |
+| written by 5+ filers | 5.4% | 28.7% |
+
+A real grantee is written down repeatedly by different funders; a mistyped number
+appears once. The missing EINs are 35.2% of *distinct* EINs but only **12.6% of
+grant observations** — the arithmetic signature of singleton errors.
+
+**This validates the augmentation design rather than threatening it.**
+`pf_bmf_augment()` already requires `n_filers >= 2`, which discards 73.8% of the
+missing set as a side effect. The corroboration filter and the typo filter are
+the same filter, so nothing needs changing.
+
+---
+
+## 6d. A BMF defect found on the way: `nteev2` was wrong on 13.8% of rows
+
+Recomputing the field with the canonical implementation
+(`fiscal::get_nteev2()` = `get_industry()` + `get_clean_ntee()` + `get_org_type()`)
+disagreed with the stored value on **509,637 of 3,687,435 unified-BMF rows**.
+Confirmed correct by the maintainer and applied by `dev/fix-nteev2.R`.
+
+Input column matters: recomputing from `ntee_code_raw` agrees 86.18% against
+68.69% from `ntee_code_clean`, because `clean` is already truncated to three
+characters (losing the `B8443 -> B43` rule) and carries `INVALID` / `UNDEFINED`
+text that would become codes like `UNU-UND-RG`.
+
+| error class | rows |
+|---|---|
+| specialty double-encoding — `B11` stored `EDU-B11-MS`, correct `EDU-B00-MS` | 261,249 |
+| stale `UNDEFINED` — `P20` stored `HMS-Z99-RG`, `B29` stored `UNU-Z99-RG` | 189,522 |
+| other | 58,866 |
+| **real code downgraded to `UNDEFINED`** | **0** |
+
+The fix is monotonic — it only ever adds classification. `Z99` fell from 23.79%
+to 18.65%, and the corrected file reproduces at **100.0000%** on all four fields.
+
+In NTEEv2 the 01-19 digits encode organization *type*, not activity: `B11` is
+"single-organization support in education", so the activity slot is `B00` and the
+work is described by the `MS` org type. The stored field emitted `11` in both
+slots. The reference text confirms the reading — `EDU-B00-AA` reads
+"Alliance/Advocacy Organization for a nonprofit in education".
+
+**Effect on the NTEE text join** (`pf_build_org_text()`): **86.08% -> 98.66%**,
+463,886 rows gaining a reference-text join.
+
+### Two residual issues
+
+**A vocabulary mismatch, handled.** `get_industry()` splits higher education and
+hospitals into their own `UNI` / `HOS` subsectors (the NTMAJ12 convention), but
+the NCCS reference file is built on the 10-subsector vocabulary and has no
+`UNI-` or `HOS-` keys — the same activity codes live under `EDU-` / `HEL-`.
+That was essentially all of the 49,321 remaining misses. `pf_build_org_text()`
+now retries under the parent sector.
+
+**An inconsistency in `fiscal`, unfixed.** `get_clean_ntee()` applies the
+last-two-digits rule only when digits 2-3 are `<= 19`; `get_industry()` applies
+it to *every* 5-character code. They diverge above 19:
+
+| raw | `get_clean_ntee` | `get_industry` | result |
+|---|---|---|---|
+| `B8340` | `B83` | reads "40" -> B40 -> `UNI` | `UNI-B83-RG` |
+| `B8443` | `B84` | reads "43" -> B43 -> `UNI` | `UNI-B84-RG` |
+
+`B83` is student sororities and fraternities, not higher education — the
+subsector is decided by digits the code rule correctly ignores. **353 rows of
+3.69M**, so immaterial here, but `fiscal` is shared code and the fix is to gate
+`get_industry()`'s 5-char branch on the same `<= 19` condition.
+
+**Also in the source data:** every `MS` description in the NCCS reference reads
+"Providing monetary support to a **sinlge** organization". Cosmetic for display,
+but `SINLGE` is the token that lands in the reference text, so a purpose saying
+"single organization" will not match it.
+
+---
+
 ## 7. Where this sits against everything else
 
 | lever | measured worth |

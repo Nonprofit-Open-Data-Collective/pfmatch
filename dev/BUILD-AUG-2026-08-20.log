@@ -18,3 +18,29 @@ This is removed when the R session ends.
 ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
 ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 ℹ See ?duckdb_storage for details and alternatives.
+aliases: 350,729 rows over 238,296 EINs 
+   filers aliases
+   <fctr>   <int>
+1:    2-4  275207
+2:   5-19   70662
+3:    20+    4860
+========================================================================== 
+STAGE 4  difference against the bmf_unified_geocoded_2026-08-20 BMF 
+========================================================================== 
+BMF: 3,698,124 rows 
+alias rows in: 350,729 over 238,296 EINs 
+  dropped 37,220 with no BMF row for the EIN 
+  dropped 120,446 already present as the BMF name or DBA 
+  net new alias rows: 193,063 
+augmented BMF: 3,891,187 rows (+5.2%) 
+========================================================================== 
+STAGE 5  write 
+========================================================================== 
+wrote ./data-dev/BMF-AUGMENTED-bmf_unified_geocoded_2026-08-20.csv (4003 MB) 
+   row_source       N
+       <char>   <int>
+1:        bmf 3698124
+2:     schedi  193063
+ 
+to match against it: 
+  ref <- pf_reference('./data-dev/BMF-AUGMENTED-bmf_unified_geocoded_2026-08-20.csv', cache = 'data-dev/BMF-REF-AUG-bmf_unified_geocoded_2026-08-20.rds') 

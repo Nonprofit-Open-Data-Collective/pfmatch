@@ -1,0 +1,91 @@
+﻿============================================================================== 
+DISCLOSURE VS THE NAME RULE ALREADY IN R/affiliation.R 
+============================================================================== 
+top-two pairs examined: 24,309 
+ 
+MAYBE (n = 10,409) 
+   pf_cluster_arms name rule (arm/op + same state) :  1155 (11.1%) 
+   generous name rule (same core + same state)     :  2148 (20.6%) 
+   disclosed edge (pooled Sch A + Sch R)           :  1548 (14.9%) 
+   union                                           :  2671 (25.7%) 
+   DISCLOSURE ONLY - the honest increment          :   523 ( 5.0%) 
+   name rule only - unconfirmed by any filing      :  1123 (10.8%) 
+ 
+YES (n = 4,501) 
+   pf_cluster_arms name rule (arm/op + same state) :    73 ( 1.6%) 
+   generous name rule (same core + same state)     :   303 ( 6.7%) 
+   disclosed edge (pooled Sch A + Sch R)           :   319 ( 7.1%) 
+   union                                           :   606 (13.5%) 
+   DISCLOSURE ONLY - the honest increment          :   303 ( 6.7%) 
+   name rule only - unconfirmed by any filing      :   287 ( 6.4%) 
+ 
+NO (n = 9,399) 
+   pf_cluster_arms name rule (arm/op + same state) :    55 ( 0.6%) 
+   generous name rule (same core + same state)     :   364 ( 3.9%) 
+   disclosed edge (pooled Sch A + Sch R)           :   349 ( 3.7%) 
+   union                                           :   555 ( 5.9%) 
+   DISCLOSURE ONLY - the honest increment          :   191 ( 2.0%) 
+   name rule only - unconfirmed by any filing      :   206 ( 2.2%) 
+ 
+------------------------------------------------------------------------------ 
+WHAT THE DISCLOSURE-ONLY PAIRS LOOK LIKE (MAYBE tier) 
+------------------------------------------------------------------------------ 
+                                  top                               runner
+                               <char>                               <char>
+   Mayo Clinic Health System-Fairmont  Mayo Clinic Health System-Lake City
+                  HERITAGE FOUNDATION                   HERITAGE INSTITUTE
+         DANA FARBER CANCER INSTITUTE      DANA FARBER CANCER CARE NETWORK
+                   JAWONIO FOUNDATION                              JAWONIO
+ GUNDERSEN LUTHERAN MEDICAL FOUNDATIO    GUNDERSEN LUTHERAN MEDICAL CENTER
+                J N PEW JR CHARITABLE                PEW CHARITABLE TRUSTS
+           Mass General Hospital Corp  Mass General Brigham Population Hlt
+ JESUIT HIGH SCHOOL OF NEW ORLEANS PR JESUIT HIGH SCHOOL OF NEW ORLEANS PR
+ KOKUA KALIHI VALLEY COMPREHENSIVE FA   KALIHI VALLEY COMMUNITY FOUNDATION
+     HARRY AND JEANETTE WEINBERG PARK    HARRY AND JEANETTE WEINBERG WOODS
+              HOPE MISSION FOUNDATION            Hope Mission Thrift Store
+                 FCS URBAN MINISTRIES                FCS COMMUNITY FINANCE
+             MOVEMENT STRATEGY CENTER MOVEMENT STRATEGY CENTER ACTION FUND
+ NATIONAL COMMITTEE TO PRESERVE SOCIA NATIONAL COMMITTEE TO PRESERVE SOCIA
+                      HARC FOUNDATION                                 HARC
+ THE CONFERENCE OF PRESIDENTS OF MAJO CONFERENCE OF PRESIDENTS OF MAJOR JE
+        CUMBERLAND HEIGHTS FOUNDATION THE ALUMNI ASSOCIATION OF CUMBERLAND
+            PLANNED PARENTHOOD GLOBAL       PLANNED PARENTHOOD ACTION FUND
+ IROQUOIS MEMORIAL HOSPITAL AND RESID IROQUOIS MEMORIAL HOSPITAL FOUNDATIO
+ BUFFALO PHILHARMONIC ORCHESTRA FOUND BUFFALO PHILHARMONIC ORCHESTRA SOCIE
+                                  top                               runner
+ same_city   gap
+    <lgcl> <num>
+      TRUE  0.01
+      TRUE  0.00
+      TRUE  0.01
+      TRUE  0.00
+      TRUE  0.04
+     FALSE  0.06
+      TRUE  0.04
+      TRUE  0.00
+      TRUE  0.00
+      TRUE  0.00
+      TRUE  0.06
+      TRUE  0.56
+      TRUE  0.01
+      TRUE  0.04
+      TRUE  0.00
+      TRUE  0.04
+      TRUE  0.60
+      TRUE  0.00
+      TRUE  0.01
+      TRUE  0.00
+ same_city   gap
+============================================================================== 
+GATING THE EDGE: DIRECT LINK ALONE VS LINK + A LOCALITY TEST 
+============================================================================== 
+gate                                MAYBE      YES       NO    %kept 
+edge only                            1548      319      349     100% 
+edge + same state                    1535      319      349      99% 
+edge + same city                     1492      307      323      96% 
+edge + 1 shared content token        1537      307      347      99% 
+edge + same city + 1 token           1481      295      321      95% 
+edge + identical name core           1030       16      158      54% 
+============================================================================== 
+DOLLAR EXPOSURE 
+============================================================================== 

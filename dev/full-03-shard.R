@@ -27,7 +27,7 @@ REF   <- Sys.getenv("PF_REF_CSV",
            file.path(PF, "data-dev", "BMF-AUGMENTED-bmf_unified_geocoded_2026-08-20.csv"))
 CACHE <- Sys.getenv("PF_REF_CACHE",
            file.path(PF, "data-dev", "BMF-REF-AUG-2026-08-20.rds"))
-say <- function(...) { cat(sprintf("[shard %02d] ", i), sprintf(...), "\n", sep = ""); flush.console() }
+say <- function(...) message(sprintf("[shard %02d] ", i), sprintf(...))
 
 stopifnot(file.exists(REF) || file.exists(CACHE))
 t0 <- proc.time()[["elapsed"]]

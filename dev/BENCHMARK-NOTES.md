@@ -297,3 +297,37 @@ ignored**; the clean figure remains the 50k measurement, which ran alone.
 
 Lesson for future benchmarking: time the cascade on an otherwise idle machine, or
 the number measures the machine rather than the code.
+
+### The same mistake, repeated 2026-08-20
+
+Recorded because the lesson above was already written down and did not prevent
+it. While the full-file prepare job held a core and 20 GB for six hours, the
+augmented reference was timed at **2,390 s per 1,000** on 98 queries and
+**1,178 s per 1,000** on 980 — against the 33.5 s per 1,000 measured at 50k.
+That is a ~25x discrepancy, the same magnitude and the same cause as the 23x
+above. It was initially reported as a 60x performance regression in the
+augmented reference. There was no regression.
+
+Two further errors compounded it:
+
+* **Comparing across batch sizes.** The 33.5 s per 1,000 was measured on
+  25,000-query batches. A 98-query run pays the same per-batch fixed cost over
+  250x fewer queries, so the per-1,000 figure is dominated by overhead. Solving
+  the two-point line gives a fixed cost near 132 s and a marginal cost near
+  1.04 s per query on this contaminated machine -- neither comparable to a
+  production batch.
+* **Timing the wrong configuration.** `pf_match_grants()` defaults to
+  `pf_default_passes()`, the state-free baseline whose unblocked `token-any`
+  sweep the scale work rejected. Production runs
+  `pf_staged_passes("lean")` with state blocking. A direct caller gets the
+  rejected configuration silently.
+
+What survives from that session is the **relative** comparison, because both
+references were timed back to back under identical load: on the same 98 queries
+and the same production passes, the augmented reference cost 630 s against the
+plain reference's 234 s -- **2.7x for 2.02x the rows**, near-linear -- while
+returning 64 YES against 61 and 10 NO against 15.
+
+**Rule, restated operationally:** no absolute timing is recorded unless
+`Get-Process Rscript` shows nothing else running, and no per-1,000 figure is
+compared across different batch sizes.

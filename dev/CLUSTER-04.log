@@ -1,0 +1,219 @@
+﻿rebuilding the 50k candidate lists ... 
+grants with 2+ surviving candidates: 24,309 
+============================================================================== 
+Q1  IS THE UNRESOLVED AMBIGUITY INTERNAL TO ONE BODY? 
+============================================================================== 
+tie band from the config: 0.050 
+ 
+------------------------------------------------------------------------------ 
+TOP TWO CANDIDATES DIRECTLY DISCLOSED AS RELATED (pooled 2009-2024) 
+------------------------------------------------------------------------------ 
+ status grants linked   pct linked_2022_only pct_2022
+ <fctr>  <int>  <int> <num>            <int>    <num>
+  MAYBE  10409   1548  14.9             1371     13.2
+     NO   9399    349   3.7              318      3.4
+    YES   4501    319   7.1              293      6.5
+ 
+------------------------------------------------------------------------------ 
+...restricted to grants where the top two are inside the tie band 
+------------------------------------------------------------------------------ 
+ status grants linked   pct linked_2022_only pct_2022
+ <fctr>  <int>  <int> <num>            <int>    <num>
+     NO   6380    329   5.2              299      4.7
+  MAYBE   5513   1345  24.4             1189     21.6
+ 
+------------------------------------------------------------------------------ 
+DOES COLLAPSING LINKED CANDIDATES DISSOLVE THE TIE? 
+------------------------------------------------------------------------------ 
+grants with 2+ candidates in the tie band: 11,897 
+ 
+ status grants mean_cand mean_group collapsed_any pct_collapsed now_single
+ <fctr>  <int>     <num>      <num>         <int>         <num>      <int>
+     NO   6380      3.89       3.73           543           8.5        285
+  MAYBE   5517      2.89       2.52          1581          28.7       1224
+ pct_single
+      <num>
+        4.5
+       22.2
+============================================================================== 
+Q2  ON THE ADJUDICATED CASES, IS THE RIGHT ANSWER A LINKED EIN? 
+============================================================================== 
+adjudicated MAYBE cases: 100 
+        verdict     N
+         <char> <int>
+    CORRECT_TOP    53
+     NO_CORRECT    24
+      AMBIGUOUS    13
+ CORRECT_DEEPER    10
+------------------------------------------------------------------------------ 
+CORRECT_DEEPER - the right answer was in the list but not first 
+------------------------------------------------------------------------------ 
+cases: 10 
+  top pick is disclosed-related to the correct one : 0 (0-31%) 
+  ...using 2022 alone                              : 0 
+Key: <grant_id, correct_rank>
+ grant_id correct_rank            failure_mode                              top
+   <char>        <int>                  <char>                           <char>
+  G000114            5         tie_break_wrong             ARTHRITIS FOUNDATION
+  G001193            2 foundation_vs_operating MAVERICKS FIGHT AGAINST LEUKEMIA
+  G001779            2              self_match               FEEDING KIDS RIGHT
+  G001981            4     truncated_reference                    OXFAM AMERICA
+  G002178            2        adversarial_name           EDUCATION ALTERNATIVES
+  G002487            5         tie_break_wrong HELENE DIAMOND AND JORDE M NATHA
+  G003477            1 foundation_vs_operating        PEACE FOR CHANGE ALLIANCE
+  G004540            3        adversarial_name                             <NA>
+  G004775            2        adversarial_name   AMERICAN FRIENDS OF KUPAT HAIR
+  G004964            2 foundation_vs_operating        DIGITAL HARBOR FOUNDATION
+                            truth linked
+                           <char> <lgcl>
+                             <NA>  FALSE
+                             <NA>  FALSE
+                             <NA>  FALSE
+                             <NA>  FALSE
+                             <NA>  FALSE
+ CHRIST MINISTRIES PENTECOSTAL CH  FALSE
+        PEACE FOR CHANGE ALLIANCE  FALSE
+                             <NA>  FALSE
+                             <NA>  FALSE
+       DIGITAL SERVICES COALITION  FALSE
+------------------------------------------------------------------------------ 
+AMBIGUOUS - the adjudicator could not choose between candidates 
+------------------------------------------------------------------------------ 
+cases: 13 
+  top two disclosed as related : 2 of 8 (3-65%) 
+     .id                            top                         runner   gap
+  <char>                         <char>                         <char> <num>
+ G000457 SUMMIT VIEW ADVENTIST ELEMENTA FIRE PRAIRIE UPPER ELEMENTARY   0.12
+ G000799 DUNDALK PATAPSCO NECK HISTORIC HERITAGE ASSOCIATION OF GREATE  0.00
+ G001279 CAMPBELL UNIVERSITY FOUNDATION            CAMPBELL UNIVERSITY  0.00
+ G001554 ARTS AND LITERATURE LABORATORY             LABORATORY THEATRE  0.56
+ G002930 SID JACOBSON JEWISH COMMUNITY                  JCC GLOBAL USA  0.56
+ G003258 AMERICA GEORGIA BUSINESS DEVEL INTELLIGENT TRANSPORTATION SOC  0.00
+ G004000 SHENANDOAH PUBLIC LIBRARY FOUN SHELDON PUBLIC LIBRARY FOUNDAT  0.37
+ G004576   WAYNE MEMORIAL HEALTH SYSTEM WAYNE MEMORIAL HOSPITAL FOUNDA  0.02
+ linked
+ <lgcl>
+  FALSE
+  FALSE
+   TRUE
+  FALSE
+  FALSE
+  FALSE
+  FALSE
+   TRUE
+------------------------------------------------------------------------------ 
+NO_CORRECT - the answer is not in the candidate list at all 
+------------------------------------------------------------------------------ 
+cases: 24 ; top two linked in 0 of 14 - linking cannot help these 
+------------------------------------------------------------------------------ 
+THE FAILURE MODES THE CLUSTER IDEA IS AIMED AT 
+------------------------------------------------------------------------------ 
+  foundation_vs_operating  cases  7   top-two linked  0   (0-84%) 
+  related_entities         cases  2   top-two linked  0   (0-84%) 
+  group_subordinates       cases  5   top-two linked  1   (1-91%) 
+  sub_unit                 cases  1   top-two linked  0   (0-98%) 
+  self_match               cases  1   top-two linked  0   (0-98%) 
+  absent                   cases 13   top-two linked  0   (0-41%) 
+------------------------------------------------------------------------------ 
+THE 15 ADJUDICATED ARM PAIRS (dev/ARM-ORDERING-CASES.csv) 
+------------------------------------------------------------------------------ 
+pairs recovered: 5 of 15 
+  disclosed as related, pooled : 0 (0-22%) 
+  disclosed as related, 2022   : 0 
+  cascade ranks the right one first: 4 of 15 
+  ...if EITHER member counts        : 15 of 15 
+     gid                            arm                         op correct_rank
+  <char>                         <char>                     <char>       <char>
+ G000328         SIERRA CLUB FOUNDATION                SIERRA CLUB            2
+ G001000 MINNESOTA GOLF ASSOCIATION FOU MINNESOTA GOLF ASSOCIATION            2
+ G001193 BOYS AND GIRLS CLUB OF SALEM M BOYS AND GIRLS CLUB OF SAL            2
+ G002440 SUMMIT CHARTER SCHOOL FOUNDATI      SUMMIT CHARTER SCHOOL            2
+ G003466 TEXAS SCOTTISH RITE HOSPITAL F TEXAS SCOTTISH RITE HOSPIT            1
+ G003477 UNIVERSITY OF WASHINGTON FOUND   UNIVERSITY OF WASHINGTON            1
+ G003556           PROJECT RENEWAL FUND            PROJECT RENEWAL            1
+ G003613 WARREN HENDERSON FARM BUREAU F WARREN HENDERSON FARM BURE            1
+ G004510 SANTA BARBARA COTTAGE HOSPITAL SANTA BARBARA COTTAGE HOSP            2
+ G004964 BIG BROTHERS BIG SISTERS LONE  BIG BROTHERS BIG SISTERS L            2
+ G004986 SECOND HARVEST HEARTLAND FOUND   SECOND HARVEST HEARTLAND            2
+      E7 EASTERN VIRGINIA MEDICAL SCHOO EASTERN VIRGINIA MEDICAL S            2
+     E57 LIGHTHOUSE MISSION MINISTRIES  LIGHTHOUSE MISSION MINISTR            2
+    E135 NOTRE DAME SCHOOL OF MILWAUKEE NOTRE DAME SCHOOL OF MILWA            2
+    E168         EAGLE RANCH FOUNDATION                EAGLE RANCH            2
+    winner linked
+    <char> <lgcl>
+       ARM  FALSE
+       ARM  FALSE
+ OPERATING  FALSE
+       ARM  FALSE
+ OPERATING  FALSE
+       ARM  FALSE
+ OPERATING  FALSE
+       ARM  FALSE
+       ARM  FALSE
+ OPERATING  FALSE
+ OPERATING  FALSE
+ OPERATING  FALSE
+ OPERATING  FALSE
+ OPERATING  FALSE
+ OPERATING  FALSE
+============================================================================== 
+Q3  WHAT DOES THE RELAXED ERROR DEFINITION COST? 
+============================================================================== 
+------------------------------------------------------------------------------ 
+SHARED CONTENT TOKENS AMONG LINKED TOP-TWO PAIRS 
+------------------------------------------------------------------------------ 
+ shared_tokens pairs   pct
+         <int> <int> <num>
+             0    25   1.1
+             1   306  13.8
+             2   932  42.1
+             3   953  43.0
+ 
+linked pairs sharing NO content token   : 25 (1.1%) 
+linked pairs with an identical name core: 1204 (54.3%) 
+ 
+examples of linked pairs with no shared token - these are the ones a 
+relaxed error definition would wrongly forgive: 
+                                    top                                 runner
+                                 <char>                                 <char>
+  NETWORK FOR TEACHING ENTREPRENEURSHIP                    NFTE ENDOWMENT FUND
+             ALLIED SERVICES FOUNDATION JOHN HEINZ INSTITUTE OF REHABILITATION
+                     STAND UP TO CANCER      ENTERTAINMENT INDUSTRY FOUNDATION
+                   FRIENDS OF MORSELIFE NEARLY NEW THRIFT SHOP OF THE MORSE GE
+ HEART SHARE HUMAN SERVICES OF NEW YORK            HEARTSHARE EDUCATION CENTER
+         AMERICAN CIVIL LIBERTIES UNION       ROGER BALDWIN FOUNDATION OF ACLU
+           HSHS WISCONSIN MEDICAL GROUP SAINT ELIZABETHS HOSPITAL OF THE HOSPI
+                BRYANS HOUSE FOUNDATION                              OPEN ARMS
+                    CARE NET FOUNDATION                                CARENET
+                       H H FUNDING CORP                             HOPE HOUSE
+                                 AS 220              AS220 REAL ESTATE SUPPORT
+             SIGHT SAVERS INTERNATIONAL                            SIGHTSAVERS
+                    CARE NET FOUNDATION                                CARENET
+  WESTCHESTER MEDICAL CENTER FOUNDATION            WMC HEALTH NETWORK ROCKLAND
+          CHILDRENS HOSPITAL FOUNDATION           NORTON HEALTHCARE FOUNDATION
+ status
+ <fctr>
+    YES
+    YES
+     NO
+    YES
+    YES
+    YES
+     NO
+  MAYBE
+  MAYBE
+  MAYBE
+    YES
+    YES
+  MAYBE
+    YES
+  MAYBE
+------------------------------------------------------------------------------ 
+DEGREE OF THE CANDIDATE EINS IN THE LINK GRAPH 
+------------------------------------------------------------------------------ 
+
+    0     1     2   3-5  6-10 11-25   26+ 
+74461  7949  2655  2535  1065   811   809 
+candidate EINs with degree >= 26 (system hubs): 809 (0.90%) 
+ 
+wrote data-dev/CLUSTER-EVAL.rds 

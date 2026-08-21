@@ -1,0 +1,46 @@
+========================================================================== 
+PREPARE  1k 
+========================================================================== 
+---------------------------------------------------------------------- 
+STAGE 1  prepare 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+  grant rows ......... 5,000 
+  in scope ........... 4,920 (98.4%) 
+exact dedup: 5,000 grant rows -> 4,861 distinct keys (1.03x collapse) 
+fuzzy pass: 816 blocks with 2-2000 members (2,475 keys eligible) 
+  fuzzy   5%  40/816 blocks  0 s elapsed, ~1 s left 
+  fuzzy  10%  80/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  15%  120/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  20%  160/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  25%  200/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  29%  240/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  34%  280/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  39%  320/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  44%  360/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  49%  400/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  54%  440/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  59%  480/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  64%  520/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  69%  560/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  74%  600/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  78%  640/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  83%  680/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  88%  720/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  93%  760/816 blocks  0 s elapsed, ~0 s left 
+  fuzzy  98%  800/816 blocks  0 s elapsed, ~0 s left 
+  115 fuzzy joins accepted, 14 rejected by the number/ordinal/direction veto 
+fuzzy dedup: -> 4,767 distinct identities (1.05x total collapse) 
+  distinct identities  4,716 (1.04x collapse) 
+  elapsed 1.1 s 
+identities to match: 4,716 
+adjudicated answers available: 63 
+========================================================================== 
+RUN  ACTIVE 
+========================================================================== 
+---------------------------------------------------------------------- 
+STAGE 2  reference (building) 
+  1,924,822 records | elapsed 386.6 s 
+  reference: 1,924,822 rows | 398 s 
+---------------------------------------------------------------------- 
+STAGE 3  link 
+pf_run_batches: 4,716 rows in 1 batches of 25,000 

@@ -21,8 +21,8 @@ setDTthreads(0L)
 STAGE <- "C:/Users/jlecy/Documents/grants/staging"
 DB    <- "C:/Users/jlecy/Documents/grants/db"
 dir.create(DB, showWarnings = FALSE, recursive = TRUE)
-say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
-hr  <- function() { cat(strrep("-", 78), "\n"); flush.console() }
+say <- function(...) message(sprintf(...))   # stderr is unbuffered
+hr  <- function() message(strrep("-", 78))
 
 hr(); say("COMBINE SHARD RESULTS"); hr()
 f <- list.files(file.path(STAGE, "shards"), "^status-\\d+[.]rds$", full.names = TRUE)

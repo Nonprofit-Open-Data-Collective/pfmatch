@@ -1,0 +1,46 @@
+base BMF: ../npmatch/data-raw/bmf_unified_geocoded-nteev2fix.csv 
+========================================================================== 
+STAGE 1  download 
+========================================================================== 
+skipped (PF_SKIP_DOWNLOAD set) 
+========================================================================== 
+STAGE 2  DuckDB + alias table 
+========================================================================== 
+using existing schedi_grants.duckdb (delete to rebuild) 
+========================================================================== 
+STAGE 3  alias table, min_filers = 2 
+========================================================================== 
+duckdb keeps downloaded extensions and secrets in a temporary directory:
+ℹ C:\Users\jlecy\AppData\Local\Temp\Rtmp0UZBdv/duckdb
+This is removed when the R session ends.
+• Extensions are re-downloaded each session.
+• Secrets are lost.
+ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+ℹ See ?duckdb_storage for details and alternatives.
+aliases: 350,729 rows over 238,296 EINs 
+   filers aliases
+   <fctr>   <int>
+1:    2-4  275207
+2:   5-19   70662
+3:    20+    4860
+========================================================================== 
+STAGE 4  difference against the bmf_unified_geocoded-nteev2fix BMF 
+========================================================================== 
+BMF: 3,687,435 rows 
+alias rows in: 350,729 over 238,296 EINs 
+  dropped 37,236 with no BMF row for the EIN 
+  dropped 120,497 already present as the BMF name or DBA 
+  net new alias rows: 192,996 
+augmented BMF: 3,880,431 rows (+5.2%) 
+========================================================================== 
+STAGE 5  write 
+========================================================================== 
+wrote data-dev/BMF-AUGMENTED-unified-fixed.csv (3994 MB) 
+   row_source       N
+       <char>   <int>
+1:        bmf 3687435
+2:     schedi  192996
+ 
+to match against it: 
+  ref <- pf_reference('data-dev/BMF-AUGMENTED-unified-fixed.csv', cache = 'data-dev/BMF-REF-AUG-bmf_unified_geocoded-nteev2fix.rds') 

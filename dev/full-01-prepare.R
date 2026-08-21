@@ -18,8 +18,8 @@ setDTthreads(0L)
 SRC   <- "C:/Users/jlecy/Documents/grants/2025_08_29_All_Years_990PFPart14Grants3A.csv"
 STAGE <- "C:/Users/jlecy/Documents/grants/staging"
 dir.create(STAGE, showWarnings = FALSE, recursive = TRUE)
-say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
-hr  <- function() { cat(strrep("-", 78), "\n"); flush.console() }
+say <- function(...) message(sprintf(...))   # stderr is unbuffered
+hr  <- function() message(strrep("-", 78))
 tick <- function() proc.time()[["elapsed"]]
 
 hr(); say("PHASE 1.1 -- INGEST"); hr()
