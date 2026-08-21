@@ -1,0 +1,91 @@
+﻿============================================================================== 
+BUILD AGAINST THE UNIFIED BMF 
+============================================================================== 
+read 6,828,961 disclosure rows 
+  usable directed rows: 6,575,176 
+distinct unordered pairs: 566,653 
+  demoted for degree > 5: 14,206 pairs (federated networks) 
+  substitutable 29,230 | related 537,423 
+dyads: 566,653 pairs over 174,496 EINs
+  related          537,423 (94.8%)
+  substitutable     29,230 ( 5.2%)
+  Schedule A direction stated on 77,867
+  substitutable subgraph: max degree 5, mean 1.24, 47329 EINs
+============================================================================== 
+WHAT CHANGED 
+============================================================================== 
+                                    monthly BMF  unified BMF      delta 
+pairs in the table                      566,653      566,653          0 
+both EINs resolve in the BMF            354,684      503,475    148,791 
+same state known and TRUE               248,789      336,228     87,439 
+same city known and TRUE                192,861      247,429     54,568 
+substitutable                            29,238       29,230         -8 
+ 
+BMF coverage of dyad EINs: 62.6% -> 88.9% 
+------------------------------------------------------------------------------ 
+SUBSTITUTABLE BY REASON 
+------------------------------------------------------------------------------ 
+pairs present in both builds: 566,653 
+                           reason    dyad_class pairs
+                           <char>        <char> <int>
+                exclusive_support substitutable 24859
+        same_name_core+same_state substitutable  2392
+ exclusive_support+same_name_core substitutable  1979
+------------------------------------------------------------------------------ 
+CLASS TRANSITIONS 
+------------------------------------------------------------------------------ 
+         cls_o         cls_u      N
+        <char>        <char>  <int>
+       related       related 536662
+ substitutable substitutable  28477
+ substitutable       related    761
+       related substitutable    753
+ 
+promoted to substitutable by the unified BMF: 753 
+                                             was                       now
+                                          <char>                    <char>
+                               disclosed_related same_name_core+same_state
+                  same_name_core_different_state same_name_core+same_state
+                  support_relation_not_exclusive same_name_core+same_state
+          exclusive_support; demoted: degree > 5         exclusive_support
+ exclusive_support; demoted: subsection mismatch         exclusive_support
+                                            <NA>                      <NA>
+ pairs
+ <int>
+   415
+   298
+    33
+     6
+     1
+    NA
+ 
+                                    a                                    b
+                               <char>                               <char>
+ INTERNATIONAL BROTHERHOOD OF ELECTRI INTERNATIONAL BROTHERHOOD OF ELECTRI
+          BLUE HILL MEMORIAL HOSPITAL BLUE HILL MEMORIAL HOSPITAL FOUNDATI
+                       THOMAS COLLEGE            THOMAS COLLEGE FOUNDATION
+                     MAINE GOLF HOUSE                     MAINE GOLF HOUSE
+        NEIGHBORHOOD LENDING PARTNERS        NEIGHBORHOOD LENDING PARTNERS
+        NEIGHBORHOOD LENDING PARTNERS        NEIGHBORHOOD LENDING PARTNERS
+ ANCHORAGE COMMUNITY MENTAL HEALTH SE ANCHORAGE COMMUNITY MENTAL HEALTH SE
+         CHOICES FOR COMMUNITY LIVING         CHOICES FOR COMMUNITY LIVING
+         CHOICES FOR COMMUNITY LIVING         CHOICES FOR COMMUNITY LIVING
+                  BENEDICTINE SISTERS                  BENEDICTINE SISTERS
+                  MANAGEMENT SERVICES                  MANAGEMENT SERVICES
+ INTERNATIONAL BROTHERHOOD OF ELECTRI INTERNATIONAL BROTHERHOOD OF ELECTRI
+ 
+demoted to related by the unified BMF: 761 
+                                                            now pairs
+                                                         <char> <int>
+                exclusive_support; demoted: subsection mismatch   530
+                 same_name_core+same_state; demoted: degree > 5   142
+                         exclusive_support; demoted: degree > 5    27
+ exclusive_support+same_name_core; demoted: subsection mismatch    19
+                                 same_name_core_different_state    14
+                                 support_relation_not_exclusive    12
+------------------------------------------------------------------------------ 
+DEGREE - the safety number, recomputed 
+------------------------------------------------------------------------------ 
+substitutable EINs 47,329   max degree 5   mean 1.24   deg>10 0 
+ 
+wrote data-dev/PF-DYADS-UNIFIED.rds and .csv 

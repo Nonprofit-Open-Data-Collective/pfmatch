@@ -1,0 +1,125 @@
+﻿============================================================================== 
+THE TABLE-LEVEL RATE VS THE RATE THAT FIRES 
+============================================================================== 
+substitutable pairs               : 29,238 
+  sharing no content token        : 9,019 (30.8%) 
+ 
+                           reason no_shared_token pairs   pct
+                           <char>          <lgcl> <int> <num>
+                exclusive_support           FALSE 16787  57.4
+                exclusive_support            TRUE  9019  30.8
+ exclusive_support+same_name_core           FALSE  1612   5.5
+        same_name_core+same_state           FALSE  1820   6.2
+ 
+As expected the risk sits entirely in exclusive_support: the name-core 
+paths cannot produce a zero by construction. 
+------------------------------------------------------------------------------ 
+EDGES THAT ACTUALLY FIRE ON A CANDIDATE LIST (50k top-two pairs) 
+------------------------------------------------------------------------------ 
+top-two pairs classed substitutable: 1,370 
+  sharing no content token         : 14 (1.0%) 
+ 
+Table-level 30.8% versus fired 1.0%. The blocking does the filtering: 
+two candidates for one query are already name-similar, so an edge between 
+two differently-named bodies seldom gets the chance to merge anything. 
+ 
+                                  top                               runner
+                               <char>                               <char>
+ NETWORK FOR TEACHING ENTREPRENEURSHI                  NFTE ENDOWMENT FUND
+                   STAND UP TO CANCER    ENTERTAINMENT INDUSTRY FOUNDATION
+              BRYANS HOUSE FOUNDATION                            OPEN ARMS
+                  CARE NET FOUNDATION                              CARENET
+                     H H FUNDING CORP                           HOPE HOUSE
+                               AS 220            AS220 REAL ESTATE SUPPORT
+                  CARE NET FOUNDATION                              CARENET
+                 MORSELIFE FOUNDATION NEARLY NEW THRIFT SHOP OF THE MORSE 
+ YOUNG MENS CHRISTIAN ASSOCIATION OF                  YMCA SHARED SERVICES
+                  CARE NET FOUNDATION                              CARENET
+               MUSEUM OF NEBRASKA ART            MONA REAL ESTATE HOLDINGS
+    YWCA GLA URBAN CAMPUS DEVELOPMENT YOUNG WOMENS CHRISTIAN ASSOCIATION O
+                  CHALLENGED ATHLETES                         CAF PROPERTY
+                 MUSEUM OF MODERN ART                     MOMA AUXILIARIES
+ status
+ <char>
+    YES
+     NO
+  MAYBE
+  MAYBE
+  MAYBE
+    YES
+  MAYBE
+    YES
+  MAYBE
+  MAYBE
+    YES
+  MAYBE
+  MAYBE
+    YES
+------------------------------------------------------------------------------ 
+THE RISKY EDGES THEMSELVES - exclusive_support, no shared token 
+------------------------------------------------------------------------------ 
+pairs: 9,019   same city: 46%   5+ years disclosed: 67% 
+                                    a                                    b
+                               <char>                               <char>
+     Educational Advancement Fund inc             COLUMBIA COLLEGE CHICAGO
+ DENVER CENTER FOR THE PERFORMING ART           HELEN G BONFILS FOUNDATION
+       WESLEY UNITED METHODIST CHURCH                BOY SCOUTS OF AMERICA
+             MATER ACADEMY FOUNDATION                  8003 FOUNDATION INC
+                               CAHRMC        EAGLE LAKE COMMUNITY HOSPITAL
+       NEW ENGLAND USSSA HALL OF FAME                     BREAKTHROUGH T1D
+ SUNNY SLOPE SCHOOL PARENT TEACHER OR                           SUNNYSLOPE
+            MABEL K TOOPS SCHOLARSHIP                 GRAYVILLE SCHOOL DIS
+      SANTIAGO ARGONNE POST ASSOC INC VETERANS OF FOREIGN WARS DEPT OF MIS
+             UAB ATHLETICS FOUNDATION  UNIVERSITY OF ALABAMA AT BIRMINGHAM
+  GEORGIA LIONS LIGHTHOUSE FOUNDATION VIRGINIA KIMBROUGH CLARK REESE & THO
+                LEGACY REVITALIZATION       FIRST BAPTIST CHURCH OF DOWNEY
+                          HOMECOMINGS HOUSING AUTHORITY OF THE CITY OF SAN
+       ALL DULLES AREA MUSLIM SOCIETY                 ADAMS ENDOWMENT FUND
+        CLARITY CHILD GUIDANCE CENTER          SAN ANTONIO CHILDREN CENTER
+      ART STUDENTS LEAGUE OF NEW YORK           AMERICAN FINE ARTS SOCIETY
+       CRISTO REY ST VIATOR LAS VEGAS                        CRSVLV ROYALS
+     BLUE RIVERS AREA AGENCY ON AGING BEATRICE COMMUNITY HOSPITAL FOUNDATI
+            ATLANTICARE HEALTH SYSTEM SOUTHERN NEW JERSEY HOSPITAL WORKERS
+                                 GPCH                HUTCHINSON COUNTY EMS
+                                    a                                    b
+ same_city n_years
+    <lgcl>   <int>
+     FALSE      13
+      TRUE      16
+     FALSE       1
+     FALSE      10
+      TRUE       2
+     FALSE       5
+     FALSE       2
+     FALSE       9
+     FALSE      14
+     FALSE       7
+     FALSE      14
+     FALSE       3
+     FALSE      13
+      TRUE      12
+     FALSE       2
+      TRUE      16
+      TRUE       4
+      TRUE       1
+     FALSE       1
+     FALSE       1
+ same_city n_years
+ 
+These are mostly real: a hospital and its named-differently housing arm, 
+a school and its endowment trust. But some are a supporting organisation 
+and its single grantee, which is a relation and not a substitution. 
+------------------------------------------------------------------------------ 
+PRICING AN EXTRA GATE ON THE EXCLUSIVE-SUPPORT PATH 
+------------------------------------------------------------------------------ 
+gate                                 pairs    %kept top-2 hit 
+as shipped                          29,238     100%      1370 
++ require a shared token            20,219      69%      1353 
++ require same city                 12,824      44%      1327 
++ shared token OR same city         24,359      83%      1370 
++ shared token AND same city         8,684      30%      1310 
+ 
+The `as shipped` row is the one to beat. A gate that removes a third of 
+the table but only a handful of firing edges is buying nothing measurable 
+on this evidence - and it would remove the acronym and rebrand cases that 
+are the only reason disclosure beats a name rule at all. 

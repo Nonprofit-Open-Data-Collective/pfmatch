@@ -28,10 +28,23 @@ NULL
 #'   and lose less on an interrupt; larger ones amortise per-batch overhead.
 #' @param passes,config,method,recover Passed to [pf_match_grants()].
 #' @param self_guard Apply [pf_drop_self_matches()] to each batch.
+#' @param dyads Optional dyad table from [pf_build_dyads()]. When given,
+#'   [pf_dyad_collapse()] runs on each batch before the status frame is built,
+#'   and the status gains `dyad_collapsed`, `dyad_id`, `dyad_alt_ein` and
+#'   `dyad_class`. See *Where the collapse runs*.
+#' @param dyad_config Settings for that collapse; see [pf_dyad_config()].
 #' @param resume Skip batches whose checkpoint file already exists.
 #' @param verbose Per-batch progress.
 #' @return A data frame: the concatenated per-identity [pf_status()] frames, with
 #'   a `batch` column. Timings are attached as `attr(, "timing")`.
+#'
+#' @section Where the collapse runs:
+#' Between [pf_drop_self_matches()] and [pf_status()], because that is the only
+#' point at which the scored pairs still exist — the status frame keeps just the
+#' winning candidate. Collapsing is resolved **within one grant's candidate list
+#' only**, so a per-batch collapse is identical to a whole-file one; batching
+#' cannot change the answer. Changing `dyads` or `dyad_config` invalidates the
+#' checkpoints in `dir`, which `resume` will otherwise happily reuse.
 #' @export
 pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
                            batch_size = 25000L,
@@ -39,6 +52,7 @@ pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
                                       pf_recovery_passes(state = TRUE)),
                            config = npmatch::np_config(), method = "hier",
                            recover = TRUE, self_guard = TRUE,
+                           dyads = NULL, dyad_config = pf_dyad_config(),
                            resume = TRUE, verbose = TRUE) {
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   say <- function(...) if (verbose) cat(sprintf(...), "\n")
@@ -68,7 +82,16 @@ pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
       m <- pf_match_grants(sub, ref, config = config, method = method,
                            passes = passes, recover = recover, verbose = FALSE)
       if (self_guard) m <- pf_drop_self_matches(m, verbose = FALSE)
+      # The dyad collapse has to run HERE. It needs the scored pairs, and
+      # pf_status() is where they stop being available -- the status frame keeps
+      # only the winning candidate. Collapsing is resolved strictly within one
+      # grant's candidate list, so doing it per batch gives the same answer as
+      # doing it over the whole file.
+      if (!is.null(dyads))
+        m <- suppressMessages(pf_dyad_collapse(m, dyads, dyad_config,
+                                               np_config = config))
       st <- pf_status(m)
+      if (!is.null(dyads)) st <- .pf_attach_dyad_cols(st, m)
       st$batch <- b
       el <- proc.time()[["elapsed"]] - t0
       timing <<- c(timing, el)
@@ -117,3 +140,18 @@ pf_batch_report <- function(status) {
   invisible(tb)
 }
 `%||%` <- function(a, b) if (is.null(a)) b else a
+
+# pf_status() builds a fixed set of columns, so the dyad audit trail has to be
+# joined back on afterwards or it is lost at the batch boundary. `dyad_alt_ein`
+# is the partner that was merged away: an analyst aggregating grants to a
+# recipient needs it whether or not the collapse changed the reported EIN.
+.pf_attach_dyad_cols <- function(st, m) {
+  res <- as.data.frame(m$result)
+  i <- match(st$grant_id, res$.id)
+  st$dyad_collapsed <- !is.na(i) & (res$dyad_collapsed[i] %in% TRUE)
+  for (col in c("dyad_id", "dyad_from_ein")) {
+    v <- if (!is.null(res[[col]])) res[[col]][i] else NA_character_
+    st[[col]] <- v
+  }
+  st
+}

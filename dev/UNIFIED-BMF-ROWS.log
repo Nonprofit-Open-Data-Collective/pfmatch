@@ -1,0 +1,24 @@
+﻿rows: 3,687,435   distinct EINs: 3,687,435 
+ 
+bmf_source: 
+ bmf_source       N
+     <char>   <int>
+    current 2208124
+     legacy 1479311
+ 
+rows per EIN: 
+
+      1 
+3687435 
+ 
+blank fields, by source: 
+ bmf_source    rows no_name no_state no_city no_subsec
+     <char>   <int>   <int>    <int>   <int>     <int>
+     legacy 1479311       1     5410    2778    187273
+    current 2208124       2     1558       0         0
+ 
+do rows for one EIN disagree on state? (sample of multi-row EINs) 
+  EINs sampled: 0 
+  disagree on state      : 0 (NaN%) 
+  disagree on subsection : 0 (NaN%) 
+  more than one name     : 0 (NaN%) 

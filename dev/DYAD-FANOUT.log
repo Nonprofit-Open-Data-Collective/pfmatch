@@ -1,0 +1,90 @@
+﻿============================================================================== 
+FAN-OUT OF THE SCHEDULE A SUPPORT RELATION 
+============================================================================== 
+Schedule A edges: 77,867 over 31,894 supporters 
+ 
+ fan_out_bucket edges pct_of_edges
+         <fctr> <int>        <num>
+              2 25133         32.3
+              3  5980          7.7
+            4-5  7310          9.4
+           6-10  6184          7.9
+          11-50 16962         21.8
+            51+ 16298         20.9
+ 
+edges from a supporter with fan-out 1 : 25,133 (32%) - the exclusive case 
+edges from a supporter with fan-out >10: 33,260 (43%) - grantmakers, not arms 
+------------------------------------------------------------------------------ 
+THE BIGGEST SUPPORTERS - none of these licenses a substitution 
+------------------------------------------------------------------------------ 
+ supporter                                     sup_name fan_out
+    <char>                                       <char>   <int>
+ 135562401 YOUNG MENS CHRISTIAN ASSOCIATION RETIREMENT      907
+ 471760883                          SPARKJOY FOUNDATION     408
+ 860097240                   VITALYST HEALTH FOUNDATION     406
+ 231968136                            FRIENDS FIDUCIARY     343
+ 900442780                           ALPHA LAMBDA DELTA     337
+ 311717077                          SUPPORT KANSAS CITY     329
+ 362715311 INDEPENDENT SCHOOL ASSOCIATION OF THE CENTRA     293
+ 953239789                       BHHS LEGACY FOUNDATION     289
+ 521932054 ASSOCIATION OF BOARDS IN THEOLOGICAL EDUCATI     259
+ 311662309                             ASCENSION HEALTH     253
+ 453358926                    ASCENSION HEALTH ALLIANCE     251
+ 205823039                  AMERICAN FOUNDATION OF UTAH     250
+ 367046706 ASCENSION HEALTH PROFESSIONAL AND GENERAL LI     250
+ 651257719                          ASCENSION HEALTH-IS     250
+ 741297212                           SCANLAN FOUNDATION     248
+------------------------------------------------------------------------------ 
+DOES A NAME CORE MATCH SURVIVE HIGH FAN-OUT? 
+------------------------------------------------------------------------------ 
+ fan_out_bucket edges name_core_agrees   pct
+         <fctr> <int>            <int> <num>
+              2 25133             5105  20.3
+              3  5980              937  15.7
+            4-5  7310              791  10.8
+           6-10  6184              635  10.3
+          11-50 16962             1636   9.6
+            51+ 16298             1287   7.9
+ 
+The name core is the check that survives: at fan-out 1 the names agree far 
+more often than at fan-out 51+, which is what an exclusive arm looks like. 
+============================================================================== 
+WHAT EACH CANDIDATE RULE WOULD CLASS AS SUBSTITUTABLE 
+============================================================================== 
+rule                                    pairs % of all 
+sched A edge (any fan-out)             77,867    13.7% 
+sched A, fan-out <= 3                  34,197     6.0% 
+sched A, fan-out 1                     25,133     4.4% 
+identical name core                    65,565    11.6% 
+name core + same state                 11,275     2.0% 
+sched A fan-out<=3 OR name core        93,463    16.5% 
+------------------------------------------------------------------------------ 
+MAX DEGREE UNDER EACH RULE - the number that decides it 
+------------------------------------------------------------------------------ 
+sched A edge (any fan-out)         max   907   mean 1.99   EINs with degree>10  1444 
+sched A, fan-out <= 3              max   155   mean 1.30   EINs with degree>10   142 
+sched A, fan-out 1                 max   110   mean 1.16   EINs with degree>10    97 
+identical name core                max   319   mean 2.90   EINs with degree>10  2124 
+name core + same state             max   289   mean 2.09   EINs with degree>10   443 
+sched A fan-out<=3 OR name core    max   319   mean 2.28   EINs with degree>10  2332 
+------------------------------------------------------------------------------ 
+WHAT 'sched A fan-out<=3 OR name core' DROPS FROM THE OLD RULE 
+------------------------------------------------------------------------------ 
+dropped: 39,772 pairs 
+                                  a                                  b fan_out
+                             <char>                             <char>   <int>
+                ELMIRA M QUICKEL TW           ELMIRA M QUICKEL TR 7332      12
+ ANATOMICAL GIFT ASSOCIATION OF ILL        ANATOMICAL GIFT ASSOCIATION      96
+   BAKER GERTRUDE-TR-COMBINED BAKER                     COMBINED BAKER      10
+ ANATOMICAL GIFT ASSOCIATION OF ILL        ANATOMICAL GIFT ASSOCIATION      96
+ ANATOMICAL GIFT ASSOCIATION OF ILL        ANATOMICAL GIFT ASSOCIATION      96
+ ASHER MYERS-RESIDUARY TUWR 82-3000              ASHER MYERS RESIDUARY       4
+ ASHER MYERS-RESIDUARY TUWR 82-3000              ASHER MYERS RESIDUARY       4
+             ANCILLA DOMINI SISTERS MARY CROSS TIPPMANN FOUNDATION CHA     131
+ YOUNG MEN'S CHRISTIAN ASSOCIATION  YOUNG MENS CHRISTIAN ASSOCIATION R     907
+   BAKER GERTRUDE-TR-COMBINED BAKER                     COMBINED BAKER      10
+          BANGOR SYMPHONY ORCHESTRA JOHN AND ROSE HERMAN SUPPORT FOUND      66
+                        MAINEHEALTH                MAINHEALTH SERVICES      17
+                  BRIDGTON HOSPITAL           CENTRAL MAINE HEALTHCARE      11
+                        MAINEHEALTH                MAINHEALTH SERVICES      17
+     LINCOLN COUNTY HEALTH CARE INC ST ANDREWS HOSPITAL ST ANDREWS HOS       4

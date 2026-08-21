@@ -1,0 +1,10 @@
+﻿============================================================================== 
+BENCHMARK  5,000 grants, augmented unified reference, wired path 
+============================================================================== 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+identities: 4,716 
+reference : 3,891,187 rows 
+dyads     : 566,653 (29,230 substitutable) 
+------------------------------------------------------------------------------ 
+RUN: baseline 
+------------------------------------------------------------------------------ 

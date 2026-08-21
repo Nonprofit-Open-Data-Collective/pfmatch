@@ -1,0 +1,122 @@
+﻿============================================================================== 
+THE PROMOTIONS 
+============================================================================== 
+MAYBE -> YES : 704 
+all inside a collapsed grant: TRUE 
+ 
+------------------------------------------------------------------------------ 
+WHY EACH PROMOTED PAIR WAS CALLED ONE BODY 
+------------------------------------------------------------------------------ 
+                           reason grants   pct
+                           <char>  <int> <num>
+ exclusive_support+same_name_core    405  57.5
+        same_name_core+same_state    201  28.6
+                exclusive_support     98  13.9
+ 
+same city  : 698 (99%) 
+disclosed in 5+ tax years: 611 (87%) 
+------------------------------------------------------------------------------ 
+NAME AGREEMENT BETWEEN THE KEPT AND THE DROPPED CANDIDATE 
+------------------------------------------------------------------------------ 
+ shared_tokens promotions   pct
+         <int>      <int> <num>
+             0          4   0.6
+             1         34   4.8
+             2        251  35.7
+             3        415  58.9
+ 
+identical name core: 595 (85%) 
+no shared content token: 4 (0.6%)  <- the ones to eyeball 
+------------------------------------------------------------------------------ 
+EVERY PROMOTION WITH NO SHARED TOKEN 
+------------------------------------------------------------------------------ 
+            kept                              dropped            reason
+          <char>                               <char>            <char>
+         CARENET                  CARE NET FOUNDATION exclusive_support
+         CARENET                  CARE NET FOUNDATION exclusive_support
+         CARENET                  CARE NET FOUNDATION exclusive_support
+ Meals On Wheels PETER CARDELLA SENIOR CITIZEN CENTER exclusive_support
+ same_city
+    <lgcl>
+      TRUE
+      TRUE
+      TRUE
+      TRUE
+------------------------------------------------------------------------------ 
+A RANDOM SAMPLE OF THE REST 
+------------------------------------------------------------------------------ 
+                               kept                            dropped    m0
+                             <char>                             <char> <num>
+                      CENTRA HEALTH           CENTRA HEALTH FOUNDATION 0.000
+ FLORENCE CRITTENTON HOME AND SERVI FLORENCE CRITTENTON HOME & SERVICE 0.000
+              LETOURNEAU UNIVERSITY   LETOURNEAU UNIVERSITY FOUNDATION 0.000
+       ANIMAL RESCUE LEAGUE OF IOWA ANIMAL RESCUE LEAGUE OF IOWA FOUND 0.000
+                      PARK NICOLLET           PARK NICOLLET FOUNDATION 0.000
+        OREGON SYMPHONY ASSOCIATION         OREGON SYMPHONY FOUNDATION 0.000
+          TIMOTHY CHRISTIAN SCHOOLS TIMOTHY CHRISTIAN SCHOOLS FOUNDATI 0.000
+             ALBERTINA KERR CENTERS  ALBERTINA KERR CENTERS FOUNDATION 0.000
+ BILLY GRAHAM EVANGELISTIC ASSOCIAT BILLY GRAHAM EVANGELISTIC ASSOCIAT 0.000
+            NEBRASKA HUMANE SOCIETY NEBRASKA HUMANE SOCIETY FOUNDATION 0.000
+                      SELFHELP HOME                SELFHELP FOUNDATION 0.033
+          YOUTH AND FAMILY SERVICES YOUTH AND FAMILY SERVICES FOUNDATI 0.000
+   VIRGINIA HOME FOR BOYS AND GIRLS VIRGINIA HOME FOR BOYS AND GIRLS F 0.000
+                    VALLEY HOSPITAL         VALLEY HOSPITAL FOUNDATION 0.000
+ GREATER GRAND FORKS SENIOR CITIZEN GREATER GRAND FORKS SENIOR CITIZEN 0.000
+             RALEIGH RESCUE MISSION  RALEIGH RESCUE MISSION FOUNDATION 0.000
+                      CENTRA HEALTH           CENTRA HEALTH FOUNDATION 0.000
+             ANTI DEFAMATION LEAGUE  ANTI DEFAMATION LEAGUE FOUNDATION 0.000
+ THE CHILDRENS HOSPITAL OF PHILADEL THE CHILDRENS HOSPITAL OF PHILADEL 0.000
+ GERMANNA COMMUNITY COLLEGE EDUCATI GERMANNA COMMUNITY COLLEGE REAL ES 0.000
+                               kept                            dropped    m0
+    m1
+ <num>
+ 0.980
+ 0.820
+ 0.080
+ 0.355
+ 0.071
+ 0.270
+ 0.760
+ 0.891
+ 0.567
+ 0.900
+ 0.707
+ 0.184
+ 0.760
+ 0.180
+ 0.200
+ 0.167
+ 0.980
+ 0.200
+ 0.240
+ 0.537
+    m1
+------------------------------------------------------------------------------ 
+WHY operating-first PROMOTES MORE THAN keep-top 
+------------------------------------------------------------------------------ 
+promoted grants where the KEPT candidate carries a soft veto   : 0 (0%) 
+promoted grants where the DROPPED candidate carried a soft veto: 451 (64%) 
+ 
+kept candidate scored LOWER than the one dropped: 24 (3%) 
+ 
+If the dropped-soft rate is well above the kept-soft rate, the soft veto 
+is the mechanism and the policy is doing more than reporting a preference. 
+------------------------------------------------------------------------------ 
+DID THE PICK ITSELF CHANGE ON PROMOTED GRANTS? 
+------------------------------------------------------------------------------ 
+promotions where the reported EIN also changed: 196 (28%) 
+(the operating-first policy; where it did not change, the cascade had 
+already ranked the operating entity first) 
+------------------------------------------------------------------------------ 
+PROMOTED GRANTS THAT ARE IN THE ADJUDICATED 100 
+------------------------------------------------------------------------------ 
+labelled promotions: 1 
+Key: <.id>
+     .id   verdict correct_rank                         kept
+  <char>    <char>       <char>                       <char>
+ G004576 AMBIGUOUS              WAYNE MEMORIAL HEALTH SYSTEM
+                      dropped
+                       <char>
+ WAYNE MEMORIAL HOSPITAL FOUN
+ 
+wrote data-dev/DYAD-PROMOTIONS.csv 

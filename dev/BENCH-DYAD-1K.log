@@ -1,0 +1,153 @@
+﻿============================================================================== 
+BENCHMARK  1,000 grants, augmented unified reference 
+============================================================================== 
+identities: 978 
+reference : 3,891,187 rows (loaded in 75 s) 
+dyads     : 566,653 (29,230 substitutable) 
+------------------------------------------------------------------------------ 
+CASCADE (once) 
+------------------------------------------------------------------------------ 
+Rscript : np_cascade: method = hier | YES>=0.78  MAYBE>=0.65  margin>=0.05
+At line:1 char:433
++ ...  - URBAN\00-GITHUB\pfmatch"; Rscript dev/bench-dyad-1k.R 2>&1 | Tee-O ...
++                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (np_cascade: met...5  margin>=0.05:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  score = 0.60*name + 0.40*geo;  geo = max(zip9=1.00, street=0.95, zip5=0.90, pobox=0.90, zip3=0.55, city=0.50, 
+state=0.20)
+  [A1-name-zip5    ] name + ZIP5 (exact)                781 cand ->  307 YES   163 MAYBE     1 NO | resolved 307, 
+pending 671, med YES margin 0.98
+  [A2-name-state   ] name + state (exact)             8,056 cand ->   79 YES   214 MAYBE     1 NO | resolved 79, 
+pending 592, med YES margin 0.90
+  [A3-name-dba     ] name == dba, same state            174 cand ->   16 YES    25 MAYBE     0 NO | resolved 16, 
+pending 576, med YES margin 0.96
+  [A4-dba-name     ] dba == name, same state              3 cand ->    1 YES     1 MAYBE     0 NO | resolved 1, 
+pending 575, med YES margin 0.98
+  [A5-dba-dba      ] dba == dba, same state               0 candidates
+  [B1-token-state  ] shared token, same state         56,442 cand ->   65 YES   260 MAYBE   192 NO | resolved 65, 
+pending 510, med YES margin 0.30
+  [B2-token-concat ] shared token + compound, same state 121,738 cand ->    5 YES   294 MAYBE   174 NO | resolved 5, 
+pending 505, med YES margin 0.27
+  [C1-name-any     ] name == name, ANY state          10,360 cand ->    0 YES   242 MAYBE    15 NO | resolved 0, 
+pending 505, med YES margin NA
+  [C2-dba-any      ] name == dba,  ANY state            323 cand ->    0 YES    25 MAYBE    32 NO | resolved 0, 
+pending 505, med YES margin NA
+  [D1-acronym      ] shared token incl. initials      30,276 cand ->    1 YES   251 MAYBE   189 NO | resolved 1, 
+pending 504, med YES margin 0.12
+  [D2-prefix       ] name prefix + ZIP5 (truncated source names)    11 cand ->    0 YES     3 MAYBE     0 NO | 
+resolved 0, pending 504, med YES margin NA
+  final: 593 YES | 200 MAYBE | 160 NO over 953/978 queries
+cascade 5436 s (5557.9 s per 1,000 identities) | 127,206 scored pairs 
+pairs per identity: 130 
+ 
+baseline: YES 593  MAYBE 200  NO 185  OOS 0 
+------------------------------------------------------------------------------ 
+VARIANT: operating-first 
+------------------------------------------------------------------------------ 
+pf_dyad_collapse: 19 grants have more than 25 candidates in the band (max 128); capped by score
+pf_dyad_collapse: 34 grants merged (222 candidates -> 179 groups), 43 rows dropped, 7 picks changed
+  tiers: YES 593->612  MAYBE 200->181  NO 159->159
+  YES   612 (+19)  MAYBE   181 (-19)  NO   185 (+0) 
+------------------------------------------------------------------------------ 
+VARIANT: keep-top 
+------------------------------------------------------------------------------ 
+pf_dyad_collapse: 19 grants have more than 25 candidates in the band (max 128); capped by score
+pf_dyad_collapse: 34 grants merged (222 candidates -> 179 groups), 43 rows dropped, 6 picks changed
+  tiers: YES 593->609  MAYBE 200->184  NO 159->159
+  YES   609 (+16)  MAYBE   184 (-16)  NO   185 (+0) 
+------------------------------------------------------------------------------ 
+VARIANT: +related (unsafe) 
+------------------------------------------------------------------------------ 
+pf_dyad_collapse: 19 grants have more than 25 candidates in the band (max 128); capped by score
+pf_dyad_collapse: 52 grants merged (321 candidates -> 224 groups), 97 rows dropped, 14 picks changed
+  tiers: YES 593->620  MAYBE 200->173  NO 159->159
+  YES   620 (+27)  MAYBE   173 (-27)  NO   185 (+0) 
+============================================================================== 
+PREDICTION 1  PROMOTIONS 
+============================================================================== 
+run                     YES  MAYBE     NO    OOS  collapsed 
+baseline                593    200    185      0          - 
+operating-first         612    181    185      0         34 
+keep-top                609    184    185      0         34 
++related (unsafe)       620    173    185      0         52 
+ 
+promotions as a share of baseline MAYBE: 9.5% 
+(the 50k monthly-BMF run gave 6.5%) 
+============================================================================== 
+PREDICTION 2  DOES ANYTHING FALL INTO NO? 
+============================================================================== 
+operating-first: 19 changed tier; into NO from elsewhere: 0 
+     t0     t1     N
+ <fctr> <fctr> <int>
+  MAYBE    YES    19
+  every change on a collapsed identity: TRUE 
+keep-top: 16 changed tier; into NO from elsewhere: 0 
+     t0     t1     N
+ <fctr> <fctr> <int>
+  MAYBE    YES    16
+  every change on a collapsed identity: TRUE 
++related (unsafe): 27 changed tier; into NO from elsewhere: 0 
+     t0     t1     N
+ <fctr> <fctr> <int>
+  MAYBE    YES    27
+  every change on a collapsed identity: TRUE 
+============================================================================== 
+PREDICTION 3  ACCURACY ON THE ADJUDICATED ANSWERS 
+============================================================================== 
+adjudicated answers: 61 
+baseline             n =  13   correct  10 (77%) 
+operating-first      n =  13   correct  10 (77%) 
+keep-top             n =  13   correct  10 (77%) 
++related (unsafe)    n =  13   correct   7 (54%) 
+============================================================================== 
+WHAT COLLAPSED 
+============================================================================== 
+identities collapsed: 34   reported EIN changed: 7 
+promotions: 19 
+                      recip                           kept
+                     <char>                         <char>
+            Community House    COMMUNITY HOUSE ASSOCIATION
+ ST SEBASTIANS SCHOOL FUND         SAINT SEBASTIANS SCHOOL
+ United Way of the Midlands     UNITED WAY OF THE MIDLANDS
+ CENTRA HEALTH FOUNDATION I                  CENTRA HEALTH
+   ALL FAITHS FOOD BANK INC           ALL FAITHS FOOD BANK
+ CHILDREN'S HOSPITAL COLORA    CHILDRENS HOSPITAL COLORADO
+      SEATTLE THEATRE GROUP          SEATTLE THEATRE GROUP
+ PHOENIX CHILDREN'S HOSPITA     PHOENIX CHILDRENS HOSPITAL
+   MT HOOD KIWANIS CAMP INC        MOUNT HOOD KIWANIS CAMP
+ NORFOLK BOTANICAL GARDEN I       NORFOLK BOTANICAL GARDEN
+    CAMP COURAGEOUS OF IOWA        CAMP COURAGEOUS OF IOWA
+      THE LEARNING ALLIANCE          THE LEARNING ALLIANCE
+ UNIVERSITY OF SIOUX FALLS       UNIVERSITY OF SIOUX FALLS
+ HIBISCUS CHILDREN'S CENTER      HIBISCUS CHILDRENS CENTER
+ KANSAS WESLEYAN UNIVERSITY     KANSAS WESLEYAN UNIVERSITY
+ COMMUNITY PREGNANCY CENTER    COMMUNITY PREGNANCY CLINICS
+ MULTIPLE MYELOMA RESEARCH  MULTIPLE MYELOMA RESEARCH CONS
+ GOLDEN VALLEY HEALTH CENTE   GOLDEN VALLEY HEALTH CENTERS
+ BOCA RATON REGIONAL HEALTH   BOCA RATON REGIONAL HOSPITAL
+                            was
+                         <char>
+     COMMUNITY HOUSE FOUNDATION
+   SAINT SEBASTIANS SCHOOL FUND
+     UNITED WAY OF THE MIDLANDS
+       CENTRA HEALTH FOUNDATION
+           ALL FAITHS FOOD BANK
+    CHILDRENS HOSPITAL COLORADO
+          SEATTLE THEATRE GROUP
+ PHOENIX CHILDRENS HOSPITAL FOU
+        MOUNT HOOD KIWANIS CAMP
+       NORFOLK BOTANICAL GARDEN
+        CAMP COURAGEOUS OF IOWA
+          THE LEARNING ALLIANCE
+      UNIVERSITY OF SIOUX FALLS
+      HIBISCUS CHILDRENS CENTER
+     KANSAS WESLEYAN UNIVERSITY
+    COMMUNITY PREGNANCY CLINICS
+ MULTIPLE MYELOMA RESEARCH CONS
+ GOLDEN VALLEY HEALTH CENTERS F
+   BOCA RATON REGIONAL HOSPITAL
+ 
+collapsed but NOT promoted (the tie shrank, the tier did not move): 15 
+ 
+wrote data-dev/BENCH-DYAD-1K.csv 

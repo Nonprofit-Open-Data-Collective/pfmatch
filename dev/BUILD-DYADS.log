@@ -1,0 +1,178 @@
+﻿============================================================================== 
+BUILD 
+============================================================================== 
+dyads: 566,653 pairs over 174,496 EINs
+  related          537,415 (94.8%)
+  substitutable     29,238 ( 5.2%)
+  Schedule A direction stated on 77,867
+  substitutable subgraph: max degree 5, mean 1.23, 47400 EINs
+============================================================================== 
+COMPOSITION 
+============================================================================== 
+------------------------------------------------------------------------------ 
+class by reason 
+------------------------------------------------------------------------------ 
+    dyad_class                                                    dyad_reason
+        <char>                                                         <char>
+       related                                              disclosed_related
+       related                                 same_name_core_different_state
+       related                                 support_relation_not_exclusive
+       related                 same_name_core+same_state; demoted: degree > 5
+       related                         exclusive_support; demoted: degree > 5
+       related                exclusive_support; demoted: subsection mismatch
+       related        same_name_core+same_state; demoted: subsection mismatch
+       related          exclusive_support+same_name_core; demoted: degree > 5
+       related exclusive_support+same_name_core; demoted: subsection mismatch
+ substitutable                                              exclusive_support
+ substitutable                                      same_name_core+same_state
+ substitutable                               exclusive_support+same_name_core
+  pairs   pct
+  <int> <num>
+ 433418  76.5
+  47009   8.3
+  42822   7.6
+   6553   1.2
+   4528   0.8
+   1795   0.3
+    834   0.1
+    286   0.1
+    170   0.0
+  25806   4.6
+   1820   0.3
+   1612   0.3
+------------------------------------------------------------------------------ 
+class by source 
+------------------------------------------------------------------------------ 
+    dyad_class          source  pairs
+        <char>          <char>  <int>
+       related Schedule R only 487124
+       related            both  25556
+       related Schedule A only  24735
+ substitutable            both  16613
+ substitutable Schedule A only  10963
+ substitutable Schedule R only   1662
+------------------------------------------------------------------------------ 
+geography and persistence 
+------------------------------------------------------------------------------ 
+both EINs in the BMF     : 354,684 (63%) 
+same state               : 248,789 (44%) 
+same city                : 192,861 (34%) 
+ 
+    dyad_class  years  pairs
+        <char> <fctr>  <int>
+       related      1  64325
+       related      2  54559
+       related    3-5 118955
+       related   6-10 158579
+       related    11+ 140997
+ substitutable      1   3010
+ substitutable      2   2142
+ substitutable    3-5   5848
+ substitutable   6-10   6773
+ substitutable    11+  11465
+------------------------------------------------------------------------------ 
+WHY PAIRS WERE KEPT OUT OF substitutable 
+------------------------------------------------------------------------------ 
+                         reason  pairs
+                         <char>  <int>
+              disclosed_related 433418
+ same_name_core_different_state  47009
+ support_relation_not_exclusive  42822
+            demoted: degree > 5  11367
+   demoted: subsection mismatch   2799
+ 
+Schedule A edges rejected for fan-out (the supporter is a grantmaker, 
+not an arm) - the biggest offenders: 
+       sup                                           nm fan_out
+    <char>                                       <char>   <int>
+ 135562401 YOUNG MENS CHRISTIAN ASSOCIATION RETIREMENT      907
+ 471760883                          SPARKJOY FOUNDATION     408
+ 860097240                   VITALYST HEALTH FOUNDATION     406
+ 231968136                            FRIENDS FIDUCIARY     343
+ 900442780                           ALPHA LAMBDA DELTA     337
+ 311717077                          SUPPORT KANSAS CITY     329
+ 362715311 INDEPENDENT SCHOOL ASSOCIATION OF THE CENTRA     293
+ 953239789                       BHHS LEGACY FOUNDATION     289
+ 521932054 ASSOCIATION OF BOARDS IN THEOLOGICAL EDUCATI     259
+ 311662309                             ASCENSION HEALTH     253
+------------------------------------------------------------------------------ 
+SUBSTITUTABLE EXAMPLES 
+------------------------------------------------------------------------------ 
+                                    a                                    b
+                               <char>                               <char>
+ MAINE COAST REGIONAL HEALTH FACILI D           MAINE COAST MEDICAL REALTY
+ WOMENS BOARD OF THE MAINE MEDICAL CE                   A MAINEHEALTH HCSR
+ BANGOR YOUNG MENS CHRISTIAN ASSOCIAT               BANGOR YMCA FOUNDATION
+                BOY SCOUTS OF AMERICA                        KCI CHARITIES
+         CENTRAL MAINE MEDICAL CENTER WOMANS HOSPITAL ASSOCIATION INC OF T
+     THE TRUSTEES OF FRYEBURG ACADEMY  FRYEBURG ACADEMY ALUMNI ASSOCIATION
+     THE TRUSTEES OF FRYEBURG ACADEMY        FRYEBURG ACADEMY TR UA 121261
+           GOOD WILL HOME ASSOCIATION               GW HINCKLEY FOUNDATION
+           CEDARS NURSING CARE CENTER                    CEDARS FOUNDATION
+             MAINE HISTORICAL SOCIETY                                M H S
+ REDINGTON MEMORIAL HOSPITAL ASSOCIAT  REDINGTON-FAIRVIEW GENERAL HOSPITAL
+ PRESIDENT AND TRUSTEES OF BATES COLL BATES MORSE MOUNTAIN CONSERVATION AR
+         MOUNT DESERT ISLAND HOSPITAL         BIRCH BAY RETIREMENT VILLAGE
+                   ST JOSEPH HOSPITAL            ST JOSEPH AMBULATORY CARE
+ MAINE STATE SOCIETY FOR THE PROTECTI                    AHIMSA FOUNDATION
+       dyad_reason
+            <char>
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+ exclusive_support
+------------------------------------------------------------------------------ 
+RELATED-ONLY EXAMPLES - never collapse these 
+------------------------------------------------------------------------------ 
+                                    a                                    b
+                               <char>                               <char>
+                      AMERICAN LEGION AMERICAN LEGION DEPARTMENT OF MAINE 
+      MAINE STATE CHAMBER OF COMMERCE FOUNDATION FOR A STRONG MAINE ECONOM
+    BANGOR REGION CHAMBER OF COMMERCE      BANGOR REGION COMMUNITY COUNCIL
+            PORTLAND REGIONAL CHAMBER GREATER PORTLAND BUSINESS EDUCATION 
+ LEWISTON AUBURN METROPOLITAN CHAMBER LEWISTON-AUBURN ECONOMIC GROWTH COUN
+ LEWISTON AUBURN METROPOLITAN CHAMBER LEWISTON AUBURN METROPOLITAN CHAMBER
+      CHRISTIAN CIVIC LEAGUE OF MAINE           CHRISTIAN EDUCATION LEAGUE
+     INDEPENDENT ORDER OF ODD FELLOWS     INDEPENDENT ORDER OF ODD FELLOWS
+ INTERNATIONAL BROTHERHOOD OF ELECTRI PORTLAND ELECTRICAL JOINT APPRENTICE
+ INTERNATIONAL BROTHERHOOD OF ELECTRI IBEW LOCAL 567 LABOR-MANAGEMENT COOP
+          MAINE EDUCATION ASSOCIATION MAINE EDUCATION ASSOCIATION BENEFITS
+          MAINE EDUCATION ASSOCIATION       CLYDE RUSSELL SCHOLARSHIP FUND
+          MAINE EDUCATION ASSOCIATION MAINE EDUCATION ASSOCIATION STAFF OR
+          MAINE EDUCATION ASSOCIATION CITIZENS WHO SUPPORT MAINES PUBLIC S
+            MAINE BANKERS ASSOCIATION MAINE FINANCIAL INSTITUTIONS EMPLOYE
+------------------------------------------------------------------------------ 
+DEGREE - the hub check 
+------------------------------------------------------------------------------ 
+EINs in the table: 174,496 
+all
+     1      2      3    4-5   6-10  11-25    26+ 
+     0 103329  24339  21004   9611   8177   8036 
+substitutable_only
+     0      1      2    3-5   6-10  11-25    26+ 
+127096  39575   5446   2379      0      0      0 
+ 
+max substitutable degree: 5 - the worst case a collapse could reach 
+       ein deg_sub deg_all
+    <char>   <int>   <int>
+ 016000769       5      12
+ 041843040       5      14
+ 042103547       5      49
+ 042103622       5      37
+ 042104021       5      10
+ 042104397       5       8
+ 042254742       5       6
+ 042375956       5       8
+ 
+wrote data-dev/PF-DYADS.rds and .csv 

@@ -39,7 +39,15 @@ g[, grant_id := sprintf("G%09d", .I)]
 
 hr(); say("PHASE 1.2 -- PREPARE"); hr()
 t1 <- tick()
-prep <- pf_prepare(g, dedup = "fuzzy", verbose = TRUE)
+# Exact dedup already delivers 3.72x on the full file and completes in minutes.
+# The fuzzy pass ran 12.3 hours without finishing on this file: its cost is the
+# sum of squared block sizes, and mean block size rises from 7.9 at 100k rows to
+# 74 here. Fuzzy adds roughly 10-15% more collapse on top, which is not worth
+# blocking the pipeline for. PF_DEDUP=fuzzy re-enables it now that pf_dedup()
+# reports progress and sub-blocks oversized blocks instead of dropping them.
+DEDUP <- Sys.getenv("PF_DEDUP", "exact")
+say("dedup method: %s", DEDUP)
+prep <- pf_prepare(g, dedup = DEDUP, verbose = TRUE)
 say("prepare + dedup took %.0f s (%.1f min)", tick() - t1, (tick() - t1) / 60)
 
 gp <- as.data.table(prep$grants)

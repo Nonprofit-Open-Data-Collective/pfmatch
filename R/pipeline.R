@@ -119,24 +119,41 @@ pf_reference <- function(bmf, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
 #' @param dir Checkpoint directory. Completed batches are skipped on re-run.
 #' @param batch_size Identities per checkpoint.
 #' @param passes,config,method Passed to [pf_run_batches()].
+#' @param dyads Optional dyad table from [pf_build_dyads()]. When supplied, the
+#'   substitutable pairs inside each candidate list are collapsed before
+#'   selection, which is what removes ties a grant has with itself. `NULL`
+#'   disables it. See [pf_dyads] and `dev/DYAD-FINDINGS.md`.
+#' @param dyad_config Settings for that collapse; see [pf_dyad_config()].
 #' @param verbose Print progress.
 #' @return A list of class `pf_linked` with identity-level `status`, row-level
 #'   `grants`, and `timing`.
 #' @export
 pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L,
                     passes = NULL, config = npmatch::np_config(),
-                    method = "hier", verbose = TRUE) {
+                    method = "hier", dyads = NULL,
+                    dyad_config = pf_dyad_config(), verbose = TRUE) {
   stopifnot(inherits(prepared, "pf_prepared"))
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 3  link")
   if (is.null(passes))
     passes <- c(pf_staged_passes("lean"), pf_recovery_passes(state = TRUE))
+  if (is.character(dyads) && length(dyads) == 1L) dyads <- readRDS(dyads)
+  if (!is.null(dyads))
+    .pf_say(verbose, "  dyads: %s pairs, %s substitutable",
+            format(nrow(dyads), big.mark = ","),
+            format(sum(dyads$dyad_class == "substitutable"), big.mark = ","))
 
   status <- pf_run_batches(prepared$recipients, ref, dir = dir,
                            batch_size = batch_size, passes = passes,
-                           config = config, method = method, verbose = verbose)
+                           config = config, method = method,
+                           dyads = dyads, dyad_config = dyad_config,
+                           verbose = verbose)
   g <- pf_propagate_matches(prepared$grants, status)
   g$status[!g$in_scope] <- "OOS"
+  if (!is.null(status$dyad_collapsed))
+    .pf_say(verbose, "  dyad collapse fired on %s identities (%.1f%%)",
+            format(sum(status$dyad_collapsed, na.rm = TRUE), big.mark = ","),
+            100 * mean(status$dyad_collapsed, na.rm = TRUE))
   el <- .pf_tick() - t0
   .pf_say(verbose, "  elapsed %.1f s", el)
   structure(list(status = status, grants = g,
@@ -185,7 +202,8 @@ pf_adjudicate <- function(x, bmf, ids = NULL, k = 5, tiebreak = FALSE,
 #'
 #' @param grants,pattern,dedup Passed to [pf_prepare()].
 #' @param bmf,ref_cache Passed to [pf_reference()].
-#' @param dir,batch_size Passed to [pf_link()].
+#' @param dir,batch_size,dyads Passed to [pf_link()]. `dyads` may be a table or
+#'   a path to a cached one.
 #' @param report Print the outcome tables when done.
 #' @param verbose Print progress.
 #' @param ... Further arguments to [pf_link()].
@@ -197,13 +215,13 @@ pf_run <- function(grants, bmf, pattern = "grants.*[.]csv$",
                    dedup = c("fuzzy", "exact", "none"),
                    ref_cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
                    dir = "data-dev/batches", batch_size = 25000L,
-                   report = TRUE, verbose = TRUE, ...) {
+                   dyads = NULL, report = TRUE, verbose = TRUE, ...) {
   t0 <- .pf_tick()
   prep <- pf_prepare(grants, pattern = pattern, dedup = match.arg(dedup),
                      verbose = verbose)
   ref  <- pf_reference(bmf, cache = ref_cache, verbose = verbose)
   lnk  <- pf_link(prep, ref, dir = dir, batch_size = batch_size,
-                  verbose = verbose, ...)
+                  dyads = dyads, verbose = verbose, ...)
   rm(ref); invisible(gc())
 
   out <- structure(list(grants = lnk$grants, recipients = prep$recipients,

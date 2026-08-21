@@ -1,0 +1,60 @@
+﻿============================================================================== 
+RULE SIZE AND SAFETY 
+============================================================================== 
+rule                               pairs    max    mean    deg>10 
+A. sched A only (shipped v1)     129,645    905    2.68      3567 
+B. + fan-out <= 3                 90,587    319    2.34      2322 
+C. B + name core needs state      40,605    289    1.50       577 
+D. C + degree cap 5               29,238      5    1.23         0 
+E. C + degree cap 3               26,480      3    1.18         0 
+F. name core + same city only      8,536    289    2.35       379 
+============================================================================== 
+COVERAGE ON THE 50K RUN 
+============================================================================== 
+rule                              MAYBE      YES       NO 
+A. sched A only (shipped v1)       1183      137      223 
+B. + fan-out <= 3                  1163      125      218 
+C. B + name core needs state       1158      125      218 
+D. C + degree cap 5                1055      110      205 
+E. C + degree cap 3                 984      100      188 
+F. name core + same city only       895       18      150 
+ 
+(all disclosed edges, for reference : MAYBE 1548  YES 319  NO 349) 
+============================================================================== 
+AGAINST THE ADJUDICATED 100 
+============================================================================== 
+rule                            forgiven   touched already-right 
+                                  errors     AMBIG     touched 
+A. sched A only (shipped v1)           4         2           4 
+B. + fan-out <= 3                      4         2           4 
+C. B + name core needs state           4         2           4 
+D. C + degree cap 5                    4         2           4 
+E. C + degree cap 3                    4         2           4 
+F. name core + same city only          4         2           4 
+ 
+'already-right touched' is the false-alarm proxy: grants the cascade got 
+right whose runner-up the rule calls a substitute. Those stay correct, but 
+a rule that touches many of them is asserting more than it knows. 
+============================================================================== 
+WHAT THE DEGREE CAP REMOVES (rule C -> rule D) 
+============================================================================== 
+edges removed: 11,367 
+                                  name degree
+                                <char>  <int>
+                    ALPHA LAMBDA DELTA    289
+ ANCIENT FREE MASONS OF SOUTH CAROLINA    214
+                 VOLUNTEERS OF AMERICA    156
+                 VOLUNTEERS OF AMERICA    155
+                 VOLUNTEERS OF AMERICA    155
+                 VOLUNTEERS OF AMERICA    155
+                 VOLUNTEERS OF AMERICA    155
+    Asociacion Venezolano Americana de    155
+                 VOLUNTEERS OF AMERICA    151
+                 VOLUNTEERS OF AMERICA    147
+                 VOLUNTEERS OF AMERICA    147
+                 VOLUNTEERS OF AMERICA    147
+  FREE & ACCEPTED MASONS OF CALIFORNIA    139
+                 VOLUNTEERS OF AMERICA    138
+                 VOLUNTEERS OF AMERICA    135
+ 
+wrote data-dev/DYAD-RULE-SWEEP.rds 

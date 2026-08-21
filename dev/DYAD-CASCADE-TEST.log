@@ -1,0 +1,149 @@
+﻿dyad table: 566,653 pairs (29,238 substitutable) 
+loading the 50k cascade result ... 
+  46,945 grants scored 
+============================================================================== 
+1  TIER MOVEMENT 
+============================================================================== 
+baseline: YES 25436  MAYBE 10898  NO 10611 
+ 
+>> substitutable only, operating-first (proposed default) 
+Rscript : pf_dyad_collapse: 620 grants have more than 25 candidates in the band (max 4609); capped by score
+At line:1 char:433
++ ... RBAN\00-GITHUB\pfmatch"; Rscript dev/test-dyad-cascade.R 2>&1 | Tee-O ...
++                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (pf_dyad_collaps...capped by score:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+pf_dyad_collapse: 1657 grants merged (9093 candidates -> 6994 groups), 2099 rows dropped, 349 picks changed
+  tiers: YES 25436->26140  MAYBE 10898->10194  NO 10611->10611
+   YES  26140 (+704)   MAYBE  10194 (-704)   NO  10611 (+0) 
+ 
+>> substitutable only, arm-first 
+pf_dyad_collapse: 620 grants have more than 25 candidates in the band (max 4609); capped by score
+pf_dyad_collapse: 1657 grants merged (9093 candidates -> 6994 groups), 2099 rows dropped, 558 picks changed
+  tiers: YES 25436->25694  MAYBE 10898->10640  NO 10611->10611
+   YES  25694 (+258)   MAYBE  10640 (-258)   NO  10611 (+0) 
+ 
+>> substitutable only, keep the cascade's pick 
+pf_dyad_collapse: 620 grants have more than 25 candidates in the band (max 4609); capped by score
+pf_dyad_collapse: 1657 grants merged (9093 candidates -> 6994 groups), 2099 rows dropped, 311 picks changed
+  tiers: YES 25436->25834  MAYBE 10898->10500  NO 10611->10611
+   YES  25834 (+398)   MAYBE  10500 (-398)   NO  10611 (+0) 
+ 
+>> substitutable + related, operating-first (the unsafe variant) 
+pf_dyad_collapse: 620 grants have more than 25 candidates in the band (max 4609); capped by score
+pf_dyad_collapse: 2575 grants merged (15936 candidates -> 11223 groups), 4713 rows dropped, 539 picks changed
+  tiers: YES 25436->26419  MAYBE 10898->9914  NO 10611->10612
+   YES  26419 (+983)   MAYBE   9914 (-984)   NO  10612 (+1) 
+------------------------------------------------------------------------------ 
+WHERE THE TIER MOVEMENT COMES FROM (proposed default) 
+------------------------------------------------------------------------------ 
+grants with a collapse : 1,657 
+  candidates removed   : 2,099 
+ 
+  tier0  tier1     N
+ <fctr> <fctr> <int>
+  MAYBE    YES   704
+ 
+every tier change is inside a collapsed grant: TRUE 
+median margin before / after on collapsed grants: 0.000 / 0.140 
+------------------------------------------------------------------------------ 
+MAYBE -> YES PROMOTIONS, sample 
+------------------------------------------------------------------------------ 
+      id                               kept                                was
+  <char>                             <char>                             <char>
+ G000052                     HUNDRED NIGHTS                     HUNDRED NIGHTS
+ G000077 BILLY GRAHAM EVANGELISTIC ASSOCIAT BILLY GRAHAM EVANGELISTIC ASSOCIAT
+ G000199               SAINT ANTHONY SHRINE               SAINT ANTHONY SHRINE
+ G000229              BOY SCOUTS OF AMERICA              BOY SCOUTS OF AMERICA
+ G000318             ANTI DEFAMATION LEAGUE             ANTI DEFAMATION LEAGUE
+ G000323                   VNA CARE NETWORK                   VNA CARE NETWORK
+ G000327 BILLY GRAHAM EVANGELISTIC ASSOCIAT BILLY GRAHAM EVANGELISTIC ASSOCIAT
+ G000397               DAVENPORT UNIVERSITY    DAVENPORT UNIVERSITY FOUNDATION
+ G000619                  COMMUNITY HOSPICE                  COMMUNITY HOSPICE
+ G000666                 OAKLAND UNIVERSITY                 OAKLAND UNIVERSITY
+ G000710 THE CHILDRENS HOSPITAL OF PHILADEL THE CHILDRENS HOSPITAL OF PHILADEL
+ G000734                     CRAIG HOSPITAL          CRAIG HOSPITAL FOUNDATION
+ G000782           BRIGHAM YOUNG UNIVERSITY           BRIGHAM YOUNG UNIVERSITY
+ G001083             ANTI DEFAMATION LEAGUE             ANTI DEFAMATION LEAGUE
+ G001196             ANTI DEFAMATION LEAGUE             ANTI DEFAMATION LEAGUE
+ margin0 margin1
+   <num>   <num>
+       0   0.880
+       0   0.600
+       0   0.760
+       0   0.208
+       0   0.200
+       0   0.680
+       0   0.600
+       0   0.380
+       0   0.380
+       0   0.360
+       0   0.240
+       0   0.760
+       0   0.080
+       0   0.180
+       0   0.200
+============================================================================== 
+3  WHY THE substitutable / related SPLIT IS LOAD-BEARING 
+============================================================================== 
+collapsing related edges too moves YES by +983 and MAYBE by -984, 
+i.e. it looks better on every headline number. It gets there by merging 
+pairs like these, which are not substitutes: 
+                                  top                               runner
+                               <char>                               <char>
+             JOHNS HOPKINS UNIVERSITY             JOHNS HOPKINS UNIVERSITY
+   Mayo Clinic Health System-Fairmont  Mayo Clinic Health System-Lake City
+                  HERITAGE FOUNDATION                   HERITAGE INSTITUTE
+         DANA FARBER CANCER INSTITUTE      DANA FARBER CANCER CARE NETWORK
+                   JAWONIO FOUNDATION                              JAWONIO
+ GUNDERSEN LUTHERAN MEDICAL FOUNDATIO    GUNDERSEN LUTHERAN MEDICAL CENTER
+           Mass General Hospital Corp  Mass General Brigham Population Hlt
+ KOKUA KALIHI VALLEY COMPREHENSIVE FA   KALIHI VALLEY COMMUNITY FOUNDATION
+                             LYNNDALE                  LYNNDALE FOUNDATION
+ WORLD FOUNDATION FOR GIRL GUIDES AND GIRL SCOUTS OF THE UNITED STATES OF 
+       AMERICAN CIVIL LIBERTIES UNION AMERICAN CIVIL LIBERTIES UNION FOUND
+     HARRY AND JEANETTE WEINBERG PARK    HARRY AND JEANETTE WEINBERG WOODS
+             MOVEMENT STRATEGY CENTER MOVEMENT STRATEGY CENTER ACTION FUND
+ NATIONAL COMMITTEE TO PRESERVE SOCIA NATIONAL COMMITTEE TO PRESERVE SOCIA
+ UNITED STATES NAVAL ACADEMY ALUMNI A UNITED STATES NAVAL ACADEMY FOUNDATI
+ 
+grants collapsed under related-too but not under substitutable-only: 918 
+============================================================================== 
+4  THE ADJUDICATED 100 
+============================================================================== 
+errors under the strict definition        : 47 of 100 
+forgiven by 'either substitutable member' : 4 
+errors after                              : 43 (33-53%) 
+ 
+already-correct grants whose runner-up the rule calls a substitute: 4 of 53 
+ 
+ grant_id        verdict                              top
+   <char>         <char>                           <char>
+  G001193 CORRECT_DEEPER BOYS AND GIRLS CLUB OF SALEM MAR
+  G003768      AMBIGUOUS         THE BLUE CARD FOUNDATION
+  G004400      AMBIGUOUS     DENVER ART MUSEUM FOUNDATION
+  G004964 CORRECT_DEEPER BIG BROTHERS BIG SISTERS LONE ST
+                            truth
+                           <char>
+ BOYS AND GIRLS CLUB OF SALEM MAR
+                             <NA>
+                             <NA>
+ BIG BROTHERS BIG SISTERS LONE ST
+ 
+100 labels cannot separate rules that differ by 3 cases. This is a 
+consistency check, not a validation; the rule was chosen on graph safety. 
+============================================================================== 
+5  THE PRECISION RESIDUAL 
+============================================================================== 
+substitutable pairs: 29,238 
+ shared_tokens pairs   pct
+         <int> <int> <num>
+             0  9019  30.8
+             1  4889  16.7
+             2  6324  21.6
+             3  9006  30.8
+ 
+Error in sprintf(...) : too few arguments
+Calls: say -> cat -> sprintf
+Execution halted

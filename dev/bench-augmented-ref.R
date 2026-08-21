@@ -29,7 +29,8 @@ lnk <- pf_link(prep, ref, dir = file.path(PF, "data-dev", "batches-augbench"),
                batch_size = 1000L, verbose = TRUE)
 el <- proc.time()[["elapsed"]] - t0
 
-st <- as.data.table(pf_status(lnk))
+# pf_link() returns a pf_linked object; pf_status() wants the pf_match inside it.
+st <- as.data.table(lnk$status)
 tb <- st[, .N, by = status]
 hr(); say("AUGMENTED UNIFIED REFERENCE vs BASELINE"); hr()
 base <- c(YES = 2821L, MAYBE = 1006L, NO = 1093L, OOS = 80L)

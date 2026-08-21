@@ -1,3 +1,16 @@
 benchmark grants: 5,000
 recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
 identities: 4,716
+reference: 3,891,187 rows
+---------------------------------------------------------------------- 
+STAGE 3  link 
+pf_run_batches: 4,716 rows in 5 batches of 1,000 
+  [  1/  5]  1,000 rows | YES   612 MAYBE   201 NO   187 OOS    0 | 4284.5 s (4284.5 s/1k) 
+  [  2/  5]  1,000 rows | YES   601 MAYBE   223 NO   176 OOS    0 | 4498.8 s (4498.8 s/1k) 
+  [  3/  5]  1,000 rows | YES   607 MAYBE   195 NO   198 OOS    0 | 5058.2 s (5058.2 s/1k) 
+  [  4/  5]  1,000 rows | YES   589 MAYBE   231 NO   180 OOS    0 | 4160.4 s (4160.4 s/1k) 
+  [  5/  5]    716 rows | YES   442 MAYBE   152 NO   122 OOS    0 | 3080.3 s (4302.1 s/1k) 
+  elapsed 21082.3 s 
+Error in pf_status(lnk) : inherits(x, "pf_match") is not TRUE
+Calls: as.data.table -> pf_status -> stopifnot
+Execution halted

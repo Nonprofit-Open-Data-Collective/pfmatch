@@ -1,0 +1,45 @@
+﻿============================================================================== 
+TWO EINS, ONE NAME: THE OTHER HALF OF THE TIE BAND 
+============================================================================== 
+MAYBE  n=10,409  identical normalised name  1651 (15.9%)  of which disclosed-linked  181 (11%) 
+YES    n= 4,501  identical normalised name   228 ( 5.1%)  of which disclosed-linked    1 ( 0%) 
+NO     n= 9,399  identical normalised name   436 ( 4.6%)  of which disclosed-linked  111 (25%) 
+ 
+A disclosure edge cannot exist between an organisation and itself, so the 
+identical-name population is unreachable by any linked-EIN table. 
+ 
+------------------------------------------------------------------------------ 
+THE THREE POPULATIONS IN THE MAYBE TIE BAND, DISJOINT 
+------------------------------------------------------------------------------ 
+                        bucket grants   pct
+                        <char>  <int> <num>
+                       neither   6993  67.2
+           same name, two EINs   1651  15.9
+ arm pair, name AND disclosure    851   8.2
+               disclosure only    516   5.0
+        name only, unconfirmed    398   3.8
+ 
+same-name examples (different EINs, indistinguishable names): 
+                                   name        e1        e2 same_city   gap
+                                 <char>    <char>    <char>    <lgcl> <num>
+                       Childrens Center 200778360 560615188     FALSE  0.00
+                      ADOPT A CLASSROOM 650828272 760802829     FALSE  0.00
+                              FOOD BANK 814867833 581857406     FALSE  0.00
+  BILLY GRAHAM EVANGELISTIC ASSOCIATION 452588350 806198602      TRUE  0.00
+    Southeast Missouri State University 462017900 510232834      TRUE  0.00
+               JOHNS HOPKINS UNIVERSITY 520595110 237424444      TRUE  0.00
+           BEST FOOT FORWARD FOUNDATION 300598378 333457780     FALSE  0.26
+               JOHNS HOPKINS UNIVERSITY 520595110 520591627      TRUE  0.00
+ MEMORIAL SLOAN KETTERING CANCER CENTER 912154267 133389586      TRUE  0.00
+              CAMPUS CRUSADE FOR CHRIST 202109283 205340940      TRUE  0.00
+                  BOY SCOUTS OF AMERICA 590637816 237196280      TRUE  0.00
+                         Newsong Church 320346424 934755525     FALSE  0.12
+            CHRISTIAN COUNSELING CENTER 581339729 134333352     FALSE  0.00
+          FIRST UNITED METHODIST CHURCH 362167072 362693469     FALSE  0.00
+                       VNA CARE NETWORK 042794849 042103825      TRUE  0.00
+------------------------------------------------------------------------------ 
+HOW OFTEN IS THE SAME-NAME PAIR ALSO SAME-CITY? 
+------------------------------------------------------------------------------ 
+same city  : 746 (45%)  - almost certainly one body, two BMF rows 
+same state : 910 (55%) 
+different state: 741 (45%) - chapters or unrelated namesakes 

@@ -14,6 +14,13 @@ NULL
 # from a script.
 .datatable.aware <- TRUE
 
+# `.datatable.aware` makes `:=` work, but it does not put data.table's infix
+# operators on the package search path. `%chin%` is one of them, and unqualified
+# use inside a package function fails with "could not find function" the moment
+# the caller has not attached data.table themselves. Import it explicitly.
+#' @importFrom data.table %chin%
+NULL
+
 # data.table's non-standard evaluation makes column names look like undeclared
 # globals to R CMD check. Declaring them here silences the note without
 # suppressing genuine ones: anything added to a `[ ... ]` expression that is NOT
@@ -31,5 +38,12 @@ utils::globalVariables(c(
   "NTEE2", "l1", "l24", "l5", "cat_name", "cat_desc", "keywords", "level4",
   "level3.label", "level4.label", "level5.label", "ref",
   # grant-purpose columns
-  "purpose", "contentful", "cov_all"
+  "purpose", "contentful", "cov_all",
+  # dyad table columns
+  "ego_ein", "alter_ein", "tax_year", "ego_name", "alter_name", "src",
+  "ein_a", "ein_b", "dyad_class", "dyad_reason", "dyad_id", "sched_a_dir",
+  "n_years", "first_year", "last_year", "in_bmf", "sup_key",
+  "filed_a", "filed_b", ".rowid", ".top", ".pri", "grp", "gsz", "arm",
+  "n_before", "n_after", "cls", "did", "rep", "top_row", "pick_ein",
+  "name_y", "x", "y"
 ))

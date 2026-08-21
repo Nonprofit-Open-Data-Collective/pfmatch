@@ -1,0 +1,52 @@
+﻿ARM-CLUSTERS pairs (name+geo detected, same state): 752 
+           cls     N
+        <char> <int>
+ substitutable   411
+     (no edge)   273
+       related    68
+ 
+-- restricted to pairs the 2022 build could link at all: 
+           cls     N
+        <char> <int>
+ substitutable   380
+       related    61
+     (no edge)    10
+ 
+-- same city: 
+           cls     N
+        <char> <int>
+ substitutable   402
+     (no edge)   220
+       related    66
+ 
+-- the ones a disclosure exists for but that we now call `related`: 
+   arm_ein    op_ein evidence       direction
+    <char>    <char>   <char>          <char>
+ 113604532 133491367  SCHED_R      undirected
+ 133740818 130547000  SCHED_R      undirected
+ 134012469 135562304  SCHED_R      undirected
+ 136003018 130453095  SCHED_R      undirected
+ 136213516 133871360  SCHED_R      undirected
+ 136844298 221487148  SCHED_R      undirected
+ 200267158 590624414  SCHED_R      undirected
+ 201330372 590706084  SCHED_R      undirected
+ 201826827 237325853  SCHED_R      undirected
+ 202380599 741100555  SCHED_A arm_supports_op
+ 208830904 540366440  SCHED_R      undirected
+ 222456079 223452412  SCHED_R      undirected
+ 
+-- named examples, to eyeball: 
+                                arm                                 op
+                             <char>                             <char>
+        CAMPHILL SOLTANE FOUNDATION                   CAMPHILL SOLTANE
+ NEIGHBORHOOD HOUSE CHARTER SCHOOL  THE NEIGHBORHOOD HOUSE CHARTER SCH
+         BAYSTATE HEALTH FOUNDATION                    BAYSTATE HEALTH
+         MIRIAM HOSPITAL FOUNDATION                THE MIRIAM HOSPITAL
+   WINSTED HEALTH CENTER FOUNDATION              WINSTED HEALTH CENTER
+     FAULKNER UNIVERSITY FOUNDATION                FAULKNER UNIVERSITY
+  MIDSTATE MEDICAL CENTER AUXILIARY            MIDSTATE MEDICAL CENTER
+        NORTHWELL HEALTH FOUNDATION                   NORTHWELL HEALTH
+          NASHOTAH HOUSE FOUNDATION                     NASHOTAH HOUSE
+  ANTI DEFAMATION LEAGUE FOUNDATION             ANTI-DEFAMATION LEAGUE
+ AGUDATH ISRAEL OF AMERICA FOUNDATI          AGUDATH ISRAEL OF AMERICA
+               PROJECT RENEWAL FUND                    PROJECT RENEWAL
