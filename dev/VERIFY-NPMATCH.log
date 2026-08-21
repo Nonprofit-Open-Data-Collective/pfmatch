@@ -16,7 +16,7 @@ identities 195 | reference 1,924,822 rows
 ARE THE THREE ARGUMENTS ACTUALLY USED? 
 ============================================================================== 
 with precomputed index : YES 110 MAYBE 43 NO 34 
-without                : YES 110 MAYBE 43 NO 34 (349 s) 
+without                : YES 110 MAYBE 43 NO 34 (250 s) 
   [PASS] results identical either way (the index is an optimisation, not a behaviour change) 
 ============================================================================== 
 THE DYAD PATH, END TO END, ON THE INSTALLED npmatch 
@@ -24,8 +24,11 @@ THE DYAD PATH, END TO END, ON THE INSTALLED npmatch
 collapsed identities: 5 
   [PASS] pf_status() works after a collapse 
 ============================================================================== 
+IS pfmatch ITSELF INSTALLED? 
+============================================================================== 
+  [PASS] pfmatch is installed (library(pfmatch) resolves) 
+  [PASS] the installed pfmatch exports the dyad module 
+  [PASS] the installed pf_run_batches() accepts `dyads` 
+  [PASS] the installed pf_link() accepts `dyads` 
+============================================================================== 
 ALL CHECKS PASSED 
- 
-NOTE: pfmatch itself is NOT installed -- `library(pfmatch)` would fail 
-outright. The Phase 1 scripts (dev/full-0*.R) call it. Installing npmatch 
-fixes half the problem. 

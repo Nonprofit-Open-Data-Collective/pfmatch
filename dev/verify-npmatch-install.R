@@ -79,10 +79,21 @@ s <- as.data.table(pf_status(x))
 say("collapsed identities: %d", sum(as.data.frame(x$result)$dyad_collapsed))
 ok(nrow(s) == nrow(prep$recipients), "pf_status() works after a collapse")
 
+hr(); say("IS pfmatch ITSELF INSTALLED?"); hr()
+# It was not, until 2026-08-21. Every Phase 1 script calls library(pfmatch),
+# so an npmatch-only fix leaves them broken. Checked here rather than asserted.
+inst <- requireNamespace("pfmatch", quietly = TRUE)
+ok(inst, "pfmatch is installed (library(pfmatch) resolves)")
+if (inst) {
+  e <- getNamespaceExports("pfmatch")
+  ok(all(c("pf_build_dyads", "pf_dyad_collapse", "pf_dyad_lookup") %in% e),
+     "the installed pfmatch exports the dyad module")
+  ok("dyads" %in% names(formals(pfmatch::pf_run_batches)),
+     "the installed pf_run_batches() accepts `dyads`")
+  ok("dyads" %in% names(formals(pfmatch::pf_link)),
+     "the installed pf_link() accepts `dyads`")
+}
+
 hr()
 say(if (FAILED) "SOME CHECKS FAILED" else "ALL CHECKS PASSED")
-say("")
-say("NOTE: pfmatch itself is NOT installed -- `library(pfmatch)` would fail")
-say("outright. The Phase 1 scripts (dev/full-0*.R) call it. Installing npmatch")
-say("fixes half the problem.")
 if (FAILED) quit(status = 1L)

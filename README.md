@@ -148,7 +148,48 @@ with no institutional token *and* a positive person signal (a single-letter
 initial, or a common given name). It fires on 0.7% of YES matches and 18% of
 out-of-sample rows, which is the right direction.
 
-### 3. `R/match.R` — two cascades
+### 3. `R/match.R` — the cascade
+
+Full walkthrough in **`dev/CASCADE.md`**: what is compared, the scoring formula,
+all eleven passes, the vetoes, and how a grant lands in YES / MAYBE / NO. The
+short version:
+
+**Both sides carry two name slots**, so name similarity is the best of a
+cross-product — `max(name×name, name×dba, dba×name, dba×dba)`. The query `dba`
+is `recip_name_alt`, the untruncated line1+line2 form. Address is not one
+comparison either: seven location signals are emitted and the geo score takes
+the strongest, never a sum.
+
+```
+score = 0.60 · name  +  0.40 · geo
+
+geo   = max( 1.00·zip9,  0.95·street,  0.90·zip5,  0.90·pobox,
+             0.55·zip3,  0.50·city,    0.20·state )
+```
+
+Taking the `max` means correlated address fields cannot double-count and a wrong
+city cannot pull down a ZIP-confirmed match. Fuzzy similarities are floored to 0
+below `jw_threshold` (0.85) — reclin2's `threshold=` is the Winkler prefix
+*boost*, not a cutoff, so unrelated strings otherwise leak ~0.5 into every score.
+
+Eleven passes run cheapest-first and **a query resolved to YES leaves the pending
+set**, so expensive passes only see the residue. Stage A (exact, state-blocked)
+resolves the bulk on a few thousand candidates; stages B–D spend two orders of
+magnitude more candidates on the tail.
+
+Tiering is `score ≥ 0.78 → YES`, `≥ 0.65 → MAYBE`, else `NO`, with two
+demotions from YES to MAYBE: a **margin under 0.05** to the runner-up (an
+ambiguity brake — something else is nearly as good), and a **soft veto**. The
+soft vetoes that matter here are `affiliate_suffix` (candidate ends
+FOUNDATION / ENDOWMENT / AUXILIARY / BOOSTERS and the query does not) and
+`government_entity`.
+
+> **These thresholds are npmatch defaults, fitted on SAM/USASpending — not on
+> 990-PF data.** What is worth re-tuning, what the current label set can support,
+> and why tier boundaries cannot be tuned on MAYBE-only labels:
+> `dev/OPTIMIZATION-PLAN.md`.
+
+### 3a. Two pass configurations
 
 **`pf_staged_passes()` is the production cascade** (state-blocked bulk plus a
 cheap cross-state exact sweep) and **`pf_default_passes()` is the state-free
@@ -204,6 +245,30 @@ match timings. `pf_match_grants()` times **only** the cascade.
 `pf_report()` prints the outcome split, the outcome x recipient-type crosstab,
 geographic-agreement diagnostics, the per-pass cascade table, and the runtime;
 `pf_status()`, `pf_crosstab()`, and `pf_geo_agreement()` return the frames.
+
+### 5. `R/dyads.R` — EIN dyads
+
+A grant reported to `EAGLE RANCH` may have been paid to `EAGLE RANCH
+FOUNDATION`. When both are candidates, the margin brake in §3 fires on a
+runner-up that is *the same body under a second EIN* — median margin on affected
+grants is exactly **0.000**, a grant held back for tying with itself.
+
+`pf_build_dyads()` reads Schedule A Part I line 12g and Schedule R Part II
+disclosures (2009–2024) and classifies each disclosed pair as `substitutable` or
+merely `related`. `pf_link(dyads = )` then collapses substitutable candidates
+*within one grant's candidate list* before selection and re-runs the tiering:
+**704 MAYBE grants become YES on the 50k run, with nothing moving into NO.**
+
+Two rules are not negotiable, both learned the hard way:
+
+* **Direct edges only, never a transitive closure.** Connected components over
+  the disclosure graph produce a single component of 66,973 EINs across 56
+  states.
+* **Substitution requires exclusivity.** A bare Schedule A edge gave the *YMCA
+  Retirement Fund* 905 "substitutable" partners — it supports 907 local YMCAs.
+
+`dev/DYAD-FINDINGS.md` for the evidence, `dev/CLUSTER-FINDINGS.md` for the
+negative result that shaped the design.
 
 ## Benchmarks and development
 

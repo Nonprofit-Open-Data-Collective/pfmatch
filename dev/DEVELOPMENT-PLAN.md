@@ -20,6 +20,12 @@ rather than only labels. See §"Phase 0c" and `dev/DYAD-FINDINGS.md`.
 | NO | 21.9% | Candidate-generation failures plus genuine absences (government units, foreign, defunct). |
 | OOS | 1.6% | Foreign only, after the recipient-type filter was narrowed. |
 
+How the cascade actually works — comparisons, scoring formula, all eleven
+passes, vetoes, tiering — is documented in `dev/CASCADE.md`. Every threshold in
+it is an **npmatch default fitted on SAM/USASpending, not on 990-PF data**;
+`dev/OPTIMIZATION-PLAN.md` says what is worth re-tuning and why the current
+label set cannot support tuning a tier boundary.
+
 Findings that shape everything below, each with its own memo:
 
 * **Text enrichment is the largest available lever** — appending each candidate's
