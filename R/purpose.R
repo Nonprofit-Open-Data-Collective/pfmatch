@@ -171,7 +171,7 @@ pf_purpose_tiebreak <- function(x, org_text, config = pf_tiebreak_config()) {
                  n_close = sum(score >= score[1L] - config$tie_band)), by = .id]
   live <- tops[n_close >= 2L & top >= config$tie_high]$.id
   if (!length(live)) return(structure(
-    utils::modifyList(x, list(result = .pf_reclass(res, x$result))), class = "pf_match"))
+    .pf_setresult(x, .pf_reclass(res, x$result)), class = "pf_match"))
   cand <- pr[.id %in% live]
   cand[, top := max(score), by = .id]
   cand <- cand[score >= top - config$tie_band]
@@ -224,9 +224,22 @@ pf_purpose_tiebreak <- function(x, org_text, config = pf_tiebreak_config()) {
     length(live), sum(res$tiebreak_fired),
     paste(sprintf("%s=%d", names(table(res$tiebreak_key)),
                   table(res$tiebreak_key)), collapse = " ")))
-  structure(utils::modifyList(x, list(result = .pf_reclass(res, x$result))),
+  structure(.pf_setresult(x, .pf_reclass(res, x$result)),
             class = "pf_match")
 }
+# Replace x$result, keeping every attribute the caller put on the new result.
+#
+# This existed as `utils::modifyList(x, list(result = new))`, which is wrong
+# here and silently so. modifyList recurses whenever both the old and new values
+# are lists -- and a data.frame IS a list -- so instead of replacing the result
+# it merged the new one COLUMN BY COLUMN into the old object. The columns came
+# through, which is why nothing looked broken, but the returned frame was the
+# old one wearing new columns, and every attribute set on the new frame was
+# discarded. pf_dyad_collapse() attaches the reduced pair set as an attribute,
+# so the collapse's whole output was being thrown away while its tier counts --
+# computed before the assignment -- still looked correct.
+.pf_setresult <- function(x, new) { x$result <- new; x }
+
 # preserve np_tiered class and the pairs attribute across the rewrite
 .pf_reclass <- function(new, old) {
   for (a in setdiff(names(attributes(old)), c("names", "row.names", "class")))

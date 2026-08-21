@@ -371,15 +371,26 @@ pf_dyad_lookup <- function(dyads, a, b, what = c("class", "id")) {
 #'   adjudicated arm pairs the flat operating rule scored 60% against the
 #'   cascade's 27%; that 60% has a 32-84% interval and is not settled.
 #'   `pf_arm_order()` implements the purpose-conditional alternative.
+#' @param keep_soft_veto Carry a soft veto from a merged-away member onto the
+#'   surviving representative, so the grant stays in review. A soft veto is
+#'   npmatch's "do not auto-accept this" signal, and `affiliate_suffix` is the
+#'   operating-arm problem in veto form — it fires on exactly the `X FOUNDATION`
+#'   candidate when the grant says `X`. Without this, dropping the arm drops the
+#'   veto with it. Measured on the 50k run: **71 of 700 promotions** came from
+#'   that path, every one of them a case where the cascade ranked the arm first
+#'   and the policy overrode both the score and the veto. `FALSE` restores the
+#'   older behaviour and recovers those 71 auto-accepts, at the cost of resting
+#'   them on a rule validated at 60% on 15 cases.
 #' @return A list.
 #' @export
 pf_dyad_config <- function(tie_band = 0.05, max_band = 25L,
                            use = "substitutable",
-                           policy = c("operating", "arm", "top")) {
+                           policy = c("operating", "arm", "top"),
+                           keep_soft_veto = TRUE) {
   # Inf is a legitimate way to say "no cap"; as.integer() would turn it into NA.
   max_band <- if (is.finite(max_band)) as.integer(max_band) else Inf
   list(tie_band = tie_band, max_band = max_band, use = use,
-       policy = match.arg(policy))
+       policy = match.arg(policy), keep_soft_veto = keep_soft_veto)
 }
 
 #' Attach dyad context to a match result
@@ -402,17 +413,17 @@ pf_dyad_annotate <- function(x, dyads, config = pf_dyad_config()) {
   res$dyad_alt_ein <- NA_character_; res$dyad_alt_name <- NA_character_
   cand <- .pf_dyad_band(x, config)
   if (!nrow(cand)) return(structure(
-    utils::modifyList(x, list(result = .pf_reclass(res, x$result))), class = "pf_match"))
+    .pf_setresult(x, .pf_reclass(res, x$result)), class = "pf_match"))
   pick <- .pf_ein(res$overall_ein)
   cand[, pick_ein := pick[match(.id, res$.id)]]
   hit <- cand[!is.na(pick_ein) & ein != pick_ein]
   if (!nrow(hit)) return(structure(
-    utils::modifyList(x, list(result = .pf_reclass(res, x$result))), class = "pf_match"))
+    .pf_setresult(x, .pf_reclass(res, x$result)), class = "pf_match"))
   hit[, cls := pf_dyad_lookup(dyads, pick_ein, ein)]
   hit[, did := pf_dyad_lookup(dyads, pick_ein, ein, "id")]
   hit <- hit[!is.na(cls)]
   if (!nrow(hit)) return(structure(
-    utils::modifyList(x, list(result = .pf_reclass(res, x$result))), class = "pf_match"))
+    .pf_setresult(x, .pf_reclass(res, x$result)), class = "pf_match"))
   # A chosen EIN may have more than one disclosed partner in the list. Report a
   # substitutable partner ahead of a merely related one, then the higher score.
   hit[, .pri := data.table::fifelse(cls == "substitutable", 0L, 1L)]
@@ -424,7 +435,7 @@ pf_dyad_annotate <- function(x, dyads, config = pf_dyad_config()) {
   message(sprintf("pf_dyad_annotate: %d results carry a dyad partner (%s)",
                   nrow(hit), paste(sprintf("%s=%d", names(table(hit$cls)),
                                            table(hit$cls)), collapse = " ")))
-  structure(utils::modifyList(x, list(result = .pf_reclass(res, x$result))),
+  structure(.pf_setresult(x, .pf_reclass(res, x$result)),
             class = "pf_match")
 }
 
@@ -470,7 +481,7 @@ pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
   res$dyad_id <- NA_character_; res$dyad_from_ein <- NA_character_
   res$dyad_n_before <- NA_integer_; res$dyad_n_after <- NA_integer_
   done <- function() structure(
-    utils::modifyList(x, list(result = .pf_reclass(res, x$result))), class = "pf_match")
+    .pf_setresult(x, .pf_reclass(res, x$result)), class = "pf_match")
 
   cand <- .pf_dyad_band(x, config, report = TRUE)
   if (!nrow(cand)) return(done())
@@ -557,11 +568,66 @@ pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
   if (is.null(np_config))
     np_config <- if (!is.null(x$config)) x$config else npmatch::np_config()
   pr0  <- attr(x$result, "pairs")
-  keep_rows <- !(paste(as.data.frame(pr0)$.id, as.data.frame(pr0)$.ein) %chin% drop_key)
+  pr0df <- as.data.frame(pr0)
+  pk0   <- paste(pr0df$.id, pr0df$.ein)
+  keep_rows <- !(pk0 %chin% drop_key)
   pr1  <- pr0[keep_rows, , drop = FALSE]
   for (a in setdiff(names(attributes(pr0)), c("names", "row.names", "class")))
     attr(pr1, a) <- attr(pr0, a)
   class(pr1) <- class(pr0)
+
+  # A soft veto on a DROPPED member would otherwise vanish with it, and a soft
+  # veto is npmatch's "do not auto-accept this" signal. Measured on the 50k run,
+  # 71 of 700 promotions came from exactly this: the cascade ranked the ARM
+  # first, `affiliate_suffix` soft-vetoed it, and the policy overrode both. Those
+  # promotions rest on the ordering policy alone -- 60% on 15 adjudicated cases
+  # -- against a score and a veto that both said otherwise. Carry the veto onto
+  # the representative so the grant stays in review.
+  # Only a veto that was actually HOLDING the grant counts, and "holding" has a
+  # precise meaning: the veto sat on the candidate np_select() had ALREADY
+  # chosen, so the grant was in MAYBE because of it. Two weaker predicates were
+  # tried on the 50k run and both were wrong:
+  #
+  #   any dropped member vetoed  -> 700 promotions fall to 249. In 380 of those
+  #     the cascade had already picked the un-vetoed operating entity; the veto
+  #     was about a candidate that was never going to be reported.
+  #   top of the band vetoed     -> falls to 394, and 6 still leak. The band's
+  #     top row is not the pick: np_select() resolves ties through
+  #     .np_overall_summary(), not by raw max score.
+  #
+  # So read the pick off the pre-collapse result rather than reconstructing it.
+  if (isTRUE(config$keep_soft_veto) && !is.null(pr0df$veto_soft) &&
+      !is.null(res$overall_veto_soft)) {
+    held <- res$.id[res$overall_veto_soft %in% TRUE]
+    pick_key <- paste(res$.id, res$overall_ein)[res$overall_veto_soft %in% TRUE]
+    sv <- (pr0df$veto_soft %in% TRUE) & (pr0df$.id %chin% held) &
+          (pk0 %chin% pick_key)
+    if (any(sv & !keep_rows)) {
+      # Carry the ORIGINAL reason across, not just a flag: the vetoed candidate
+      # is about to leave the pair set, so this is the only remaining record of
+      # why the grant is being held.
+      lost <- pr0df[sv & !keep_rows, , drop = FALSE]
+      why  <- if (!is.null(lost$veto_soft_reason)) lost$veto_soft_reason
+              else rep(NA_character_, nrow(lost))
+      first_why <- tapply(why, lost$.id, function(v) {
+        v <- v[!is.na(v)]; if (length(v)) v[1L] else NA_character_
+      })
+      dropped_sv <- names(first_why)
+      pr1df <- as.data.frame(pr1)
+      hit <- pr1df$.id %chin% dropped_sv
+      if (any(hit)) {
+        pr1$veto_soft[hit] <- TRUE
+        if (!is.null(pr1$veto_soft_reason)) {
+          inherited <- unname(first_why[pr1df$.id[hit]])
+          pr1$veto_soft_reason[hit] <- ifelse(
+            is.na(pr1df$veto_soft_reason[hit]),
+            paste0("dyad_collapse: inherited from a merged member",
+                   ifelse(is.na(inherited), "", paste0(" (", inherited, ")"))),
+            pr1df$veto_soft_reason[hit])
+        }
+      }
+    }
+  }
 
   new <- npmatch::np_tier(npmatch::np_select(pr1, np_config), np_config)
   new <- as.data.frame(new)
@@ -582,14 +648,20 @@ pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
   message(sprintf(
     "pf_dyad_collapse: %d grants merged (%d candidates -> %d groups), %d rows dropped, %d picks changed",
     length(merged_ids), sum(nb$n_before, na.rm = TRUE), sum(nb$n_after, na.rm = TRUE),
-    length(drop_key), sum(chg, na.rm = TRUE)))
+    sum(!keep_rows), sum(chg, na.rm = TRUE)))
   message(sprintf("  tiers: %s", paste(sprintf("%s %d->%d", names(before),
                                                as.integer(before), as.integer(after)),
                                        collapse = "  ")))
-  res <- new
-  attr(res, "pairs") <- pr1
-  structure(utils::modifyList(x, list(result = .pf_reclass(res, x$result))),
-            class = "pf_match")
+  # `pairs` must be attached AFTER .pf_reclass(), not before: .pf_reclass copies
+  # every attribute off the OLD result, so setting it first means the reduced
+  # pair set is silently overwritten by the full one. The tiers would still be
+  # right -- they are computed from pr1 above -- but the returned object would
+  # carry candidates that were merged away, and pf_candidate_frame() builds the
+  # review sheet from this attribute, so a reviewer would be shown a contender
+  # the collapse had already resolved.
+  out <- .pf_reclass(new, x$result)
+  attr(out, "pairs") <- pr1
+  structure(.pf_setresult(x, out), class = "pf_match")
 }
 
 # The contending candidates for every grant with 2+ inside the tie band, capped

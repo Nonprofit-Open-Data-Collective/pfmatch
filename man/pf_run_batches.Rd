@@ -14,6 +14,8 @@ pf_run_batches(
   method = "hier",
   recover = TRUE,
   self_guard = TRUE,
+  dyads = NULL,
+  dyad_config = pf_dyad_config(),
   resume = TRUE,
   verbose = TRUE
 )
@@ -33,6 +35,13 @@ and lose less on an interrupt; larger ones amortise per-batch overhead.}
 
 \item{self_guard}{Apply \code{\link[=pf_drop_self_matches]{pf_drop_self_matches()}} to each batch.}
 
+\item{dyads}{Optional dyad table from \code{\link[=pf_build_dyads]{pf_build_dyads()}}. When given,
+\code{\link[=pf_dyad_collapse]{pf_dyad_collapse()}} runs on each batch before the status frame is built,
+and the status gains \code{dyad_collapsed}, \code{dyad_id}, \code{dyad_alt_ein} and
+\code{dyad_class}. See \emph{Where the collapse runs}.}
+
+\item{dyad_config}{Settings for that collapse; see \code{\link[=pf_dyad_config]{pf_dyad_config()}}.}
+
 \item{resume}{Skip batches whose checkpoint file already exists.}
 
 \item{verbose}{Per-batch progress.}
@@ -44,3 +53,13 @@ a \code{batch} column. Timings are attached as \code{attr(, "timing")}.
 \description{
 Run the cascade over a large grant file in checkpointed batches
 }
+\section{Where the collapse runs}{
+
+Between \code{\link[=pf_drop_self_matches]{pf_drop_self_matches()}} and \code{\link[=pf_status]{pf_status()}}, because that is the only
+point at which the scored pairs still exist — the status frame keeps just the
+winning candidate. Collapsing is resolved \strong{within one grant's candidate list
+only}, so a per-batch collapse is identical to a whole-file one; batching
+cannot change the answer. Changing \code{dyads} or \code{dyad_config} invalidates the
+checkpoints in \code{dir}, which \code{resume} will otherwise happily reuse.
+}
+

@@ -12,6 +12,8 @@ pf_link(
   passes = NULL,
   config = npmatch::np_config(),
   method = "hier",
+  dyads = NULL,
+  dyad_config = pf_dyad_config(),
   verbose = TRUE
 )
 }
@@ -25,6 +27,13 @@ pf_link(
 \item{batch_size}{Identities per checkpoint.}
 
 \item{passes, config, method}{Passed to \code{\link[=pf_run_batches]{pf_run_batches()}}.}
+
+\item{dyads}{Optional dyad table from \code{\link[=pf_build_dyads]{pf_build_dyads()}}. When supplied, the
+substitutable pairs inside each candidate list are collapsed before
+selection, which is what removes ties a grant has with itself. \code{NULL}
+disables it. See \link{pf_dyads} and \code{dev/DYAD-FINDINGS.md}.}
+
+\item{dyad_config}{Settings for that collapse; see \code{\link[=pf_dyad_config]{pf_dyad_config()}}.}
 
 \item{verbose}{Print progress.}
 }

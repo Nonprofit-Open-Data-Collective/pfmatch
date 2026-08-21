@@ -8,7 +8,8 @@ pf_dyad_config(
   tie_band = 0.05,
   max_band = 25L,
   use = "substitutable",
-  policy = c("operating", "arm", "top")
+  policy = c("operating", "arm", "top"),
+  keep_soft_veto = TRUE
 )
 }
 \arguments{
@@ -33,6 +34,17 @@ arm, \code{"top"} keeps whichever the cascade already ranked first. On 15
 adjudicated arm pairs the flat operating rule scored 60\% against the
 cascade's 27\%; that 60\% has a 32-84\% interval and is not settled.
 \code{pf_arm_order()} implements the purpose-conditional alternative.}
+
+\item{keep_soft_veto}{Carry a soft veto from a merged-away member onto the
+surviving representative, so the grant stays in review. A soft veto is
+npmatch's "do not auto-accept this" signal, and \code{affiliate_suffix} is the
+operating-arm problem in veto form — it fires on exactly the \verb{X FOUNDATION}
+candidate when the grant says \code{X}. Without this, dropping the arm drops the
+veto with it. Measured on the 50k run: \strong{71 of 700 promotions} came from
+that path, every one of them a case where the cascade ranked the arm first
+and the policy overrode both the score and the veto. \code{FALSE} restores the
+older behaviour and recovers those 71 auto-accepts, at the cost of resting
+them on a rule validated at 60\% on 15 cases.}
 }
 \value{
 A list.

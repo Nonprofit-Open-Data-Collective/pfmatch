@@ -1,0 +1,39 @@
+﻿scoring the 50k pair set ... 
+promotions: 629 
+============================================================================== 
+WHY WAS THE GRANT IN MAYBE BEFORE THE COLLAPSE? 
+============================================================================== 
+promotions where the baseline pick carried a SOFT VETO : 0 (0%) 
+promotions held only by the margin brake              : 629 (100%) 
+ 
+The soft-veto group is the one at issue: those grants were flagged 
+'do not auto-accept' and are now auto-accepted. 
+============================================================================== 
+THE DECISIVE CROSSTAB: DID THE REPORTED EIN CHANGE? 
+============================================================================== 
+ held_by_veto pick_changed     N
+       <lgcl>       <lgcl> <int>
+        FALSE        FALSE   505
+        FALSE         TRUE   124
+ 
+veto dropped, pick UNCHANGED (veto satisfied)  : 0 
+veto dropped, pick CHANGED   (policy overrode) : 0  <- the exposure 
+ 
+In the first group the cascade already ranked the operating entity first; 
+the veto was about a candidate that was never going to be reported. 
+In the second the cascade ranked the ARM first and the policy overrode it, 
+so the promotion rests on a rule validated at 60% on 15 adjudicated cases. 
+============================================================================== 
+WHAT THE EXPOSED CASES LOOK LIKE 
+============================================================================== 
+============================================================================== 
+DOES THE COLLAPSE EVER KEEP A SOFT-VETOED CANDIDATE? 
+============================================================================== 
+collapsed grants                       : 1650 
+  representative carries a soft veto   : 162 
+  ...and the grant stayed MAYBE        : 142 
+ 
+A veto on the KEPT candidate still holds the grant, as it should. Only a 
+veto on a DROPPED candidate disappears. 
+ 
+wrote data-dev/DYAD-VETO-PROBE.csv 

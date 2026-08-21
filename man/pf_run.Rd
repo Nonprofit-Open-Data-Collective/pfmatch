@@ -12,6 +12,7 @@ pf_run(
   ref_cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
   dir = "data-dev/batches",
   batch_size = 25000L,
+  dyads = NULL,
   report = TRUE,
   verbose = TRUE,
   ...
@@ -22,7 +23,8 @@ pf_run(
 
 \item{bmf, ref_cache}{Passed to \code{\link[=pf_reference]{pf_reference()}}.}
 
-\item{dir, batch_size}{Passed to \code{\link[=pf_link]{pf_link()}}.}
+\item{dir, batch_size, dyads}{Passed to \code{\link[=pf_link]{pf_link()}}. \code{dyads} may be a table or
+a path to a cached one.}
 
 \item{report}{Print the outcome tables when done.}
 

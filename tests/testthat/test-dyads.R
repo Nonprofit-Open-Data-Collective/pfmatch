@@ -272,3 +272,71 @@ test_that("annotate adds context without changing any pick", {
   # rather than suppressed. Only pf_dyad_collapse() filters on the class.
   expect_equal(r$dyad_class, c("substitutable", "related", "substitutable"))
 })
+
+## ------------------------------------------- soft veto carried across a merge
+veto_match <- function() {
+  # G1: the ARM outscores the operating entity and carries a soft veto, which is
+  # what affiliate_suffix does on a real "X FOUNDATION" / "X" pair.
+  pairs <- data.frame(
+    .id    = c("G1", "G1"),
+    .ein   = c("111111111", "222222222"),
+    name_y = c("EAGLE RANCH FOUNDATION", "EAGLE RANCH"),
+    score  = c(0.98, 0.96),
+    veto   = FALSE,
+    veto_soft = c(TRUE, FALSE),
+    veto_soft_reason = c("affiliate_suffix", NA_character_),
+    stringsAsFactors = FALSE)
+  # np_select() always emits overall_veto_soft, and the guard reads the veto off
+  # the PICK rather than off the band, so the fixture has to carry it too. The
+  # pick here is the arm, which is the vetoed row.
+  res <- data.frame(.id = "G1", overall_ein = "111111111",
+                    overall_name_y = "EAGLE RANCH FOUNDATION",
+                    overall_score = 0.98, overall_veto_soft = TRUE,
+                    stringsAsFactors = FALSE)
+  attr(res, "pairs") <- pairs
+  structure(list(result = res, grants = data.frame(grant_id = "G1")),
+            class = "pf_match")
+}
+
+test_that("a soft veto on a dropped member is carried to the representative", {
+  d <- build()
+  x <- veto_match()
+  pr <- pfmatch:::.pf_dyad_band(x, pf_dyad_config())
+  expect_equal(nrow(pr), 2L)   # both candidates are in the band
+
+  # with the guard on, the surviving row inherits the veto
+  out <- suppressMessages(pf_dyad_collapse(
+    x, d, pf_dyad_config(keep_soft_veto = TRUE), np_config = npmatch::np_config()))
+  p <- as.data.frame(attr(out$result, "pairs"))
+  expect_equal(nrow(p), 1L)                       # the arm was dropped
+  expect_equal(p$.ein, "222222222")               # operating entity survives
+  expect_true(p$veto_soft)                        # and carries the veto
+  expect_match(p$veto_soft_reason, "affiliate_suffix")
+})
+
+test_that("keep_soft_veto = FALSE lets the veto vanish with the dropped member", {
+  d <- build()
+  out <- suppressMessages(pf_dyad_collapse(
+    veto_match(), d, pf_dyad_config(keep_soft_veto = FALSE),
+    np_config = npmatch::np_config()))
+  p <- as.data.frame(attr(out$result, "pairs"))
+  expect_equal(p$.ein, "222222222")
+  expect_false(p$veto_soft %in% TRUE)
+})
+
+test_that("a soft veto on the KEPT member survives either way", {
+  d <- build()
+  x <- veto_match()
+  pr <- attr(x$result, "pairs")
+  pr$veto_soft <- c(FALSE, TRUE)          # veto now sits on the operating entity
+  pr$veto_soft_reason <- c(NA_character_, "affiliate_suffix")
+  attr(x$result, "pairs") <- pr
+  # the pick is still the arm, which is no longer the vetoed row
+  x$result$overall_veto_soft <- FALSE
+  for (k in c(TRUE, FALSE)) {
+    out <- suppressMessages(pf_dyad_collapse(
+      x, d, pf_dyad_config(keep_soft_veto = k), np_config = npmatch::np_config()))
+    p <- as.data.frame(attr(out$result, "pairs"))
+    expect_true(p$veto_soft)
+  }
+})

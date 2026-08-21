@@ -276,6 +276,61 @@ tier change** — the tie shrank but the grant stayed in MAYBE for some other
 reason. That last number matters: collapsing is not a promotion machine, it
 removes one specific artefact.
 
+## 5c. The soft veto the collapse was defeating
+
+`affiliate_suffix` is a **soft veto** that fires when a candidate's last token is
+FOUNDATION / ENDOWMENT / AUXILIARY / BOOSTERS and the query lacks it. It is the
+operating-arm problem in veto form, and a soft veto is npmatch's "do not
+auto-accept this" signal — it caps the grant at MAYBE.
+
+Dropping the arm dropped the veto with it. Measured on the 50k run:
+
+| | grants |
+|---|---:|
+| promotions, no guard | 700 |
+| ...where the **pick itself** was soft-vetoed | **71** |
+| ...held only by the margin brake | 629 |
+
+All 71 are pick-changed: the cascade ranked the arm first, `affiliate_suffix`
+said don't accept it, and `policy = "operating"` overrode both. Those
+auto-accepts rested on the ordering policy alone — 60% on 15 adjudicated cases —
+against a score and a veto that both said otherwise.
+
+`pf_dyad_config(keep_soft_veto = TRUE)`, on by default, carries the veto (and
+its original reason) onto the surviving representative. Result: **629
+promotions, exposure 0**, and a veto on the *kept* candidate still holds the
+grant — 162 collapsed grants keep a soft-vetoed representative and 142 stay
+MAYBE.
+
+### Two predicates that were wrong, and what they cost
+
+The guard has to fire on "the veto was **holding** this grant", and that has a
+precise meaning. Two looser readings were tried and measured first:
+
+| predicate | promotions | exposure |
+|---|---:|---:|
+| any dropped member vetoed | 249 | 0 |
+| top of the band vetoed | 394 | 6 |
+| **the pick itself vetoed** | **629** | **0** |
+
+The first cost 451 grants to fix 71: in 380 of those the cascade had already
+picked the un-vetoed operating entity, so the veto concerned a candidate that
+was never going to be reported. The second leaked because **the band's top row
+is not the pick** — `np_select()` resolves through `.np_overall_summary()` with
+tiebreak rules, not by raw max score. Only reading `overall_veto_soft` off the
+pre-collapse result gives 700 − 71 = 629 by construction.
+
+### What this does not explain
+
+Earlier notes here claimed the soft veto was why `operating` promoted more than
+`keep-top` (+704 against +398). **It is not** — only 10% of promotions were
+veto-held, which cannot account for a 306-grant gap. The "64% of dropped
+candidates carried a soft veto" statistic describes the *dropped candidate*, not
+what determined the tier: the arm frequently carried a veto while the pick was
+already the operating entity, in which case the veto never affected the outcome.
+The mechanism behind the policy gap is **unexplained** and should not be
+asserted without measurement.
+
 ## 6. Bugs the exercise found
 
 Recorded because each was invisible until something executed:
@@ -292,8 +347,30 @@ Recorded because each was invisible until something executed:
    exceed it). Nothing below the top handful can affect selection.
 4. Row identity in `pf_dyad_collapse()` was carried by position across a
    `setorder()`. Now carried in a `.rowid` column.
+5. **`utils::modifyList()` was silently discarding the collapse's output.** The
+   return was `modifyList(x, list(result = new))`; `modifyList` recurses
+   whenever both values are lists, and **a data.frame is a list**, so instead of
+   replacing the result it merged the new one column-by-column into the old
+   object. The columns arrived, which is why nothing looked wrong, but every
+   attribute set on the new frame was dropped — including the reduced pair set
+   that `pf_dyad_collapse()` exists to produce. Tier counts stayed correct
+   (computed from `pr1` before the assignment), so the promotion findings above
+   are unaffected; but the returned object still carried the merged-away
+   candidates, and `pf_candidate_frame()` builds the review sheet from that
+   attribute, so a reviewer would have been shown a contender the collapse had
+   already resolved. Now an explicit `.pf_setresult()`. The same pattern was in
+   `pf_purpose_tiebreak()` — benign there, since it does not change `pairs`, but
+   equally wrong.
+6. The progress message reported `length(drop_key)` rather than rows actually
+   removed, so it announced a drop that had not happened. That is what concealed
+   (5): the message said "1 rows dropped" while the returned pair set still had
+   both. Now `sum(!keep_rows)`.
 
-(1) and (2) came from the unit tests, (3) from the cascade run, (4) from review.
+(1) and (2) came from the unit tests, (3) from the cascade run, (4) from review,
+(5) from a unit test written for something else entirely, and (6) from chasing
+(5). Note the shape of (5) and (6): a wrong progress message hid a real defect
+for as long as it was believed. **Instrument the thing that happened, not the
+thing that was requested.**
 
 ## 7. What to do
 
