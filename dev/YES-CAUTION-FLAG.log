@@ -1,0 +1,62 @@
+﻿YES on the small reference: 569, of which risky: 16 (2.8%) 
+============================================================================== 
+SINGLE FLAGS 
+============================================================================== 
+flag                               risky caught           safe wrongly flagged         total escalated 
+------------------------------------------------------------------------------ 
+arm_name  (name has a suffix)      caught  3/16 ( 19%)  flagged  75 of 553 safe (13.6%)  escalates  78 (13.7%) 
+sibling   (EIN in a subst. dyad)   caught  3/16 ( 19%)  flagged  93 of 553 safe (16.8%)  escalates  96 (16.9%) 
+promo     (score exactly 0.90)     caught  2/16 ( 12%)  flagged  85 of 553 safe (15.4%)  escalates  87 (15.3%) 
+rare      (name_freq <= 3)         caught 12/16 ( 75%)  flagged 524 of 553 safe (94.8%)  escalates 536 (94.2%) 
+============================================================================== 
+COMBINATIONS 
+============================================================================== 
+arm_name OR sibling                caught  6/16 ( 38%)  flagged 155 of 553 safe (28.0%)  escalates 161 (28.3%) 
+sibling OR promo                   caught  5/16 ( 31%)  flagged 158 of 553 safe (28.6%)  escalates 163 (28.6%) 
+arm_name OR sibling OR promo       caught  8/16 ( 50%)  flagged 214 of 553 safe (38.7%)  escalates 222 (39.0%) 
+============================================================================== 
+WHAT THE `sibling` FLAG MISSES 
+============================================================================== 
+risky YES with no substitutable dyad on the winning EIN: 13 
+    .id                              small                                big
+ <char>                             <char>                             <char>
+   R157  BOSTON CHILDRENS HEART FOUNDATION           BOSTON CHILDREN HOSPITAL
+   R181                   HUNTER INSTITUTE                  HUNTER FOUNDATION
+   R280 BEMIDJI STATE UNIVERSITY ALUMNI AN           Bemidji State University
+    R31        GILCREASE MUSEUM MANAGEMENT         GILCREASE MUSEUM ENDOWMENT
+   R329 Eastern Connecticut State Universi Eastern Connecticut State Universi
+    R37 HYDE PARK NEIGHBORHOOD ASSOCIATION                 HISTORIC HYDE PARK
+   R453     North Shore Medical Center Inc         NORTH SHORE MEDICAL CENTER
+   R494           TEXAS CHILDRENS HOSPITAL TEXAS CHILDRENS HOSPITAL FOUNDATIO
+   R603                          Hillsdale                          Hillsdale
+   R624 UNIVERSITY OF KENTUCKY RESEARCH FO             UNIVERSITY OF KENTUCKY
+   R629         DALLAS BLACK DANCE THEATRE         DALLAS BLACK DANCE THEATRE
+   R782           GREENWICH DENTAL SOCIETY               GREENWICH UNITED WAY
+   R884         REGIS HIGH SCHOOL PROPERTY                  REGIS HIGH SCHOOL
+ arm_name  promo
+   <lgcl> <lgcl>
+     TRUE  FALSE
+    FALSE  FALSE
+     TRUE  FALSE
+    FALSE  FALSE
+    FALSE  FALSE
+    FALSE   TRUE
+    FALSE  FALSE
+    FALSE  FALSE
+    FALSE  FALSE
+     TRUE  FALSE
+    FALSE   TRUE
+    FALSE  FALSE
+    FALSE  FALSE
+============================================================================== 
+THE COST OF THE BEST FLAG 
+============================================================================== 
+escalating flagged YES adds 222 of 569 queries (39.0%) to the big-reference pass. 
+ 
+Runtime arithmetic, using the measured 128 vs 279 s per 1,000 identities: 
+  single pass, big reference only :    279 s per 1,000 
+  tiered: all through small       :    128 s 
+          64% escalated to big     :    178 s 
+          total                   :    306 s per 1,000  (110% of single-pass) 
+ 
+wrote data-dev/YES-CAUTION-FLAG.csv 

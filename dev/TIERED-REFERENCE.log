@@ -1,0 +1,81 @@
+﻿recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+queries: 1000 
+============================================================================== 
+RUNNING BOTH REFERENCES ON THE SAME QUERIES 
+============================================================================== 
+  small  1,924,822 rows | 208 s | YES 569 MAYBE 193 NO 198 
+  big    3,891,187 rows | 400 s | YES 612 MAYBE 201 NO 162 
+============================================================================== 
+PAYOFF -- what does escalation actually buy? 
+============================================================================== 
+queries the SMALL reference did not settle as YES : 389 
+  small    big     N
+ <fctr> <fctr> <int>
+  MAYBE  MAYBE   140
+  MAYBE    YES    47
+  MAYBE     NO     6
+     NO     NO   145
+     NO    YES    36
+     NO  MAYBE    15
+ 
+of those, the BIG reference settles as YES        : 83 (21%) 
+============================================================================== 
+RISK -- is an early YES safe to bank? 
+============================================================================== 
+YES on the small reference                        : 569 
+  big reference agrees on the SAME EIN            : 553 (97.2%) 
+  big reference picks a DIFFERENT EIN             : 16 (2.8%)  <- the risk 
+  ...and rates it YES there                       : 4 
+ 
+Key: <.id>
+    .id                            small                              big  sc_s
+ <char>                           <char>                           <char> <num>
+   R157 BOSTON CHILDRENS HEART FOUNDATIO         BOSTON CHILDREN HOSPITAL  0.91
+   R181                 HUNTER INSTITUTE                HUNTER FOUNDATION  0.98
+    R25                    TALBERT HOUSE                    TALBERT HOUSE  0.98
+   R280 BEMIDJI STATE UNIVERSITY ALUMNI          Bemidji State University  0.92
+    R31      GILCREASE MUSEUM MANAGEMENT       GILCREASE MUSEUM ENDOWMENT  0.90
+   R329 Eastern Connecticut State Univer Eastern Connecticut State Univer  0.96
+    R37 HYDE PARK NEIGHBORHOOD ASSOCIATI               HISTORIC HYDE PARK  0.90
+   R374         UNIVERSITY OF PITTSBURGH         UNIVERSITY OF PITTSBURGH  0.96
+   R453   North Shore Medical Center Inc       NORTH SHORE MEDICAL CENTER  0.98
+   R494         TEXAS CHILDRENS HOSPITAL TEXAS CHILDRENS HOSPITAL FOUNDAT  0.98
+   R603                        Hillsdale                        Hillsdale  0.82
+   R624 UNIVERSITY OF KENTUCKY RESEARCH            UNIVERSITY OF KENTUCKY  0.88
+   R629       DALLAS BLACK DANCE THEATRE       DALLAS BLACK DANCE THEATRE  0.90
+   R763   LOWELL COMMUNITY HEALTH CENTER LOWELL COMMUNITY CHARTER SCHOOL   0.88
+   R782         GREENWICH DENTAL SOCIETY             GREENWICH UNITED WAY  0.87
+   R884       REGIS HIGH SCHOOL PROPERTY                REGIS HIGH SCHOOL  0.91
+  sc_b    t_b
+ <num> <fctr>
+  0.96  MAYBE
+  0.68  MAYBE
+  0.98  MAYBE
+  0.96    YES
+  0.74  MAYBE
+  0.96  MAYBE
+  0.78  MAYBE
+  0.96  MAYBE
+  0.96  MAYBE
+  0.90  MAYBE
+  0.96    YES
+  0.89  MAYBE
+  0.90  MAYBE
+  0.90  MAYBE
+  0.96    YES
+  0.96    YES
+============================================================================== 
+THE REFERENCE-DEPENDENT SCORING TERM 
+============================================================================== 
+The base score is 0.60*name + 0.40*geo and does NOT depend on the 
+reference. Only the distinctive-name promotion does: it fires on 
+name_freq <= 3 counted in the reference. 
+ 
+winning pairs with a name_freq on both sides      : 956 
+  rare (<=3) on SMALL                             : 879 
+  ...still rare on BIG                            : 825 
+  ...NO LONGER rare on BIG                        : 54  <- promotion would differ 
+ 
+median name_freq of the winning pair: small 1, big 1 
+ 
+wrote data-dev/TIERED-REFERENCE.csv 

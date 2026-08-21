@@ -71,7 +71,16 @@ The one thing that unblocks everything else. Target ~600, stratified:
 The YES and NO strata are the new information. Phase 4 of
 `dev/DEVELOPMENT-PLAN.md` already plans ~1,000 labels on the enriched packet;
 **this is that round, stratified to also answer the threshold questions** rather
-than a separate effort. Label on the enriched packet (`pf_adjudicate()` with
+than a separate effort.
+
+> **99 cases are already drawn.** `data-dev/LABEL-FRAME-REFTIER.csv`
+> (`dev/build-label-frame.R`) holds the YES and NO strata as a by-product of the
+> reference-tier probe: **36 `NO_to_YES`** (recipients the active BMF cannot
+> reach at any threshold — the NO-boundary question), **16 `YES_contested`**
+> (auto-accepts the larger reference answers with a different EIN — the
+> YES-precision question), and **47 `MAYBE_to_YES`**. Each row carries the
+> candidate the bigger reference found, so the labeller confirms or rejects a
+> specific answer rather than searching. `dev/REFERENCE-TIER-FINDINGS.md` §5. Label on the enriched packet (`pf_adjudicate()` with
 NTEE text, mission, program descriptions) — it resolves 45 of 56 hard cases, so
 it is what makes the YES and NO strata answerable at all.
 

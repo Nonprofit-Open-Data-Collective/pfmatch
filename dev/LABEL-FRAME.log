@@ -1,0 +1,46 @@
+﻿============================================================================== 
+SAMPLING FRAME 
+============================================================================== 
+       stratum cases
+        <char> <int>
+  MAYBE_to_YES    47
+     NO_to_YES    36
+ YES_contested    16
+ 
+dyad relationship between the two answers, where one exists: 
+       stratum    dyad_class     N
+        <char>        <char> <int>
+  MAYBE_to_YES          <NA>    44
+  MAYBE_to_YES       related     2
+  MAYBE_to_YES substitutable     1
+     NO_to_YES          <NA>    34
+     NO_to_YES       related     1
+     NO_to_YES substitutable     1
+ YES_contested          <NA>    12
+ YES_contested       related     3
+ YES_contested substitutable     1
+ 
+NO_to_YES -- the recipient the active BMF could not reach: 
+    .id                                  found score
+ <char>                                 <char> <num>
+  R1004              THE ROTARY FOUNDATION INC 0.980
+  R1020               OLDE TOWN MEDICAL CENTER 0.980
+   R147                     NEW BETHANY SCHOOL 0.891
+   R184                      TUNNELS TO TOWERS 0.980
+   R200                AMERICAN CANCER SOCIETY 0.820
+   R204                    BRADLEY FREE CLINIC 0.980
+   R205                             HHM HEALTH 0.900
+   R255           THE LUKEMIA LYMPHOMA SOCIETY 0.900
+    R26                            HELIOS CARE 0.980
+   R264                           B2 THE WORLD 0.960
+   R270                        BEST BUDDIES NY 0.900
+   R272     BACH FESTIVAL SOCIETY OF KALAMAZOO 0.980
+     R3               PHILLIPS ACADEMY ANDOVER 0.913
+   R342               JEWISH NATIONAL FUND INC 0.980
+   R346                  TRINITY BIBLE COLLEGE 0.960
+   R380                                THE USO 0.960
+   R385 OREGON INSTITUTE FOR CREATIVE RESEARCH 0.965
+   R402             DOVER CEMETERY ASSOCIATION 0.931
+   R420                        LOVIN SPOONFULS 0.980
+   R450                           HOUSTON SPCA 0.960
+    .id                                  found score
