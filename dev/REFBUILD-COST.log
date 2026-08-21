@@ -1,0 +1,21 @@
+﻿========================================================================== 
+reference rebuild cost by component 
+corpus: data-dev/REF-active.rds 
+========================================================================== 
+  readRDS cached bundle          50.7 s 
+  rows: 1,924,822 
+========================================================================== 
+recompute each component from the normalized reference 
+========================================================================== 
+  np_normalize                  269.7 s 
+  np_name_freq                   27.5 s 
+  np_token_idf                   22.8 s 
+  np_ref_index                   87.8 s 
+Rscript.exe : Error: object 'n1' not found
+At line:1 char:302
++ ... tch {} } }; & 'C:\Program Files\R\R-4.4.2\bin\x64\Rscript.exe' dev/pr ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error: object 'n1' not found:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Execution halted

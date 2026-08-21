@@ -92,6 +92,37 @@ token index") introduced. It also raises the stakes on the install problem: an
 npmatch that cannot accept those arguments does not merely error, it forfeits
 14x.
 
+## Rebuilding the reference: where the time goes, and why IDF is not the lever
+
+From `dev/probe-refbuild-cost.R` / `dev/REFBUILD-COST.log`, on the 1,924,822-row
+monthly BMF:
+
+| component | seconds | share of rebuild |
+|---|---:|---:|
+| `np_normalize` | 269.7 | **66%** |
+| `np_ref_index` | 87.8 | 22% |
+| `np_name_freq` | 27.5 | 7% |
+| `np_token_idf` | 22.8 | **5.6%** |
+| **total recompute** | **407.8** | |
+| `readRDS` of the cached bundle | 50.7 | — |
+
+`dev/probe-idf-atomize.R` shows token IDF *can* be precomputed per cell and
+recombined for an arbitrary subset in **0.03 s instead of 41 s — a 1,371x
+speedup, verified identical on 191,181 tokens.** But IDF is only 5.6% of a
+rebuild, so the whole optimisation saves at most ~23 s of ~408 s. **Normalization
+is the lever, not IDF**, and caching beats both: `readRDS` is 50.7 s against
+407.8 s to recompute.
+
+That is a clean negative result and belongs in the record: the fast thing was
+made 1,371x faster and it did not matter.
+
+**Caveat on the source.** `probe-refbuild-cost.R` errors before printing its own
+summary (`object 'n1' not found`), so the shares above are computed by hand from
+the four timings it did print. Those timings are sound; the summary arithmetic
+in the script is not verified. The cause is unclear — possibly the shell wrapper
+it was invoked through rather than the script itself — and it was not re-run,
+since a rebuild is ~7 minutes and the numbers that matter already printed.
+
 ## Residual, not worth chasing
 
 The 2026-08-19 50k run recorded 35 s per 1,000 against 128 s per 1,000 here for

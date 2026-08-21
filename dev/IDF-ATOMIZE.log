@@ -1,0 +1,38 @@
+﻿========================================================================== 
+corpus: data-dev/REF-active.rds 
+========================================================================== 
+readRDS bundle               50.2 s   (1.43 GB on disk) 
+name_key rows            1,924,822 
+stopwords                29 
+========================================================================== 
+A  live np_token_idf(), step by step 
+========================================================================== 
+  strsplit                    1.95 s 
+  unique + stopword drop     33.93 s 
+  unlist + table + log        5.26 s 
+  -------------------------------------- 
+  TOTAL A                    41.14 s   (259,324 vocab) 
+========================================================================== 
+C  tokens stored as a pre-cleaned string 
+========================================================================== 
+  (stored column: 0.14 GB in memory) 
+  strsplit stored             2.01 s 
+  unlist + table + log        9.58 s 
+  -------------------------------------- 
+  TOTAL C                    11.59 s 
+========================================================================== 
+B  per-cell df vectors, 8 cells 
+========================================================================== 
+  BUILD (one-time)            8.16 s   (8.3 MB matrix) 
+  PER-SPEC recombine        0.0300 s  <-- the number that matters 
+  direct on same subset       4.02 s 
+  identical to direct?    YES   (191,181 tokens) 
+========================================================================== 
+summary 
+========================================================================== 
+  readRDS the cached bundle             50.20 s 
+  A  recompute live                     41.14 s 
+  C  recompute from stored tokens       11.59 s 
+  B  recombine from per-cell df        0.0300 s 
+ 
+  B speedup over A: 1371x 
