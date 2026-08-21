@@ -188,4 +188,36 @@ So: retain top-K (5 is enough — `pf_adjudicate()` already defaults to it) for
 **all** tiers, at roughly 5 rows per identity instead of 1. At ~3M identities
 that is ~15M rows, which is nothing next to the 12.5M-grant output, and it makes
 adjudication, dyad policy changes and threshold sweeps replayable offline. Do it
-for that reason, in the Phase 2 partitions — not as a tiering rescue.
+for that reason — not as a tiering rescue.
+
+### Whose Phase 2, and how narrow the change is
+
+**`pfmatch` Phase 2** — "the development databases", `dev/DEVELOPMENT-PLAN.md`
+§"Phase 2", writing `PF-{YES,MAYBE,NO,OOS}.parquet` and `PF-IDENTITIES.parquet`
+to `~/Documents/grants/`. *Not* matchdb Phase 2, which is "Schedule I as
+`observed`" (`matchdb/dev/PLAN.md` §11) and concerns the reference side only.
+Both repos now number their phases and "the Phase 2 partitions" is ambiguous
+between them; this is the pfmatch one. No part of it is matchdb work — candidate
+pairs are match *output*, and matchdb's deliverable is the reference the match
+ran against.
+
+The change is narrower than "retain candidates" suggests, because two of the
+three tier partitions already do:
+
+| partition | today | change |
+|---|---|---|
+| `PF-MAYBE.parquet` | "with its full candidate set" | none |
+| `PF-NO.parquet` | "with whatever candidates were surfaced" | none |
+| `PF-YES.parquet` | "EIN, scores, match provenance" — **the winner only** | **carry the top-K candidate set** |
+
+So the ask is one partition's schema, and it is the partition where retention
+matters most, for the reason §3 measures: the 16 contested auto-accepts are YES
+rows, and a YES row today keeps no record of what it beat. The Phase 2 exit
+criterion is unaffected — reconciling to 12,559,051 counts identities, and only
+columns per identity change.
+
+Restating what retention does **not** buy, because it is easy to lose: the 16 are
+wrong because the sibling was never a candidate. Keeping five candidates from a
+run whose reference lacked the sibling preserves a list the answer is absent
+from. Retention makes adjudication replayable; it does not make a thin reference
+safe. That argument lives in `matchdb/dev/PLAN.md` §8a.
