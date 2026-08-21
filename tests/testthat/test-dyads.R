@@ -340,3 +340,53 @@ test_that("a soft veto on the KEPT member survives either way", {
     expect_true(p$veto_soft)
   }
 })
+
+## --------------------------------------------- policy = "query" follows the grant
+q_match <- function(query_name) {
+  pairs <- data.frame(
+    .id = c("G1", "G1"), .ein = c("111111111", "222222222"),
+    name_y = c("EAGLE RANCH FOUNDATION", "EAGLE RANCH"),
+    score = c(0.98, 0.96), veto = FALSE, veto_soft = FALSE,
+    veto_soft_reason = NA_character_, stringsAsFactors = FALSE)
+  res <- data.frame(.id = "G1", overall_ein = "111111111",
+                    overall_name_y = "EAGLE RANCH FOUNDATION",
+                    overall_score = 0.98, overall_veto_soft = FALSE,
+                    stringsAsFactors = FALSE)
+  attr(res, "pairs") <- pairs
+  structure(list(result = res,
+                 grants = data.frame(grant_id = "G1", recip_name = query_name,
+                                     stringsAsFactors = FALSE)),
+            class = "pf_match")
+}
+pick <- function(x, policy) {
+  o <- suppressMessages(pf_dyad_collapse(x, build(), pf_dyad_config(policy = policy),
+                                         np_config = npmatch::np_config()))
+  as.data.frame(o$result)$overall_ein
+}
+
+test_that("policy 'query' reports the arm when the grant names the arm", {
+  # a funder who writes "EAGLE RANCH FOUNDATION" named the foundation
+  expect_equal(pick(q_match("EAGLE RANCH FOUNDATION"), "query"), "111111111")
+  # and the operating entity when the grant does not say FOUNDATION
+  expect_equal(pick(q_match("EAGLE RANCH"), "query"), "222222222")
+})
+
+test_that("'operating' contradicts the grant record, which is why it is not the default", {
+  # same grant, explicitly naming the foundation, still reports the ranch
+  expect_equal(pick(q_match("EAGLE RANCH FOUNDATION"), "operating"), "222222222")
+  # and 'arm' makes the mirror error on a grant that names no arm
+  expect_equal(pick(q_match("EAGLE RANCH"), "arm"), "111111111")
+})
+
+test_that("'query' falls back to the operating entity when the grant name is missing", {
+  x <- q_match(NA_character_)
+  expect_equal(pick(x, "query"), "222222222")
+  # and when the grants frame carries no recip_name column at all
+  x2 <- q_match("EAGLE RANCH FOUNDATION")
+  x2$grants$recip_name <- NULL
+  expect_equal(pick(x2, "query"), "222222222")
+})
+
+test_that("the default policy is 'query'", {
+  expect_equal(pf_dyad_config()$policy, "query")
+})

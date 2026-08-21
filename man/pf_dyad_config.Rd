@@ -8,7 +8,7 @@ pf_dyad_config(
   tie_band = 0.05,
   max_band = 25L,
   use = "substitutable",
-  policy = c("operating", "arm", "top"),
+  policy = c("query", "operating", "arm", "top"),
   keep_soft_veto = TRUE
 )
 }
@@ -28,13 +28,6 @@ drops are reported by \code{\link[=pf_dyad_collapse]{pf_dyad_collapse()}}.}
 \code{"substitutable"} only; \code{c("substitutable", "related")} is available for
 measurement but see \link{pf_dyads} for why it should not be shipped.}
 
-\item{policy}{Which member to report when a dyad is collapsed.
-\code{"operating"} (default) reports the non-arm member, \code{"arm"} the support
-arm, \code{"top"} keeps whichever the cascade already ranked first. On 15
-adjudicated arm pairs the flat operating rule scored 60\% against the
-cascade's 27\%; that 60\% has a 32-84\% interval and is not settled.
-\code{pf_arm_order()} implements the purpose-conditional alternative.}
-
 \item{keep_soft_veto}{Carry a soft veto from a merged-away member onto the
 surviving representative, so the grant stays in review. A soft veto is
 npmatch's "do not auto-accept this" signal, and \code{affiliate_suffix} is the
@@ -52,3 +45,16 @@ A list.
 \description{
 Dyad collapse settings
 }
+\section{Why the policies differ}{
+
+On the 50k run, \code{operating} promotes 629 MAYBE grants to YES, \code{top} 388 and
+\code{arm} 253 — and \code{top} cannot lose on score, since it keeps the highest-scoring
+member by construction. The gap is the \strong{soft veto}. Of the 241 grants where
+\code{operating} and \code{top} land on different tiers, \code{top} keeps an arm in \strong{240},
+\code{operating} in \strong{none}, and the query carries a support marker in \strong{none}.
+That is exactly the \code{affiliate_suffix} trigger — candidate ends in a support
+token, query does not — so \code{top} inherits a veto that \code{operating} escapes.
+The policies are not trading accuracy for score; one of them is standing on a
+veto.
+}
+

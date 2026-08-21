@@ -366,11 +366,36 @@ pf_dyad_lookup <- function(dyads, a, b, what = c("class", "id")) {
 #'   `"substitutable"` only; `c("substitutable", "related")` is available for
 #'   measurement but see [pf_dyads] for why it should not be shipped.
 #' @param policy Which member to report when a dyad is collapsed.
-#'   `"operating"` (default) reports the non-arm member, `"arm"` the support
-#'   arm, `"top"` keeps whichever the cascade already ranked first. On 15
-#'   adjudicated arm pairs the flat operating rule scored 60% against the
+#'   \describe{
+#'     \item{`"query"`}{**Default.** Follow the grant record's own name: report
+#'       the arm when the recorded recipient name carries a support marker, the
+#'       operating entity when it does not. The funder wrote a name down, and it
+#'       is evidence on *every* case rather than on the 15 that were adjudicated.}
+#'     \item{`"operating"`}{Always the non-arm member. This was the previous
+#'       default and it **contradicts the source document on 134 of the 155**
+#'       collapsed grants whose recorded name carries a support marker (86%) —
+#'       reporting `CRAIG HOSPITAL` for a grant written as `CRAIG HOSPITAL
+#'       FOUNDATION`.}
+#'     \item{`"arm"`}{Always the support arm. The mirror error: it reports an arm
+#'       on 41% of grants whose recorded name has no marker at all.}
+#'     \item{`"top"`}{Whatever the cascade ranked first. Promotes least, because
+#'       it keeps the arm and inherits the `affiliate_suffix` soft veto — see
+#'       *Why the policies differ*.}
+#'   }
+#'   On 15 adjudicated arm pairs the flat operating rule scored 60% against the
 #'   cascade's 27%; that 60% has a 32-84% interval and is not settled.
 #'   `pf_arm_order()` implements the purpose-conditional alternative.
+#'
+#' @section Why the policies differ:
+#' On the 50k run, `operating` promotes 629 MAYBE grants to YES, `top` 388 and
+#' `arm` 253 — and `top` cannot lose on score, since it keeps the highest-scoring
+#' member by construction. The gap is the **soft veto**. Of the 241 grants where
+#' `operating` and `top` land on different tiers, `top` keeps an arm in **240**,
+#' `operating` in **none**, and the query carries a support marker in **none**.
+#' That is exactly the `affiliate_suffix` trigger — candidate ends in a support
+#' token, query does not — so `top` inherits a veto that `operating` escapes.
+#' The policies are not trading accuracy for score; one of them is standing on a
+#' veto.
 #' @param keep_soft_veto Carry a soft veto from a merged-away member onto the
 #'   surviving representative, so the grant stays in review. A soft veto is
 #'   npmatch's "do not auto-accept this" signal, and `affiliate_suffix` is the
@@ -385,7 +410,7 @@ pf_dyad_lookup <- function(dyads, a, b, what = c("class", "id")) {
 #' @export
 pf_dyad_config <- function(tie_band = 0.05, max_band = 25L,
                            use = "substitutable",
-                           policy = c("operating", "arm", "top"),
+                           policy = c("query", "operating", "arm", "top"),
                            keep_soft_veto = TRUE) {
   # Inf is a legitimate way to say "no cap"; as.integer() would turn it into NA.
   max_band <- if (is.finite(max_band)) as.integer(max_band) else Inf
@@ -516,15 +541,30 @@ pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
   cand[, gsz := .N, by = list(.id, grp)]
 
   # pick a representative inside each merged group by the stated policy
-  rep_of <- function(rowid, arm, score) {
+  # The grant record's OWN name is evidence about which member was meant, and it
+  # is available on every case rather than on the 15 that were adjudicated. When
+  # a funder writes "CRAIG HOSPITAL FOUNDATION", reporting CRAIG HOSPITAL
+  # contradicts the source document. Measured on the 50k run, policy="operating"
+  # does exactly that on 134 of the 155 collapsed grants whose recorded name
+  # carries a support marker (86%).
+  qn <- if (!is.null(x$grants$recip_name) && !is.null(x$grants$grant_id))
+          x$grants$recip_name[match(cand$.id, x$grants$grant_id)] else NA_character_
+  cand[, q_arm := if (all(is.na(qn))) NA else pf_is_arm(qn)]
+
+  rep_of <- function(rowid, arm, score, want_arm) {
     if (length(rowid) == 1L) return(rowid[1L])
     o <- switch(config$policy,
+                # follow the query when it says which member it means, and fall
+                # back to the operating entity when it is silent
+                query     = if (isTRUE(want_arm)) order(!arm, -score)
+                            else order(arm, -score),
                 operating = order(arm, -score),
                 arm       = order(!arm, -score),
                 top       = order(-score))
     rowid[o[1L]]
   }
-  keep <- cand[gsz > 1L, list(rep = rep_of(.rowid, arm, score)), by = list(.id, grp)]
+  keep <- cand[gsz > 1L, list(rep = rep_of(.rowid, arm, score, q_arm[1L])),
+               by = list(.id, grp)]
   if (!nrow(keep)) return(done())
 
   # the group containing the candidate the cascade currently ranks first

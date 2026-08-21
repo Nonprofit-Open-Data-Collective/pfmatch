@@ -320,16 +320,88 @@ is not the pick** — `np_select()` resolves through `.np_overall_summary()` wit
 tiebreak rules, not by raw max score. Only reading `overall_veto_soft` off the
 pre-collapse result gives 700 − 71 = 629 by construction.
 
-### What this does not explain
+### Why the policies differ — resolved
 
-Earlier notes here claimed the soft veto was why `operating` promoted more than
-`keep-top` (+704 against +398). **It is not** — only 10% of promotions were
-veto-held, which cannot account for a 306-grant gap. The "64% of dropped
-candidates carried a soft veto" statistic describes the *dropped candidate*, not
-what determined the tier: the arm frequently carried a veto while the pick was
-already the operating entity, in which case the veto never affected the outcome.
-The mechanism behind the policy gap is **unexplained** and should not be
-asserted without measurement.
+`operating` promotes 629, `top` 388, `arm` 253, and `top` cannot lose on score
+because it keeps the highest-scoring member by construction. Of the **241**
+grants where `operating` and `top` land on different tiers:
+
+| | n | share |
+|---|---:|---:|
+| `top` kept an **arm** | **240** | **100%** |
+| `operating` kept an arm | 0 | 0% |
+| the query carried a support marker | 0 | 0% |
+
+That is the `affiliate_suffix` trigger exactly — candidate ends in a support
+token, query does not. **`top` keeps the arm and inherits the veto; `operating`
+drops the arm and escapes it.** Every diverging case is `operating` → YES,
+`top` → MAYBE. `HUNDRED NIGHTS INC` keeps `HUNDRED NIGHTS` (YES) under
+`operating` and `HUNDRED NIGHTS FOUNDATION` (MAYBE) under `top`, 241 times over.
+
+**Two earlier readings of this were wrong and are withdrawn.** The first cited
+"64% of dropped candidates carried a soft veto", which describes the *dropped*
+candidate rather than what set the tier. The second concluded the veto was
+*not* the mechanism, on a measurement of `operating`'s own promotions — which by
+construction keep the un-vetoed member, so it could never reveal the constraint
+binding on `top`. Measuring one policy and drawing a conclusion about both was
+the error in each case.
+
+## 5d. The ordering policy ignored the grant record
+
+`rep_of()` ordered on `order(arm, -score)`. **It never looked at the query.** So
+when a funder wrote `CRAIG HOSPITAL FOUNDATION`, `policy = "operating"` reported
+`CRAIG HOSPITAL`.
+
+| | n | share |
+|---|---:|---:|
+| collapsed grants whose recorded name carries a support marker | 155 | |
+| **`operating` reports a non-arm EIN anyway** | **134** | **86%** |
+| collapsed grants with no marker in the recorded name | 1,495 | |
+| **`arm`/`top` reports an arm anyway** | **617** | **41%** |
+
+Both flat policies override the source document, in opposite directions. This
+needs no adjudication to call wrong: the funder wrote the name down, and it is
+evidence on every case rather than on the 15 that were labelled.
+
+### `policy = "query"`, now the default
+
+Follow the recorded name — report the arm when it carries a support marker, the
+operating entity when it does not, falling back to operating when the grant name
+is missing. Measured against the old default on the 50k run:
+
+| | |
+|---|---:|
+| collapsed grants | 1,650 |
+| **tier outcome differs** | **0** |
+| **reported EIN differs** | **109** |
+| ...where the grant record names an arm | **109 (100%)** |
+| ...switches where it does not | **0** |
+
+**Tier-identical and zero misfires.** Every switch is a grant whose own name says
+FOUNDATION and whose reported EIN now matches it: `DAVENPORT UNIVERSITY
+FOUNDATION`, `MIRIAM HOSPITAL FOUNDATION`, `USA Swimming Foundation`,
+`CONVOY OF HOPE FOUNDATION`. That is a strict correction, not a trade — it costs
+nothing in promotions because `affiliate_suffix` does not fire when the query
+carries the token, so keeping the arm lands YES exactly as keeping the operating
+entity did.
+
+It also reconciles the tension with `dev/FEATURE-ENGINEERING.md`, which measures
+`is_arm` at 0.470 pair AUC and concludes "do not demote arms globally". Arms are
+not worse candidates; they are the right answer when the grant names them.
+
+### What this does *not* settle
+
+The 109 are settled by the document. The remaining ~1,540 collapsed grants,
+where the recorded name carries no marker, still fall back to operating-first on
+15 adjudicated cases at 60% (CI 32-84%). **The labelling round remains the
+blocking item** — this change removes the cases that never needed labels, not the
+ones that do.
+
+`dev/probe-arm-policy.R` also compared policies against `ARM-ORDERING-CASES.csv`
+and the join was **invalid**: that file carries grant ids from an older run, so
+each case paired with an unrelated grant (`G000328` resolved to "TEAM DC", not
+Sierra Club). The section is disabled rather than reported — the same stale-id
+trap as the `AUDIT-MAYBE-100` rank join in §7.
 
 ## 6. Bugs the exercise found
 

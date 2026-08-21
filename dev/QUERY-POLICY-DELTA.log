@@ -1,0 +1,66 @@
+﻿scoring ... 
+============================================================================== 
+query VS operating 
+============================================================================== 
+collapsed grants                    : 1650 
+tier differs                        : 0 
+REPORTED EIN differs                : 109 
+ 
+of the changed grants: 
+  the grant record names an arm     : 109 (100%) 
+  query policy now reports an arm   : 107 (98%) 
+ 
+Every switch should be a grant whose own name says FOUNDATION and whose 
+reported EIN now matches it. Anything else is the rule misfiring. 
+ 
+Key: <.id>
+     .id                              query                          was
+  <char>                             <char>                       <char>
+ G000397    DAVENPORT UNIVERSITY FOUNDATION         DAVENPORT UNIVERSITY
+ G000734          CRAIG HOSPITAL FOUNDATION               CRAIG HOSPITAL
+ G001624    EDEN AUTISM SERVICES FOUNDATION         EDEN AUTISM SERVICES
+ G001676 DELAWARE STATE UNIVERSITY FOUNDATI    DELAWARE STATE UNIVERSITY
+ G002344  JUNIOR LEAGUE OF OMAHA FOUNDATION       JUNIOR LEAGUE OF OMAHA
+ G002542 ANN & ROBERT H LURIE CHILDRENS HOS ANN AND ROBERT H LURIE CHILD
+ G002743         VALLEY HOSPITAL FOUNDATION              VALLEY HOSPITAL
+ G003053        NORTHWELL HEALTH FOUNDATION             NORTHWELL HEALTH
+ G003943 PHOENIX CHILDREN'S HOSPITAL FOUNDA   PHOENIX CHILDRENS HOSPITAL
+ G004576   WAYNE MEMORIAL HEALTH FOUNDATION WAYNE MEMORIAL HEALTH SYSTEM
+ G005036 NORTHWELL HEALTH SYSTEM FOUNDATION             NORTHWELL HEALTH
+ G006048         MIRIAM HOSPITAL FOUNDATION          THE MIRIAM HOSPITAL
+ G006573          BAPTIST HEALTH FOUNDATION               BAPTIST HEALTH
+ G007013 CHESTER COUNTY HOSPITAL FOUNDATION      CHESTER COUNTY HOSPITAL
+ G008837              CLINIC OLE FOUNDATION              OLE HEALTH NMTC
+ G008964         DALLAS SYMPHONY FOUNDATION  DALLAS SYMPHONY ASSOCIATION
+ G009110            USA Swimming Foundation                 USA SWIMMING
+ G010131          CONVOY OF HOPE FOUNDATION               CONVOY OF HOPE
+ G010689 SENIOR FRIENDSHIP CENTERS FOUNDATI    SENIOR FRIENDSHIP CENTERS
+ G011196              LIGHTHOUSE FOUNDATION                   LIGHTHOUSE
+     .id                              query                          was
+                          now
+                       <char>
+ DAVENPORT UNIVERSITY FOUNDAT
+    CRAIG HOSPITAL FOUNDATION
+ EDEN AUTISM SERVICES FOUNDAT
+ DELAWARE STATE UNIVERSITY FO
+ JUNIOR LEAGUE OF OMAHA FOUND
+ ANN AND ROBERT H LURIE CHILD
+   VALLEY HOSPITAL FOUNDATION
+  NORTHWELL HEALTH FOUNDATION
+ PHOENIX CHILDRENS HOSPITAL F
+ WAYNE MEMORIAL HOSPITAL FOUN
+  NORTHWELL HEALTH FOUNDATION
+   MIRIAM HOSPITAL FOUNDATION
+    BAPTIST HEALTH FOUNDATION
+ CHESTER COUNTY HOSPITAL FOUN
+        OLE HEALTH FOUNDATION
+   DALLAS SYMPHONY FOUNDATION
+      USA SWIMMING FOUNDATION
+    CONVOY OF HOPE FOUNDATION
+ SENIOR FRIENDSHIP CENTERS FO
+        LIGHTHOUSE FOUNDATION
+                          now
+ 
+switches where the grant does NOT name an arm: 0 
+ 
+wrote data-dev/QUERY-POLICY-DELTA.csv 

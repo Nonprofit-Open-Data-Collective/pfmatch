@@ -1,0 +1,117 @@
+﻿scoring the 50k pair set ... 
+baseline: YES 25209 MAYBE 10575 NO 11161 
+queries whose own recorded name carries a support marker: 5116 (10.9%) 
+============================================================================== 
+TIER OUTCOME BY POLICY (soft-veto guard active) 
+============================================================================== 
+  query      YES  25838 ( +629)  MAYBE   9946  NO  11161 
+  operating  YES  25838 ( +629)  MAYBE   9946  NO  11161 
+  top        YES  25597 ( +388)  MAYBE  10187  NO  11161 
+  arm        YES  25462 ( +253)  MAYBE  10322  NO  11161 
+============================================================================== 
+Q1  WHERE DOES operating DIVERGE FROM top? 
+============================================================================== 
+collapsed grants: 1650 
+  the two policies keep a DIFFERENT EIN : 607 
+  ...and land on a different tier       : 241 
+ 
+tier outcome on the grants where they differ: 
+ operating    top     N
+    <fctr> <fctr> <int>
+       YES  MAYBE   241
+     MAYBE  MAYBE   187
+       YES    YES   112
+        NO     NO    67
+------------------------------------------------------------------------------ 
+DOES THE QUERY NAME EXPLAIN IT? 
+------------------------------------------------------------------------------ 
+grants where the policies land on different tiers: 241 
+  of those, the QUERY itself names an arm         : 0 (0%) 
+  baseline rate across all collapsed grants       : 9% 
+ 
+Key: <.id>
+     .id                          query q_is_arm                  operating
+  <char>                         <char>   <lgcl>                     <char>
+ G000052             HUNDRED NIGHTS INC    FALSE             HUNDRED NIGHTS
+ G000199              ST ANTHONY SHRINE    FALSE       SAINT ANTHONY SHRINE
+ G000318         ANTI DEFAMATION LEAGUE    FALSE     ANTI DEFAMATION LEAGUE
+ G000619              COMMUNITY HOSPICE    FALSE          COMMUNITY HOSPICE
+ G000666             OAKLAND UNIVERSITY    FALSE         OAKLAND UNIVERSITY
+ G001083         Anti-Defamation League    FALSE     ANTI DEFAMATION LEAGUE
+ G001196         ANTI-DEFAMATION LEAGUE    FALSE     ANTI DEFAMATION LEAGUE
+ G001288       SPECIAL OLYMPICS FLORIDA    FALSE   SPECIAL OLYMPICS FLORIDA
+ G001652               THE FAMILY PLACE    FALSE               FAMILY PLACE
+ G001733                       HARC INC    FALSE                       HARC
+ G001810            ADMIRAL AT THE LAKE    FALSE        ADMIRAL AT THE LAKE
+ G001870       CHOSEN PEOPLE MINISTRIES    FALSE   CHOSEN PEOPLE MINISTRIES
+ G002011           VENICE FAMILY CLINIC    FALSE       VENICE FAMILY CLINIC
+ G002985            ALPENA COMM COLLEGE    FALSE   ALPENA COMMUNITY COLLEGE
+ G003494            LOS ANGELES MISSION    FALSE        LOS ANGELES MISSION
+ G003526        GRAND RAPIDS ART MUSEUM    FALSE    GRAND RAPIDS ART MUSEUM
+ G003622       VERO BEACH MUSEUM OF ART    FALSE   VERO BEACH MUSEUM OF ART
+ G003821        NEBRASKA HUMANE SOCIETY    FALSE    NEBRASKA HUMANE SOCIETY
+ G004002                      ARTSQUEST    FALSE                  ARTSQUEST
+ G004171 Flint Cultural Center Corporat    FALSE FLINT CULTURAL CENTER CORP
+     .id                          query q_is_arm                  operating
+   t_op                        top   t_tp
+ <fctr>                     <char> <fctr>
+    YES  HUNDRED NIGHTS FOUNDATION  MAYBE
+    YES SAINT ANTHONY SHRINE FOUND  MAYBE
+    YES ANTI DEFAMATION LEAGUE FOU  MAYBE
+    YES COMMUNITY HOSPICE FOUNDATI  MAYBE
+    YES OAKLAND UNIVERSITY FOUNDAT  MAYBE
+    YES ANTI DEFAMATION LEAGUE FOU  MAYBE
+    YES ANTI DEFAMATION LEAGUE FOU  MAYBE
+    YES SPECIAL OLYMPICS FLORIDA F  MAYBE
+    YES    FAMILY PLACE FOUNDATION  MAYBE
+    YES            HARC FOUNDATION  MAYBE
+    YES THE ADMIRAL AT THE LAKE FO  MAYBE
+    YES CHOSEN PEOPLE MINISTRIES F  MAYBE
+    YES VENICE FAMILY CLINIC FOUND  MAYBE
+    YES ALPENA COMMUNITY COLLEGE E  MAYBE
+    YES LOS ANGELES MISSION FOUNDA  MAYBE
+    YES GRAND RAPIDS ART MUSEUM FO  MAYBE
+    YES VERO BEACH MUSEUM OF ART F  MAYBE
+    YES NEBRASKA HUMANE SOCIETY FO  MAYBE
+    YES       ARTSQUEST FOUNDATION  MAYBE
+    YES FLINT CULTURAL CENTER FOUN  MAYBE
+   t_op                        top   t_tp
+============================================================================== 
+Q2  DOES operating-first OVERRIDE THE FUNDER'S OWN WORDS? 
+============================================================================== 
+collapsed grants whose recorded name carries a support marker: 155 
+  operating-first still reports a NON-arm EIN : 134 (86%)  <- overriding the query 
+  keep-top reports an arm                     : 96 (62%) 
+ 
+Key: <.id>
+     .id                              query                  operating_reports
+  <char>                             <char>                             <char>
+ G000397    DAVENPORT UNIVERSITY FOUNDATION               DAVENPORT UNIVERSITY
+ G000734          CRAIG HOSPITAL FOUNDATION                     CRAIG HOSPITAL
+ G001624    EDEN AUTISM SERVICES FOUNDATION               EDEN AUTISM SERVICES
+ G001676 DELAWARE STATE UNIVERSITY FOUNDATI          DELAWARE STATE UNIVERSITY
+ G002344  JUNIOR LEAGUE OF OMAHA FOUNDATION             JUNIOR LEAGUE OF OMAHA
+ G002542 ANN & ROBERT H LURIE CHILDRENS HOS ANN AND ROBERT H LURIE CHILDRENS H
+ G002743         VALLEY HOSPITAL FOUNDATION                    VALLEY HOSPITAL
+ G003053        NORTHWELL HEALTH FOUNDATION                   NORTHWELL HEALTH
+ G003525   FRIENDS OF CITY PARK NEW ORLEANS              CITY PARK CONSERVANCY
+ G003684 PERMIAN BASIN AREA FOUNDATION - AM SOCIETY OF ECONOMIC PALENTOLOGISTS
+ G003943 PHOENIX CHILDREN'S HOSPITAL FOUNDA         PHOENIX CHILDRENS HOSPITAL
+ G004479 KANSAS STATE ATHLETICS-AHEARN FUND                  K STATE ATHLETICS
+ G004576   WAYNE MEMORIAL HEALTH FOUNDATION       WAYNE MEMORIAL HEALTH SYSTEM
+ G004676 RADY CHILDREN'S HOSPITAL FOUNDATIO  RADY CHILDRENS HOSPITAL SAN DIEGO
+ G005036 NORTHWELL HEALTH SYSTEM FOUNDATION                   NORTHWELL HEALTH
+ G005969 THE CENTURIONS OF SOUTHERN ARIZONA    OPERA GUILD OF SOUTHERN ARIZONA
+ G006048         MIRIAM HOSPITAL FOUNDATION                THE MIRIAM HOSPITAL
+ G006573          BAPTIST HEALTH FOUNDATION                     BAPTIST HEALTH
+ G006601          BOCA RATON HOSPITAL FOUND FIRST PRESBYTERIAN CHURCH BOCA RAT
+ G007013 CHESTER COUNTY HOSPITAL FOUNDATION            CHESTER COUNTY HOSPITAL
+     .id                              query                  operating_reports
+ 
+collapsed grants whose recorded name has NO support marker: 1495 
+  keep-top reports an arm anyway              : 617 (41%)  <- overriding the query the other way 
+------------------------------------------------------------------------------ 
+A QUERY-MATCHING POLICY, SIMULATED 
+------------------------------------------------------------------------------ 
+query-matching agrees with operating-first : 1572 (95%) 
+query-matching agrees with keep-top        : 1121 (68%) 
