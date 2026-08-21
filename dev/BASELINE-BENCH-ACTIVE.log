@@ -1,0 +1,12 @@
+﻿============================================================================== 
+BASELINE benchmark: active 
+============================================================================== 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+loading REF-active.rds ... 
+  1,924,822 rows 
+matching (11 passes) ... 
+  matched in 495.8 s 
+wrote benchmark-1k-active.rds (4733 identities, 9.65 MB) 
+
+  YES MAYBE    NO 
+ 2821  1006   906 

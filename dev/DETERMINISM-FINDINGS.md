@@ -59,14 +59,33 @@ Note also that this pins the *benchmark*, not the *baseline*. Phase 0a still
 needs a manifested baseline from a pinned `(npmatch, pfmatch)` commit pair; this
 result only says such a baseline will be reproducible once taken.
 
-## Incidental: the result object is 242 MB
+## Incidental: the result object is 242 MB, and it need not be
 
 Each `DET-RUN*.rds` is 242,434,747 bytes for a 4,733 x 24 frame — roughly 51 KB
-per row. `as.data.frame(m$result)` is retaining attributes far larger than the
-frame itself (the `np_tiered` object carries the candidate pairs along). Not a
-correctness problem, and `compress = FALSE` is deliberate throughout, but worth
-knowing before anyone stores one per phase gate: a gate that archives its result
-frame would cost a quarter-gigabyte a run.
+per row. Run down while freezing the Phase 0a baseline, the cause is specific
+and the fix is one line.
+
+`as.data.frame()` does **not** drop a subclassed frame's attributes, and
+`np_cascade()` attaches the full scored candidate-pair table to its result
+(`attr(res, "pairs") <- union`, `npmatch/R/cascade.R`). So the "data frame" is:
+
+| attribute | size |
+|---|---:|
+| `pairs` | **194.4 MB** |
+| `config` | 0.2 MB |
+| `profile`, `stages` | < 0.1 MB |
+| the frame itself | ~3 MB |
+
+Setting `attr(x, "pairs") <- NULL` before saving took the baseline outputs from
+9.65 MB and 16.64 MB to **0.163 MB and 0.165 MB** compressed — 60x and 100x —
+with the frame and the useful metadata (`config`, `profile`, `stages`) intact.
+
+Not a defect: retaining the pairs is deliberate and `np_route()` needs them,
+which is exactly why `dev/probe-variant-class-ab.R` could recover variant class
+post-hoc without any npmatch change. But it means **anything that persists a
+`pf_match` result is storing ~194 MB of candidate pairs by default**, and a
+phase gate archiving one per run would cost a quarter-gigabyte each time. Strip
+the attribute unless the pairs are the point.
 
 The three scratch files were deleted after comparison; `data-dev/` is gitignored
 and the probe reproduces them in about eight minutes each.
