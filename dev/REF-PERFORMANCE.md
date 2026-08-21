@@ -1,92 +1,132 @@
-# The augmented unified reference is ~166x slower, and Phase 1 cannot run on it
+# Cascade cost: there is no blocker, and how I convinced myself there was one
 
-Found 2026-08-21 while benchmarking the dyad module, which is why it is recorded
-separately: it has nothing to do with dyads and blocks the full-file run whether
-or not they ship.
+Investigated 2026-08-21 while benchmarking the dyad module. **Conclusion: every
+reference and pass combination measured is comfortably within the Phase 1
+budget.** The augmented unified reference costs 1.77x the monthly BMF for 2.02x
+the rows — sublinear, which is the good case.
+
+The rest of this memo is the record of four wrong explanations, kept because the
+mistake was methodological and worth not repeating.
 
 ## The measurement
 
-| reference | rows | seconds per 1,000 |
-|---|---:|---:|
-| `bmf_2026_01_processed.csv` (monthly BMF) | 1,924,822 | **33.5** (grants) |
-| `BMF-AUGMENTED-bmf_unified_geocoded_2026-08-20.csv` | 3,891,187 | **5,558** (identities) |
+1,000 identities, all 14 threads, idle machine, same queries throughout
+(`dev/bench-cascade-clean.R`, `dev/CASCADE-COST-CLEAN.log`):
 
-From `dev/BENCH-DYAD-1K.log`: 978 identities, cascade 5,436 s wall, one core
-saturated throughout. The two figures are not perfectly comparable — grants
-versus deduplicated identities, and identities are the harder unit — but the
-collapse ratio on this sample is 1.02x, so the comparison stands at roughly
-**two orders of magnitude**.
+| reference | rows | passes | s per 1,000 | scored pairs | YES | MAYBE |
+|---|---:|---|---:|---:|---:|---:|
+| monthly BMF | 1,924,822 | 9 | **128** | 51,214 | 569 | 188 |
+| monthly BMF | 1,924,822 | 11 | 149 | 52,210 | 569 | 193 |
+| augmented unified | 3,891,187 | 9 | 226 | 127,018 | 612 | 198 |
+| augmented unified | 3,891,187 | 11 | **279** | 128,983 | 612 | 201 |
 
-The reference is 2.02x larger. The slowdown is ~166x. It is superlinear, so it
-is not "the reference doubled".
+Two ratios worth keeping:
 
-## Where it goes
+* **recovery passes cost 1.16–1.23x**, and buy +5 MAYBE and 0 YES on this
+  sample. Cheap, and on this evidence close to worthless — but cheap.
+* **the augmented unified reference costs 1.77x for 2.02x the rows**, and buys
+  +43 YES and +10 MAYBE over the monthly BMF on 1,000 identities. That is the
+  +2.2 points of Phase 0b showing up, at a sublinear price.
 
-Candidate counts per pass, 978 identities:
+## Phase 1 is executable
 
-| pass | candidates | resolved |
-|---|---:|---:|
-| A1-name-zip5 | 781 | 307 |
-| A2-name-state | 8,056 | 79 |
-| A3-name-dba | 174 | 16 |
-| **B1-token-state** | **56,442** | 65 |
-| **B2-token-concat** | **121,738** | **5** |
-| C1-name-any | 10,360 | 0 |
-| **D1-acronym** | **30,276** | **1** |
-| D2-prefix | 11 | 0 |
+12,559,051 grants, **before** any dedup credit:
 
-127,206 scored pairs over 978 identities — **130 candidates per identity**.
+| reference | passes | total | on 12 shards |
+|---|---|---:|---:|
+| monthly | 9 | 445 h | **37 h** |
+| monthly | 11 | 520 h | 43 h |
+| augmented unified | 9 | 789 h | 66 h |
+| augmented unified | 11 | 975 h | **81 h** |
 
-The three token/acronym passes generate **208,456 of the 227,838 candidates and
-resolve 71 queries between them.** B2-token-concat alone costs 121,738
-candidates for **5** resolutions. On the 50k monthly-BMF run the same passes
-were expensive but proportionate (B1: 2.1M candidates, 4,144 resolutions).
+The worst combination is 81 hours on 12 shards with no dedup at all. The plan
+budgets 117 hours. Dedup on the full file has not been measured yet (Phase 1.2)
+and only improves this. **Run the augmented unified reference with all passes.**
 
-The likely mechanism is the 193,063 Schedule I alias rows: an alias is a short,
-common name variant, so it enlarges token blocks disproportionately and adds
-rows that are near-duplicates of BMF rows already present. That is a hypothesis
-consistent with the counts above, **not something measured yet** — the
-attribution test is to run the same benchmark against the unaugmented unified
-BMF (3,687,435 rows, no aliases) and see whether the cost tracks row count or
-alias count.
+## Four wrong explanations, and the one real error
 
-## Why it matters
+Each was a plausible reading of a number produced under uncontrolled conditions:
 
-Phase 1 is 12,559,051 grants, budgeted at 117 hours single-threaded against the
-monthly BMF and made tractable by dedup plus ~12 parallel shards. At 5,558 s per
-1,000 identities that budget becomes tens of thousands of hours. **The full-file
-run is not executable against this reference**, and no amount of sharding fixes
-a 166x constant.
+| claim | test | verdict |
+|---|---|---|
+| the augmented reference is ~166x slower | compared an 11-pass run to a 9-pass benchmark | **wrong** — different pass sets |
+| the recovery passes cost ~44x | 9 vs 11 passes, same bundle | **wrong** — 1.1x |
+| `REF-active.rds` lacks a blocking index | inspected all three bundles | **wrong** — all carry `ref_index`, `name_freq`, `token_idf` |
+| a fixed per-call cost that small batches multiply | fitted time against query count | **wrong** — fixed component 15 s, R² 0.999 |
 
-Phase 0b credits the augmented reference with +2.2 points of recall. That gain
-is real and measured, but it has never been priced against its runtime, and on
-this evidence the price is prohibitive.
+The actual variable was **`setDTthreads()`, differing between the diagnostic
+scripts themselves**:
 
-## What to do, in order
+| threads | s per 1,000, same reference and passes |
+|---:|---:|
+| 6 | 1,335 |
+| 14 | 192 |
 
-1. **Attribute the cost.** Same benchmark, three references: monthly BMF,
-   unaugmented unified BMF, augmented unified. This separates "more rows" from
-   "alias rows" and takes one run each. `dev/run-bmf-comparison.R` already has
-   the three configs wired.
-2. **Profile the token passes** against the augmented reference. If block sizes
-   are the cause, the fix is a block-size cap or an IDF floor on the blocking
-   token, not a smaller reference.
-3. **Reconsider what the alias rows are for.** `dev/SCHEDI-ALIAS-FINDINGS.md`
-   established that the alias justifies the match and enters as its own row. If
-   alias rows only ever need to resolve through the *exact-name* passes (A1/A2),
-   they could be excluded from token blocking entirely, which would remove them
-   from B1/B2/D1 at no recall cost. This is the most promising lever and is
-   untested.
-4. **Only then re-benchmark Phase 1.**
+Some early runs were also competing with an unrelated R process for cores. So
+the "catastrophic slowdown" was a property of the harness, not the reference.
 
-## Incidental
+**The methodological error, which is the point:** thread count and background
+load varied between runs while the results were treated as comparable, and the
+explanation was sought *in the code* four times rather than *in the measurement
+setup* once. A slow number should prompt "how did I measure this?" before "what
+is wrong with the software?".
 
-`dev/BENCH-AUG.log` stops mid-Stage-3 with no error. That was read as a crash
-and is not one — the run was still going. Any future benchmark against this
-reference needs `verbose = TRUE` on `pf_link()` so per-batch progress is
-visible, otherwise a very slow run is indistinguishable from a hung one.
+## The reusable reference index is worth ~14x
 
-The installed `npmatch` is also older than its source tree: `np_cascade()` there
-does not accept `name_freq` / `token_idf` / `ref_index`, which
-`pf_match_grants()` passes. Anything running from the installed package fails
-immediately. Reinstall before Phase 1.
+Measured while verifying the npmatch reinstall
+(`dev/verify-npmatch-install.R`). Same queries, same reference, same passes,
+with and without the precomputed `ref_index` / `name_freq` / `token_idf` handed
+to `np_cascade()`:
+
+| | s per 1,000 |
+|---|---:|
+| with the precomputed index | ~128 |
+| **without** (bundle stripped) | **~1,790** |
+
+Results are **identical** either way — 110 YES / 43 MAYBE / 34 NO — so this is
+purely an optimisation, not a behaviour change.
+
+This is the single largest performance factor found in the investigation, and it
+is what npmatch commit `e68353d` ("Add batched matching and a reusable reference
+token index") introduced. It also raises the stakes on the install problem: an
+npmatch that cannot accept those arguments does not merely error, it forfeits
+14x.
+
+## Residual, not worth chasing
+
+The 2026-08-19 50k run recorded 35 s per 1,000 against 128 s per 1,000 here for
+the same reference and passes — 3.7x, unexplained. Candidates are batch size
+(46,900 queries in 2 calls versus 1,000 in one, so better amortisation of
+whatever is not strictly per-query) and machine conditions. It does not change
+any decision: at either figure Phase 1 runs. Left open deliberately.
+
+## Practical notes
+
+* **Always `setDTthreads(0L)` in benchmarks**, and check for competing processes
+  before timing anything. A 7x swing hides in this.
+* **Pass `verbose = TRUE` to `pf_link()`** on a large reference. With it off, a
+  slow run is indistinguishable from a hung one — `dev/BENCH-AUG.log` stopping
+  mid-Stage-3 is a run in progress, not a crash, and was misread as one.
+* **`npmatch` reinstalled 2026-08-21 and verified.** The installed copy now
+  accepts `name_freq` / `token_idf` / `ref_index`, `pf_match_grants()` runs
+  against it under plain `library(npmatch)`, and the dyad collapse plus
+  `pf_status()` work end to end. `dev/VERIFY-NPMATCH.log`.
+
+  **Both copies reported version `0.0.0.9000`** before and after, so the version
+  string could not distinguish them. Check
+  `names(formals(npmatch::np_cascade))` instead. Worth bumping npmatch's dev
+  version whenever its API changes.
+* **`pfmatch` installed 2026-08-21** from the `dyads-cascade-cost` branch. It
+  was not installed at all before that, so `library(pfmatch)` — which every
+  Phase 1 script calls — failed outright.
+
+## A warning about this working tree
+
+This repository lives inside Dropbox. During this session, edits to this file
+and to `dev/DEVELOPMENT-PLAN.md` were silently reverted on disk between being
+written and being committed, so commit `eeaf405` captured superseded text whose
+conclusions contradicted its own commit message. Corrected in the following
+commit.
+
+**Verify file contents after writing, and before committing, in this repo.**
+`git diff` against what you believe you wrote is the cheap check.

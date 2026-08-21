@@ -89,15 +89,18 @@ Gating rules that must survive into the implementation:
 **Exit criterion:** one unified reference, with `row_source` recording where
 each row came from, and the 5k benchmark re-run against it.
 
-> **BLOCKER, found 2026-08-21.** The augmented unified reference runs at
-> **5,558 s per 1,000 identities** against the monthly BMF's 33.5 s per 1,000 —
-> ~166x for 2.02x the rows. Three token/acronym passes generate 208,456 of
-> 227,838 candidates and resolve 71 queries between them. Phase 1 is **not
-> executable** against this reference: no amount of sharding fixes a 166x
-> constant. The +2.2 recall points are real but have never been priced against
-> runtime. Attribution test and the most promising fix (exclude alias rows from
-> token blocking, since an alias only ever needs the exact-name passes) are in
-> `dev/REF-PERFORMANCE.md`. **This now gates Phase 1 ahead of everything else.**
+> **Cost, measured cleanly 2026-08-21.** The augmented unified reference costs
+> **1.77x the monthly BMF for 2.02x the rows** — sublinear — and buys +43 YES
+> per 1,000 identities. The recovery passes add 1.16–1.23x. Every combination is
+> within budget (see Phase 1). **Use the augmented reference with all passes.**
+>
+> An earlier revision of this note claimed a 166x blocker. That was a
+> `setDTthreads()` artefact in the benchmark harness — 6 threads in one
+> diagnostic script, 14 in another — not a property of the reference.
+> `dev/REF-PERFORMANCE.md` records the four wrong explanations and the real one.
+>
+> Separately: the reusable reference index (`ref_index` / `name_freq` /
+> `token_idf`) is worth **~14x**, with identical results either way.
 
 ## Phase 0c — EIN dyads in the cascade
 
@@ -209,10 +212,28 @@ the size of the drop is not established; the sign is.
 Input: `~/Documents/grants/2025_08_29_All_Years_990PFPart14Grants3A.csv`,
 **12,559,051 grants**.
 
-**Blocked on the Phase 0b performance defect** (`dev/REF-PERFORMANCE.md`). The
-schedule below assumes 33.5 s per 1,000; the augmented unified reference
-currently costs 5,558 s per 1,000. Resolve that first — the choice is not
-"augmented or plain" but "fix the token passes or forfeit +2.2 points".
+**Cost is not a blocker.** Measured 2026-08-21 on 1,000 identities, all threads,
+idle machine (`dev/bench-cascade-clean.R`), for 12,559,051 grants **before any
+dedup credit**:
+
+| reference | passes | s per 1,000 | total | 12 shards |
+|---|---|---:|---:|---:|
+| monthly BMF | 9 | 128 | 445 h | 37 h |
+| monthly BMF | 11 | 149 | 520 h | 43 h |
+| augmented unified | 9 | 226 | 789 h | 66 h |
+| **augmented unified** | **11** | **279** | **975 h** | **81 h** |
+
+The worst combination is 81 h on 12 shards with no dedup at all, against a
+117 h budget. Dedup — step 2 below — only improves it. **Run the augmented
+unified reference with all passes.**
+
+The 33.5 s per 1,000 figure this plan was written with came from the 2026-08-19
+50k run and is 3.7x faster than anything reproducible today, for reasons left
+open in `dev/REF-PERFORMANCE.md`. It changes no decision.
+
+**Both packages must be installed first.** `npmatch` was stale and `pfmatch` was
+not installed at all until 2026-08-21; every script here calls
+`library(pfmatch)`.
 
 **Depends on Phase 0c.** Running without `dyads =` forfeits the MAYBE→YES
 promotions and, more importantly, produces a review queue containing thousands
