@@ -2,3 +2,49 @@
 ============================================================================== 
 WITHOUT DYADS 
 ============================================================================== 
+ status     N
+ <fctr> <int>
+    YES   552
+     NO   234
+  MAYBE   192
+============================================================================== 
+WITH DYADS 
+============================================================================== 
+---------------------------------------------------------------------- 
+STAGE 3  link 
+  dyads: 566,653 pairs, 29,230 substitutable 
+pf_run_batches: 978 rows in 2 batches of 500 
+  [  1/  2]    500 rows | YES   299 MAYBE    87 NO   114 OOS    0 |  866.7 s (1733.4 s/1k) 
+  [  2/  2]    478 rows | YES   268 MAYBE    90 NO   120 OOS    0 |  639.1 s (1337.0 s/1k) 
+  dyad collapse fired on 30 identities (3.1%) 
+  elapsed 1505.8 s 
+ status     N
+ <fctr> <int>
+    YES   567
+     NO   234
+  MAYBE   177
+============================================================================== 
+CHECKS 
+============================================================================== 
+  [PASS] same number of identities either way 
+  [PASS] status frame carries the dyad audit columns 
+  [PASS] and does not when dyads is NULL 
+  [PASS] the collapse actually fired 
+  [PASS] no identity lost its status 
+  [PASS] identity ids are unchanged 
+ 
+tier movement: 
+     t0     t1     N
+ <fctr> <fctr> <int>
+  MAYBE    YES    15
+  [PASS] nothing was pushed into NO 
+  [PASS] every tier change happened on a collapsed identity 
+ 
+identities where the reported EIN changed: 7 
+  [PASS] every changed pick still reports an EIN 
+  [PASS] and it differs from the one it replaced 
+ 
+YES/MAYBE with a BMF state resolved: 100.0% (dyad rows 100.0%) 
+  [PASS] collapsed rows still resolve geography from the reduced pair set 
+============================================================================== 
+ALL CHECKS PASSED 
