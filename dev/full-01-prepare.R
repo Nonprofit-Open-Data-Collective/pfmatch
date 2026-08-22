@@ -15,8 +15,18 @@ suppressWarnings(suppressMessages(library(npmatch)))
 suppressWarnings(suppressMessages(library(pfmatch)))
 setDTthreads(0L)
 
-SRC   <- "C:/Users/jlecy/Documents/grants/2025_08_29_All_Years_990PFPart14Grants3A.csv"
-STAGE <- "C:/Users/jlecy/Documents/grants/staging"
+# Resolved from the environment rather than hardcoded: this script carried a
+# `jlecy` home directory that does not exist on the machine the project runs on,
+# so it could never have executed here.
+HOME  <- Sys.getenv("PF_GRANTS_DIR",
+                    file.path(path.expand("~"), "Documents", "grants"))
+HOME  <- normalizePath(HOME, winslash = "/", mustWork = FALSE)
+SRC   <- Sys.getenv("PF_GRANTS_FILE",
+                    file.path(HOME, "2025_08_29_All_Years_990PFPart14Grants3A.csv"))
+STAGE <- file.path(HOME, "staging")
+if (!file.exists(SRC))
+  stop("grant file not found: ", SRC,
+       "\n  set PF_GRANTS_DIR or PF_GRANTS_FILE.", call. = FALSE)
 dir.create(STAGE, showWarnings = FALSE, recursive = TRUE)
 say <- function(...) message(sprintf(...))   # stderr is unbuffered
 hr  <- function() message(strrep("-", 78))
@@ -53,18 +63,36 @@ say("prepare + dedup took %.0f s (%.1f min)", tick() - t1, (tick() - t1) / 60)
 gp <- as.data.table(prep$grants)
 say("")
 say("prepared rows: %s", format(nrow(gp), big.mark = ","))
-idcol <- intersect(c("identity_id", "dedup_id", "recipient_id"), names(gp))[1]
+# pf_prepare() names the identity column `recipient_uid`; none of the three names
+# this line used to look for exist, so it always took the "no identity column"
+# branch and never reported the ratio the script exists to produce.
+idcol <- intersect(c("recipient_uid", "identity_id", "dedup_id", "recipient_id"),
+                   names(gp))[1]
 if (is.na(idcol)) {
   say("NOTE: no identity column found; columns are:")
   say("  %s", paste(names(gp), collapse = ", "))
 } else {
-  n_id <- uniqueN(gp[[idcol]])
-  say("distinct recipient identities: %s", format(n_id, big.mark = ","))
-  say("COLLAPSE RATIO: %.2fx   (the 100k sample measured 1.8x)", nrow(gp) / n_id)
+  n_id  <- uniqueN(gp[[idcol]])
+  n_in  <- sum(gp$in_scope)
+  n_ids <- nrow(prep$recipients)
+  say("distinct recipient identities (all rows) : %s", format(n_id, big.mark = ","))
+  say("in-scope rows                            : %s", format(n_in, big.mark = ","))
+  say("in-scope identities (what gets matched)  : %s", format(n_ids, big.mark = ","))
   say("")
-  say("Projected match cost at 33.5 s per 1,000 identities:")
-  say("  single process : %.1f hours", n_id / 1000 * 33.5 / 3600)
-  for (w in c(6, 10, 12)) say("  %2d workers     : %.1f hours", w, n_id / 1000 * 33.5 / 3600 / w)
+  say("COLLAPSE RATIO: %.2fx overall | %.2fx on the in-scope rows that matter",
+      nrow(gp) / n_id, n_in / n_ids)
+  say("  for reference: 1.002x on 1k, 1.323x on 100k, 1.8x extrapolated in SCALE-PLAN")
+  say("")
+  # 433 s/1k is the measured production figure (augmented reference, 11 passes,
+  # dyads, n=2,000-8,000) from dev/SHARD-AND-COLLAPSE-FINDINGS.md. 197 s/1k is
+  # the same config with B2-token-concat off, which costs -1.55% YES. The 33.5
+  # this script used to quote came from the 2026-08-19 50k run and is not
+  # reproducible; the 12-worker rows it printed are unavailable at ~37 GB a shard.
+  say("Projected match cost, ONE shard (all that fits in 68 GB):")
+  for (r in c(`B2 on  (433 s/1k)` = 433, `B2 off (197 s/1k)` = 197))
+    say("  %-20s : %.0f hours", names(which(c(`B2 on  (433 s/1k)` = 433,
+        `B2 off (197 s/1k)` = 197) == r)), n_ids / 1000 * r / 3600)
+  say("  budget on record     : 117 hours")
 }
 
 hr(); say("PHASE 1.3 -- STAGE"); hr()

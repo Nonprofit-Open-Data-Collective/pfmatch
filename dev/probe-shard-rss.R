@@ -113,9 +113,17 @@ ws_dy <- peak_ws()
 say("dyads: %s pairs | working set now %.2f GB (+%.2f)",
     format(nrow(DY), big.mark = ","), ws_dy, ws_dy - ws_ref)
 
-CK <- file.path(DD, sprintf("batches-rss-%s-%d", WREF, N))
+# B2-token-concat is the single largest candidate producer -- 10.35M candidates
+# against 5.03M without it at 100k (dev/SCALE-PLAN.md). Its RECALL cost is
+# settled (-1.55% YES, keep it on); its MEMORY cost has never been measured, and
+# candidate volume is what the ~33 GB fixed cost is made of.
+CONCAT <- !identical(tolower(Sys.getenv("PF_CONCAT", "on")), "off")
+CK <- file.path(DD, sprintf("batches-rss-%s-%d%s", WREF, N,
+                            if (CONCAT) "" else "-noB2"))
 unlink(CK, recursive = TRUE)
-PASSES <- c(pf_staged_passes("lean", concat = TRUE), pf_recovery_passes(state = TRUE))
+PASSES <- c(pf_staged_passes("lean", concat = CONCAT),
+            pf_recovery_passes(state = TRUE))
+say("passes: %d (B2-token-concat %s)", length(PASSES), if (CONCAT) "ON" else "OFF")
 
 say(""); say("running ONE batch of %s at the production config ...", format(N, big.mark = ","))
 t0 <- tick()
@@ -135,7 +143,7 @@ say("PEAK WORKING SET .......... %.2f GB", ws_peak)
 say("  of which reference load   %.2f GB", ws_ref)
 say("  gc() max used (for scale) %.2f GB", gcp)
 
-row <- data.frame(ref = WREF, n = N, ref_rows = nrow(ref$reference),
+row <- data.frame(ref = WREF, concat = CONCAT, n = N, ref_rows = nrow(ref$reference),
                   elapsed_s = el, s_per_1k = 1000 * el / N,
                   ws_after_ref = ws_ref, ws_after_dyads = ws_dy,
                   ws_peak = ws_peak, gc_peak = gcp,

@@ -1,0 +1,9 @@
+------------------------------------------------------------------------------
+PHASE 1.1 -- INGEST
+------------------------------------------------------------------------------
+read 12,559,051 grants x 20 columns in 43 s
+memory held by the grant table: 2.6 GB
+tax years present: 2008 - 2024
+distinct filing foundations: 134,651
+median grants per filer-year: 5   (the dev samples had 1)
+filers with >=5 grants in a year: 51%

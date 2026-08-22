@@ -1,0 +1,41 @@
+============================================================================== 
+MEMORY BY STEP -- augmented reference, 500 queries 
+============================================================================== 
+  step                                   seconds      step peak (R)    cumulative (OS) 
+------------------------------------------------------------------------------ 
+  1. readRDS(reference bundle)              69.3 s | step peak   3.50 GB | cumulative WS   3.53 GB  
+ 
+  reference rows: 3,880,431 
+  resident sizes: reference 2.96 GB | ref_index 0.95 GB | name_freq 0.27 GB | token_idf 0.03 GB 
+  reference columns: 35 
+ 
+  2. pf_add_recovery_keys(reference)       178.5 s | step peak   5.94 GB | cumulative WS   6.08 GB (stage-4 acro/prefix keys) 
+  3. np_query + normalize + keys             0.1 s | step peak   3.63 GB | cumulative WS   6.08 GB (500 queries) 
+============================================================================== 
+EACH BLOCKING PASS, RUN ALONE 
+============================================================================== 
+  pass                                   seconds      step peak (R)   candidates 
+------------------------------------------------------------------------------ 
+  A1-name-zip5                              27.4 s |          6.99 GB |      5,610 
+  A2-name-state                             12.5 s |          7.06 GB |     11,083 
+  A3-name-dba                                6.1 s |          6.81 GB |         69 
+  A4-dba-name                               13.0 s |          6.92 GB |          2 
+  A5-dba-dba                                 1.4 s |          4.04 GB |     FAILED 
+  B1-token-state                            88.9 s |          8.17 GB |     63,635 
+  B2-token-concat                          172.3 s |          8.63 GB |    129,555 
+  C1-name-any                                6.7 s |          7.95 GB |     13,890 
+  C2-dba-any                                 4.0 s |          7.84 GB |        329 
+  D1-acronym                               112.0 s |          8.75 GB |     33,356 
+  D2-prefix                                 14.6 s |          8.04 GB |        387 
+============================================================================== 
+THE FULL CASCADE, ALL 11 PASSES 
+============================================================================== 
+  full cascade    435.6 s | step peak  31.07 GB | 77,664 candidates in the union 
+  pairs attribute resident: 0.06 GB 
+ 
+  sum of the parts     81.19 GB   (worst single pass 8.75 GB: D1-acronym) 
+  the whole            31.07 GB 
+  candidates: sum of parts 257,916 vs union 77,664 (3.32x dedup across passes) 
+ 
+  FINAL cumulative working set: 31.72 GB 
+wrote data-dev/MEMORY-STEPS-augmented.csv and MEMORY-PASSES-augmented.csv 

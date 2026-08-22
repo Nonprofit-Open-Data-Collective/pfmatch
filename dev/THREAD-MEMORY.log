@@ -1,0 +1,8 @@
+data.table threads: 1 
+after setup, working set 6.88 GB 
+ 
+threads  1 | cascade  419.9 s | cascade peak (R)  31.23 GB | process peak  31.90 GB | 77,664 pairs 
+data.table threads: 4 
+after setup, working set 6.88 GB 
+ 
+threads  4 | cascade  363.4 s | cascade peak (R)  31.23 GB | process peak  31.91 GB | 77,664 pairs 
