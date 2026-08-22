@@ -119,7 +119,7 @@ Four candidates remain, and the measurements above have already eliminated the
 cheap ones. Everything here is unmeasured; the ranking is by expected value, not
 evidence.
 
-**1. Release between passes — the only lever aimed at the actual mechanism.**
+**1. ~~Release between passes~~ — TESTED AND REJECTED, see below.**
 The cascade holds 31 GB to produce 0.06 GB. If `np_cascade()` scored and reduced
 each pass's candidates before starting the next, rather than accumulating raw
 intermediates, peak should approach the worst single pass — **~9 GB, which is 6
@@ -151,3 +151,31 @@ One shard still fits, and Phase 1 is still 406–1,142 h single-stream depending
 the dedup ratio (§3 of `SHARD-AND-COLLAPSE-FINDINGS.md`). Turning B2 off halves
 the runtime and buys no shards; nothing measured so far buys shards at all. The
 first item in §6 is the only one that would, and it is in the other repository.
+
+---
+
+## 8. Postscript: §6's ranking was wrong, and what replaced it
+
+Written before any of §6 was tested. Two corrections.
+
+**The mechanism in §2 was misdiagnosed.** "The cascade accumulates per-pass
+intermediates and does not release them between passes" was an inference from
+peak-vs-result, not an observation. It is wrong. `rm()` plus `gc(full = TRUE)`
+between passes left the peak at **31.23 GB** — unchanged to two decimals — and
+cost 43% more wall-clock. The memory was reachable, not garbage, so collecting
+harder could not have helped.
+
+**§6's top-ranked lever was therefore aimed at nothing**, and the two follow-ups
+confirmed it. Stripping the `reclin2` source-frame attributes from each pass's
+frame — which *appeared* to show the accumulator growing 5.93 → 23.72 GB over
+four passes — also left the peak at 31.23 GB, because `object.size()` counts
+shared structure once per reference and every pass points at the same `y`.
+
+Both npmatch changes were reverted; neither shipped. `trace_memory` was kept
+long enough to produce the per-pass trace that redirected the search, and is the
+evidence in `dev/STATE-PARTITION-FINDINGS.md` §2.
+
+**What actually moves it is §6's item 3, reference partitioning** — measured at
+6.6x memory and 4.4x time on a CA slice. The per-pass trace explains why nothing
+else did: the peak rises with pass *order* and reference *size*, not with
+candidates, so only shrinking the reference touches it.

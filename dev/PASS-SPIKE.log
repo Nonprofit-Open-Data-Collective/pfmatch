@@ -1,0 +1,36 @@
+np_cascade: method = hier | YES>=0.78  MAYBE>=0.65  margin>=0.05
+  score = 0.60*name + 0.40*geo;  geo = max(zip9=1.00, street=0.95, zip5=0.90, pobox=0.90, zip3=0.55, city=0.50, state=0.20)
+  [A1-name-zip5    ] name + ZIP5 (exact)              5,688 cand ->  132 YES    88 MAYBE     0 NO | resolved 132, pending 368, med YES margin 0.98
+      peak after this pass: 7.34 GB
+  [A2-name-state   ] name + state (exact)             10,953 cand ->   42 YES   109 MAYBE     0 NO | resolved 42, pending 326, med YES margin 0.90
+      peak after this pass: 8.11 GB
+  [A3-name-dba     ] name == dba, same state             89 cand ->    6 YES    16 MAYBE     0 NO | resolved 6, pending 320, med YES margin 0.89
+      peak after this pass: 10.79 GB
+  [A4-dba-name     ] dba == name, same state              4 cand ->    0 YES     2 MAYBE     0 NO | resolved 0, pending 320, med YES margin NA
+      peak after this pass: 14.80 GB
+  [A5-dba-dba      ] dba == dba, same state               0 candidates
+  [B1-token-state  ] shared token, same state         52,064 cand ->   34 YES   177 MAYBE    84 NO | resolved 34, pending 286, med YES margin 0.42
+      peak after this pass: 18.05 GB
+  [B2-token-concat ] shared token + compound, same state 71,105 cand ->    5 YES   187 MAYBE    79 NO | resolved 5, pending 281, med YES margin 0.72
+      peak after this pass: 21.51 GB
+  [C1-name-any     ] name == name, ANY state          6,284 cand ->    0 YES   119 MAYBE     9 NO | resolved 0, pending 281, med YES margin NA
+      peak after this pass: 20.76 GB
+  [C2-dba-any      ] name == dba,  ANY state            176 cand ->    0 YES    14 MAYBE    14 NO | resolved 0, pending 281, med YES margin NA
+      peak after this pass: 22.63 GB
+  [D1-acronym      ] shared token incl. initials      23,956 cand ->    4 YES   174 MAYBE    74 NO | resolved 4, pending 277, med YES margin 0.76
+      peak after this pass: 31.23 GB
+  [D2-prefix       ] name prefix + ZIP5 (truncated source names)   375 cand ->    3 YES    91 MAYBE     7 NO | resolved 3, pending 274, med YES margin 0.91
+      peak after this pass: 27.79 GB
+  final: 293 YES | 119 MAYBE | 79 NO over 491/500 queries
+
+            pass candidates   peak_gb
+    A1-name-zip5       5688  7.339050
+   A2-name-state      10953  8.106125
+     A3-name-dba         89 10.787854
+     A4-dba-name          4 14.796031
+  B1-token-state      52064 18.052445
+ B2-token-concat      71105 21.509249
+     C1-name-any       6284 20.757825
+      C2-dba-any        176 22.630542
+      D1-acronym      23956 31.231523
+       D2-prefix        375 27.789031
