@@ -128,3 +128,58 @@ test_that("resume = FALSE overrides a stale checkpoint without erroring", {
                   error = function(e) conditionMessage(e))
   expect_false(grepl("different settings", paste(err, collapse = " ")))
 })
+
+## Reference collapse --------------------------------------------------------
+# Measured and rejected (see pf_collapse_reference()), but kept as an
+# instrument, so its correctness still has to hold.
+
+toy_ref <- function() data.frame(
+  .ein     = c("300","100","200","500","400","900","901","700"),
+  name_key = c("PTA","PTA","PTA","DUCKS","DUCKS","","","SOLO"),
+  state    = c("CA","CA","CA","TN","TN","NY","NY","MA"),
+  zip5     = c("90001","90001","90001","38120","38120","10001","10002","02138"),
+  active   = c(FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE),
+  stringsAsFactors = FALSE)
+
+test_that("identical rows collapse and the rest survive", {
+  o <- pf_collapse_reference(toy_ref(), rebuild = FALSE, verbose = FALSE)
+  expect_equal(nrow(o$reference), 5L)          # PTA, DUCKS, 2 nameless, SOLO
+  expect_equal(o$collapse$rows_before, 8L)
+  expect_equal(o$collapse$max_group, 3L)
+})
+
+test_that("a nameless row is unblockable, not duplicated", {
+  # the failure this guards: keying on an empty name merges the entire nameless
+  # tail of the BMF into one representative
+  o <- pf_collapse_reference(toy_ref(), rebuild = FALSE, verbose = FALSE)
+  expect_equal(sum(o$reference$name_key == ""), 2L)
+})
+
+test_that("the representative is active, then lowest EIN", {
+  o <- pf_collapse_reference(toy_ref(), rebuild = FALSE, verbose = FALSE)
+  expect_equal(o$reference$.ein[o$reference$name_key == "PTA"], "200")
+  expect_equal(o$reference$.ein[o$reference$name_key == "DUCKS"], "400")
+})
+
+test_that("the tie-break is total, so the result is reproducible", {
+  # selection is first-row-wins; without a total order the reported EIN would
+  # follow row order and the benchmark would stop being deterministic
+  a <- pf_collapse_reference(toy_ref(), rebuild = FALSE, verbose = FALSE)
+  b <- pf_collapse_reference(toy_ref()[c(5,2,8,1,7,3,6,4), ], rebuild = FALSE,
+                             verbose = FALSE)
+  expect_equal(sort(a$reference$.ein), sort(b$reference$.ein))
+})
+
+test_that("every merged EIN is recoverable from members", {
+  o <- pf_collapse_reference(toy_ref(), rebuild = FALSE, verbose = FALSE)
+  expect_equal(nrow(o$members), 5L)                       # 3 PTA + 2 DUCKS
+  expect_setequal(o$members$ein[o$members$rep_ein == "200"],
+                  c("100", "200", "300"))
+  expect_equal(sum(o$reference$.ein %in% o$members$ein), 2L)  # the two reps
+})
+
+test_that("a missing key column is an error, not a silent no-op", {
+  expect_error(pf_collapse_reference(toy_ref(), by = c("name_key", "nope"),
+                                     rebuild = FALSE, verbose = FALSE),
+               "no column")
+})

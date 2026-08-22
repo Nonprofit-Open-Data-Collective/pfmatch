@@ -1,0 +1,59 @@
+============================================================================== 
+REFERENCE COLLAPSE -- REF-augmented.rds 
+============================================================================== 
+loaded 3,880,431 rows in 125 s 
+columns: .id .ein name dba division street unit city county state zip5 zip_plus4 active name_gen name_gen_rank name_nums name_ord name_dir name_form name_full name_key dba_key division_key street_unit street_key is_po_box street_num street_name street_type zip3 zip9 state_abb name_acro name_pre name_is_acro 
+rows with a usable name key: 3,880,428 
+============================================================================== 
+BEFORE 
+============================================================================== 
+as built                           rows   3,880,428 | blocks  3,069,114 | max   7,379 | sum(N^2) 4.486e+08 
+ 
+rows in (name, state) blocks of size >= 50: 461,138 (11.88%) 
+ 
+the blocks that dominate sum(N^2): 
+                                                      .nk    .st     N
+                                                   <char> <char> <int>
+ PTA CALIFORNIA CONGRESS OF PARENTS TEACHERS AND STUDENTS     CA  7379
+                     PEO SISTERHOOD INTERNATIONAL CHAPTER     IA  6713
+                                          DUCKS UNLIMITED     TN  5364
+                                       PTA TEXAS CONGRESS     TX  5144
+                                    OHIO STATE UNIVERSITY     OH  5082
+                          NATIONAL WILD TURKEY FEDERATION     SC  4222
+                               TOASTMASTERS INTERNATIONAL     CA  3768
+                                MICHIGAN STATE UNIVERSITY     MI  3274
+============================================================================== 
+AFTER collapsing identical (name_key, state, zip5) 
+============================================================================== 
+collapsed                          rows   3,527,239 | blocks  3,069,114 | max   1,208 | sum(N^2) 5.655e+07 
+ 
+reference rows   3,880,428 -> 3,527,239  (9.1% smaller) 
+cost driver      4.486e+08 -> 5.655e+07  (7.9x cheaper) 
+largest block    7,379 -> 1,208 
+============================================================================== 
+WHAT THE COLLAPSE HIDES 
+============================================================================== 
+groups holding more than one EIN : 152,825 (4.33% of collapsed rows) 
+EINs inside them                 : 506,014 (13.04% of the reference) 
+largest group                    : 6,710 EINs 
+ 
+distribution of group size, where > 1: 
+
+     2      3    4-5   6-10  11-50 51-500   500+ 
+118611  16686   8597   5374   3191    336     30 
+ 
+the largest collapsed groups (each is one name, one state, one ZIP5): 
+                                      name  state   zip5 n_identical
+                                    <char> <char> <char>       <int>
+      PEO SISTERHOOD INTERNATIONAL CHAPTER     IA  50312        6710
+                           DUCKS UNLIMITED     TN  38120        5363
+           NATIONAL WILD TURKEY FEDERATION     SC  29824        4221
+   AMERICAN ASSOCIATION OF RETIRED PERSONS     DC  20049        2020
+                                      AARP     DC  20049        1825
+                ROYAL NEIGHBORS OF AMERICA     IL  61201        1764
+ EPSILON SIGMA ALPHA INTERNATIONAL COUNCIL     CO  80526        1502
+                ALPHA DELTA KAPPA SORORITY     MO  64114        1447
+                PHI THETA KAPPA FRATERNITY     MS  39236        1258
+                          BNAI BRITH YOUTH     DC  20006        1175
+ 
+wrote data-dev/REF-COLLAPSE-augmented.csv 

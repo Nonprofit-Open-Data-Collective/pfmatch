@@ -193,6 +193,125 @@ pf_build_reference <- function(bmf, active_col = NULL) {
        ref_index = ref_index,
        timing = c(read = t_read, normalize = t_norm, index = t_index))
 }
+#' Collapse reference rows the matcher cannot tell apart
+#'
+#' Rows sharing a normalized name, state and ZIP5 are indistinguishable to every
+#' comparison the cascade makes. Keeping 6,710 of them buys nothing and costs
+#' the blocking pass 6,710 candidates for every query that hits the name.
+#'
+#' @section Measured, and NOT adopted:
+#' `dev/PHASE3-LIBRARIES.md` §0 listed this as one of two changes to make before
+#' the full run, on the strength of "reference −7%, cost driver −8x". Both halves
+#' reproduce on the right artifact and the blocker's own `name_key`
+#' (`dev/probe-ref-collapse.R`): **3,880,428 → 3,527,239 rows, 9.1% smaller, and
+#' `sum(block^2)` 4.49e8 → 5.66e7 — 7.9x.** The largest `(name, state)` block
+#' falls from 7,379 rows to 1,208.
+#'
+#' **It buys nothing.** Same rung, same queries, augmented against collapsed
+#' (`dev/SHARD-RSS-COLLAPSED.log`): peak working set 36.82 → 32.95 GB (−10.5%,
+#' still one shard on 68 GB) and **366 s per 1,000 either way — no speedup at
+#' all.** A 7.9x cut in the cost driver moved the cost 0%.
+#'
+#' The proxy is what failed. `sum(block^2)` counts candidates on the assumption
+#' that queries distribute like the reference. Grant recipients do not: nobody
+#' makes grants to 6,710 PEO chapters, so the giant blocks are almost never
+#' queried and shrinking them saves work nobody was doing.
+#'
+#' @section What it hides:
+#' 152,825 groups hold more than one EIN, covering 506,014 — 13.0% of the
+#' reference. Before the collapse that ambiguity was *visible*: tied candidates
+#' drove the margin to zero and `np_tier()` held the grant in MAYBE. Afterwards
+#' one row wins outright. On the 2,000-identity rung the collapse moved **80
+#' grants MAYBE → YES, and 88% of them are won by an EIN standing for more than
+#' one** — median 2, max 5,363. That is a 5% headline YES gain made entirely of
+#' converted abstentions, and it is why this function returns `members` rather
+#' than quietly dropping the merged EINs.
+#'
+#' So: **do not use this in the production cascade.** It is kept because the
+#' negative result rests on it and because `members` is a usable
+#' same-name-same-place equivalence table in its own right — which is the
+#' reference-side duplicate problem of `dev/CLUSTER-FINDINGS.md` §8, and a better
+#' use for it than blocking.
+#'
+#' @param ref A bundle from [pf_build_reference()] or a normalized reference.
+#' @param by Columns defining indistinguishability. The default is the set the
+#'   cascade actually compares on.
+#' @param rebuild Recompute `name_freq`, `token_idf` and `ref_index` from the
+#'   collapsed reference. Leaving this `FALSE` keeps the *pre-collapse* name
+#'   frequencies, which is a different system: `np_name_freq()` feeds the
+#'   promotion gate, so a rebuild makes rare-after-collapse names newly eligible.
+#' @param verbose Report what was collapsed.
+#' @return The bundle with `reference` collapsed, plus `members` — one row per
+#'   merged EIN, carrying `rep_ein`, `ein` and `n_identical` — and `collapse`,
+#'   the summary statistics.
+#' @export
+pf_collapse_reference <- function(ref, by = c("name_key", "state", "zip5"),
+                                  rebuild = TRUE, verbose = TRUE) {
+  say <- function(...) if (verbose) { cat(sprintf(...), "\n"); flush.console() }
+  bundled <- is.list(ref) && !is.null(ref$reference)
+  r <- data.table::as.data.table(if (bundled) ref$reference else ref)
+  miss <- setdiff(by, names(r))
+  if (length(miss))
+    stop("reference has no column(s): ", paste(miss, collapse = ", "), call. = FALSE)
+  n0 <- nrow(r)
+  t0 <- proc.time()[["elapsed"]]
+
+  # A row with no usable name key is not "identical" to every other such row --
+  # it is unblockable, not duplicated. Give each one its own group rather than
+  # merging the entire nameless tail into one representative.
+  nk <- r[[by[1L]]]
+  solo <- is.na(nk) | !nzchar(nk)
+  key <- do.call(paste, c(lapply(by, function(cn) {
+    v <- r[[cn]]; ifelse(is.na(v), "", v) }), sep = ""))
+  key[solo] <- paste0("", which(solo))
+  data.table::set(r, j = ".grp", value = key)
+
+  # Representative: an active row ahead of an inactive one, then the lowest EIN.
+  # The EIN tie-break is not cosmetic -- selection is first-row-wins, so without
+  # a total order the reported EIN would depend on row order and the benchmark
+  # would stop being reproducible (dev/DETERMINISM-FINDINGS.md).
+  act <- if ("active" %in% names(r)) r$active %in% TRUE else rep(FALSE, n0)
+  data.table::set(r, j = ".act", value = !act)
+  data.table::setorderv(r, c(".grp", ".act", ".ein"))
+  r[, `:=`(.n = .N, .rep = .ein[1L]), by = ".grp"]
+
+  members <- r[.n > 1L, list(rep_ein = .rep, ein = .ein, n_identical = .n)]
+  keep <- !duplicated(r$.grp)
+  out <- r[keep]
+  n_identical <- out$.n
+  data.table::set(out, j = c(".grp", ".act", ".n", ".rep"), value = NULL)
+  data.table::setattr(out, "class", class(if (bundled) ref$reference else ref))
+  el <- proc.time()[["elapsed"]] - t0
+
+  say("pf_collapse_reference: %s -> %s rows (%.1f%% smaller) in %.0f s",
+      format(n0, big.mark = ","), format(nrow(out), big.mark = ","),
+      100 * (1 - nrow(out) / n0), el)
+  say("  %s groups hold more than one EIN, covering %s EINs (%.1f%% of the reference)",
+      format(sum(n_identical > 1L), big.mark = ","),
+      format(sum(n_identical[n_identical > 1L]), big.mark = ","),
+      100 * sum(n_identical[n_identical > 1L]) / n0)
+  say("  largest group: %s EINs", format(max(n_identical), big.mark = ","))
+
+  res <- if (bundled) ref else list(reference = NULL)
+  res$reference <- out
+  res$members <- as.data.frame(members)
+  res$collapse <- list(by = by, rows_before = n0, rows_after = nrow(out),
+                       groups_multi = sum(n_identical > 1L),
+                       eins_merged = sum(n_identical[n_identical > 1L]),
+                       max_group = max(n_identical), rebuilt = rebuild,
+                       elapsed = el)
+  if (rebuild) {
+    t0 <- proc.time()[["elapsed"]]
+    res$name_freq <- npmatch::np_name_freq(out$name_key)
+    res$token_idf <- npmatch::np_token_idf(out$name_key)
+    res$ref_index <- npmatch::np_ref_index(out)
+    say("  rebuilt name_freq / token_idf / ref_index in %.0f s",
+        proc.time()[["elapsed"]] - t0)
+  } else {
+    say("  KEPT the pre-collapse name_freq / token_idf / ref_index")
+  }
+  res
+}
 #' Run the grant-recipient match
 #'
 #' Splits the prepared grants into in-scope and out-of-sample (see
