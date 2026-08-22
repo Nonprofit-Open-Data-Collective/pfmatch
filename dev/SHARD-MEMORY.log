@@ -1,0 +1,10 @@
+REF-active.rds       disk  1.43 GB | resident  2.28 GB (reference  1.60) | R peak  1.85 GB 
+    components: reference=1.60 name_freq=0.14 token_idf=0.02 ref_index=0.52 timing=0.00 
+    at  2 GB working set -> 13 concurrent shards fit in 68 GB RAM 
+    at  4 GB working set -> 9 concurrent shards fit in 68 GB RAM 
+    at  8 GB working set -> 5 concurrent shards fit in 68 GB RAM 
+REF-augmented.rds    disk  2.84 GB | resident  4.21 GB (reference  2.96) | R peak  3.54 GB 
+    components: reference=2.96 name_freq=0.27 token_idf=0.03 ref_index=0.95 timing=0.00 
+    at  2 GB working set -> 9 concurrent shards fit in 68 GB RAM 
+    at  4 GB working set -> 7 concurrent shards fit in 68 GB RAM 
+    at  8 GB working set -> 4 concurrent shards fit in 68 GB RAM 
