@@ -254,7 +254,33 @@ than assumed:
 | lever | expected | how it is obtained |
 |---|---|---|
 | **dedup to distinct recipient identities** | 1.8x measured on 100k; expected to be much better at full scale because the whole file repeats the same grantees | `pf_dedup()` + `pf_propagate_matches()` |
-| **parallel batches** | up to ~12x on 24 cores | `pf_run_batches()` per shard, one process per shard |
+| ~~**parallel batches** — up to ~12x on 24 cores~~ | **withdrawn 2026-08-22: one shard fits** | `dev/SHARD-AND-COLLAPSE-FINDINGS.md` |
+
+> ### The parallelism lever does not exist on this machine
+>
+> Measured 2026-08-22 (`dev/SHARD-AND-COLLAPSE-FINDINGS.md` §1). A shard at the
+> production config peaks at **~37 GB of working set, flat in batch size** —
+> 36.82 GB at 2,000 identities, 37.41 GB at 8,000. The reference bundle is
+> 3.59 GB of that; the other ~33 GB is a fixed cost each process pays in full.
+> On 68 GB that is **one concurrent shard**, at any batch size.
+>
+> "~12x on 24 cores" counted cores. The binding resource is memory, and every
+> `/12 shards` figure in the table above should be read as `/1`.
+>
+> Cost also *rises* with batch size on the augmented reference — 366 s/1k at
+> 2,000 against 433 at 8,000 — so there is no memory-for-speed trade to make.
+> Recosted single-stream at 433 s/1k: **406 h** at the most favourable dedup
+> figure on record (3.72x, `dev/CODE-AUDIT.md` §6) and **1,142 h** at the
+> 1.323x measured on 100k. The budget is 117 h.
+>
+> The `(name, state, zip5)` reference collapse was built and tested as the fix
+> and **is a null** — 7.9x off the blocking cost driver for 0% runtime — while
+> manufacturing an 80-grant MAYBE→YES gain that is 88% converted abstention.
+> §4 of the findings memo. Do not adopt it.
+>
+> What remains: re-decide **B2-token-concat** (2.18x faster for −1.55% of
+> matches, and that trade reads differently at 406 h than at 67 h), establish
+> the **full-file dedup ratio**, or add a second machine.
 
 Order of work:
 

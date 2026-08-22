@@ -156,6 +156,18 @@ This does not reopen `dev/REF-PERFORMANCE.md` — that memo's subject was thread
 count, and its conclusion stands. It adds a second amortization axis that no
 measurement has controlled for.
 
+> **SUPERSEDED 2026-08-22 — the table below is wrong in both directions.**
+> `dev/SHARD-AND-COLLAPSE-FINDINGS.md` measured the augmented reference directly
+> instead of extrapolating: **366 s/1k at 2,000 identities and 433 at 8,000** —
+> it gets *slower* at larger n, where the active reference gets 2.8x faster. Two
+> references with opposite scaling cannot be related by a constant ratio, which
+> is exactly what the 139 s/1k figure below does. And the shard rows assume a
+> parallelism that does not exist: a shard peaks at ~37 GB flat in batch size, so
+> **one** fits in 68 GB, not four or eight. Recosted single-stream at 433 s/1k:
+> 406 h at the best dedup figure on record, 1,142 h at the 1.323x measured on
+> 100k. Retained below as written, because the reasoning that produced it is the
+> point of §5's warning.
+
 Carrying the augmented/active ratio measured at n = 978 (1.72x) onto the gate's
 81 s/1k gives ≈ **139 s/1k for the augmented reference at production batch size**:
 
@@ -174,7 +186,15 @@ YES on 978 identities, **+43 YES per 1,000**, the same figure
 rather than the geocoded CSV `BASELINE-2026-08/MANIFEST.md` flagged as the wrong
 artifact. It costs 2.5x the candidate pairs (51,215 → 126,881) for 2.02x the rows.
 
-## 5. Memory, not cores, sets the shard count — and it is unmeasured at production batch size
+## 5. Memory, not cores, sets the shard count — **and the answer is one**
+
+> **ANSWERED 2026-08-22**, and the section's premise was right while its guess at
+> the mechanism was wrong. A shard peaks at **~37 GB, flat in batch size** —
+> 36.82 GB at 2,000 identities against 37.41 at 8,000 — so **one shard fits in
+> 68 GB**, at `batch_size = 25,000` or any other. The ~33 GB above the bundle is
+> a *fixed* cost, not the batch-proportional one this section assumed, so
+> shrinking batches does not buy shards. `dev/SHARD-AND-COLLAPSE-FINDINGS.md` §1.
+
 
 `dev/SHARD-MEMORY.log`. One process per shard means one resident reference per
 shard:
@@ -210,6 +230,6 @@ before committing a schedule.
   unless the pairs are the point — applies with more force on the augmented
   reference, where pairs grow 2.5x.
 * The reference-row collapse recommended in `dev/PHASE3-LIBRARIES.md` §0
-  (identical `(name, state, zip5)` rows; "reference −7%, cost driver −8x") is
-  **not implemented anywhere in `R/`**. It is listed as one of two changes that go
-  in *before* the full run.
+  (identical `(name, state, zip5)` rows; "reference −7%, cost driver −8x") was
+  **built and rejected on 2026-08-22** — the claim reproduces and buys 0% runtime.
+  `dev/SHARD-AND-COLLAPSE-FINDINGS.md` §4.
