@@ -251,9 +251,9 @@ The naive cost is prohibitive — 33.5 s per 1,000 grants is **117 hours**
 single-threaded. Two levers make it tractable, and both must be measured rather
 than assumed:
 
-| lever | expected | how it is obtained |
+| lever | outcome | how it is obtained |
 |---|---|---|
-| **dedup to distinct recipient identities** | 1.8x measured on 100k; expected to be much better at full scale because the whole file repeats the same grantees | `pf_dedup()` + `pf_propagate_matches()` |
+| **dedup to distinct recipient identities** | **DONE 2026-08-22: 3.72x, 3,337,585 identities.** The expectation held — the dev samples understated it badly (1.002x on 1k, 1.323x on 100k) because random grant samples destroy the repetition dedup exploits | `pf_dedup()` + `pf_propagate_matches()` |
 | ~~**parallel batches** — up to ~12x on 24 cores~~ | **withdrawn 2026-08-22: one shard fits** | `dev/SHARD-AND-COLLAPSE-FINDINGS.md` |
 
 > ### The parallelism lever does not exist on this machine
@@ -269,9 +269,17 @@ than assumed:
 >
 > Cost also *rises* with batch size on the augmented reference — 366 s/1k at
 > 2,000 against 433 at 8,000 — so there is no memory-for-speed trade to make.
-> Recosted single-stream at 433 s/1k: **406 h** at the most favourable dedup
-> figure on record (3.72x, `dev/CODE-AUDIT.md` §6) and **1,142 h** at the
-> 1.323x measured on 100k. The budget is 117 h.
+> With dedup now settled at 3.72x (3,337,585 identities), one shard is
+> **401 h** in the production config and **183 h** with B2-token-concat off.
+> The budget is 117 h, so the run is 1.6–3.4x over and the dedup lever is spent.
+>
+> `dev/MEMORY-FINDINGS.md` locates the 33 GB: it is **transient churn inside
+> `np_cascade()`**, not data anyone holds — the cascade peaks at 31 GB to return
+> a 0.06 GB pair set, and no single pass exceeds 8.75 GB. Threads (1/4/14 all
+> 31.2 GB), B2 (−1.15 GB) and the reference collapse (−10.5%) are all measured
+> and all fail to buy a second shard. The one lever aimed at the mechanism —
+> having the cascade reduce each pass before starting the next — is an npmatch
+> change and would put peak near ~9 GB, i.e. six shards.
 >
 > The `(name, state, zip5)` reference collapse was built and tested as the fix
 > and **is a null** — 7.9x off the blocking cost driver for 0% runtime — while

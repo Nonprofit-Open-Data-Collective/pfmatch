@@ -75,20 +75,34 @@ related by a constant. The direct measurement replaces it.
 
 ## 3. Phase 1, recosted
 
-At the measured 433 s/1k, single stream, 12,559,051 grants:
+> **Settled 2026-08-22.** The full file has now been ingested and deduped
+> (`dev/FULL-01-PREPARE.log`): 12,559,051 grants → 12,404,667 in scope (98.8%) →
+> **3,337,585 in-scope identities, 3.72x collapse**, in 52 minutes at a 20 GB
+> peak. That confirms the figure `CODE-AUDIT.md` §6 reported from an
+> unrecoverable run, and it is the *favourable* end of the range guessed below.
+> Staged at `~/Documents/grants/staging/PREPARED-FULL.rds` (10.3 GB).
 
-| dedup assumption | identities | single stream |
+At the measured 433 s/1k, single stream, over **3,337,585 identities**:
+
+| configuration | s per 1,000 | one shard |
 |---|---:|---:|
-| 1.323x — **measured here**, on 100k | 9.49M | **1,142 h** |
-| 1.8x — `SCALE-PLAN.md` extrapolation | 6.98M | 839 h |
-| 3.72x — reported in `CODE-AUDIT.md` §6 from a full-file run whose output is not in `data-dev/` | 3.38M | **406 h** |
+| production (B2 on) | 433 | **401 h** |
+| B2-token-concat off | 197 | **183 h** |
+| budget on record | — | 117 h |
 
-Against a **117 h** budget, on **one** shard. Even the most favourable dedup
-figure is 3.5x over, and it is the one that most needs re-establishing.
+Against a **117 h** budget, on **one** shard. The dedup lever is now spent — it
+delivered its best case and the run is still 1.6–3.4x over.
 
-**1.323x is the first dedup number measured on a sample where repetition is
-possible** (the 1k files give 1.002x because random grants share no filers). It
-is not the full-file number — that requires the full file — but it is real.
+The dedup ratio held up far better than the small samples suggested: 1.002x on
+1k and 1.323x on 100k, against 3.72x on the full file. Random grant samples
+destroy exactly the repetition dedup exploits, so **every collapse figure taken
+from a dev sample understated it**, and the extrapolated 1.8x in `SCALE-PLAN.md`
+understated it by half.
+
+`pf_dedup(method = "fuzzy")` would add an estimated 10–15% more collapse on top.
+It ran 12.3 hours without finishing on this file *before* the sub-blocking and
+accumulator fixes in `e1f754f`; whether it is now tractable is untested, and at
+best it moves 401 h to ~350 h.
 
 ## 4. The reference collapse: claim verified, benefit absent
 
