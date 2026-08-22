@@ -269,26 +269,46 @@ note("collapse fires on the wired path", NA,
      sprintf("%d identities (%.1f%%)", sum(coll), 100 * mean(coll)))
 
 # --- checkpoint footprint, for shard sizing --------------------------------
-cksz <- sum(file.size(list.files(CK, full.names = TRUE)))
+# Two components with different scaling: the status rows grow per identity, the
+# run stamp is a fixed cost per BATCH. Extrapolating the total per identity from
+# 400-row batches would multiply the stamp by 62x its real production count.
+ckf  <- list.files(CK, full.names = TRUE)
+cksz <- sum(file.size(ckf))
+stmp <- length(serialize(attr(readRDS(ckf[1]), "pf_stamp"), NULL))
+rowsz <- (cksz - stmp * length(ckf)) / nrow(st)
+nb_full <- ceiling(FULL_N / 25000)
 note("checkpoint footprint", NA,
-     sprintf("%.1f MB for %d identities -> %.0f GB at 12.56M grants",
-             cksz / 1e6, nrow(st), cksz / nrow(st) * FULL_N / 1e9))
+     sprintf("%.1f MB over %d batches (stamp %.0f KB each) -> %.1f GB at 12.56M / batch_size 25k",
+             cksz / 1e6, length(ckf), stmp / 1e3,
+             (rowsz * FULL_N + stmp * nb_full) / 1e9))
 
 ## ===========================================================================
 ## 5  THE STALE-CHECKPOINT TRAP
 ## ===========================================================================
 hr("5  STALE CHECKPOINTS -- documented hazard, never tested")
-say("re-running the SAME dir with policy='operating'. The docs say changing")
-say("dyad_config invalidates the checkpoints; nothing in code enforces it.")
-lk2 <- suppressMessages(pf_link(prep, ref, dir = CK, batch_size = 400L,
+say("re-running the SAME dir with policy='operating'. Before the checkpoint")
+say("stamp this returned the cached answer and the changed config never ran.")
+trap <- tryCatch({
+  lk2 <- suppressMessages(pf_link(prep, ref, dir = CK, batch_size = 400L,
+                                 passes = PASSES, config = NPCFG, dyads = DYADS,
+                                 dyad_config = pf_dyad_config(policy = "operating"),
+                                 verbose = FALSE))
+  list(err = NA_character_, same = identical(lk2$status$ein, st$ein))
+}, error = function(e) list(err = conditionMessage(e), same = NA))
+note("config change is refused, not silently ignored",
+     !is.na(trap$err) && grepl("different settings", trap$err),
+     if (is.na(trap$err))
+       sprintf("no error; EINs %s the first run",
+               if (isTRUE(trap$same)) "IDENTICAL to" else "differ from")
+     else sub("\n.*$", "", trap$err))
+# and the escape hatch still works: resume = FALSE recomputes under the new config
+lk3 <- suppressMessages(pf_link(prep, ref, dir = CK, batch_size = 400L,
                                passes = PASSES, config = NPCFG, dyads = DYADS,
                                dyad_config = pf_dyad_config(policy = "operating"),
-                               verbose = FALSE))
-same <- identical(lk2$status$ein, st$ein)
-note("config change is NOT silently ignored", !same,
-     if (same) "identical EINs returned from cache; the changed config was ignored"
-     else sprintf("%d EINs differ; the run recomputed",
-                  sum(lk2$status$ein != st$ein, na.rm = TRUE)))
+                               resume = FALSE, verbose = FALSE))
+note("resume = FALSE recomputes under the new config", NA,
+     sprintf("%d EINs differ from the query-policy run",
+             sum(lk3$status$ein != st$ein, na.rm = TRUE)))
 rm(ref); invisible(gc())
 
 ## ===========================================================================

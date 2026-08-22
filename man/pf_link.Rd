@@ -14,6 +14,7 @@ pf_link(
   method = "hier",
   dyads = NULL,
   dyad_config = pf_dyad_config(),
+  resume = TRUE,
   verbose = TRUE
 )
 }
@@ -34,6 +35,10 @@ selection, which is what removes ties a grant has with itself. \code{NULL}
 disables it. See \link{pf_dyads} and \code{dev/DYAD-FINDINGS.md}.}
 
 \item{dyad_config}{Settings for that collapse; see \code{\link[=pf_dyad_config]{pf_dyad_config()}}.}
+
+\item{resume}{Reuse checkpoints in \code{dir} whose run stamp matches this call.
+A checkpoint written under different settings stops the run; \code{resume = FALSE} recomputes and overwrites. See \code{\link[=pf_run_batches]{pf_run_batches()}}, \emph{Checkpoints are
+stamped}.}
 
 \item{verbose}{Print progress.}
 }

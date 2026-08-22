@@ -67,7 +67,23 @@ configs applied to one scored match so the comparison isolates the policy.
   26 characters. These are reference-side duplicates as much as arm pairs —
   `dev/CLUSTER-FINDINGS.md` §8's problem showing up inside the dyad path.
 
-## 3. Two defects the run found
+## 3. Two defects the run found — **both fixed, and the fix re-measured**
+
+Fixed the same day. `PF_REF=active Rscript dev/probe-refit-1k.R` re-run against
+the fixed source (`REFIT-1K-POSTFIX.log`) returns **11 pass, 0 fail** against the
+first run's 8 pass, 4 fail — the two remaining first-run failures were the cost
+checks, which §4 shows were never regressions. Suite: 107 assertions, 0 failures,
+including 22 new ones in `tests/testthat/test-batch.R`.
+
+| | before | after |
+|---|---|---|
+| `status carries the documented dyad columns` | MISSING `dyad_alt_ein`, `dyad_class` | **all four** |
+| `config change is refused, not silently ignored` | identical EINs from cache | **stops with a stamp mismatch** |
+| `resume = FALSE recomputes under the new config` | — | 2 EINs differ, the two `query` switches |
+
+That last row is the confirmation that matters: under `resume = FALSE` the
+operating policy actually ran and moved exactly the two EINs §2 says it should.
+Before the fix that recomputation never happened and the difference was zero.
 
 ### 3a. `pf_link()` silently returns a stale answer when the dyad config changes
 
@@ -83,9 +99,24 @@ enforces it, and `resume = TRUE` is the default on both `pf_run_batches()` and
 costs a shard's worth of hours, or worse: a config change believed applied that was
 not, in output nothing distinguishes from the real thing.
 
-**Fix:** stamp `digest(list(dyad_config, dim(dyads), passes, config))` into each
-checkpoint and refuse to resume across a mismatch. Roughly ten lines in
-`pf_run_batches()`. This should land **before** Phase 1, not after.
+**Fixed.** Every checkpoint now carries a `pf_stamp` attribute — reference row
+count and column set, normalizer signature, pass table, `np_config()`, `method`,
+`recover`, `self_guard`, and the shape of `dyads` with its `dyad_config` — and
+`pf_run_batches()` stops rather than resume across a mismatch, naming the setting
+that differs. An unstamped checkpoint is refused for the same reason: it cannot
+be shown to belong to this run.
+
+The reference is summarised rather than hashed, deliberately. It is 2–4 GB
+resident and hashing it per run would cost more than the batches the stamp
+protects; row count plus column set plus normalizer signature catches every
+change that can actually occur, and the case it cannot see — same shape, same
+normalizer, different values — requires a rebuild that moves the row count. The
+stamp costs 180 KB per checkpoint, which is per *batch*, not per identity:
+~90 MB across the full run at `batch_size = 25,000`.
+
+`resume` was also added to `pf_link()`, which did not have it. The guard's advice
+is "pass `resume = FALSE`", and that has to be true of the wrapper people
+actually call.
 
 ### 3b. The documented status contract is wrong
 
@@ -94,11 +125,15 @@ checkpoint and refuse to resume across a mismatch. Roughly ten lines in
 `dyad_collapsed`, `dyad_id` and **`dyad_from_ein`**. `dyad_alt_ein` and
 `dyad_class` come from `pf_dyad_annotate()`, which the batch path never calls.
 
-The doc names the more useful columns. `dyad_alt_ein` is the partner merged away
-— *"an analyst aggregating grants to a recipient needs it whether or not the
-collapse changed the reported EIN"*, per the comment directly above the function
-that does not emit it. Either fix the doc or emit the columns; emitting them is
-the better answer and is cheap, since the collapse already resolves the group.
+The doc named the more useful columns, so the code was brought up to it rather
+than the doc down: `pf_dyad_collapse()` now emits `dyad_class` and
+`dyad_alt_ein`, and `.pf_attach_dyad_cols()` carries all four through.
+
+The distinction is load-bearing and worth stating. `dyad_from_ein` is the EIN
+that *was* reported, and it fills in **only when the collapse changed the pick**;
+`dyad_alt_ein` is the member merged away, and it fills in on **every** merge. On
+this sample the pick changed on 2 of 30 merges, so `dyad_from_ein` alone loses
+93% of them — and a rollup keyed on the reported EIN needs all 30.
 
 ## 4. Cost: the per-1,000 figure is a function of batch size, and the plan's is pessimistic
 

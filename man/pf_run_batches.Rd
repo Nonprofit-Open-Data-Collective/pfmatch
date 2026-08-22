@@ -37,12 +37,14 @@ and lose less on an interrupt; larger ones amortise per-batch overhead.}
 
 \item{dyads}{Optional dyad table from \code{\link[=pf_build_dyads]{pf_build_dyads()}}. When given,
 \code{\link[=pf_dyad_collapse]{pf_dyad_collapse()}} runs on each batch before the status frame is built,
-and the status gains \code{dyad_collapsed}, \code{dyad_id}, \code{dyad_alt_ein} and
-\code{dyad_class}. See \emph{Where the collapse runs}.}
+and the status gains \code{dyad_collapsed}, \code{dyad_id}, \code{dyad_class},
+\code{dyad_alt_ein} and \code{dyad_from_ein}. See \emph{Where the collapse runs}.}
 
 \item{dyad_config}{Settings for that collapse; see \code{\link[=pf_dyad_config]{pf_dyad_config()}}.}
 
-\item{resume}{Skip batches whose checkpoint file already exists.}
+\item{resume}{Reuse batches whose checkpoint file already exists \strong{and whose
+run stamp matches this call}. A checkpoint written under different
+settings is an error, not a cache hit; see \emph{Checkpoints are stamped}.}
 
 \item{verbose}{Per-batch progress.}
 }
@@ -59,7 +61,27 @@ Between \code{\link[=pf_drop_self_matches]{pf_drop_self_matches()}} and \code{\l
 point at which the scored pairs still exist — the status frame keeps just the
 winning candidate. Collapsing is resolved \strong{within one grant's candidate list
 only}, so a per-batch collapse is identical to a whole-file one; batching
-cannot change the answer. Changing \code{dyads} or \code{dyad_config} invalidates the
-checkpoints in \code{dir}, which \code{resume} will otherwise happily reuse.
+cannot change the answer.
+}
+
+\section{Checkpoints are stamped}{
+
+Every checkpoint carries a \code{pf_stamp} attribute recording what produced it:
+reference size and column set, the normalizer signature, the pass table, the
+\code{\link[npmatch:np_config]{npmatch::np_config()}}, \code{method}, \code{recover}, \code{self_guard}, and the shape of
+\code{dyads} with its \code{dyad_config}. On resume the stamp must match this call or
+\code{pf_run_batches()} stops.
+
+This guards a specific silent failure, measured in
+\verb{dev/REFIT-1K-FINDINGS.md} §3a: calling \code{\link[=pf_link]{pf_link()}} twice on one directory,
+first with \code{policy = "query"} and then with \code{policy = "operating"}, returned
+\strong{identical EINs both times} — every batch came off disk and the changed
+config was never applied. Nothing in the output distinguishes that from a real
+run. A wasted recomputation costs hours; an unnoticed stale one costs the
+result.
+
+Checkpoints written before stamping existed carry no stamp and cannot be
+verified, so they are refused for the same reason. To recompute and overwrite,
+pass \code{resume = FALSE}; to start clean, delete \code{dir}.
 }
 
