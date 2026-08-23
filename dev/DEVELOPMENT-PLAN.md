@@ -410,3 +410,118 @@ exists. Design in `dev/FEATURE-ENGINEERING.md` §5.
   table and zero firing edges, and would delete exactly the acronym and rebrand
   cases (`NFTE ENDOWMENT FUND`, `MOMA AUXILIARIES`, `CAF PROPERTY`) that are the
   only reason disclosure beats a name rule.
+
+---
+
+## The stop rule: when to stop matching R&D and start consolidating
+
+Added 2026-08-22, because "keep looking for levers" has no natural end and this
+project now has enough measurements to state one.
+
+**Stop matching R&D and move to consolidation when all three hold.** Two already
+do; the first is the only one genuinely open.
+
+### 1. Cost clears the budget with a gated configuration
+
+Phase 1 completes in **≤117 h** using a configuration whose answers are gated
+against `BASELINE-2026-08`. Status: **not met, and close.** One shard is 401 h;
+ten state shards would be ~40 h, but partition equivalence is unproven
+(`dev/STATE-PARTITION-FINDINGS.md`). This is the only remaining reason to keep
+doing R&D — and it is *engineering*, not matching.
+
+### 2. Every remaining un-built lever moves <1% of grants
+
+Measured on grants or dollars — not on candidate counts, not on a subpopulation.
+The record so far:
+
+| lever | reach | verdict |
+|---|---:|---|
+| B2-token-concat removal | 1.55% of YES | keep B2; runtime trade only |
+| dyad collapse | 3.1% of identities | **built** |
+| matchdb `group_id` | **0.79% of grants**, 0.90% of dollars | matchdb builds it |
+| reference-row collapse | 0% runtime, spurious YES | **rejected** |
+| semantic re-ranking | +2 grants in 28 | rejected |
+| group signature index | +1.0 pt rank-1 for +6% candidates | rejected (matchdb) |
+| funder NTEE prior, ungated | chance | rejected |
+
+**Four of the last five candidates evaluated were rejected, and the survivor
+reaches 0.79% of grants.** That is what diminishing returns looks like in the
+record rather than in the abstract.
+
+### 3. The binding constraint is labels, not capability
+
+Already true, since `dev/FEATURE-ENGINEERING.md` §1. The accept decision cannot
+be fitted on 156 adjudicated cases of which independent verification upheld ~5 of
+12; 41% of hard cases resolve to NONE; and the dominant residual — operating
+entity versus its own fundraising arm — **has no determinate answer in any public
+source**.
+
+Three independent measurements now say the residual ambiguity is *structural*:
+15.9% of the MAYBE tie band is one body under two BMF rows
+(`CLUSTER-FINDINGS.md` §8); a group cluster in the close set never co-occurs with
+YES (matchdb `GROUP-STRUCTURE-FINDINGS.md` §3); and **10.5% of benchmark EINs are
+exact score ties** (`STATE-PARTITION-FINDINGS.md` Part 3). No threshold tuning
+addresses any of them.
+
+### The override
+
+**Any change requiring a re-freeze of `BASELINE-2026-08` must clear a higher
+bar** — ≥1% of grants *and* adopted deliberately — because the freeze gates
+matchdb's phases too. A re-freeze is a cross-repo event, not a commit.
+
+Pending under this clause: the deterministic tie-break (`npmatch@f14f1d9`), which
+moves 10.5% of reported EINs and 0% of tiers.
+
+### What consolidation means
+
+Run Phase 1; build the Phase 2 partitions; ship the enriched adjudication packet;
+spend the budget on **~1,000 labels with NONE as a first-class verdict**. That
+round is the only thing measured to unlock anything further — it gates threshold
+optimization (`OPTIMIZATION-PLAN.md` §1b), the ranker (Phase 5), and any honest
+precision claim.
+
+---
+
+## What matchdb's group work changes here
+
+Reviewed 2026-08-22: `matchdb/dev/GROUP-STRUCTURE-FINDINGS.md`,
+`matchdb/dev/RELATION-BUILD-PLAN.md`.
+
+**It confirms this project's central negative result from independent data.**
+pfmatch measured one connected component of 66,973 EINs and concluded "direct
+edges only, never a transitive closure" (`CLUSTER-FINDINGS.md` §2,
+`DYAD-FINDINGS.md` §1). matchdb, after loading every source, reports a largest
+related-entity component of **117,869 EINs**. The giant grew; the rule holds
+harder.
+
+**`group_id` is the principled version of the collapse this project rejected.**
+`pf_collapse_reference()` was rejected because merging rows that merely *share a
+name* manufactured an 80-grant YES gain, 88% of it converted abstention.
+matchdb's components merge rows *disclosed to be one group*, and the measurement
+is the mirror image: a group cluster in the close set **never co-occurs with
+YES** (0 of 3,015), appearing equally in MAYBE and NO. It marks not-YES rather
+than promoting to YES — the opposite failure mode, and the safe one. Same
+blowups, too: `DUCKS UNLIMITED` 5,363 → 740 there, 5,363 rows here.
+
+**It is nearly disjoint from the affiliate-suffix veto** — Jaccard 0.015, the
+lexical veto firing 170 times of which 8 are actual subordinates. Additive, not
+redundant.
+
+**Consequences:**
+
+1. **It does not change Phase 1.** 0.79% of grants is below the §2 threshold.
+   Consume it in Phase 3/4 disambiguation, not in blocking, and not as a reason
+   to delay the run.
+2. **It interacts with state partitioning, unchecked.** Group members span states
+   — median 2 for federated chapters, 3 for group rulings and dispersed networks.
+   A collapse applied inside a state shard sees only the part of the group in
+   that state. The dyad collapse carries the same exposure and the same
+   mitigation (it resolves *within one grant's candidate list*), but this needs
+   stating before either runs partitioned.
+3. **Pull the e-file affiliate names forward.** 0.19% of index tokens carrying
+   10.6 of 46.9 rank-1 points is the best return on data acquisition either
+   project has measured, and it is reference expansion — Phase 0b's business.
+4. **Their rank-metric correction applies here.** `na.rm=TRUE` on a conditional
+   rank metric, and `ties.method="min"`, each inflated their results
+   substantially. Any retrieval metric this project reports must be unconditional
+   and break ties randomly.

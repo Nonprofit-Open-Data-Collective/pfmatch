@@ -227,3 +227,85 @@ lever measured to move memory at all, and it moves it 7x. It is not adopted:
 exact equivalence is the gate, three named causes stand between here and it, and
 the cross-state passes (C1/C2) have not been run in a partitioned configuration
 at all yet.
+
+---
+
+# Part 3 — causes 1 and 3
+
+`dev/probe-state-equivalence2.R`. Logs: `STATE-EQUIVALENCE2.log`,
+`REFIT-1K-GATE-TIEBREAK2.log`.
+
+## Cause 1 was my misdiagnosis
+
+I attributed the 188 missing pairs to routing queries on `recip_state_raw` while
+the cascade blocks on the normalized `state`. Measured over all 74,673
+identities:
+
+| | |
+|---|---:|
+| agree | 73,901 |
+| **disagree** | **2** |
+| normalized state is NA | 770 |
+
+**Two queries in 74,673.** Routing was already right, and re-routing on the
+normalized field left the pair diff unchanged at 188 / 2,922. Worse for the
+hypothesis: **all 188 only-in-full pairs have reference state = CA** — they are
+rows the slice holds and still did not pair. So cause 1 as stated does not
+exist, and the 188 belong with cause 2.
+
+One real item survives: **770 identities have no normalized state** and would be
+routed to no shard at all. A partitioned design needs an explicit
+unassigned-state shard, or those identities are silently dropped.
+
+## Cause 3 is real, and far larger than the partition made it look
+
+Of the 25 identities where the slice and the full reference disagreed on the
+reported EIN, **20 (80%) had identical scores** — decided purely by which row the
+frame listed first.
+
+That prompted running the deterministic tie-break against the *frozen benchmark*,
+where the partition is not involved at all:
+
+| | |
+|---|---:|
+| identities | 4,733 |
+| **tier changed** | **0 (0.00%)** |
+| **`overall_ein` changed** | **498 (10.52%)** |
+| of those, scores identical | **498 (100%)** |
+
+**One in ten reported EINs on the benchmark is currently decided by row order,
+and no verdict depends on it.** `DETERMINISM-FINDINGS.md` showed the benchmark
+reproduces bit-for-bit across processes and thread counts — true, and still true.
+What it could not see is that 10.5% of those bits rest on the reference arriving
+in the same order every time. Rebuild the BMF, re-sort it, or generate the same
+pairs from a partition, and one EIN in ten changes.
+
+The partition did not create this. It made a latent positional dependency
+visible, and the 20-of-25 it exposed is a small sample of a 498-of-4,733
+population.
+
+### Why it is not adopted here
+
+`npmatch@f14f1d9` (branch `deterministic-tiebreak`) implements it and **fails the
+gate 12/24**, exactly as it must — changing 498 reported EINs is a behaviour
+change. Adopting it means **re-freezing `BASELINE-2026-08`**, which gates
+matchdb's phases as well as pfmatch's, so it is a cross-repo decision and not
+one to slip in.
+
+The change is also honest about what it buys: ties resolve to the lowest `.ein`,
+which is arbitrary. It replaces an *unstable* arbitrary rule with a *stable* one,
+which is all a tie-break can do when the scorer cannot separate the candidates.
+The principled answers for the cases that deserve one live elsewhere — the dyad
+collapse for disclosed substitutable pairs, matchdb's `group_id` for group
+subordinates, and reference-side duplicate resolution for one body under two BMF
+rows.
+
+### What it says about the project
+
+498 identities where the top candidates score *identically* is a measurement of
+how often the cascade cannot separate candidates at all. It is a larger and more
+concrete statement of the same fact as `CLUSTER-FINDINGS.md` §8 (15.9% of the
+MAYBE tie band is one body under two BMF rows) and matchdb's finding that a group
+cluster in the close set never co-occurs with YES. Three independent routes to
+the same conclusion: **the residual ambiguity is structural, not a scoring
+deficiency**, and no amount of threshold tuning addresses it.

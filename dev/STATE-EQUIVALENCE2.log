@@ -1,0 +1,38 @@
+============================================================================== 
+EQUIVALENCE v2 -- CA, routing on the NORMALIZED state 
+============================================================================== 
+queries: 74,673 
+recip_state_raw vs normalized state: 
+  agree            73,901 
+  disagree         2 
+  raw NA, norm set 0 
+  norm NA          770 
+  -> routing on the raw field misplaces 2 queries (0.00%) 
+routed to CA: 500 queries 
+full    369.6 s |  111,254 pairs | YES 328 MAYBE  80 NO  88 
+slice: 410,127 rows, whole-corpus stats grafted (n_reference 3,880,431) 
+slice   178.3 s |  113,988 pairs | YES 329 MAYBE  80 NO  87 
+============================================================================== 
+PAIR SETS 
+============================================================================== 
+pairs          full  111,254 | slice  113,988 
+in both         111,066 
+only in full        188   <- cause 1 if the slice cannot see them 
+only in slice     2,922   <- cause 2 
+IDENTICAL: FALSE 
+ 
+of the 188 only-in-full pairs, reference state: 
+ CA 
+188 
+============================================================================== 
+TIER AND EIN AGREEMENT 
+============================================================================== 
+identities compared 496 
+  same tier         495 
+  same EIN          470 
+ 
+EIN differs on 25 identities: 
+  scores IDENTICAL (a tie broken by row order) : 20 (80%)  <- cause 3 
+  scores differ    (a real candidate-set change): 5 
+ 
+  -> a deterministic tie-break can close at most 20 of the 25 

@@ -78,7 +78,34 @@ if (MODE == "gate") {
   same <- vapply(cols, function(cn) identical(b[[cn]], res[[cn]]), logical(1))
   say("rows: baseline %d, now %d", nrow(b), nrow(res))
   say("columns identical: %d / %d", sum(same), length(cols))
-  if (any(!same)) say("  DIFFER: %s", paste(cols[!same], collapse = ", "))
+  if (any(!same)) {
+    say("  DIFFER: %s", paste(cols[!same], collapse = ", "))
+    # A column-level verdict is enough to fail a gate but not enough to decide
+    # whether a change is worth a re-freeze. Count the affected identities, and
+    # separate a changed VERDICT from a changed reported EIN at the same verdict.
+    say("")
+    say("  per-identity impact:")
+    for (cn in cols[!same]) {
+      d <- !mapply(identical, b[[cn]], res[[cn]])
+      say("    %-22s %5d of %d rows (%.2f%%)", cn, sum(d), nrow(b),
+          100 * mean(d))
+    }
+    if ("tier" %in% cols) {
+      td <- as.character(b$tier) != as.character(res$tier)
+      say("")
+      say("    TIER changed on %d of %d identities (%.2f%%)", sum(td), nrow(b),
+          100 * mean(td))
+      if ("overall_ein" %in% cols) {
+        ed <- !mapply(identical, b$overall_ein, res$overall_ein)
+        say("    EIN changed at UNCHANGED tier: %d", sum(ed & !td))
+        if ("overall_score" %in% cols) {
+          sc <- abs(as.numeric(b$overall_score) - as.numeric(res$overall_score))
+          say("    ...of which the score is identical (a tie): %d",
+              sum(ed & !td & (is.na(sc) | sc < 1e-9)))
+        }
+      }
+    }
+  }
   quit(save = "no")
 }
 
