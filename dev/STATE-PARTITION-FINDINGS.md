@@ -486,3 +486,94 @@ identities and find out whether they share a mechanism — the shard boundary, t
 alias rows, or the pass reordering — in the way Part 4's residual turned out to
 concentrate on 73 queries. Until that is understood, partitioned Phase 1 would
 ship 31 unexplained tier changes per 4,793 identities.
+
+## Part 7 — diagnosed: one EIN, many reference rows, and a dedup that keeps the first
+
+`dev/probe-mover-diagnosis.R`, `dev/MOVER-DIAGNOSIS.log`,
+`data-dev/MOVERS-AUGMENTED.csv`.
+
+**None of the five hypotheses was the cause.** The answer is a property of the
+augmented reference that the active reference does not have at all:
+
+| | REF-active | REF-augmented |
+|---|---:|---:|
+| reference rows | 1,924,822 | 3,880,431 |
+| distinct EINs | 1,924,822 | 3,687,435 |
+| **EINs with more than one row** | **0 (0.00%)** | **127,499 (3.46%)** |
+| EINs whose rows span >1 state | **0** | **7,489 (0.20%)** |
+| rows on those EINs | 0 | 27,107 (0.70%) |
+| **max states for a single EIN** | **1** | **45** |
+
+**The active reference is exactly one row per EIN.** Partitioning by state is
+trivially lossless there — every EIN lives in exactly one shard, and that is the
+whole reason it scored 100.00%. It was never evidence that the design was sound;
+it was evidence that the active reference cannot exhibit the defect.
+
+### The mechanism
+
+Candidate pairs are keyed `(.id, .ein)` and the union is deduplicated with
+`!duplicated(...)`, which **keeps the first occurrence** — in `np_cascade()`,
+deliberately, "keep tightest pass". When an EIN carries several reference rows,
+those rows score *differently*, so "which row represents this EIN" is decided by
+whichever pass reached it first. Change the order in which passes run — which is
+exactly what partitioning does — and a different row survives, under the same
+EIN, with a different score.
+
+That is why the movers show the same EIN present on both sides at different
+scores:
+
+| identity | baseline | partitioned |
+|---|---|---|
+| `HORSE OF CT` → 22-2611615 | 0.780, MAYBE | **0.22**, NO |
+| `INTERNATIONAL FOLK ART MARKET` → 35-2285824 | 0.914, YES | **0.760**, MAYBE |
+| `THE SALVATION ARMY` → 13-2923701 | 0.380, NO | 0.380, but a **better row wins at 0.902**, YES |
+
+EIN 13-2923701 has **eight** reference rows — `SALVATION ARMY WORLD SERVICE
+OFFICE` in VA, `MADISON INDIANA CITADEL` in IN, `ALASKA DIVISON` in AK,
+`HOLLISTER CORPS` in CA, `PORT ANGELES` in WA. One EIN, five states, five shards.
+
+### Why the diagnostic hypotheses looked partly right
+
+They were downstream symptoms, and worth recording so they are not re-tested:
+
+* **H1 boundary** — movers sit nearer the margin brake (median |margin − 0.05|
+  0.112 vs 0.570; 12% within 0.02 vs 2%). True, and a consequence: swapping the
+  row that represents an EIN changes the score, and grants near a boundary are
+  the ones a score change can move.
+* **H4 pass** — 58 of 60 movers were won by a *token* pass (B1 48, B2 6, D1 4)
+  against 1 for all four exact-key passes combined. Also a consequence: token
+  passes are where an EIN's several rows are reachable by different routes.
+* **H5 alias** — 80% of movers' baseline picks sit on a multi-row EIN against
+  51% of non-movers. This was the closest to the mark, and understated it,
+  because the proxy counted multi-row EINs rather than multi-*state* ones.
+* **H2 ties** and **H3 shard** — no signal.
+
+Movers carry a median of **46 candidates against 4** for everything else, which
+is the same population as always: high-fanout national names — `PLANNED
+PARENTHOOD`, `THE SALVATION ARMY`, `PROTESTANT EPISCOPAL CHURCH`, `TEMPLE
+ISRAEL`. 0.20% of EINs, but they are the EINs grants actually go to, which is how
+0.20% of the reference becomes 1.25% of identities.
+
+### The fix, and why it is not free
+
+**Deduplicate `(.id, .ein)` by highest score rather than by first occurrence.**
+That makes the pair set independent of pass order, and it is the same defect —
+and the same remedy — as the selection tie-break already adopted in revision 2:
+an EIN-level answer must not rest on row-level ordering.
+
+It is **not** partition-specific. The monolithic cascade has it too: which row
+represents a multi-row EIN today depends on pass order, and nothing records that
+choice. So the fix is another npmatch behaviour change against
+`BASELINE-2026-08`, and it will move some verdicts, which means another
+re-freeze under the stop rule's override clause.
+
+Two things should be measured before adopting it, in this order:
+
+1. **How many identities does highest-score dedup move in the *monolithic* run?**
+   If it is small the change is cheap; if it is large it is a genuine question
+   about whether "tightest pass" was ever the right rule.
+2. **Does the partition then reproduce the monolith on the augmented reference?**
+   The mechanism says it should. Nothing here has demonstrated it.
+
+Until then the partition is validated **only against a reference with one row per
+EIN**, which is not the production one.
