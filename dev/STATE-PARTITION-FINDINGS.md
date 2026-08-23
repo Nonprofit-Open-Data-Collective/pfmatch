@@ -141,3 +141,89 @@ Nothing is adopted. What is measured is that the lever moves the number that
 four other levers did not. What is *not* measured is whether it can be made
 answer-preserving, and that is the gate — §4 first, then equivalence against the
 frozen 1k benchmark, then a projection worth putting in the plan.
+
+---
+
+# Part 2 — the equivalence test
+
+`dev/probe-state-equivalence.R`, `dev/probe-slice-shard.R`. Logs:
+`STATE-EQUIVALENCE.log`, `REFIT-1K-GATE-BLOCKSTATS.log`.
+
+**§4's proposed fix was aimed at the wrong table.** `name_freq` and `token_idf`
+are consumed by `np_compare()` for *scoring*. The blocking gates read neither.
+They read, in `npmatch/R/block.R`:
+
+```
+ref_df <- ref_index$df_concat / $df_base    -> max_ref_freq pruning, and IDF
+n_ref  <- nrow(reference)                   -> idf = log(n_ref / ref_df)
+```
+
+Both are corpus statistics and both change under slicing. The index cannot
+simply be reused either: `ref_index$base$row` holds **positions** into the
+reference, so a slice needs its own. The design that follows is a **hybrid** —
+slice-positional rows, whole-corpus statistics — plus one npmatch change so
+`n_ref` comes from the index rather than the frame (`npmatch@110105b`; a no-op
+for every existing caller, and the 1k gate confirms it at 24/24 identical).
+
+## Results
+
+Identical queries (500 CA), identical seven state-blocked passes.
+
+| arm | pairs | vs full: in both | only full | only slice | tier agree | EIN agree |
+|---|---:|---:|---:|---:|---:|---:|
+| naive slice | 128,731 | 102,865 | 8,389 | 25,866 | 480/495 | 449/495 |
+| **+ global stats** | 113,988 | **111,066** | **188** | **2,922** | **495/496** | 470/496 |
+| full reference | 111,254 | — | — | — | — | — |
+
+**Mismatched pairs fall from 34,255 to 3,110 — a 91% reduction — and tier
+agreement reaches 99.8%.** The corpus-statistics half of the problem is closed.
+
+**It is still not exact**, and the three residual causes are distinguishable:
+
+1. **188 pairs the slice misses.** Queries were routed by `recip_state_raw`, but
+   the cascade blocks on the *normalized* `state`. Where they disagree, a query
+   lands in the wrong shard and its true matches sit in a slice it never sees.
+   Route on the same field the blocker uses. Straightforwardly fixable.
+2. **2,922 pairs the slice adds.** Most likely the `pending` interaction: a
+   query resolved to YES early is withheld from later passes, so any difference
+   in early tiering changes which queries reach B1/B2/D1 and therefore which
+   candidates exist at all. Self-reinforcing, and it is why §5's sequencing
+   constraint is not a footnote.
+3. **26 identities agree on tier but report a different EIN.** Selection is
+   first-row-wins — `.np_argmax_by()` orders then `!duplicated()`, and
+   `.np_overall_summary()` takes `ix[1]` — so tied candidates resolve by
+   *position*, and a slice orders its rows differently. `DETERMINISM-FINDINGS.md`
+   already identified this as the mechanism that could make verdicts move without
+   a code change; partitioning is what makes it bite. Exact equivalence needs a
+   deterministic total order on candidates, EIN being the obvious key.
+
+None of the three is a reason the approach cannot work. All three are reasons it
+is not yet *proven* to work, and (3) is a latent ordering dependency worth fixing
+on its own merits.
+
+## What a shard actually costs
+
+Measured in its own process, holding only the slice and the whole-corpus
+statistics — never the full reference (`dev/probe-slice-shard.R`):
+
+| | |
+|---|---|
+| slice | 410,127 rows (CA, the largest state) |
+| resident before matching | 4.98 GB |
+| **process peak** | **5.24 GB** |
+| seconds (500 queries, 7 passes) | 227 |
+| **concurrent shards in 68 GB** | **11** |
+
+Against the 37 GB single shard this project has been stuck at, and against a
+median state of 21,255 rows. The equivalence probe's in-process peaks (22.53 /
+12.88 / 10.59 GB) are **not** shard sizes — all three arms ran in one process
+with the full reference resident throughout, which is right for diffing answers
+and useless for sizing.
+
+## Status
+
+The partition is now the leading candidate by a wide margin — it is the only
+lever measured to move memory at all, and it moves it 7x. It is not adopted:
+exact equivalence is the gate, three named causes stand between here and it, and
+the cross-state passes (C1/C2) have not been run in a partitioned configuration
+at all yet.
