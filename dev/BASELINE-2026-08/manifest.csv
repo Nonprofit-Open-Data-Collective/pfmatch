@@ -3,5 +3,5 @@
 "REF-unified.rds","Phase 0c arm A; the unified layer without aliases","9d486da3e5e29dcb6f8ad6324f1aa19b",3687435,2702403736
 "REF-augmented.rds","Phase 2 target: md_compile(*-observed) must reproduce this","74eb9b4a6875b671f64d8aadd48a36d5",3880431,2839260499
 "BMF-AUGMENTED-unified-fixed.csv","source of REF-augmented.rds, resolved by row count (see MANIFEST.md)","dac8ff11b176beb31a7bc4da5d548caf",3880431,3994188908
-"benchmark-1k-active.rds","1k benchmark verdicts (both phase gates)","aec9fb37d8b486bb6d9b4930003db48e",4733,163048
-"benchmark-1k-augmented.rds","1k benchmark verdicts (both phase gates)","75d4cf833cd0df70d022883c6468ba5d",4793,165016
+"benchmark-1k-active.rds","1k benchmark verdicts (both phase gates)","a8b8f0a94fff15f51c28eef11bec31f9",4733,162868
+"benchmark-1k-augmented.rds","1k benchmark verdicts (both phase gates)","373b247414c2279d422e070b66ae1abc",4793,169916

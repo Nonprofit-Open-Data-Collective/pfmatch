@@ -1,0 +1,40 @@
+============================================================================== 
+BASELINE manifest 
+============================================================================== 
+  hashing REF-active.rds                     (1.4 GB) ... 
+    md5 51954557f721bc282d1523884fa38ee2 | 1,924,822 rows | 40 s 
+  hashing REF-unified.rds                    (2.7 GB) ... 
+    md5 9d486da3e5e29dcb6f8ad6324f1aa19b | 3,687,435 rows | 72 s 
+  hashing REF-augmented.rds                  (2.8 GB) ... 
+    md5 74eb9b4a6875b671f64d8aadd48a36d5 | 3,880,431 rows | 58 s 
+  hashing BMF-AUGMENTED-unified-fixed.csv    (4.0 GB) ... 
+    md5 dac8ff11b176beb31a7bc4da5d548caf | 3,880,431 rows | 9 s 
+  benchmark-1k-active.rds            md5 a8b8f0a94fff15f51c28eef11bec31f9 | 4733 identities 
+  benchmark-1k-augmented.rds         md5 373b247414c2279d422e070b66ae1abc | 4793 identities 
+
+built             2026-08-22
+R                 4.4.2
+platform          x86_64-w64-mingw32
+pfmatch           1c657f8
+npmatch           f14f1d9
+normalizer sig    v1-421e1e2a6afb024e
+
+package versions:
+  npmatch      0.0.0.9000
+  data.table   1.17.0
+  stringi      1.8.7
+  stringr      1.6.0
+  reclin2      0.6.0
+  stringdist   0.9.17
+  duckdb       1.2.0
+  DBI          1.2.3
+
+ 
+wrote ./dev/BASELINE-2026-08/manifest.csv 
+                         artifact                              md5    rows
+1                  REF-active.rds 51954557f721bc282d1523884fa38ee2 1924822
+2                 REF-unified.rds 9d486da3e5e29dcb6f8ad6324f1aa19b 3687435
+3               REF-augmented.rds 74eb9b4a6875b671f64d8aadd48a36d5 3880431
+4 BMF-AUGMENTED-unified-fixed.csv dac8ff11b176beb31a7bc4da5d548caf 3880431
+5         benchmark-1k-active.rds a8b8f0a94fff15f51c28eef11bec31f9    4733
+6      benchmark-1k-augmented.rds 373b247414c2279d422e070b66ae1abc    4793

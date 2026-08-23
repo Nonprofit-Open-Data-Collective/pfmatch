@@ -353,3 +353,66 @@ combined select) remains sound in principle; what is unproven is whether it
 reproduces the unpartitioned answer exactly, and 25 of the 26 remaining
 disagreements are ties (Part 3) whose resolution depends on a decision that has
 not been made.
+
+---
+
+# Part 5 — shipped: the partitioned run reproduces the baseline exactly
+
+`R/partition.R`, `dev/probe-partition-validate.R`,
+`dev/PARTITION-VALIDATE6.log`. Validated against **BASELINE-2026-08 revision 2**,
+five 1k grant files, active reference.
+
+| | baseline | partitioned |
+|---|---:|---:|
+| identities | 4,733 | **4,733** |
+| YES / MAYBE / NO | 2821 / 1006 / 906 | **2821 / 1006 / 906** |
+| same tier | — | **4,733 (100.00%)** |
+| same EIN | — | 4,726 (99.85%) |
+| regressions | — | **0** |
+| identities lost / added | — | **0 / 0** |
+
+**Every identity lands in the same tier.** The bar was "no tier regressions";
+the result is exact tier equality, over 50 shards, with only 7 reported EINs
+differing among ties.
+
+## Three defects found by validating, each invisible without the frozen baseline
+
+**1. Skipping the stateless shard.** "A query with no state cannot match a
+state-blocked pass" is false — the block key is built from the field as it
+stands, so a stateless query joins reference rows that are also stateless. One
+identity (`HILLENGALE HHH` → `HIS HELPING HANDS`, via D1-acronym) vanished from
+the output.
+
+**2. One index per token column, not one per shard.** `np_block()` validates a
+supplied `ref_index` by comparing `token_col`, and a mismatch is **not an
+error** — it silently rebuilds the index inline from the reference it was handed.
+On a shard that is the slice, so the whole-corpus graft never applied to
+`D1-acronym`, which blocks on `name_acro`. Both sides of the lost pair sat in TN;
+the pass simply gated on Tennessee acronym frequencies.
+
+**3. `pending` does not survive being split across calls.** Each `np_cascade()`
+starts its own pending set at every query it is given. Grouping passes by token
+column into separate calls therefore re-ran the later passes on queries an
+earlier pass had already resolved, handing them candidates the monolithic cascade
+withheld — the extra candidates became runner-ups and the margin brake demoted
+them. **44 YES → MAYBE**, until the loop carried `pending` across the groups by
+hand.
+
+Defect 3 is the one worth remembering: it is the sequencing constraint this memo
+named in §5 as load-bearing, and I still broke it, in a way that showed up only
+as a tier count. The reason to validate against a frozen baseline rather than
+against expectation is that all three of these produce plausible-looking output.
+
+## Cost
+
+Shard sizes on the active reference: 50 shards, largest CA at 199,286 rows,
+median far smaller. Peak working set for the largest state slice against the
+augmented reference is **5.24 GB** (`dev/probe-slice-shard.R`), so **11 shards
+fit in 68 GB** where one did before.
+
+The validation run executes all 50 shards **sequentially in one process**, which
+is the wrong way to run it in production and the right way to test it: sequential
+execution makes the comparison deterministic and the memory ceiling irrelevant.
+Production runs one process per shard, which is what the memory measurement is
+for — and it is also the shape that ships to a scheduler, since the shards share
+no state and need no communication.
