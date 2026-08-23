@@ -1,0 +1,55 @@
+============================================================================== 
+EQUIVALENCE v2 -- CA, routing on the NORMALIZED state 
+============================================================================== 
+queries: 74,673 
+recip_state_raw vs normalized state: 
+  agree            73,901 
+  disagree         2 
+  raw NA, norm set 0 
+  norm NA          770 
+  -> routing on the raw field misplaces 2 queries (0.00%) 
+routed to CA: 500 queries 
+full    445.4 s |  111,254 pairs | YES 328 MAYBE  80 NO  88 
+slice: 410,127 rows, whole-corpus stats grafted (n_reference 3,880,431) 
+slice   185.4 s |  113,988 pairs | YES 329 MAYBE  80 NO  87 
+============================================================================== 
+PAIR SETS 
+============================================================================== 
+pairs          full  111,254 | slice  113,988 
+in both         111,066 
+only in full        188   <- cause 1 if the slice cannot see them 
+only in slice     2,922   <- cause 2 
+IDENTICAL: FALSE 
+ 
+of the 188 only-in-full pairs, reference state: 
+ CA 
+188 
+============================================================================== 
+IS THE RESIDUAL CONCENTRATED? (the pending hypothesis) 
+============================================================================== 
+only-in-full    188 pairs over    4 distinct identities 
+   top 5 identities hold 188 (100%) 
+only-in-slice  2922 pairs over   70 distinct identities 
+   top 5 identities hold 829 (28%) 
+ 
+queries affected at all: 73 of 496 (14.7%) 
+ 
+worst offenders (identity, only-full, only-slice, query name): 
+  R15         full-only    NA | slice-only   176 | ST MARK'S-IN-THE-VALLEY EPISCOPAL CHURCH 
+  R4295       full-only    NA | slice-only   176 | ST JOHNS'S EPISCOPAL CHURCH 
+  R286        full-only    NA | slice-only   165 | Santa Clara Korean American Senior Citiz 
+  R4779       full-only   158 | slice-only    NA | SOLUTIONS FOR CHANGE INC 
+  R4302       full-only    NA | slice-only   157 | ST MARTIN OF TOURS SCHOOL 
+  R1377       full-only    NA | slice-only   155 | ST JAMES ARMENIAN APOSTOLIC CHURCH 
+============================================================================== 
+TIER AND EIN AGREEMENT 
+============================================================================== 
+identities compared 496 
+  same tier         495 
+  same EIN          470 
+ 
+EIN differs on 25 identities: 
+  scores IDENTICAL (a tie broken by row order) : 20 (80%)  <- cause 3 
+  scores differ    (a real candidate-set change): 5 
+ 
+  -> a deterministic tie-break can close at most 20 of the 25 

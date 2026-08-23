@@ -309,3 +309,47 @@ MAYBE tie band is one body under two BMF rows) and matchdb's finding that a grou
 cluster in the close set never co-occurs with YES. Three independent routes to
 the same conclusion: **the residual ambiguity is structural, not a scoring
 deficiency**, and no amount of threshold tuning addresses it.
+
+## Part 4 — cause 2 is concentrated, and it is per-query
+
+`dev/STATE-EQUIVALENCE3.log`.
+
+| | pairs | over identities | top 5 hold |
+|---|---:|---:|---:|
+| only in full | 188 | **4** | 100% |
+| only in slice | 2,922 | 70 | 28% |
+| **queries affected at all** | — | **73 of 496 (14.7%)** | — |
+
+**Not systematic.** A blocking difference would touch every query with the
+affected tokens; this touches 73, and the only-in-full side collapses to four
+identities, one of which (`SOLUTIONS FOR CHANGE INC`) holds 158 of the 188.
+
+The affected names are of one kind:
+
+```
+ST MARK'S-IN-THE-VALLEY EPISCOPAL CHURCH    176 slice-only
+ST JOHNS'S EPISCOPAL CHURCH                 176
+Santa Clara Korean American Senior Citiz    165
+ST MARTIN OF TOURS SCHOOL                   157
+ST JAMES ARMENIAN APOSTOLIC CHURCH          155
+SOLUTIONS FOR CHANGE INC                    158 full-only
+```
+
+High-frequency institutional tokens — `ST`, `CHURCH`, `EPISCOPAL` — i.e. queries
+sitting exactly on the blocking gates, which is where a small difference in how
+far a query travels through the cascade shows up as hundreds of candidates.
+
+This is consistent with the `pending` interaction (§5): each pass runs only on
+queries no earlier pass resolved, so a query that stays pending one pass longer
+picks up a whole extra block of B2/D1 candidates. **Consistent with, not proven
+— the mechanism has not been traced to a specific pass.** That is the next
+measurement, and it is a `trace_memory`-style per-pass diff rather than another
+whole-cascade run.
+
+What it does establish: the residual is a **per-query** effect on 14.7% of
+queries, not a systematic blocking divergence, and tier agreement is already
+495/496. So the two-phase design (state-local passes, barrier, cross-state, one
+combined select) remains sound in principle; what is unproven is whether it
+reproduces the unpartitioned answer exactly, and 25 of the 26 remaining
+disagreements are ties (Part 3) whose resolution depends on a decision that has
+not been made.

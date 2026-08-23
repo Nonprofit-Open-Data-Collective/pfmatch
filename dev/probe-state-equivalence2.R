@@ -113,6 +113,38 @@ if (length(only_full)) {
   print(head(sort(table(st, useNA = "ifany"), decreasing = TRUE), 6))
 }
 
+## ---- CAUSE 2: is the residual concentrated, or spread? ---------------------
+# The `pending` hypothesis says a handful of queries tier differently at some
+# pass, and everything downstream of that follows: they are withheld from (or
+# admitted to) later passes, so whole blocks of candidates appear or vanish. If
+# so the diff lands on very few .ids. If it is spread over hundreds, the cause is
+# something systematic in blocking instead, and the two-phase design does not fix
+# it.
+hr("IS THE RESIDUAL CONCENTRATED? (the pending hypothesis)")
+idf <- sub(" .*$", "", only_full); ids_ <- sub(" .*$", "", only_slice)
+cf <- sort(table(idf), decreasing = TRUE)
+cs <- sort(table(ids_), decreasing = TRUE)
+say("only-in-full  %5d pairs over %4d distinct identities", length(only_full), length(cf))
+if (length(cf)) say("   top 5 identities hold %d (%.0f%%)", sum(head(cf, 5)),
+                    100*sum(head(cf, 5))/length(only_full))
+say("only-in-slice %5d pairs over %4d distinct identities", length(only_slice), length(cs))
+if (length(cs)) say("   top 5 identities hold %d (%.0f%%)", sum(head(cs, 5)),
+                    100*sum(head(cs, 5))/length(only_slice))
+say("")
+say("queries affected at all: %d of %d (%.1f%%)",
+    length(union(names(cf), names(cs))), nrow(A$res),
+    100*length(union(names(cf), names(cs)))/nrow(A$res))
+say("")
+say("worst offenders (identity, only-full, only-slice, query name):")
+worst <- head(sort(table(c(idf, ids_)), decreasing = TRUE), 6)
+for (i in seq_along(worst)) {
+  id <- names(worst)[i]
+  nmq <- query$name[match(id, query$.id)]
+  say("  %-10s  full-only %5d | slice-only %5d | %s", id,
+      as.integer(cf[id]) %||% 0L, as.integer(cs[id]) %||% 0L,
+      substr(if (is.na(nmq)) "" else nmq, 1, 40))
+}
+
 ## ---- CAUSE 3: how much of the residual is ties? ----------------------------
 hr("TIER AND EIN AGREEMENT")
 m <- merge(A$res[, c(".id","tier","overall_ein","overall_score")],
