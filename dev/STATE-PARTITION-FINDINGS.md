@@ -416,3 +416,73 @@ execution makes the comparison deterministic and the memory ceiling irrelevant.
 Production runs one process per shard, which is what the memory measurement is
 for — and it is also the shape that ships to a scheduler, since the shards share
 no state and need no communication.
+
+## Part 6 — the augmented reference does NOT reproduce, and that is the blocker
+
+`dev/PARTITION-VALIDATE-AUG.log`. Same code, same bar, production reference.
+
+| | active | **augmented** |
+|---|---:|---:|
+| identities | 4,733 / 4,733 | 4,793 / 4,794 |
+| YES / MAYBE / NO (baseline) | 2821 / 1006 / 906 | 3015 / 1041 / 737 |
+| YES / MAYBE / NO (partitioned) | **2821 / 1006 / 906** | 3010 / 1045 / 739 |
+| same tier | **100.00%** | **98.75%** |
+| **regressions** | **0** | **31** |
+| gains | 0 | 29 |
+| verdict | **PASSES** | **FAILS** |
+
+Tier movement on the augmented reference is two-directional — 15 YES→MAYBE,
+12 YES→NO, 15 MAYBE→YES, 6 NO→YES — so it is not a systematic loss of candidates
+in one direction. It looks like sensitivity: 60 identities sitting close enough
+to a boundary that a different candidate set moves them either way.
+
+**This is the blocker, and it is the production configuration.** The active
+reference is not what Phase 1 runs.
+
+### Why this was worth measuring rather than extrapolating
+
+The active result was exact, and the obvious inference — "so the augmented one
+will be too" — is wrong. That is the **second** time in this work that carrying a
+conclusion from the active reference to the augmented one has failed: the first
+was the ≈139 s/1k throughput estimate in `REFIT-1K-FINDINGS.md` §4, falsified by
+direct measurement. The augmented reference is not the active one scaled; it
+carries 2.02x the rows, most of them Schedule I alias variants, and those are
+precisely rows that create near-ties.
+
+**Rule for this project: no conclusion crosses from the active reference to the
+augmented one without being measured there.**
+
+### Cost, measured on the production reference
+
+| | |
+|---|---:|
+| partitioned, all 54 shards sequential in one process | 1,238 s / 4,793 = **258 s per 1,000** |
+| monolithic, same reference and benchmark | 1,122 s / 4,793 = **234 s per 1,000** |
+| partitioning overhead on total CPU | **+10%** |
+
+The 9–10% overhead reproduces the active measurement, which is the reassuring
+part: partitioning costs about a tenth more total work and makes that work
+divisible.
+
+Projected over 3,337,585 identities:
+
+| | |
+|---|---:|
+| single stream | 239 h |
+| 11 shards | **22 h** |
+| budget | 117 h |
+
+**Cost clears the budget with room.** What does not yet clear is equivalence.
+
+### Where that leaves the stop rule
+
+`DEVELOPMENT-PLAN.md`'s clause 1 asks for a configuration that clears the budget
+*and* is gated against `BASELINE-2026-08`. Half of it holds: 22 h against 117 h.
+The other half holds on the active reference and fails on the augmented one by 31
+tier regressions out of 4,793.
+
+The next measurement is not more engineering. It is to look at the 60 moved
+identities and find out whether they share a mechanism — the shard boundary, the
+alias rows, or the pass reordering — in the way Part 4's residual turned out to
+concentrate on 73 queries. Until that is understood, partitioned Phase 1 would
+ship 31 unexplained tier changes per 4,793 identities.
