@@ -38,8 +38,10 @@ ws <- function() {
 }
 
 hr(sprintf("PARTITION VALIDATION -- %s reference, vs BASELINE-2026-08 rev 2", W))
-base <- readRDS(file.path(PF, "dev", "BASELINE-2026-08",
-                          sprintf("benchmark-1k-%s.rds", W)))
+BASE <- Sys.getenv("PF_BASE_FILE", "")
+base <- if (nzchar(BASE)) readRDS(BASE) else
+  readRDS(file.path(PF, "dev", "BASELINE-2026-08", sprintf("benchmark-1k-%s.rds", W)))
+say("comparison target: %s", if (nzchar(BASE)) BASE else "BASELINE-2026-08")
 say("baseline: %d identities", nrow(base))
 
 g <- pf_read_grants(file.path(PF, "inputs"), pattern = "^1k_grants_.*[.]csv$")

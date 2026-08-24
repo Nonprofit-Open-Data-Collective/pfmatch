@@ -577,3 +577,82 @@ Two things should be measured before adopting it, in this order:
 
 Until then the partition is validated **only against a reference with one row per
 EIN**, which is not the production one.
+
+## Part 8 — the two measurements: one fix confirmed, one hypothesis refuted
+
+`dev/probe-dedup-rule.R`, `dev/DEDUP-RULE.log`,
+`dev/PARTITION-VALIDATE-AUG-HIGHEST.log`.
+
+### Measurement 1 — highest-score dedup is a real recall fix, and it is not small
+
+The cascade loop was replicated so the *undeduped* accumulator could be held and
+both rules applied to identical pairs. **The replication is validated, not
+asserted**: arm A (keep-first) reproduces `BASELINE-2026-08` tier-for-tier, which
+is what makes arm B interpretable.
+
+| | |
+|---|---:|
+| raw accumulator | 1,249,655 pairs |
+| distinct `(.id, .ein)` | 674,511 |
+| `(.id, .ein)` seen more than once | 290,660 |
+| **…of those, disagreeing on score** | **4,201 (1%)** |
+| median score spread where they disagree | 0.140 |
+| max | 0.900 |
+
+| rule | YES | MAYBE | NO |
+|---|---:|---:|---:|
+| keep-FIRST (current) | 3015 | 1041 | 737 |
+| **keep-HIGHEST** | **3099** | **1017** | **677** |
+
+**143 identities change tier (2.98%), and the score rises on 138 of them** —
+0.22 → 0.955, 0.38 → 0.968. Nothing moves *into* NO.
+
+So "keep tightest pass" is not merely order-dependent. It **discards a much
+better-scoring row for the same EIN**, and it does so on the production
+reference. It was a no-op when written, because one EIN meant one row — which is
+exactly true of `REF-active` and false of `REF-augmented`.
+
+**This is a recall improvement in its own right, independent of partitioning**,
+and that reframes it: it is not a partitioning prerequisite, it is a defect the
+partitioning work happened to surface.
+
+### Measurement 2 — it does NOT make the partition reproduce the monolith
+
+Both sides on keep-highest, augmented reference:
+
+| both sides | tier agreement | regressions | gains |
+|---|---:|---:|---:|
+| keep-first | 98.75% | 31 | 29 |
+| **keep-highest** | **97.25%** | **114** | **18** |
+
+**Worse, and now one-directional** — 95 of the moves are YES → MAYBE/NO. The
+prediction in Part 7 ("the mechanism says it should") is **refuted**.
+
+The reason is the interaction the two changes have, and it is the constraint
+Part 5 named and Part 5's design then ignored. `np_cascade()` runs
+`C1-name-any` / `C2-dba-any` **between B2 and D1**; `pf_run_partitioned()` runs
+all nine state-local passes first and the two cross-state passes last. So the
+partition's residual at C1/C2 is *smaller* — D1 and D2 have already resolved
+queries out of it.
+
+Under keep-first that mattered little, because a late C1 row rarely displaced an
+earlier one. Under keep-highest a C1 row **wins whenever it scores best**, so
+every query that reaches C1 in the monolith and not in the partition now
+diverges. Making the dedup order-independent exposed the one ordering difference
+that remains.
+
+### What this leaves
+
+The two changes are separable and should be separated:
+
+1. **Highest-score dedup stands on its own merits** — +84 YES, 143 identities,
+   nothing into NO, on the production reference. It needs a re-freeze under the
+   stop rule's override clause and it is worth one. It is an npmatch change
+   (`np_cascade()`'s union step), not a pfmatch one.
+2. **The partition needs the monolithic pass order preserved**: three phases —
+   state-local `A1…B2`, then cross-state `C1/C2` against the whole reference,
+   then state-local `D1/D2`. One extra barrier. Untested, and it is now the only
+   identified difference between the two runs.
+
+Until (2) is done and measured, the partition remains validated only against a
+reference with one row per EIN.

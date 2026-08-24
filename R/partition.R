@@ -238,7 +238,7 @@ pf_run_partitioned <- function(grants, part, ref, config = npmatch::np_config(),
       pend_i <- pend_i[!(query$.id[pend_i] %in% done)]
     }
     pr <- as.data.frame(data.table::rbindlist(prl, fill = TRUE))
-    pr <- pr[!duplicated(paste(pr$.id, pr$.ein)), , drop = FALSE]
+    pr <- .pf_dedup_pairs(pr)
     acc[[L]] <- pr
     say("  [%-8s] %6d queries -> %8s pairs", L, length(i),
         format(nrow(pr), big.mark = ","))
@@ -281,7 +281,7 @@ pf_run_partitioned <- function(grants, part, ref, config = npmatch::np_config(),
   ## ---- combine: one union, one selection -----------------------------------
   if (!length(acc)) stop("no candidate pairs from any shard.", call. = FALSE)
   union <- as.data.frame(data.table::rbindlist(acc, fill = TRUE))
-  union <- union[!duplicated(paste(union$.id, union$.ein)), , drop = FALSE]
+  union <- .pf_dedup_pairs(union)
   union <- .pf_reclass_pairs(union, CMP, PROF)
   say("union: %s pairs over %s queries", format(nrow(union), big.mark = ","),
       format(length(unique(union$.id)), big.mark = ","))
@@ -315,4 +315,28 @@ pf_run_partitioned <- function(grants, part, ref, config = npmatch::np_config(),
   attr(df, "profile")  <- profile
   class(df) <- c("np_pairs", "data.frame")
   df
+}
+
+# Reduce a pair set to one row per (.id, .ein), keeping the HIGHEST-SCORING row.
+#
+# np_cascade() keeps the FIRST occurrence instead -- deliberately, "keep tightest
+# pass". That is a no-op while one EIN has one reference row, which is exactly
+# true of the active BMF (1,924,822 rows, 1,924,822 EINs). It is not true of the
+# augmented reference: 127,499 EINs carry several rows, those rows score
+# differently, and keeping the first means the row that represents an EIN is
+# decided by whichever pass reached it first.
+#
+# Measured monolithically on the 1k benchmark (dev/DEDUP-RULE.log): of 290,660
+# repeated (.id, .ein) pairs only 4,201 disagree on score, but those 4,201 move
+# 143 identities and the score rises on 138 of them -- median spread 0.140, max
+# 0.900. Tier counts go 3015/1041/737 to 3099/1017/677. So keeping the first is
+# not merely order-dependent, it discards a much better match for the same EIN.
+#
+# Ties in score fall back to the first, which preserves "tightest pass" for the
+# case the original rule was written for.
+.pf_dedup_pairs <- function(df) {
+  if (!nrow(df)) return(df)
+  o <- order(df$.id, df$.ein, -df$score)
+  d <- df[o, , drop = FALSE]
+  d[!duplicated(paste(d$.id, d$.ein)), , drop = FALSE]
 }

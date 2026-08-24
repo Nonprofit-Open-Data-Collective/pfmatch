@@ -1,0 +1,97 @@
+============================================================================== 
+PARTITION VALIDATION -- augmented reference, vs BASELINE-2026-08 rev 2 
+============================================================================== 
+comparison target: data-dev/DEDUP-HIGHEST-augmented.rds 
+baseline: 4793 identities 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+reference: 3,880,431 rows | working set 6.83 GB 
+partitioned into 54 shards in 1212 s (largest 410,127 rows) 
+  top shards: CA=410,127  TX=286,589  NY=241,576  FL=218,699  IL=159,801 
+passes: 9 state-local, 2 cross-state (C1-name-any, C2-dba-any) 
+routed 4,920 queries across 53 shards 
+  [_NONE   ]     39 queries ->      239 pairs 
+  [AK      ]     21 queries ->       12 pairs 
+  [AL      ]     41 queries ->      466 pairs 
+  [AR      ]     24 queries ->      438 pairs 
+  [AZ      ]     54 queries ->    1,873 pairs 
+  [CA      ]    457 queries ->  100,055 pairs 
+  [CO      ]     96 queries ->    4,054 pairs 
+  [CT      ]     97 queries ->    3,582 pairs 
+  [DC      ]    133 queries ->    4,799 pairs 
+  [DE      ]     14 queries ->       22 pairs 
+  [FL      ]    227 queries ->   24,867 pairs 
+  [GA      ]    101 queries ->    4,286 pairs 
+  [HI      ]     27 queries ->    1,499 pairs 
+  [IA      ]     62 queries ->    1,855 pairs 
+  [ID      ]     27 queries ->      798 pairs 
+  [IL      ]    202 queries ->    6,356 pairs 
+  [IN      ]     78 queries ->    4,368 pairs 
+  [KS      ]     35 queries ->    1,690 pairs 
+  [KY      ]     47 queries ->    7,879 pairs 
+  [LA      ]     33 queries ->    5,114 pairs 
+  [MA      ]    221 queries ->   10,868 pairs 
+  [MD      ]    111 queries ->    4,598 pairs 
+  [ME      ]     34 queries ->      329 pairs 
+  [MI      ]    106 queries ->    4,607 pairs 
+  [MN      ]     99 queries ->    9,673 pairs 
+  [MO      ]     99 queries ->   21,324 pairs 
+  [MS      ]     17 queries ->    1,028 pairs 
+  [MT      ]     26 queries ->    1,692 pairs 
+  [NC      ]    109 queries ->   29,147 pairs 
+  [ND      ]     10 queries ->      259 pairs 
+  [NE      ]     37 queries ->      400 pairs 
+  [NH      ]     22 queries ->    1,142 pairs 
+  [NJ      ]    188 queries ->   49,077 pairs 
+  [NM      ]     26 queries ->    6,546 pairs 
+  [NV      ]     19 queries ->      466 pairs 
+  [NY      ]    615 queries ->  208,363 pairs 
+  [OH      ]    138 queries ->   35,889 pairs 
+  [OK      ]     36 queries ->    2,488 pairs 
+  [OR      ]     76 queries ->    1,260 pairs 
+  [PA      ]    247 queries ->   11,035 pairs 
+  [PR      ]      2 queries ->      658 pairs 
+  [RI      ]     29 queries ->    2,142 pairs 
+  [SC      ]     42 queries ->    2,415 pairs 
+  [SD      ]     12 queries ->      487 pairs 
+  [TN      ]     89 queries ->   10,451 pairs 
+  [TX      ]    287 queries ->   28,175 pairs 
+  [UT      ]     39 queries ->    1,714 pairs 
+  [VA      ]    140 queries ->    5,894 pairs 
+  [VT      ]     23 queries ->      681 pairs 
+  [WA      ]     70 queries ->    8,144 pairs 
+  [WI      ]    106 queries ->    9,171 pairs 
+  [WV      ]     18 queries ->    3,528 pairs 
+  [WY      ]     12 queries ->      411 pairs 
+phase 1 (state-local): 2086 s 
+phase 2: 1,903 of 4,920 queries still pending 
+  [_CROSS  ]   1903 queries ->   62,305 pairs 
+phase 2 (cross-state): 44 s 
+union: 671,951 pairs over 4,794 queries 
+ 
+partitioned run: 2185 s | process peak 20.60 GB 
+============================================================================== 
+VERDICTS 
+============================================================================== 
+identities   baseline 4793 | partitioned 4794 
+baseline     YES 3099  MAYBE 1017  NO  677 
+partitioned  YES 3023  MAYBE 1047  NO  724 
+ 
+identities in both: 4793 
+  same tier : 4661 (97.25%) 
+  same EIN  : 4662 (97.37%) 
+============================================================================== 
+TIER MOVEMENT -- the bar 
+============================================================================== 
+        partitioned
+baseline  YES MAYBE   NO
+   YES   3004    67   28
+   MAYBE   18   980   19
+   NO       0     0  677
+ 
+REGRESSIONS (YES->MAYBE/NO, MAYBE->NO) : 114 
+gains       (MAYBE/NO->YES, NO->MAYBE) : 18 
+identities only in baseline            : 0 
+identities only in partitioned         : 1 
+ 
+VERDICT: FAILS 
+wrote data-dev/PARTITION-VALIDATE-augmented.csv 
