@@ -24,6 +24,11 @@ inputs/*
 # ... except the benchmark fixtures and the NTEE source, all small and public,
 # so that a clean clone can run the 1k benchmark and rebuild data/nteev2.rda
 !inputs/1k_grants_0*.csv
+# ... and the e-file rebuild's equivalents. Kept alongside rather than
+# replacing the line above: BASELINE-2026-08 is defined as the benchmark over
+# 1k_grants_0*, so overwriting those would make the frozen reference point
+# unreproducible.
+!inputs/ef1k_grants_0*.csv
 !inputs/nteev2-descriptions.csv
 !inputs/nteev2-descriptions-tidy-format.csv
 !inputs/GTDC*.xlsx
