@@ -162,8 +162,16 @@ Remaining, in priority order:
    cheapest remaining experiment and it bears on the largest unmeasured cell.
 2. **Judge a sample of the 364 demotions.** Still the biggest exposure, because
    the cascade makes every one of them permanent.
-3. **Internet-check a NO sample** to establish how much of the residual is
-   genuinely unmatchable rather than merely unmatched.
+3. ~~**Internet-check a NO sample**~~ — **done**, see `dev/NO-RESIDUAL-AUDIT.md`.
+   Of the 592 NO-under-both identities, ~35% are recoverable (worth 4.3 points)
+   and ~59% are a genuine floor, mostly individuals and payees with no exemption
+   of their own. All 21 independently established EINs were already in **both**
+   references, so the residual is name resolution, not missing data — widening
+   the reference again will not help. Two side findings matter more than the
+   split: the individual-payee flags miss half of what they should catch, which
+   inflates the denominator behind every clear rate in this project, and one
+   case in 100 has a filed state that contradicts its own ZIP and so is invisible
+   to state blocking.
 4. **Add a geographic gate to tier 2.** All three adjudicated tier-2 errors in
    the cleared cell are geographic, not nominal — a wrong affiliate or a wrong
    city under a correct name. Tier 2 widens the name space; it should not widen
