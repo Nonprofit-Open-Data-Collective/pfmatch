@@ -76,13 +76,53 @@ Tier 2 never sees a tier-1 YES, so every tier-1 YES is final.
 * **440 identities** are tier-1 YES that matchdb demotes or loses. If matchdb is
   right to doubt them, those are tier-1 false positives the cascade locks in.
 
-Both numbers are **unadjudicated**. Which side is correct is the single most
-important quantity still missing, and no amount of further crosstabulation will
-produce it — it needs ground truth.
+Of the three, two are now adjudicated by hand against the filed grant, both
+references' BMF rows, and the 990 mission/program text.
 
-This is the real cost of the design and it should be stated plainly: the
-cascade trades a guaranteed recall gain for an unmeasured precision risk on
-roughly 10% of tier-1 YES.
+**The 46 EIN disagreements (44 judged).** BMF correct 23, matchdb correct 14,
+neither 3, unclear 4. The BMF side wins **62% of decided cases** (95% CI
+45-78%), so locking tier-1 YES costs roughly **17 identities = 0.36% of the
+file**. That is the price of never revisiting a tier-1 YES, and it is small.
+The disagreements are almost entirely the affiliate/endowment family:
+`GEORGIA TECH FOUNDATION` vs the Alumni Association, `SPECIAL OLYMPICS INC` vs
+its Endowment Fund, `GREENPEACE FUND` vs Greenpeace Vision Fund. matchdb's wins
+are the mirror image — it is right when the filed name is the *operating* entity
+and the BMF legal name is not (`CHILDREN'S HOSPITAL OF PITTSBURGH FOUNDATION`,
+whose matchdb mission says "sole fundraising arm"; `TOLEDO ZOO & AQUARIUM`,
+where the BMF side picked the American Dental Assistants Association).
+
+**The 244 newly cleared (33 judged).** This cell is not homogeneous and a
+blended sample would describe neither half of it:
+
+| stratum | n | sampled | correct | wrong | unclear | precision |
+|---|---:|---:|---:|---:|---:|---|
+| same EIN as tier 1's top pick | 131 | 16 | 14 | 1 | 1 | 93% (68-100%) |
+| different EIN | 113 | 17 | 13 | 2 | 2 | 87% (60-98%) |
+
+Weighted over the full cell: **~220 of 244 correct, 90%**. Tier 2 therefore
+introduces roughly **24 wrong YES = 0.49% of the 4,869 identities** in exchange
+for +5.0 points of clear rate. The same-EIN half is the safer one, which is what
+you would expect: tier 1 had already chosen that organisation and matchdb only
+supplied the corroboration needed to clear the threshold.
+
+The different-EIN half is where tier 2 earns its keep, and the wins are the ones
+no amount of BMF tuning reaches: `MIT` to Massachusetts Institute of Technology,
+`CAMP` to Children's Association for Maximum Potential (whose mission text opens
+"CAMP'S MISSION"), `YWCA Seattle` to Young Women's Christian Association of
+Seattle, `COLUMBIA UNIVERSITY` to Trustees of Columbia University. These are
+acronym and legal-name expansions that exist as *observed* or *dba* name
+variants in matchdb and simply are not in the BMF.
+
+Both failure modes in that half are geographic, not nominal:
+`MONTROSE COMMUNITY COLLEGE` to Montrose Community **Band**, and a St Francis
+Hospital in Manhattan standing in for the one in Poughkeepsie. The single
+same-EIN failure is the same shape — Habitat for Humanity in Woody Creek CO
+matched to the Vail Valley affiliate. Tier 2 widens the name space without
+widening the geographic discipline, and that is where it breaks.
+
+**The 364 demotions are still unjudged**, and they remain the larger exposure:
+if matchdb is right to doubt them, they are tier-1 false positives the cascade
+makes permanent. §4 is the cheaper route to that answer than adjudication.
 
 ### The variant you proposed: tier 1 → adjudicate → rematch the remainder
 
@@ -109,22 +149,30 @@ If a margin or tie-band adjustment recovers those 212 without also promoting the
 152 genuine displacements, matchdb alone would land near 64% and the case for a
 cascade weakens considerably. That experiment is cheap and has not been run.
 
-## 5. What has to be measured before this is the default
+## 5. What is measured, and what is left
 
-In priority order:
+**Done.** The 46 EIN disagreements and the 244 newly cleared are adjudicated
+(§3). Between them they put a number on both sides of the trade: the cascade
+buys +5.0 points of clear rate at ~90% precision on the gains, and the cost of
+never revisiting a tier-1 YES is ~0.36% of the file.
 
-1. **Adjudicate the disputed cells**, not the undifferentiated MAYBE tier. The
-   decision-relevant populations are the 244 newly cleared, the 46 EIN
-   disagreements, and a sample of the 364 demotions. Those three settle whether
-   the cascade's gains are real and whether its locked-in tier-1 YES are sound.
-2. **Test the tier rule** on the 212 same-EIN demotions, per §4.
+Remaining, in priority order:
+
+1. **Test the tier rule** on the 212 same-EIN demotions, per §4. This is the
+   cheapest remaining experiment and it bears on the largest unmeasured cell.
+2. **Judge a sample of the 364 demotions.** Still the biggest exposure, because
+   the cascade makes every one of them permanent.
 3. **Internet-check a NO sample** to establish how much of the residual is
    genuinely unmatchable rather than merely unmatched.
-4. **Normalise the `EIN-` prefix** matchdb emits. It silently breaks every join
+4. **Add a geographic gate to tier 2.** All three adjudicated tier-2 errors in
+   the cleared cell are geographic, not nominal — a wrong affiliate or a wrong
+   city under a correct name. Tier 2 widens the name space; it should not widen
+   the place space with it.
+5. **Normalise the `EIN-` prefix** matchdb emits. It silently breaks every join
    against BMF-keyed artifacts, and it already produced one bogus "100% churn"
    result in this analysis.
 
-## 6. Default, pending those measurements
+## 6. Default
 
 ```
 tier 1   augmented BMF, all grants
@@ -133,5 +181,8 @@ tier 3   adjudicate the union of unresolved, both references' candidates
 ```
 
 69.0% cleared before any human review, against 63.0% today, for tier-2 compute
-on 37% of the file. Adopt tier 1 and tier 2 now; hold the claim that tier-1 YES
-is safe until the sampling in §5 says so.
+on 37% of the file. The adjudication in §3 supports adopting tier 1 and tier 2
+now: the gains are real at ~90%, and locking tier-1 YES is a 0.36% cost, not the
+open-ended risk it looked like before the cells were judged. What is still
+unsupported is the stronger claim that tier-1 YES is *sound* — the 364 demotions
+have not been judged, and item 1 above is the cheap way to find out.
