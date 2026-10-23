@@ -1,0 +1,47 @@
+cases: 25
+reference: 3,891,187 rows
+--------------------------------------------------------------------------------------------
+ROW-LEVEL RETRIEVAL ON THE CORRECT EIN
+--------------------------------------------------------------------------------------------
+              verdict     N
+               <char> <int>
+ best row was offered    18
+    row never offered     7
+--------------------------------------------------------------------------------------------
+id        filed                       rows  offd achiev offerd   prod  best achievable row
+G002405   BOROUGHS COMMUNITY CENTER      1     0  0.944      -  0.080  BURROUGHS COMMUNITY CENTER / BRIDGEPORT CT
+G004078   CASA OF NJ                     3     0  0.891      -  0.220  CASA OF NEW JERSEY / New Brunswick NJ
+G000920   The Dallas Foundation for      7     0  0.736      -  0.220  THE DALLAS FOUNDATIONBONTON FARMS / DALLAS TX
+G004572   CROWN FINANCIAL MINISTRY       3     0  0.569      -  0.360  CROWN FINANCIAL MINISTRIES / KNOXVILLE TN
+G000311   GIRLS INC                      2     0  0.380      -  0.600  GIRLS INC OF WASHINGTON COUNTY / HAGERSTOWN MD
+G001777   CROSSROADS THE RIDE            2     0  0.380      -  0.220  CROSSROADS FOR KIDS / DUXBURY MA
+G003722   EASTER SEAL SOCIETY OF DEL    11     0  0.380      -  0.080  EASTER SEALS DELAWARE AND MARYLAND / NEW CASTLE DE
+G000145   UCAP SCHOOL                    2     1  0.380  0.380  0.380  URBAN COLLABORATIVE / PROVIDENCE RI
+G000304   AMERICAN NATIONAL RED CROS   358    12  0.600  0.600  0.608  AMERICAN NATIONAL RED CROSS / WASHINGTON DC
+G000907   JUVENILE DIABETES RESEARCH   164     3  0.780  0.780  0.611  JUVENILE DIABETES RESEARCH FOUNDAT / ATLANTA GA
+G001170   MUSCULAR DYSTROPHY            31     4  0.600  0.600  0.600  MUSCULAR DYSTROPHY ASSOCIATION / CHICAGO IL
+G001402   DANCE PLACE DC WHEEL PRODU     6     6  0.780  0.780  0.380  DANCE PLACE / WASHINGTON DC
+G001460   UNIVERSITY OF DENVER - OFF    19    13  0.780  0.780  0.220  CENTER FOR JUDAIC STUDIES UNIVERSI / Denver CO
+G001912   MIRACULOUS LOVE MINISTRIES     1     1  0.220  0.220  0.220  MIRACULOUS LOVE INTERNATION MINIST / FRANKLIN TN
+G001935   Donovan Bank Foundation        1     1  0.605  0.605  0.605  DONOVAN AND BANK FOUNDATION / WILMINGTON NC
+G002181   The Salvation Army           223     8  0.780  0.780  0.602  SALVATION ARMY BIRMINGHAM AREA COM / BIRMINGHAM AL
+G002473   WISH BOOK 2020 FUND            2     2  0.780  0.780  0.380  SAN JOSE MERCURY NEWS WISH BOOK FU / SAN JOSE CA
+G002579   NW CHILDREN'S THTR SCHL        2     2  0.220  0.220  0.360  NORTHWEST CHILDRENS THEATER AND SC / PORTLAND OR
+G002630   BEIT HALOCHEN USA              5     3  0.380  0.380  0.380  FRIENDS OF ISRAEL DISABLED VETERAN / NEW YORK NY
+G002704   WGBH Public TV                 5     2  0.380  0.380  0.380  WGBH EDUCATIONAL FOUNDATION / BOSTON MA
+G002810   PLAYWORKS                     14     1  0.360  0.360  0.600  PLAYWORKS WASHINGTON DC / Washington DC
+G002885   STERLING ANIMAL SHELTER        2     2  0.220  0.220  0.480  ANIMAL SHELTER / STERLING MA
+G003429   WE CARE INC FEED THE FRIDG     3     3  0.220  0.220  0.220  WE CARE / BETHESDA MD
+G004596   THISTLEBEND COTTAGE            1     1  0.360  0.360  0.360  THISTLEBEND MINISTRIES / LOUISVILLE KY
+G004966   LIONS EYE DOUNDATION OF CA     1     1  0.220  0.220  0.506  LIONS EYE FOUNDATION OF CALIFORNIA / SAN FRANCISCO CA
+--------------------------------------------------------------------------------------------
+WHAT THE ACHIEVABLE BEST WOULD HAVE TIERED AS (yes 0.78 / maybe 0.65)
+--------------------------------------------------------------------------------------------
+Key: <off_tier>
+ off_tier MAYBE    NO   YES
+   <char> <int> <int> <int>
+    MAYBE     5     0     0
+       NO     0    13     0
+     none     1     4     2
+--------------------------------------------------------------------------------------------
+wrote data-dev/ROW-LEVEL-REPLAY.csv

@@ -1,3 +1,38 @@
 agreement cell: 2,564 identities
 usable (EIN + name + city): 2,564
-reference rows: 3,880,428
+reference rows usable: 3,876,116
+chosen EIN has a row in the filed city: 2,333 (91.0%)
+candidate rival rows after (city, first-token) blocking: 5,268
+----------------------------------------------------------------------------------------
+THE PLAYWORKS SIGNATURE IN THE AGREEMENT CELL
+----------------------------------------------------------------------------------------
+  chosen EIN has a row in the filed city        : 2,333 (91.0%)
+  chosen EIN does not, no same-name rival there : 214 (8.3%)
+  chosen EIN does not, a RIVAL does      [RISK] : 17 (0.7%)
+----------------------------------------------------------------------------------------
+worst cases (most rival EINs holding the filed name in the filed city):
+  id        filed name                 filed city     st  rival ein  rival name                   #riv
+  G002595   TEXAS A&M UNIVERSITY       COLLEGE STATIO TX  742632267  TEXAS A AND M UNIVERSITY ASI 5
+  G001356   ISKCON                     PHILADELPHIA   PA  222445729  ISKCON OF PHILADELPHIA HOLDI 3
+  G001835   College Prep               Oakland        CA  941492272  COLLEGE PREPARATORY SCHOOL   2
+  G002675   SAINT LOUIS ZOO ENDOWMENT  ST LOUIS       MO  430692190  SAINT LOUIS                  2
+  G003397   SANTA BARBARA WILDLIFE CAR SANTA BARBARA  CA  770222048  SANTA BARBARA                2
+  G003850   WOODSTOCK AGRICULTURAL SOC WOODSTOCK      CT  030221142  WOODSTOCK                    2
+  G000358   CHABAD HOUSE               NEW YORK       NY  262047932  CHABAD HOUSE BOWERY          1
+  G003729   FOCUS AND LEARNING CENTER  ST PAUL        MN  742539739  FOCUS                        1
+  G001067   GATEWAY CHILDRENS CHARITY  SAINT LOUIS    MO  206294706  GATEWAY                      1
+  G002809   HOUSE OF THE GOOD SHEPHERD SAINT LOUIS    MO  520608774  HOUSE OF THE GOOD SHEPHERD O 1
+  G003239   ISRAEL RESOURCE CENTER     NEW YORK       NY  455230138  ISRAEL                       1
+  G002154   MATTHEWS MAVERSICKS        MATTHEWS       NC  566060673  MATTHEWS                     1
+  G001919   STEAMBOAT MOUNTAIN SCHOOL  STEAMBOAT SPRI CO  262096621  STEAMBOAT                    1
+  G002425   THE EVANGELICAL LUTHERAN C GREENVILLE     PA  411568278  EVANGELICAL LUTHERAN C       1
+  G003613   Tryon Presbyterian Church  Tryon          NC  731233655  TRYON                        1
+  G001075   UNITED FRIENDS OF THE CHIL CULVER CITY    CA  954629604  UNITED FRIENDS OF THE CHILDR 1
+  G001235   ZION EPISCOPAL CHURCH      MANCHESTER     VT  146070913  ZION EPISCOPAL CH            1
+----------------------------------------------------------------------------------------
+wrote data-dev/AGREEMENT-RISK-SCAN.csv  (174 s)
+
+A hit is not a proven error. It is a case where the name and the place
+point at different organisations and the pipeline followed the name, which
+is exactly what went wrong on PLAYWORKS. These need adjudication, not
+assumption -- in either direction.
