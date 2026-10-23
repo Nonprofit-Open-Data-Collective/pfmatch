@@ -22,11 +22,17 @@ setDTthreads(4L)
 say <- function(...) message(sprintf(...))
 hr  <- function() message(strrep("=", 92))
 
-truth <- fread(file.path(PF, "data-dev", "PF-TRUTH.csv"), colClasses = "character")
-say("truth: %d rows, population %s", nrow(truth), truth$population[1])
+# The population and the truth table must be chosen together: pf_evaluate()
+# refuses to score a run whose population id differs from the table's.
+GPAT  <- Sys.getenv("PF_GRANTS_PAT", "^ef1k_grants_.*\\.csv$")
+TRIN  <- Sys.getenv("PF_TRUTH_IN",   "PF-TRUTH.csv")
+AROUT <- Sys.getenv("PF_ARMS_OUT",   "ARMS-VS-TRUTH.csv")
+
+truth <- fread(file.path(PF, "data-dev", TRIN), colClasses = "character")
+say("truth: %d rows, population %s  (%s)", nrow(truth), truth$population[1], TRIN)
 
 grants <- pf_recover_name_from_street(
-  pf_read_grants(file.path(PF, "inputs"), pattern = "^ef1k_grants_.*\\.csv$"))
+  pf_read_grants(file.path(PF, "inputs"), pattern = GPAT))
 POP <- pf_population_id(grants)
 say("run population: %s  (match: %s)", POP, identical(POP, truth$population[1]))
 
@@ -70,5 +76,5 @@ say("")
 say("'picked an EIN adjudication ruled out', per arm:")
 for (i in seq_len(nrow(z))) say("  %-28s %d", z$tag[i], z$ruled_out_yes[i])
 
-fwrite(z, file.path(PF, "data-dev", "ARMS-VS-TRUTH.csv"))
-hr(); say("wrote data-dev/ARMS-VS-TRUTH.csv")
+fwrite(z, file.path(PF, "data-dev", AROUT))
+hr(); say("wrote data-dev/%s", AROUT)

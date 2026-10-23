@@ -135,8 +135,17 @@ pf_efilepf_download <- function(dir = pf_efilepf_dir(),
 
 #' @rdname pf_efilepf
 #' @export
-pf_efilepf_dir <- function()
-  file.path(path.expand("~"), "Documents", "grants", "efilepf")
+pf_efilepf_dir <- function() {
+  d <- Sys.getenv("PF_EFILEPF_DIR")
+  if (nzchar(d)) return(d)
+  # path.expand("~") is NOT the user's home on Windows: R sets it to the
+  # Documents folder, so file.path(path.expand("~"), "Documents", ...) resolved
+  # to C:/Users/<u>/Documents/Documents/grants/efilepf and every year was
+  # reported MISSING. Use USERPROFILE there, which is the actual home.
+  home <- if (.Platform$OS.type == "windows" && nzchar(Sys.getenv("USERPROFILE")))
+    Sys.getenv("USERPROFILE") else path.expand("~")
+  file.path(home, "Documents", "grants", "efilepf")
+}
 
 #' The e-file to GTDC column mapping
 #'
@@ -229,6 +238,7 @@ pf_efilepf_build <- function(dir = pf_efilepf_dir(), out, years = pf_efilepf_yea
   if (file.exists(out)) unlink(out)
   log <- list()
   first <- TRUE
+  canon <- NULL   # column order of the first year written; see the v2 branch
   for (y in years) {
     f <- file.path(dir, sprintf("%s-%d.CSV", pf_efilepf_table(), y))
     if (!file.exists(f)) { if (verbose) message(sprintf("  %d  MISSING, skipped", y)); next }
@@ -248,6 +258,28 @@ pf_efilepf_build <- function(dir = pf_efilepf_dir(), out, years = pf_efilepf_yea
     if (identical(schema, "v2")) {
       # keep the file as published: current names, full filing metadata
       o <- d
+      # ... but NOT in whatever order this year happens to publish them.
+      # fwrite(append = TRUE) writes POSITIONALLY, against the header the first
+      # year wrote. The blank column added above lands at the END of the frame,
+      # whereas every other year carries it in its published position, so
+      # appending 2025 -- the one year missing PF_15_G_PAID_RECIP_STAT -- shifted
+      # all 658,811 of its rows two columns out of register: the amount came out
+      # empty and the purpose text landed in the status column. The gtdc path
+      # never had this problem because it selects columns by name into a fixed
+      # order. Pin the order here so the v2 path cannot drift either.
+      if (is.null(canon)) {
+        canon <- names(o)
+      } else {
+        extra <- setdiff(names(o), canon)
+        if (length(extra))
+          stop("the ", y, " extract publishes column(s) no earlier year had: ",
+               paste(extra, collapse = ", "),
+               ".\n  Appending it would write every later row out of register. ",
+               "Rebuild from the first year, or restrict `years` to one schema.",
+               call. = FALSE)
+        for (cc in setdiff(canon, names(o))) o[, (cc) := ""]
+        data.table::setcolorder(o, canon)
+      }
     } else {
       keep <- c(map, OBJECTID = "OBJECTID")
       o <- d[, keep, with = FALSE]
@@ -276,7 +308,17 @@ pf_efilepf_build <- function(dir = pf_efilepf_dir(), out, years = pf_efilepf_yea
     rm(d, o); invisible(gc())
   }
   res <- do.call(rbind, log)
-  if (verbose && !is.null(res))
+  # A build that found no source files used to report "total: 0 rows", write
+  # nothing, and return invisibly with no error -- so a wrong `dir` looked like
+  # a successful empty build and only surfaced downstream as a missing file.
+  # Not finding the data is a failure, and it says so here.
+  if (is.null(res))
+    stop("pf_efilepf_build() found no source extracts in ", dir,
+         ".\n  Expected files named ", pf_efilepf_table(), "-<year>.CSV for ",
+         "years ", min(years), "-", max(years), ".\n  Download them with ",
+         "pf_efilepf_download(), or set PF_EFILEPF_DIR / pass `dir` to point ",
+         "at an existing cache.", call. = FALSE)
+  if (verbose)
     message(sprintf("total: %s rows -> %s",
                     format(sum(res$rows), big.mark = ","), out))
   invisible(res)

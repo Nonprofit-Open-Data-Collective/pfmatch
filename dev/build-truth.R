@@ -44,7 +44,12 @@ sq  <- function(x) { x <- as.character(x); x[is.na(x)] <- ""; x }
 e9  <- function(v) { v <- gsub("[^0-9]", "", as.character(v))
                      ifelse(nchar(v) == 9L, v, NA_character_) }
 
-GPAT <- "^ef1k_grants_.*\\.csv$"
+# PF_GRANTS_PAT selects the population; PF_TRUTH_OUT where the table lands.
+# The v1 sample and its v2 lift are different populations with different
+# population ids, so each needs its own truth file -- pf_evaluate() refuses to
+# score a run whose population id does not match the one in the table.
+GPAT  <- Sys.getenv("PF_GRANTS_PAT", "^ef1k_grants_.*\\.csv$")
+TROUT <- Sys.getenv("PF_TRUTH_OUT",  "PF-TRUTH.csv")
 raw  <- pf_read_grants(file.path(PF, "inputs"), pattern = GPAT)
 g    <- as.data.table(raw)
 say("population: %s grant rows", format(nrow(g), big.mark = ","))
@@ -166,9 +171,9 @@ say("  unresolved (carried for completeness)          : %d", sum(t$verdict == "U
 say("")
 print(t[, .N, by = .(basis, confidence)][order(basis)], row.names = FALSE)
 
-fwrite(t, file.path(PF, "data-dev", "PF-TRUTH.csv"))
+fwrite(t, file.path(PF, "data-dev", TROUT))
 hr()
-say("wrote data-dev/PF-TRUTH.csv  (%d rows, population %s)", nrow(t), POP)
+say("wrote data-dev/%s  (%d rows, population %s)", TROUT, nrow(t), POP)
 say("")
 say("COVERAGE WARNING, by construction: every row here was drawn from a cell the")
 say("then-current pipeline produced -- the MAYBE tier, the cleared cell, the NO")

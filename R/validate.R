@@ -92,6 +92,34 @@ pf_validate_grants <- function(grants, strict = FALSE, verbose = TRUE) {
       if (all(resolved)) paste(length(needed), "of", length(needed), "resolve and are non-empty")
       else paste("all-missing:", paste(needed[!resolved], collapse = ", ")))
 
+  ## ---- per-year coverage, which a column shift breaks in ONE year ---------
+  # The corpus-wide check above passes while a single year is wrecked: when the
+  # v2 build wrote 2025 two columns out of register, every one of its 658,811
+  # rows had an empty amount, but 96% of the corpus was fine so the column
+  # still "resolved". A shift shows up as a year at ~0% on a column the other
+  # years populate, which is what this looks for.
+  yr <- .pf_col(g, "TAX_YEAR")
+  if (!all(is.na(yr)) && length(unique(yr[!is.na(yr)])) > 1L) {
+    bad <- character(0)
+    for (c0 in needed) {
+      v <- .pf_col(g, c0)
+      if (all(is.na(v))) next
+      ok <- !is.na(v) & nzchar(as.character(v))
+      overall <- mean(ok)
+      if (overall < 0.5) next          # sparse everywhere: nothing to compare to
+      byyr <- tapply(ok, yr, mean)
+      off  <- names(byyr)[!is.na(byyr) & byyr < 0.10]
+      if (length(off))
+        bad <- c(bad, sprintf("%s empty in %s (corpus %.0f%%)", c0,
+                              paste(off, collapse = "/"), 100 * overall))
+    }
+    add("per-year column coverage", if (!length(bad)) "PASS" else "FAIL",
+        if (!length(bad))
+          sprintf("no year is empty on a column the others populate (%d years)",
+                  length(unique(yr[!is.na(yr)])))
+        else paste(bad, collapse = "; "))
+  }
+
   ## ---- state / ZIP sanity, which a transposition would break --------------
   st <- .pf_col(g, "PF_15_G_PAID_RECIP_ADDR_STATE")
   zp <- .pf_col(g, "PF_15_G_PAID_RECIP_ADDR_ZIP")
