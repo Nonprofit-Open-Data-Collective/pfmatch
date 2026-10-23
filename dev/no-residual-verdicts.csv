@@ -13,7 +13,7 @@ G001055,THE PURPOSEFUL LIVING CENTER,web,UNFINDABLE,,,nothing by this name in Oa
 G001170,MUSCULAR DYSTROPHY,web,REAL-ORG,131665552,Muscular Dystrophy Association,truncated name; both references surfaced the right org
 G001402,DANCE PLACE DC WHEEL PRODUCTIONS INC,web,REAL-ORG,521118504,DC Wheel Productions dba Dance Place,same street as filed
 G001422,BROOKLYN GARRISON-OSBORN,reference,INDIVIDUAL,,,person-shaped name; purpose Educational
-G001460,UNIVERSITY OF DENVER - OFFICE OF GIFT PROC,reference,REAL-ORG,840404231,Colorado Seminary dba University of Denver,payee is an internal office of the university
+G001460,UNIVERSITY OF DENVER - OFFICE OF GIFT PROC,web,REAL-ORG,840404231,Colorado Seminary dba University of Denver,payee is an internal office of the university
 G001546,MOTHER MARIA ANNA BRUNNER CATHOLIC SCHOOL,web,NO-OWN-EIN,,Archdiocese of Cincinnati,parochial school under a group ruling
 G001777,CROSSROADS THE RIDE,web,REAL-ORG,042103837,Crossroads for Kids Inc,payee named as the fundraising event not the charity
 G001821,UNIVERSITY BAPTIST CHURCH,reference,UNCLEAR-GEO,,,exact name in reference but the EIN is an Ohio church not Hattiesburg MS
@@ -24,7 +24,7 @@ G001935,Donovan Bank Foundation,web,REAL-ORG,872789816,Donovan and Bank Foundati
 G002095,Marys Cupboard,web,NO-OWN-EIN,,Catholic Social Services of Bucks County,pantry operating inside a parent charity
 G002137,SHAW CANCER CENTER,web,NO-OWN-EIN,,Vail Health,a programme of the hospital system
 G002150,Cong Mesilas Hachessed,reference,REAL-ORG,,Congregation Mesilas Hachesed,Cong abbreviation; both references surfaced it
-G002181,The Salvation Army,reference,REAL-ORG,580660607,The Salvation Army,exact name; local corps file under the territory
+G002181,The Salvation Army,web,REAL-ORG,580660607,The Salvation Army,exact name; local corps file under the territory
 G002273,CHRISTIAN FILM & TELEVISION CO,web,UNCLEAR,,Christian Film and Television Commission,organisation exists but no EIN confirmed
 G002284,UCSF FOUNDATION - CTRP,reference,REAL-ORG,,UCSF Foundation,payee is a fund inside the university foundation
 G002298,MERCY MISSIONS TO THE WORLD INC,web,UNFINDABLE,,,nothing by this name in Lebanon PA
@@ -36,9 +36,9 @@ G002565,ST BARTHOLOMEWS CHURCH,reference,UNCLEAR-GEO,,,exact name in reference b
 G002579,NW CHILDREN'S THTR SCHL,web,REAL-ORG,931111344,Northwest Childrens Theater and School Inc,abbreviated to consonants
 G002602,WE ARE DOWN HERE,web,UNCLEAR,,,reference holds WE ARE DOWN HOME in the same town; filed name may be garbled
 G002630,BEIT HALOCHEN USA,web,REAL-ORG,133392711,Friends of Israel Disabled Veterans - Beit Halochem,same ZIP; both references hold the legal name
-G002704,WGBH Public TV,reference,REAL-ORG,042103626,WGBH Educational Foundation,call sign plus a descriptor
+G002704,WGBH Public TV,web,REAL-ORG,042104397,WGBH Educational Foundation,call sign plus a descriptor
 G002781,TRINITY LUTHERAN AT COLUMBUS - MARY ANN S,web,UNCLEAR,,,a named scholarship fund inside a church; parent not pinned down
-G002810,PLAYWORKS,reference,REAL-ORG,042752957,Playworks,exact name; both references agree on the EIN but the city is a chapter
+G002810,PLAYWORKS,web,REAL-ORG,943251867,Playworks Education Energized,both references agreed on 04-2752957 which is NOT this org; the agreed EIN was wrong
 G002832,CHILDREN'S NATIONAL HOSPITAL FOUNDATION,reference,REAL-ORG,,Children's National Hospital Foundation,matchdb holds the current name; the BMF the older one
 G002885,STERLING ANIMAL SHELTER,web,REAL-ORG,043236868,Animal Shelter Inc dba Sterling Animal Shelter,dba name; legal name omits the town
 G002951,FHDA FOOTHILL,reference,REAL-ORG,,Foothill-De Anza Community College Foundation,acronym; both references surfaced it

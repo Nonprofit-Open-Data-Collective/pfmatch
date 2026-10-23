@@ -141,10 +141,19 @@ filed state and ZIP disagree, which is a cheap check.
 Separately, three cases carry the **exact** filed name in the reference and still
 score 0.60, below the 0.65 MAYBE floor, because the organisation is a common one
 and the geography does not corroborate: `UNIVERSITY BAPTIST CHURCH`,
-`ST BARTHOLOMEWS CHURCH`, `CHRIST CHURCH CATHEDRAL`. Two more —
-`PLAYWORKS` and `UNIVERSITY BAPTIST CHURCH` — score 0.60 with *both references
-agreeing on the EIN*. The 0.60 cap is the geography term doing its job on a
-name that cannot discriminate, and these should not be forced through.
+`ST BARTHOLOMEWS CHURCH`, `CHRIST CHURCH CATHEDRAL`. The 0.60 cap is the
+geography term doing its job on a name that cannot discriminate, and these
+should not be forced through.
+
+An earlier draft of this note added `PLAYWORKS` to that list as a case where
+*both references agree on the EIN*, implying the agreement corroborated the
+answer. It does not. Both references carry 04-2752957 for `PLAYWORKS`, and that
+is not Playworks — the organisation is 94-3251867 in Oakland. **Agreement
+between the two references is not evidence of correctness; both can hold the
+same wrong row.** Any rule that treats cross-reference agreement as
+corroboration has to account for that, and the 46 EIN-disagreement cases in
+`dev/CASCADE-STRATEGY.md` §3 were adjudicated on the assumption that agreement
+was the safe case.
 
 ## What this says to do next
 
