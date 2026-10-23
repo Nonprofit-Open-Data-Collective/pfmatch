@@ -4,7 +4,11 @@
 \alias{pf_read_grants}
 \title{Read and prepare the sample grant CSVs}
 \usage{
-pf_read_grants(path = "inputs", pattern = "grants.*\\\\.csv$")
+pf_read_grants(
+  path = "inputs",
+  pattern = "grants.*\\\\.csv$",
+  allow_mixed = FALSE
+)
 }
 \arguments{
 \item{path}{Directory or vector of CSV paths.}
@@ -13,6 +17,9 @@ pf_read_grants(path = "inputs", pattern = "grants.*\\\\.csv$")
 the \verb{*_grants*.csv} benchmark files and so will pull in \strong{every} size
 variant sitting in the folder — pass an explicit pattern or file vector to
 pick one set.}
+
+\item{allow_mixed}{Set \code{TRUE} to suppress the vintage check described below.
+Only do this when the mixture is genuinely wanted.}
 }
 \value{
 The prepared frame, with \code{source_file} recording provenance.
@@ -20,3 +27,18 @@ The prepared frame, with \code{source_file} recording provenance.
 \description{
 Read and prepare the sample grant CSVs
 }
+\section{Vintage check}{
+
+Grant extracts from different sources do not share a schema, and silently
+concatenating them produces a population that is neither. The two vintages in
+this project are distinguished by \code{OBJECTID}: the NCCS e-file rebuild carries
+it, the older GT-derived extracts do not. Reading both at once also
+double-counts, because the two sources were sampled from overlapping filings.
+
+The default \code{pattern} matched 15 files across both vintages in \verb{inputs/} —
+422,806 rows where either population alone is a fraction of that — so this
+function now stops when the matched files disagree on \code{OBJECTID}, naming the
+files on each side. The check is on the column, not on filenames, so it keeps
+working whatever the samples are called.
+}
+

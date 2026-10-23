@@ -51,3 +51,8 @@ inputs/*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# pkgdown build output. Not committed: choose a deployment route first --
+# either commit this directory (GitHub Pages from /docs) or add a workflow
+# that builds and publishes to gh-pages. See _pkgdown.yml url.
+docs/

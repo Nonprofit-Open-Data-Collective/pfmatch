@@ -1,0 +1,247 @@
+── Building pkgdown site for package pfmatch ───────────────────────────────────
+Reading from: C:/Users/jlecy/Dropbox/00 - URBAN/00-GITHUB/pfmatch
+Writing to: C:/Users/jlecy/Dropbox/00 - URBAN/00-GITHUB/pfmatch/docs
+── Sitrep ──────────────────────────────────────────────────────────────────────
+✔ URLs ok.
+✔ Favicons ok.
+✔ Open graph metadata ok.
+✔ Articles metadata ok.
+✔ Reference metadata ok.
+── Initialising site ───────────────────────────────────────────────────────────
+── Building home ───────────────────────────────────────────────────────────────
+Writing `authors.html`
+Writing `LICENSE-text.html`
+Reading README.md
+Writing `index.html`
+Writing `404.html`
+── Building function reference ─────────────────────────────────────────────────
+Reading man/nteev2.Rd
+Writing `reference/nteev2.html`
+Reading man/pfmatch-package.Rd
+Writing `reference/pfmatch-package.html`
+Reading man/pf_add_recovery_keys.Rd
+Writing `reference/pf_add_recovery_keys.html`
+Reading man/pf_adjudicate.Rd
+Writing `reference/pf_adjudicate.html`
+Reading man/pf_affiliation.Rd
+Writing `reference/pf_affiliation.html`
+Reading man/pf_arm_core.Rd
+Writing `reference/pf_arm_core.html`
+Reading man/pf_arm_order.Rd
+Writing `reference/pf_arm_order.html`
+Reading man/pf_attached.Rd
+Writing `reference/pf_attached.html`
+Reading man/pf_attached_report.Rd
+Writing `reference/pf_attached_report.html`
+Reading man/pf_attach_missions.Rd
+Writing `reference/pf_attach_missions.html`
+Reading man/pf_batch_doc.Rd
+Writing `reference/pf_batch_doc.html`
+Reading man/pf_batch_report.Rd
+Writing `reference/pf_batch_report.html`
+Reading man/pf_bmf_augment.Rd
+Writing `reference/pf_bmf_augment.html`
+Reading man/pf_bmf_context.Rd
+Writing `reference/pf_bmf_context.html`
+Reading man/pf_bmf_context_cols.Rd
+Writing `reference/pf_bmf_context_cols.html`
+Reading man/pf_build_affiliation_links.Rd
+Writing `reference/pf_build_affiliation_links.html`
+Reading man/pf_build_dyads.Rd
+Writing `reference/pf_build_dyads.html`
+Reading man/pf_build_org_text.Rd
+Writing `reference/pf_build_org_text.html`
+Reading man/pf_build_reference.Rd
+Writing `reference/pf_build_reference.html`
+Reading man/pf_candidate_frame.Rd
+Writing `reference/pf_candidate_frame.html`
+Reading man/pf_cluster_arms.Rd
+Writing `reference/pf_cluster_arms.html`
+Reading man/pf_collapse_reference.Rd
+Writing `reference/pf_collapse_reference.html`
+Reading man/pf_consistency.Rd
+Writing `reference/pf_consistency.html`
+Reading man/pf_crosstab.Rd
+Writing `reference/pf_crosstab.html`
+Reading man/pf_dedup.Rd
+Writing `reference/pf_dedup.html`
+Reading man/pf_dedup_doc.Rd
+Writing `reference/pf_dedup_doc.html`
+Reading man/pf_dedup_report.Rd
+Writing `reference/pf_dedup_report.html`
+Reading man/pf_default_passes.Rd
+Writing `reference/pf_default_passes.html`
+Reading man/pf_drop_self_matches.Rd
+Writing `reference/pf_drop_self_matches.html`
+Reading man/pf_dyads.Rd
+Writing `reference/pf_dyads.html`
+Reading man/pf_dyad_annotate.Rd
+Writing `reference/pf_dyad_annotate.html`
+Reading man/pf_dyad_collapse.Rd
+Writing `reference/pf_dyad_collapse.html`
+Reading man/pf_dyad_config.Rd
+Writing `reference/pf_dyad_config.html`
+Reading man/pf_dyad_lookup.Rd
+Writing `reference/pf_dyad_lookup.html`
+Reading man/pf_dyad_sources.Rd
+Writing `reference/pf_dyad_sources.html`
+Reading man/pf_dyad_summary.Rd
+Writing `reference/pf_dyad_summary.html`
+Reading man/pf_efilepf.Rd
+Writing `reference/pf_efilepf.html`
+Reading man/pf_efilepf_build.Rd
+Writing `reference/pf_efilepf_build.html`
+Reading man/pf_efilepf_download.Rd
+Writing `reference/pf_efilepf_download.html`
+Reading man/pf_efilepf_map.Rd
+Writing `reference/pf_efilepf_map.html`
+Reading man/pf_efilepf_url.Rd
+Writing `reference/pf_efilepf_url.html`
+Reading man/pf_enrich.Rd
+Writing `reference/pf_enrich.html`
+Reading man/pf_evaluate.Rd
+Writing `reference/pf_evaluate.html`
+Reading man/pf_geo_agreement.Rd
+Writing `reference/pf_geo_agreement.html`
+Reading man/pf_group_siblings.Rd
+Writing `reference/pf_group_siblings.html`
+Reading man/pf_initials.Rd
+Writing `reference/pf_initials.html`
+Reading man/pf_is_arm.Rd
+Writing `reference/pf_is_arm.html`
+Reading man/pf_is_placeholder.Rd
+Writing `reference/pf_is_placeholder.html`
+Reading man/pf_link.Rd
+Writing `reference/pf_link.html`
+Reading man/pf_map_grants.Rd
+Writing `reference/pf_map_grants.html`
+Reading man/pf_match.Rd
+Writing `reference/pf_match.html`
+Reading man/pf_match_grants.Rd
+Writing `reference/pf_match_grants.html`
+Reading man/pf_ntee_text.Rd
+Writing `reference/pf_ntee_text.html`
+Reading man/pf_oos_details.Rd
+Writing `reference/pf_oos_details.html`
+Reading man/pf_partition.Rd
+Writing `reference/pf_partition.html`
+Reading man/pf_pass_stage.Rd
+Writing `reference/pf_pass_stage.html`
+Reading man/pf_pipeline.Rd
+Writing `reference/pf_pipeline.html`
+Reading man/pf_placeholder_pattern.Rd
+Writing `reference/pf_placeholder_pattern.html`
+Reading man/pf_population_id.Rd
+Writing `reference/pf_population_id.html`
+Reading man/pf_prepare.Rd
+Writing `reference/pf_prepare.html`
+Reading man/pf_prepare_grants.Rd
+Writing `reference/pf_prepare_grants.html`
+Reading man/pf_propagate_matches.Rd
+Writing `reference/pf_propagate_matches.html`
+Reading man/pf_purpose.Rd
+Writing `reference/pf_purpose.html`
+Reading man/pf_purpose_coverage.Rd
+Writing `reference/pf_purpose_coverage.html`
+Reading man/pf_purpose_is_contentful.Rd
+Writing `reference/pf_purpose_is_contentful.html`
+Reading man/pf_purpose_stopwords.Rd
+Writing `reference/pf_purpose_stopwords.html`
+Reading man/pf_purpose_tiebreak.Rd
+Writing `reference/pf_purpose_tiebreak.html`
+Reading man/pf_purpose_tokens.Rd
+Writing `reference/pf_purpose_tokens.html`
+Reading man/pf_read_grants.Rd
+Writing `reference/pf_read_grants.html`
+Reading man/pf_recipients.Rd
+Writing `reference/pf_recipients.html`
+Reading man/pf_recipient_type.Rd
+Writing `reference/pf_recipient_type.html`
+Reading man/pf_recover.Rd
+Writing `reference/pf_recover.html`
+Reading man/pf_recovery_passes.Rd
+Writing `reference/pf_recovery_passes.html`
+Reading man/pf_recover_name_from_street.Rd
+Writing `reference/pf_recover_name_from_street.html`
+Reading man/pf_reference.Rd
+Writing `reference/pf_reference.html`
+Reading man/pf_report.Rd
+Writing `reference/pf_report.html`
+Reading man/pf_run.Rd
+Writing `reference/pf_run.html`
+Reading man/pf_run_batches.Rd
+Writing `reference/pf_run_batches.html`
+Reading man/pf_schedi.Rd
+Writing `reference/pf_schedi.html`
+Reading man/pf_schedi_alias.Rd
+Writing `reference/pf_schedi_alias.html`
+Reading man/pf_schedi_build.Rd
+Writing `reference/pf_schedi_build.html`
+Reading man/pf_schedi_dir.Rd
+Writing `reference/pf_schedi_dir.html`
+Reading man/pf_schedi_download.Rd
+Writing `reference/pf_schedi_download.html`
+Reading man/pf_schedi_url.Rd
+Writing `reference/pf_schedi_url.html`
+Reading man/pf_schedi_years.Rd
+Writing `reference/pf_schedi_years.html`
+Reading man/pf_schedule_a_status.Rd
+Writing `reference/pf_schedule_a_status.html`
+Reading man/pf_staged_passes.Rd
+Writing `reference/pf_staged_passes.html`
+Reading man/pf_standardize_status.Rd
+Writing `reference/pf_standardize_status.html`
+Reading man/pf_status.Rd
+Writing `reference/pf_status.html`
+Reading man/pf_status_audit.Rd
+Writing `reference/pf_status_audit.html`
+Reading man/pf_text.Rd
+Writing `reference/pf_text.html`
+Reading man/pf_tiebreak_config.Rd
+Writing `reference/pf_tiebreak_config.html`
+Reading man/pf_truth_schema.Rd
+Writing `reference/pf_truth_schema.html`
+Reading man/pf_type_labels.Rd
+Writing `reference/pf_type_labels.html`
+Reading man/pf_type_levels.Rd
+Writing `reference/pf_type_levels.html`
+── Building articles ───────────────────────────────────────────────────────────
+Writing `articles/index.html`
+Reading vignettes/cascade-workflow.Rmd
+Writing `articles/cascade-workflow.html`
+── Building sitemap ────────────────────────────────────────────────────────────
+Writing `sitemap.xml`
+── Building docs for llms ──────────────────────────────────────────────────────
+── Building redirects ──────────────────────────────────────────────────────────
+Adding redirect from reference/pf_efilepf_dir.html to
+reference/pf_efilepf.html.
+Adding redirect from reference/pf_efilepf_table.html to
+reference/pf_efilepf.html.
+Adding redirect from reference/pf_efilepf_years.html to
+reference/pf_efilepf.html.
+Adding redirect from reference/pf_partition_reference.html to
+reference/pf_partition.html.
+Adding redirect from reference/pf_route_queries.html to
+reference/pf_partition.html.
+Adding redirect from reference/pf_run_partitioned.html to
+reference/pf_partition.html.
+Adding redirect from reference/pf_status_levels.html to
+reference/pf_report.html.
+Adding redirect from reference/pfmatch.html to reference/pfmatch-package.html.
+── Building search index ───────────────────────────────────────────────────────
+── Checking for problems ───────────────────────────────────────────────────────
+── Finished building pkgdown site for package pfmatch ──────────────────────────
+Warning message:
+In dir.create(target_dir) :
+  'C:\Users\jlecy\Dropbox\00 - URBAN\00-GITHUB\pfmatch\docs\deps\jquery-3.6.0' already exists
+
+=== VERIFY, in-process ===
+reference html: 104 
+article html  : 2 
+diagram copied: TRUE 
+  viewBox casing kept   : TRUE 
+  markerWidth kept      : TRUE 
+  rect/text not in <p>  : TRUE 
+article references svg  : TRUE 
+no mangled inline svg   : TRUE 
+tables present          : 12 
