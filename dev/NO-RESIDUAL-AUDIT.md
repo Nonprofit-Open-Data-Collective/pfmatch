@@ -145,15 +145,35 @@ and the geography does not corroborate: `UNIVERSITY BAPTIST CHURCH`,
 geography term doing its job on a name that cannot discriminate, and these
 should not be forced through.
 
-An earlier draft of this note added `PLAYWORKS` to that list as a case where
-*both references agree on the EIN*, implying the agreement corroborated the
-answer. It does not. Both references carry 04-2752957 for `PLAYWORKS`, and that
-is not Playworks — the organisation is 94-3251867 in Oakland. **Agreement
-between the two references is not evidence of correctness; both can hold the
-same wrong row.** Any rule that treats cross-reference agreement as
-corroboration has to account for that, and the 46 EIN-disagreement cases in
-`dev/CASCADE-STRATEGY.md` §3 were adjudicated on the assumption that agreement
-was the safe case.
+An earlier draft added `PLAYWORKS` to that list as a case where *both references
+agree on the EIN*, implying the agreement corroborated the answer. Looking at
+what the references actually hold makes it worse than a drafting error:
+
+```
+04-2752957  PLAYWORKS                          NEWTON MA        <- both picked this
+94-3251867  PLAYWORKS EDUCATION ENERGIZED      OAKLAND CA       <- the real org
+94-3251867  PLAYWORKS WASHINGTON DC            Washington DC    <- matches the filed city
+```
+
+The filed grant is `PLAYWORKS` in Washington DC. Both references chose a real
+but unrelated Newton MA organisation whose name is exactly `PLAYWORKS`, over the
+correct organisation whose own variant row names the filed city. Two separate
+failures in one case: the geography term did not break a tie it should have won
+outright, and the agreement looked like corroboration.
+
+**The two references are not independent evidence.** matchdb is built from the
+same BMF lineage, and both runs are scored by the *same* npmatch engine with the
+same normalizer, comparator and tiering. When they agree they are not two
+witnesses; they are one scoring decision taken twice over overlapping data.
+Agreement is correlated error, and it is most correlated exactly where the name
+is short and exact — which is where it is least safe.
+
+This matters well beyond this note. `dev/CASCADE-STRATEGY.md` §3 adjudicated the
+46 cases where the references **disagree** and concluded that locking tier-1 YES
+costs ~17 identities (0.36% of the file). That estimate says nothing about the
+**2,564 YES→YES same-EIN cases — 53% of the file — which were never sampled**,
+on the implicit assumption that agreement meant correct. That assumption is now
+falsified by a case found incidentally, without even looking for it.
 
 ## What this says to do next
 

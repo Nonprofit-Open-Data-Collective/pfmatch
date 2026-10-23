@@ -1,0 +1,52 @@
+tracing 6 cases
+detected geo profile: street_full  [fields: street, city, state, zip5]
+query coverage: street=1.00  unit=0.00  city=1.00  county=0.00  state=1.00  zip5=1.00
+reference rows for these EINs: 434
+pairs to score: 434
+------------------------------------------------------------------------------------------------
+EVERY GEO INPUT, PER PAIR
+------------------------------------------------------------------------------------------------
+
+== G002181  filed: The Salvation Army | Birmingham AL 35234
+   reference name                   ref city       st   name  city   z5   z3  stn  stt  score
+   SALVATION ARMY BIRMINGHAM AREA C BIRMINGHAM     AL   0.95  0.00    1    1    0    1  0.780
+   SALVATION ARMY ANNISTON          ANNISTON       AL   0.87  0.00    0    0    0    1  0.602
+   THE SALVATION ARMY               BROOKHAVEN     GA   1.00  0.00    0    0    0    0  0.600
+   SALVATION ARMY HUNTSVILLE        HUNTSVILLE     AL   0.85  0.00    0    0    0    1  0.592
+   THE SALVATION ARMY HUNTSVILLE    Huntsville     AL   0.85  0.00    0    0    0    1  0.592
+
+== G001170  filed: MUSCULAR DYSTROPHY | BOSTON MA 02110
+   reference name                   ref city       st   name  city   z5   z3  stn  stt  score
+   MUSCULAR DYSTROPHY ASSOCIATION   CHICAGO        IL   1.00  0.00    0    0    0    0  0.600
+   MUSCULAR DYSTROPHY ASSOCIATION   CHICAGO        IL   1.00  0.00    0    0    0    0  0.600
+   MUSCULAR DYSTROPHY ASSOCIATION I TEMPE          AZ   1.00  0.00    0    0    0    0  0.600
+   MUSCULAR DYSTROPHY ASSOCIATION I CHICAGO        IL   1.00  0.00    0    0    0    0  0.600
+   MUSCULAR DYSTOPHY ASSOCIATION    COLUMBUS       OH   0.98  0.00    0    0    0    0  0.589
+
+== G000907  filed: JUVENILE DIABETES RESEARCH FOU | ATLANTA GA 30305
+   reference name                   ref city       st   name  city   z5   z3  stn  stt  score
+   JUVENILE DIABETES RESEARCH FOUND ATLANTA        GA   0.95  1.00    1    1    0    1  0.780
+   JUVENILE DIABETES RESEARCH FDN   Tucson         AZ   1.00  0.00    0    0    0    0  0.600
+   JUVENILE DIABETES RESEARCH FOUND MANCHESTER     NH   1.00  0.00    0    0    0    0  0.600
+   JUVENILLE DIABETES RESEARCH FOUN St Petersburg  FL   0.99  0.00    0    0    0    0  0.593
+   JUVENILE DIABETES RESEACH FOUNDA New York       NY   0.99  0.00    0    0    0    0  0.592
+
+== G002810  filed: PLAYWORKS | WASHINGTON DC 20003
+   reference name                   ref city       st   name  city   z5   z3  stn  stt  score
+   PLAYWORKS WASHINGTON DC          Washington     DC   0.00  0.00    1    1    0    1  0.360
+   PLAYWORKS EDUCATION ENERGIZED    OAKLAND        CA   0.00  0.00    0    0    0    0  0.000
+   PLAYWORKS ARIZONA                PHOENIX        AZ   0.00  0.00    0    0    0    0  0.000
+   PLAYWORKS COLORADO               DENVER         CO   0.00  0.00    0    0    0    0  0.000
+   PLAYWORKS EDUCATION ENERGIZED PL ST PAUL        MN   0.00  0.00    0    0    0    0  0.000
+
+== G004596  filed: THISTLEBEND COTTAGE | ANCHORAGE KY 40223
+   reference name                   ref city       st   name  city   z5   z3  stn  stt  score
+   THISTLEBEND MINISTRIES           LOUISVILLE     KY   0.00  0.00    1    1    0    1  0.360
+
+== G001935  filed: Donovan Bank Foundation | Fayetteville NC 28314
+   reference name                   ref city       st   name  city   z5   z3  stn  stt  score
+   DONOVAN AND BANK FOUNDATION      WILMINGTON     NC   0.88  0.00    0    0    0    1  0.605
+------------------------------------------------------------------------------------------------
+city column is JW, FLOORED AT 0.85 inside .np_hier_score(); a city_sim
+printed above as 0.00 contributed nothing even if the names look alike.
+wrote data-dev/GEO-CREDIT-TRACE.csv
