@@ -17,6 +17,7 @@ navbar:
           href: articles/cascade-workflow.html
 
 
+
 reference:
 
 - title: Run the pipeline
@@ -114,6 +115,7 @@ reference:
   contents:
   - pf_evaluate
   - pf_consistency
+  - pf_validate_grants
   - pf_truth_schema
   - pf_population_id
 
@@ -143,8 +145,13 @@ reference:
     aliases.
   contents:
   - pf_efilepf
+  - pf_efilepf_fetch
   - pf_efilepf_build
   - pf_efilepf_download
+  - pf_source_provenance
+  - pf_concordance_vars
+  - pf_efilepf_dedup
+  - pf_grant_content_cols
   - pf_efilepf_map
   - pf_efilepf_url
   - pf_schedi

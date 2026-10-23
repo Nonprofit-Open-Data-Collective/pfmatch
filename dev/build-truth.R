@@ -21,11 +21,17 @@
 # archived GT population and are deliberately NOT loaded here
 # (inputs/archive-gt/README.md).
 #
-# STABLE KEY. grant_id is positional and so breaks on re-extraction. truth_id is
-# content-derived: OBJECTID + raw recipient name + raw address line 1 + amount,
-# which is unique on 5,000 rows where OBJECTID alone collides 751 times (one
-# filing reports up to 124 grants). Validate at full scale before relying on it
-# beyond the samples.
+# STABLE KEY. grant_id is positional and breaks on re-extraction, so truth_id
+# is `OBJECTID | TABLE_ID`: the published ef2 row key. OBJECTID identifies the
+# filing and TABLE_ID is the within-filing row counter that every 1:M ef2 table
+# carries -- verified unique across all 17,560,767 grant rows.
+#
+# An earlier version of this script hashed OBJECTID + recipient name + address
+# line 1 + amount instead. That was reinventing TABLE_ID by hand, and only
+# because pf_efilepf_build() was discarding it: OBJECTID alone collides 751
+# times in 5,000 rows because one filing reports up to 124 grants, so three
+# content fields had to be added to reach uniqueness. The build now keeps the
+# published metadata (schema = "v2"), so the real key is available.
 # ============================================================================
 suppressWarnings(suppressMessages(library(data.table)))
 suppressWarnings(suppressMessages(library(digest)))
@@ -47,13 +53,17 @@ say("population: %s grant rows", format(nrow(g), big.mark = ","))
 POP <- substr(digest::digest(sort(unique(sq(g$OBJECTID))), algo = "md5"), 1, 16)
 say("population id: %s  (md5 of the sorted OBJECTID set)", POP)
 
-## ---- stable content key -----------------------------------------------------
-g[, truth_id := vapply(paste(sq(OBJECTID), sq(SIGOCPYRPNAM), sq(SIGOCPYRFAAL1),
-                             sq(SIGOCPYAMOUN), sep = "\r"),
-                       function(s) substr(digest::digest(s, algo = "xxhash64"), 1, 16),
-                       character(1))]
-stopifnot(!anyDuplicated(g$truth_id))
-say("truth_id unique over %s rows: yes", format(nrow(g), big.mark = ","))
+## ---- the published row key ---------------------------------------------------
+if (!all(c("OBJECTID", "TABLE_ID") %in% names(g)))
+  stop("this grant file has no TABLE_ID: rebuild it with ",
+       "pf_efilepf_build(schema = \"v2\"). The legacy GTDC schema discards the ",
+       "published row key.", call. = FALSE)
+g[, truth_id := paste(sq(OBJECTID), sq(TABLE_ID), sep = "|")]
+if (anyDuplicated(g$truth_id))
+  stop("OBJECTID + TABLE_ID is not unique in this grant file (",
+       format(sum(duplicated(g$truth_id)), big.mark = ","), " duplicates). ",
+       "That should not happen on a deduplicated ef2 build.", call. = FALSE)
+say("truth_id = OBJECTID | TABLE_ID, unique over %s rows", format(nrow(g), big.mark = ","))
 key <- g[, .(grant_id, truth_id, object_id = OBJECTID, recip_name)]
 
 sim <- fread(file.path(PF, "data-dev", "TWO-TIER-SIMULATION.csv"), colClasses = "character")

@@ -8,6 +8,8 @@ pf_efilepf_build(
   dir = pf_efilepf_dir(),
   out,
   years = pf_efilepf_years(),
+  schema = c("v2", "gtdc"),
+  dedup = NULL,
   verbose = TRUE
 )
 }
@@ -17,6 +19,13 @@ pf_efilepf_build(
 \item{out}{Output CSV path.}
 
 \item{years}{Years to include.}
+
+\item{schema}{\code{"v2"} for the published concordance990 names and full
+metadata, \code{"gtdc"} for the legacy v1 names.}
+
+\item{dedup}{Drop superseded and duplicate filings with
+\code{\link[=pf_efilepf_dedup]{pf_efilepf_dedup()}}. Requires \code{schema = "v2"}, since the legacy schema
+discards the flags the rule needs.}
 
 \item{verbose}{Print progress.}
 }
@@ -33,3 +42,20 @@ they are free here and the GTDC file had no equivalent: \code{OBJECTID}, which
 identifies the source return, and \code{efile_year}, the extract the row came from
 (distinct from \code{TAXYEAR} when a return is filed late or amended).
 }
+\section{Schema}{
+
+\code{schema = "v2"} (the default) keeps the ef2 columns \strong{as published}, with
+their concordance990 v2 names (\verb{PF_15_G_PAID_*}) and the full filing
+metadata. \code{schema = "gtdc"} reproduces the legacy behaviour: rename to the
+v1 GTDC names via \code{\link[=pf_efilepf_map]{pf_efilepf_map()}} and keep only those columns.
+
+The legacy path exists to reproduce artifacts built before the migration. It
+is a \strong{downgrade}: the published files already carry the current names, and
+renaming them to v1 also discarded ten standardized columns. Two of those
+matter beyond tidiness — \code{TABLE_ID}, the within-filing row counter that makes
+\code{OBJECTID + TABLE_ID} a unique row key, and \code{RETURN_AMENDED_X} /
+\code{RETURN_PARTIAL_X}, without which superseded filings cannot be identified.
+Dropping \code{TABLE_ID} is why a content hash once had to be invented for a key
+the data already published.
+}
+

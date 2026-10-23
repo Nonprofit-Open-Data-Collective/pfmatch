@@ -133,13 +133,13 @@ pf_candidate_frame <- function(x, ids = NULL, k = 5, bmf_context = NULL) {
     is_top_pick = as.integer(p$.ein == res$overall_ein[ri]),
     status     = as.character(st$status[match(p$.id, st$grant_id)]),
     # ---- foundation (the filer) ----
-    fdn_ein    = .pf_ein(gv("FILEREIN")),
+    fdn_ein    = .pf_ein(gv("ORG_EIN")),
     fdn_name   = gv("FILERNAME1"),
     # ---- grant ----
-    grant_purpose = gv("SIGOCPYPOGOC"),
-    grant_amount  = gv("SIGOCPYAMOUN"),
-    grant_year    = gv("TAXYEAR"),
-    recip_status_raw = gv("SIGOCPYRFSTA"),
+    grant_purpose = gv("PF_15_G_PAID_PURPOSE"),
+    grant_amount  = gv("PF_15_G_PAID_AMT"),
+    grant_year    = gv("TAX_YEAR"),
+    recip_status_raw = gv("PF_15_G_PAID_RECIP_STAT"),
     recipient_type   = as.character(g$recipient_type)[gi],
     # ---- recipient as filed ----
     recip_name   = gv("recip_name"),

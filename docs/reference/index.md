@@ -154,6 +154,8 @@ clear-rate delta cannot separate recall from false accepts.
   : Score a run against ground truth
 - [`pf_consistency()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_consistency.md)
   : Consistency across renderings of one organisation
+- [`pf_validate_grants()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_validate_grants.md)
+  : Validate a grant file
 - [`pf_truth_schema()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_truth_schema.md)
   : Ground-truth table columns
 - [`pf_population_id()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_population_id.md)
@@ -203,10 +205,21 @@ aliases.
   [`pf_efilepf_table()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf.md)
   [`pf_efilepf_dir()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf.md)
   : 990-PF Part XV grants paid, direct from the NCCS e-file extracts
+- [`pf_efilepf_fetch()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf_fetch.md)
+  : Fetch the 990-PF grants-paid extracts via panel990
 - [`pf_efilepf_build()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf_build.md)
   : Build the rebuilt grant file from the downloaded extracts
 - [`pf_efilepf_download()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf_download.md)
   : Download the e-file 990-PF grants-paid extracts
+- [`pf_source_provenance()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_source_provenance.md)
+  : The release pfmatch would read, as panel990 resolves it
+- [`pf_concordance_vars()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_concordance_vars.md)
+  : The grants-paid variables, taken from concordance990
+- [`pf_efilepf_dedup()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf_dedup.md)
+  : Drop superseded and duplicate 990-PF filings, keeping every grant
+  reported
+- [`pf_grant_content_cols()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_grant_content_cols.md)
+  : Grant fields compared when deciding whether two filings are the same
 - [`pf_efilepf_map()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf_map.md)
   : The e-file to GTDC column mapping
 - [`pf_efilepf_url()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf_url.md)

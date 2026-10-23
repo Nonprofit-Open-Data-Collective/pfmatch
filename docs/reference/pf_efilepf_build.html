@@ -49,6 +49,8 @@ rather than the whole 17.5M-row table.</p>
 <span>  dir <span class="op">=</span> <span class="fu"><a href="pf_efilepf.html">pf_efilepf_dir</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">out</span>,</span>
 <span>  years <span class="op">=</span> <span class="fu"><a href="pf_efilepf.html">pf_efilepf_years</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  schema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v2"</span>, <span class="st">"gtdc"</span><span class="op">)</span>,</span>
+<span>  dedup <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -69,6 +71,17 @@ rather than the whole 17.5M-row table.</p>
 <dd><p>Years to include.</p></dd>
 
 
+<dt id="arg-schema">schema<a class="anchor" aria-label="anchor" href="#arg-schema"></a></dt>
+<dd><p><code>"v2"</code> for the published concordance990 names and full
+metadata, <code>"gtdc"</code> for the legacy v1 names.</p></dd>
+
+
+<dt id="arg-dedup">dedup<a class="anchor" aria-label="anchor" href="#arg-dedup"></a></dt>
+<dd><p>Drop superseded and duplicate filings with
+<code><a href="pf_efilepf_dedup.html">pf_efilepf_dedup()</a></code>. Requires <code>schema = "v2"</code>, since the legacy schema
+discards the flags the rule needs.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Print progress.</p></dd>
 
@@ -83,6 +96,23 @@ rather than the whole 17.5M-row table.</p>
 they are free here and the GTDC file had no equivalent: <code>OBJECTID</code>, which
 identifies the source return, and <code>efile_year</code>, the extract the row came from
 (distinct from <code>TAXYEAR</code> when a return is filed late or amended).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="schema">Schema<a class="anchor" aria-label="anchor" href="#schema"></a></h2>
+
+
+<p><code>schema = "v2"</code> (the default) keeps the ef2 columns <strong>as published</strong>, with
+their concordance990 v2 names (<code>PF_15_G_PAID_*</code>) and the full filing
+metadata. <code>schema = "gtdc"</code> reproduces the legacy behaviour: rename to the
+v1 GTDC names via <code><a href="pf_efilepf_map.html">pf_efilepf_map()</a></code> and keep only those columns.</p>
+<p>The legacy path exists to reproduce artifacts built before the migration. It
+is a <strong>downgrade</strong>: the published files already carry the current names, and
+renaming them to v1 also discarded ten standardized columns. Two of those
+matter beyond tidiness — <code>TABLE_ID</code>, the within-filing row counter that makes
+<code>OBJECTID + TABLE_ID</code> a unique row key, and <code>RETURN_AMENDED_X</code> /
+<code>RETURN_PARTIAL_X</code>, without which superseded filings cannot be identified.
+Dropping <code>TABLE_ID</code> is why a content hash once had to be invented for a key
+the data already published.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

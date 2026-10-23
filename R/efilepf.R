@@ -190,14 +190,41 @@ pf_efilepf_map <- function() {
 #' identifies the source return, and `efile_year`, the extract the row came from
 #' (distinct from `TAXYEAR` when a return is filed late or amended).
 #'
+#' @section Schema:
+#' `schema = "v2"` (the default) keeps the ef2 columns **as published**, with
+#' their concordance990 v2 names (`PF_15_G_PAID_*`) and the full filing
+#' metadata. `schema = "gtdc"` reproduces the legacy behaviour: rename to the
+#' v1 GTDC names via [pf_efilepf_map()] and keep only those columns.
+#'
+#' The legacy path exists to reproduce artifacts built before the migration. It
+#' is a **downgrade**: the published files already carry the current names, and
+#' renaming them to v1 also discarded ten standardized columns. Two of those
+#' matter beyond tidiness — `TABLE_ID`, the within-filing row counter that makes
+#' `OBJECTID + TABLE_ID` a unique row key, and `RETURN_AMENDED_X` /
+#' `RETURN_PARTIAL_X`, without which superseded filings cannot be identified.
+#' Dropping `TABLE_ID` is why a content hash once had to be invented for a key
+#' the data already published.
+#'
 #' @param dir Directory holding the downloaded CSVs.
 #' @param out Output CSV path.
 #' @param years Years to include.
+#' @param schema `"v2"` for the published concordance990 names and full
+#'   metadata, `"gtdc"` for the legacy v1 names.
+#' @param dedup Drop superseded and duplicate filings with
+#'   [pf_efilepf_dedup()]. Requires `schema = "v2"`, since the legacy schema
+#'   discards the flags the rule needs.
 #' @param verbose Print progress.
 #' @return A one-row-per-year `data.frame` of counts, invisibly.
 #' @export
 pf_efilepf_build <- function(dir = pf_efilepf_dir(), out, years = pf_efilepf_years(),
+                             schema = c("v2", "gtdc"), dedup = NULL,
                              verbose = TRUE) {
+  schema <- match.arg(schema)
+  if (is.null(dedup)) dedup <- identical(schema, "v2")
+  if (isTRUE(dedup) && !identical(schema, "v2"))
+    stop("dedup = TRUE needs schema = \"v2\": the legacy schema drops ",
+         "RETURN_AMENDED_X and RETURN_PARTIAL_X, so supersession cannot be ",
+         "determined.", call. = FALSE)
   map <- pf_efilepf_map()
   if (file.exists(out)) unlink(out)
   log <- list()
@@ -218,10 +245,27 @@ pf_efilepf_build <- function(dir = pf_efilepf_dir(), out, years = pf_efilepf_yea
                                    y, paste(miss, collapse = ", ")))
       for (cc in miss) d[, (cc) := ""]
     }
-    keep <- c(map, OBJECTID = "OBJECTID")
-    o <- d[, keep, with = FALSE]
-    data.table::setnames(o, unname(keep), names(keep))
+    if (identical(schema, "v2")) {
+      # keep the file as published: current names, full filing metadata
+      o <- d
+    } else {
+      keep <- c(map, OBJECTID = "OBJECTID")
+      o <- d[, keep, with = FALSE]
+      data.table::setnames(o, unname(keep), names(keep))
+    }
     o[, efile_year := as.character(y)]
+    if (isTRUE(dedup)) {
+      # Per year, not corpus-wide. A filing can only supersede another in the
+      # same (EIN2, TAX_YEAR, group, partial) context, and TAX_YEAR is inside
+      # the context, so no supersession pair can straddle two extract files.
+      # Doing it per year keeps peak memory at one year.
+      n_in <- nrow(o)
+      o <- data.table::as.data.table(pf_efilepf_dedup(o, verbose = FALSE))
+      if (verbose && nrow(o) < n_in)
+        message(sprintf("  %d  dedup: %s -> %s rows", y,
+                        format(n_in, big.mark = ","),
+                        format(nrow(o), big.mark = ",")))
+    }
     data.table::fwrite(o, out, append = !first)
     first <- FALSE
     log[[as.character(y)]] <- data.frame(

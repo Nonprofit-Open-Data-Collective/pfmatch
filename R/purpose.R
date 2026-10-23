@@ -177,7 +177,7 @@ pf_purpose_tiebreak <- function(x, org_text, config = pf_tiebreak_config()) {
   cand <- cand[score >= top - config$tie_band]
   # 2. features, for contenders only
   gi <- match(cand$.id, g$grant_id)
-  cand[, purpose := as.character(g$SIGOCPYPOGOC)[gi]]
+  cand[, purpose := .pf_col(g, "PF_15_G_PAID_PURPOSE")[gi]]
   cand[, ein := .pf_ein(.ein)]
   ti <- match(cand$ein, org_text$ein)
   cand[, all_text   := .pf_txt_sq(org_text$all_text[ti])]

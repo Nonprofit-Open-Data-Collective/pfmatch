@@ -1,0 +1,17 @@
+building 2023 under both schemas (dedup off, so only naming differs) ...
+v2 file   : 2,047,052 rows, 31 cols
+gtdc file : 2,047,052 rows, 22 cols
+  schema detected: v2=mixed gtdc=mixed
+--------------------------------------------------------------------------------
+PREPARED FRAMES
+  rows : 2,047,052 vs 2,047,052
+  shared columns: 27 | only in v2: 28
+    (EIN2, ORG_EIN, ORG_NAME_L1, ORG_NAME_L2, RETURN_AMENDED_X, RETURN_GROUP_X, RETURN_PARTIAL_X, RETURN_TAXPER_DAYS, RETURN_TIME_STAMP, RETURN_TYPE, TAX_PERIOD_BEGIN_DATE, TAX_PERIOD_END_DATE)
+--------------------------------------------------------------------------------
+COLUMN-BY-COLUMN DIFFERENCES (0 everywhere = migration is safe)
+--------------------------------------------------------------------------------
+ALL 27 shared prepared columns identical -- the v2 readers and the
+legacy fallback agree, so no column is silently reading as NA.
+
+columns the v2 schema adds that the legacy one could not carry:
+  OBJECTID, TABLE_ID, EIN2, VERSION, RETURN_AMENDED_X, RETURN_PARTIAL_X, RETURN_GROUP_X, RETURN_TIME_STAMP, RETURN_TYPE, RETURN_TAXPER_DAYS

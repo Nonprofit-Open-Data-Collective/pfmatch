@@ -16,7 +16,81 @@ holds only what is specific to the 990-PF grant context.
 # npmatch first — pfmatch Imports it
 install.packages("../npmatch", repos = NULL, type = "source")
 install.packages(".",          repos = NULL, type = "source")
+
+# suggested: retrieval and the variable dictionary
+remotes::install_github("Nonprofit-Open-Data-Collective/panel990")
+remotes::install_github("Nonprofit-Open-Data-Collective/concordance990")
 ```
+
+## The data source
+
+Grants come from the **NCCS e-file (ef2) release**, retrieved through
+[`panel990`](https://github.com/Nonprofit-Open-Data-Collective/panel990),
+which owns release resolution and defaults to the current published
+version and to parquet:
+
+``` r
+pf_efilepf_fetch(years = 2015:2025)       # panel990 picks the release
+pf_efilepf_build(out = "inputs/grants.csv")   # schema = "v2", dedup = TRUE
+pf_source_provenance()
+#> $efile_version  "v3_1"
+#> $efile_root     "https://nccs-efile.s3.us-east-1.amazonaws.com/public/efilepf_v3_1/"
+#> $efile_format   "parquet"
+#> $concordance_version "2.0.3"
+```
+
+Column names are the **concordance990 v2** research variables
+(`PF_15_G_PAID_RECIP_NAME_ORG_L1`, `ORG_EIN`, …), documented in the
+[990-PF data
+dictionary](https://nonprofit-open-data-collective.github.io/concordance990/articles/data-dictionary-990pf.html).
+[`pf_concordance_vars()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_concordance_vars.md)
+reads them from the installed concordance rather than hardcoding them,
+and warns if pfmatch expects a name the concordance has renamed — so a
+dictionary change surfaces as a warning instead of a column that
+silently reads as all-missing.
+
+### A note on the earlier source
+
+This package was prototyped against GT’s Data Mart extract, whose
+columns carry the concordance990 **v1** names (`SIGOCPYRPNAM`,
+`SIGOCPYRBNBN1`, `FILEREIN`, …). Those are superseded. The GT extract is
+also truncated at the recent end — 2024 is under-represented roughly
+tenfold and 2025 is absent — so it is kept only in `inputs/archive-gt/`
+for reproducing pre-migration artifacts, never for measurement.
+[`pf_read_grants()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_read_grants.md)
+refuses to concatenate the two vintages.
+
+Readers accept either naming through an internal resolver, so files
+built before the migration still work; new code should use the v2 names.
+
+### Duplicate and superseded filings
+
+[`pf_efilepf_build()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_efilepf_build.md)
+deduplicates by default. The unit is
+`(EIN2, TAX_YEAR, group flag, partial flag)` — a filing can only
+supersede another covering the same reporting context — and within a
+context identical filings collapse, an amended filing supersedes the
+original, and filings that disagree with no amendment to settle them are
+**all kept** and flagged.
+
+On the 17,560,767-row corpus that removes 307,568 rows (**1.75%**)
+across 9,882 of 977,677 filings, leaving 5 contexts flagged for review.
+Two properties are deliberate and tested:
+
+- a **short-period** return is never dropped for sharing a tax year with
+  a full-year one — they cover different periods, and in 97 of 310 such
+  pairs the partial return reports *more* grants
+- the dedup unit is **not** keyed on the tax period, because in 18 units
+  an amendment corrected the period dates; keying on it would stop the
+  amendment superseding its original
+
+990-PF filers do not file group returns (`RETURN_GROUP_X` is `FALSE` on
+every row), but the flag stays in the key so the behaviour holds if that
+changes.
+
+Rows are addressed by `OBJECTID | TABLE_ID`, the published ef2 row key —
+`OBJECTID` identifies the filing, `TABLE_ID` counts rows within it.
+Verified unique across all 17.5M rows.
 
 ## Use
 
@@ -62,7 +136,7 @@ reserved `data/`.
 
 ## What is specific to this problem
 
-### 1. `R/recipient-type.R` — standardizing `SIGOCPYRFSTA`
+### 1. `R/recipient-type.R` — standardizing `PF_15_G_PAID_RECIP_STAT`
 
 Column (c) of the grants table asks the filer for the “foundation status
 of recipient” and the IRS supplies no controlled vocabulary. Across
@@ -120,18 +194,18 @@ Two judgment calls worth knowing about:
 The data dictionary settles the name-field question. There are three
 columns:
 
-- `SIGOCPYRPNAM` — “Name of Grantee — **Person**”
-- `SIGOCPYRBNBN1` — “Name of Grantee — **Business** Line 1”
-- `SIGOCPYRBNBN2` — “Name of Grantee — **Business** Line 2”
+- `PF_15_G_PAID_RECIP_NAME_PERS` — “Recipient Person Name”
+- `PF_15_G_PAID_RECIP_NAME_ORG_L1` — “…business name line 1”
+- `PF_15_G_PAID_RECIP_NAME_ORG_L2` — “…business name line 2”
 
-So `BNBN1`/`BNBN2` are a two-line **wrap of one name**, not a main name
-and a DBA — confirming the working assumption. `PNAM` and `BNBN1` never
-co-occur (0 of 155,000 rows carry both), so the recipient name is a
-straight coalesce.
+So The two `_ORG_L1`/`_ORG_L2` columns are a two-line **wrap of one
+name**, not a main name and a DBA — confirming the working assumption.
+`_NAME_PERS` and `_ORG_L1` never co-occur (0 of 155,000 rows carry
+both), so the recipient name is a straight coalesce.
 
-`PNAM` is **not** a usable individual flag: filers routinely put
+`_NAME_PERS` is **not** a usable individual flag: filers routinely put
 organizations in it (“World Central Kitchen”, “Surfrider Foundation”),
-which is why scope is decided from `SIGOCPYRFSTA` instead.
+which is why scope is decided from `PF_15_G_PAID_RECIP_STAT` instead.
 
 Line 2, when present, is one of four things and each is handled
 separately:
@@ -153,8 +227,9 @@ whichever the BMF happens to hold. It earns its keep: the
 Other handling: 4-digit ZIPs are repaired (a dropped New-England leading
 zero), spelled-out state names are folded to postal codes, and a state
 value that is not a US postal jurisdiction marks the record foreign.
-`SIGOCAFFRFACO` (country) is in the schema but empty throughout the
-sample, so foreign detection has to come from the state field.
+`PF_15_G_PAID_RECIP_ADDR_CNTR` (country) is in the schema but empty
+throughout the sample, so foreign detection has to come from the state
+field.
 
 `looks_personal` is a diagnostic only and never drives scope: a 2-3
 token name with no institutional token *and* a positive person signal (a
