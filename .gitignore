@@ -52,7 +52,6 @@ inputs/*
 Thumbs.db
 desktop.ini
 
-# pkgdown build output. Not committed: choose a deployment route first --
-# either commit this directory (GitHub Pages from /docs) or add a workflow
-# that builds and publishes to gh-pages. See _pkgdown.yml url.
-docs/
+
+# docs/ IS committed: GitHub Pages serves the site from main:/docs.
+# Rebuild with pkgdown::build_site() and commit the result.
