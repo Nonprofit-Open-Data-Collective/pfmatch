@@ -87,6 +87,33 @@ Miraculous Love International Ministries. `Donovan Bank Foundation` → Donovan
 **and** Bank Foundation. These are not retrieval failures; the candidate was in
 hand and scored too low.
 
+## The reference often holds the right name AND the right city
+
+A direct probe of the reference for 26 of the 67 cases
+(`dev/no-residual-probe-output.txt`) goes further than the EIN lookup. It
+searched by rare token pair rather than by blocking key, so it sees rows the
+blocker never offered the scorer — and in several cases those rows carry both
+the correct name and the correct city:
+
+| filed | reference row found | EIN |
+|---|---|---|
+| `DANCE PLACE DC WHEEL PRODUCTIONS INC` (Washington DC) | `DC WHEEL PRODUCTIONS INC AKA DANCE PLACE` (Washington DC) | 52-1118504 |
+| `The Salvation Army` (Birmingham AL) | `SALVATION ARMY BIRMINGHAM AREA COMMAND` (Birmingham AL) | 58-0660607 |
+| `JUVENILE DIABETES RESEARCH FOUNDATION` (Atlanta GA) | `JUVENILE DIABETES RESEARCH FOUNDATION GA CHAPT` (Atlanta GA) | 23-1907729 |
+| `MUSCULAR DYSTROPHY` (Boston MA) | `MUSCULAR DYSTROPHY ASSOCIATIONS OF AMERICA INC` (Boston MA) | 23-7148632 |
+| `Cong Mesilas Hachessed` (Brooklyn NY) | `CONGREGATION MESILAS HACHESED` (Brooklyn NY) | 83-1272141 |
+| `MIRACULOUS LOVE MINISTRIES` (Franklin TN) | `MIRACULOUS LOVE INTERNATION MINISTRIES` (Franklin TN) | 20-8092403 |
+
+The Dance Place row is the sharpest: the reference carries four alias rows on
+that EIN, one of which is `DC WHEEL PRODUCTIONS INC AKA DANCE PLACE`, and the
+filed name is almost exactly that string concatenated. The pipeline returned NO.
+
+This narrows the diagnosis. It is not only that the right name is absent from
+the candidate set — for these the right name **and** place are both present and
+retrievable, so the failure sits in blocking or scoring, not in the reference and
+not in the geography term. That is a stronger and more actionable claim than
+"name resolution", and it is where the 4.3 points live.
+
 ## Two findings that are not about the residual
 
 **1. The individual-payee flags miss half of what they should catch.** The
@@ -121,11 +148,15 @@ name that cannot discriminate, and these should not be forced through.
 
 ## What this says to do next
 
-1. **Alias and acronym expansion is the whole game here.** 6 acronyms, 6 legal-name
-   divergences, 5 dba names, 3 truncations — 20 of 32 are one mechanism. matchdb
-   already carries observed and dba name variants, which is why tier 2 wins the
-   cleared cell (`dev/CASCADE-STRATEGY.md` §3); these 592 are the cases where
-   carrying the variant was not enough to clear the threshold.
+1. **Blocking and scoring, not reference coverage.** 6 acronyms, 6 legal-name
+   divergences, 5 dba names, 3 truncations — 20 of 32 are one mechanism, and the
+   probe above shows the reference already carries the alias row with the right
+   city for at least six of them. matchdb's observed and dba variants are why
+   tier 2 wins the cleared cell (`dev/CASCADE-STRATEGY.md` §3); here the variant
+   was present and still did not clear. Start by replaying these 32 through
+   `np_block` and `np_score` with the correct EIN known, and find out at which
+   stage each one is lost — that is a cheap, decisive diagnostic and it has not
+   been run.
 2. **Fix the individual-payee flags before re-quoting any clear rate.** A
    denominator with 14% misrouted individuals understates every figure in the
    project, and the fix is independent of matching.

@@ -1,12 +1,19 @@
-# SUPERSEDED -- kept only as a record of what not to do.
+# PARTIAL RESULT, kept for the evidence it produced: dev/no-residual-probe-output.txt
 #
-# This printed through cat() to stdout. R buffers stdout when it is
-# redirected, so the run died without flushing and every result was lost.
-# Use message() for progress in anything long-running.
+# Two things to know before re-running it.
 #
-# It is also the wrong instrument: dev/score-no-residual.R answers the same
-# question by exact EIN lookup, which is both cheaper and not dependent on
-# a name-normalisation choice. See dev/NO-RESIDUAL-AUDIT.md.
+# It prints through cat() to stdout, which R buffers when redirected, so a long
+# run looks completely silent and then emits everything at exit. That cost an
+# earlier conclusion in this session: the silence was read as a crash and the
+# run written off, when in fact it finished with exit code 0. Use message() for
+# progress in anything long-running.
+#
+# Its real defect is speed and the token heuristic, not the buffering. Ranking
+# tokens by rarity costs one grepl() over 3.9M reference rows PER TOKEN, which
+# is why it covered 26 of 67 cases in roughly 40 minutes. And when a name
+# reduces to a single non-stop token the two-token requirement cannot fire, so
+# GIRLS INC and AMERICAN NATIONAL RED CROSS returned noise while the correct
+# rows plainly exist. Build a token -> row index once before re-running.
 
 #!/usr/bin/env Rscript
 # ============================================================================
