@@ -18,6 +18,17 @@
 # checks explicit and cheap enough to run before every benchmark.
 # ============================================================================
 
+# Columns the IRS genuinely stopped publishing, and the first tax year they
+# are absent from. An empty column in those years is correct data, not a build
+# fault, and the per-year check below would otherwise fail on every sound file.
+#
+# PF_15_G_PAID_RECIP_STAT -- the GTDC SIGOCPYRFSTA, "foundation status of
+# recipient" -- was dropped from Form 990-PF Part XV line 3. It is present
+# every year 2009-2024 and absent from 2025 onward, permanently; see the
+# "2025 drops the recipient-status column" section of R/efilepf.R for what
+# that costs downstream.
+.pf_discontinued <- function() list(PF_15_G_PAID_RECIP_STAT = 2025L)
+
 #' Validate a grant file
 #'
 #' Checks schema consistency, key uniqueness, deduplication status and column
@@ -100,7 +111,9 @@ pf_validate_grants <- function(grants, strict = FALSE, verbose = TRUE) {
   # years populate, which is what this looks for.
   yr <- .pf_col(g, "TAX_YEAR")
   if (!all(is.na(yr)) && length(unique(yr[!is.na(yr)])) > 1L) {
-    bad <- character(0)
+    yn  <- suppressWarnings(as.integer(as.character(yr)))
+    gone <- .pf_discontinued()
+    bad <- character(0); noted <- character(0)
     for (c0 in needed) {
       v <- .pf_col(g, c0)
       if (all(is.na(v))) next
@@ -109,15 +122,26 @@ pf_validate_grants <- function(grants, strict = FALSE, verbose = TRUE) {
       if (overall < 0.5) next          # sparse everywhere: nothing to compare to
       byyr <- tapply(ok, yr, mean)
       off  <- names(byyr)[!is.na(byyr) & byyr < 0.10]
+      if (!length(off)) next
+      # An empty year is EXPECTED where the IRS stopped publishing the column.
+      # Without this the check fails on every well-formed file from 2025 on,
+      # and a check that always fails is one nobody reads.
+      from <- gone[[c0]]
+      if (!is.null(from)) {
+        exp <- off[suppressWarnings(as.integer(off)) >= from]
+        off <- setdiff(off, exp)
+        if (length(exp))
+          noted <- c(noted, sprintf("%s absent from %d (expected)", c0, from))
+      }
       if (length(off))
         bad <- c(bad, sprintf("%s empty in %s (corpus %.0f%%)", c0,
                               paste(off, collapse = "/"), 100 * overall))
     }
     add("per-year column coverage", if (!length(bad)) "PASS" else "FAIL",
-        if (!length(bad))
-          sprintf("no year is empty on a column the others populate (%d years)",
-                  length(unique(yr[!is.na(yr)])))
-        else paste(bad, collapse = "; "))
+        if (length(bad)) paste(bad, collapse = "; ")
+        else paste(c(sprintf("no unexplained empty year over %d years",
+                             length(unique(yr[!is.na(yr)]))), noted),
+                   collapse = "; "))
   }
 
   ## ---- state / ZIP sanity, which a transposition would break --------------
