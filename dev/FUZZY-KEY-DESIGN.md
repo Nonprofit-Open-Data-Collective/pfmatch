@@ -116,6 +116,55 @@ scoring. Note from the replay that **18 of 25 audited cases were already
 retrieved and lost downstream**, so fuzzy keys address the smaller half of the
 problem. The composite score is the bigger lever.
 
+## Measured: substring credit on the full cascade
+
+`dev/bench-substring-ab.R`, 5,000 grant rows, same passes as `bench-efilepf.R`.
+`config$substring_p = 0.90` routes a sliding-window partial ratio into
+`np_score()`'s review-only path (see `dev/JARO-NOT-JAROWINKLER.md` for arms A/B).
+
+```
+                                   YES    MAYBE   NO      YES / YES+MAYBE
+A: Jaro, no substring  [baseline]  3051   1054   738      63.0% / 84.8%
+B: Jaro-Winkler                    3126   1176   541      64.5% / 88.8%
+C: Jaro + substring 0.90           3050   1132   661      63.0% / 86.4%
+D: Jaro-Winkler + substring        3125   1202   516      64.5% / 89.3%
+```
+
+C against A: **77 cases move NO→MAYBE and none move to YES.** That was the
+stated prediction — the review-only cap means YES must stay flat, and a jump in
+YES would have meant the cap was broken. D against B shows the same shape
+(+25 NO→MAYBE).
+
+On the 25 adjudicated cases:
+
+| arm | correct top pick | surfaced, correct EIN | surfaced, **wrong** EIN |
+|---|---:|---:|---:|
+| C | 11/25 | 3 | **0** |
+| D | 11/25 | 7 | 4 |
+
+Substring credit also lifts correct top picks from 9 (baseline) to 11, because
+raising the name term changes which candidate wins, not only how it tiers.
+
+**One qualification.** YES falls by exactly 1 in both C and D. Raising a
+runner-up's name score can break a `min_margin` that previously held, which is
+the same mechanism behind the 138 demotions in the Jaro-Winkler arm. So
+"substring credit cannot affect auto-accepts" is not strictly true: it cannot
+add one, but it can break a tie.
+
+## Recommended order, by risk
+
+1. **Substring credit (arm C) is shippable.** It cannot manufacture a false
+   accept — it feeds only the review-only path — the benchmark confirms
+   auto-accepts are untouched, and it introduced zero wrong surfacings in the
+   adjudicated sample while surfacing 77 more cases.
+2. **Jaro-Winkler waits on adjudication.** Bigger win (+1.5 YES, 0→7
+   recoveries) but all the risk: 138 demoted YES and 4 wrong surfacings, 2 of
+   them auto-accepts. Judge the 77 NO→YES, 137 MAYBE→YES and 138 YES→MAYBE
+   cells first.
+3. Fuzzy blocking keys (below) — worth two YES on the audited sample
+   (BOROUGHS 0.944, CASA 0.891) and cannot cost precision, but needs the
+   candidate-volume measurement.
+
 ## Order of work
 
 1. Fix the composite score — 18 of 25, a good name with a matching city landing

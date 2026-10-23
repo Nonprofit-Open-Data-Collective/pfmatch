@@ -1,0 +1,77 @@
+======================================================================================
+JARO vs JARO-WINKLER  --  5,000 grant rows
+======================================================================================
+reference: 3,891,187 rows
+--------------------------------------------------------------------------------------
+RUN: jw_p = NULL  (plain Jaro -- current production)
+--------------------------------------------------------------------------------------
+  YES=3051  MAYBE=1054  NO=738  OOS=0
+--------------------------------------------------------------------------------------
+RUN: jw_p = 0.1   (true Jaro-Winkler)
+--------------------------------------------------------------------------------------
+  YES=3126  MAYBE=1176  NO=541  OOS=0
+======================================================================================
+HEADLINE
+======================================================================================
+                        YES  YES+MAYBE
+  Jaro (current)      63.0%      84.8%
+  Jaro-Winkler        64.5%      88.8%
+  change (pts)        +1.5       +4.1
+======================================================================================
+TIER MOVEMENT (rows = Jaro, cols = Jaro-Winkler)
+======================================================================================
+Key: <tier_a>
+ tier_a   YES MAYBE    NO
+ <fctr> <int> <int> <int>
+    YES  2912   138     1
+  MAYBE   137   916     1
+     NO    77   122   539
+======================================================================================
+EIN CHURN among rows YES under BOTH
+======================================================================================
+  YES in both : 2,912
+  same EIN    : 2,910 (99.9%)
+  EIN CHANGED : 2 (0.1%)
+======================================================================================
+RECOVERY ON THE 25 ADJUDICATED NO-RESIDUAL CASES (biased sample)
+======================================================================================
+  joined: 25 of 25
+  correct EIN as top pick -- Jaro         : 9
+  correct EIN as top pick -- Jaro-Winkler : 11
+  of those, tiered YES or MAYBE -- Jaro   : 0
+  of those, tiered YES or MAYBE -- JW     : 7
+
+  id        filed                        tierA  tierB  einA_ok   einB_ok  
+  G000145   UCAP SCHOOL                  NO     NO     yes       yes      
+  G000304   AMERICAN NATIONAL RED CROSS  NO     NO     -         -        
+  G000311   GIRLS INC                    NO     NO     -         -        
+  G000907   JUVENILE DIABETES RESEARCH F NO     YES    -         yes      
+  G000920   The Dallas Foundation for On NO     NO     -         -        
+  G001170   MUSCULAR DYSTROPHY           NO     MAYBE  yes       -        
+  G001402   DANCE PLACE DC WHEEL PRODUCT NO     YES    yes       yes      
+  G001460   UNIVERSITY OF DENVER - OFFIC NO     MAYBE  -         yes      
+  G001777   CROSSROADS THE RIDE          NO     NO     -         -        
+  G001912   MIRACULOUS LOVE MINISTRIES   NO     MAYBE  yes       yes      
+  G001935   Donovan Bank Foundation      NO     NO     yes       yes      
+  G002181   The Salvation Army           NO     NO     yes       yes      
+  G002405   BOROUGHS COMMUNITY CENTER    NO     NO     -         -        
+  G002473   WISH BOOK 2020 FUND          NO     NO     yes       yes      
+  G002579   NW CHILDREN'S THTR SCHL      NO     NO     -         -        
+  G002630   BEIT HALOCHEN USA            NO     YES    yes       -        
+  G002704   WGBH Public TV               NO     YES    -         -        
+  G002810   PLAYWORKS                    NO     YES    -         yes      
+  G002885   STERLING ANIMAL SHELTER      NO     MAYBE  -         -        
+  G003429   WE CARE INC FEED THE FRIDGE  NO     NO     -         -        
+  G003722   EASTER SEAL SOCIETY OF DEL-M NO     NO     -         -        
+  G004078   CASA OF NJ                   NO     NO     -         -        
+  G004572   CROWN FINANCIAL MINISTRY     NO     NO     -         -        
+  G004596   THISTLEBEND COTTAGE          NO     YES    yes       yes      
+  G004966   LIONS EYE DOUNDATION OF CA & NO     MAYBE  -         yes      
+======================================================================================
+wrote data-dev/BENCH-JW-AB.csv
+
+READ THIS BEFORE ACTING: a clear-rate gain here is NOT evidence of
+correctness. The adjudicated sample is biased toward current failures, and
+the YES cells are unadjudicated for this file, so a rise in YES could be
+recall or could be false accepts. Deciding needs the newly-promoted cells
+sampled and judged, as was done for the cascade in CASCADE-STRATEGY.md.

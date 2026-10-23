@@ -84,6 +84,57 @@ shifts the curve to 67%.** And once fixed, the floor should probably go *up*,
 not down: JW at 0.88 finds 13 and admits 7, a better ratio than Jaro at 0.78
 (14 and 9).
 
+## Measured on the full cascade
+
+`dev/bench-jw-ab.R`, 5,000 grant rows against the augmented unified reference,
+same passes as `dev/bench-efilepf.R`. npmatch now exposes `config$jw_p`
+(`NULL` = today's split behaviour, a number = one `p` on both paths).
+
+```
+                   YES    YES+MAYBE
+Jaro (current)   63.0%        84.8%
+Jaro-Winkler     64.5%        88.8%
+change           +1.5         +4.1
+```
+
+Tier movement (rows Jaro, columns Jaro-Winkler):
+
+| | YES | MAYBE | NO |
+|---|---:|---:|---:|
+| **YES** | 2912 | **138** | 1 |
+| **MAYBE** | 137 | 916 | 1 |
+| **NO** | **77** | **122** | 539 |
+
+NO falls from 738 to 541. Identity churn is negligible: of the 2,912 rows YES
+under both, **2** changed EIN. So this is a tiering change, not a reshuffle of
+which organisation gets picked.
+
+On the 25 hand-adjudicated NO-residual cases, the number surfaced as YES or
+MAYBE **with the correct EIN** goes from **0 to 7**. Under Jaro nine of those
+already had the correct top pick and not one was offered for review.
+
+### It is not free
+
+**138 current YES demote to MAYBE.** Raising every name similarity also raises
+the runner-up, so `min_margin = 0.05` now fails on pairs that previously cleared
+it. Net YES is +75 (214 promotions against 139 demotions). Those 138 are
+auto-accepted today and would become review work.
+
+**Some new YES are wrong.** Within the adjudicated 25, `BEIT HALOCHEN USA` goes
+NO → **YES on the wrong EIN** (under Jaro its top pick was correct), and
+`WGBH Public TV` goes NO → YES also wrong, against 4 newly-correct YES.
+`MUSCULAR DYSTROPHY` loses a correct top pick. That is roughly 67% precision on
+new YES in a sample of six — tiny, and biased toward current failures, but it
+is evidence the promotion is not clean.
+
+### What would settle it
+
+Sample and adjudicate the three moved cells — **77 NO→YES**, **137 MAYBE→YES**,
+**138 YES→MAYBE** — exactly as `dev/CASCADE-STRATEGY.md` §3 did for the cascade.
+A clear-rate delta cannot distinguish recall from false accepts, and the
+adjudicated sample available here is deliberately drawn from current failures so
+it can only measure recovery.
+
 ## Do not just change it
 
 Every threshold in the system was tuned against the behaviour the pipeline
