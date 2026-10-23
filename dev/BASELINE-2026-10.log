@@ -1,0 +1,62 @@
+============================================================================== 
+BASELINE benchmark: active 
+============================================================================== 
+loading REF-active.rds ... 
+  1,924,822 rows 
+matching (11 passes) ... 
+  matched in 603.7 s 
+wrote benchmark-1k-active.rds (4780 identities, 0.17 MB) 
+
+  YES MAYBE    NO 
+ 2726  1003  1051 
+============================================================================== 
+BASELINE benchmark: augmented 
+============================================================================== 
+loading REF-augmented.rds ... 
+  3,880,431 rows 
+matching (11 passes) ... 
+  matched in 1798.5 s 
+wrote benchmark-1k-augmented.rds (4842 identities, 0.17 MB) 
+
+  YES MAYBE    NO 
+ 3051  1057   734 
+============================================================================== 
+BASELINE manifest 
+============================================================================== 
+  hashing REF-active.rds                     (1.4 GB) ... 
+    md5 51954557f721bc282d1523884fa38ee2 | 1,924,822 rows | 46 s 
+  hashing REF-unified.rds                    (2.7 GB) ... 
+    md5 9d486da3e5e29dcb6f8ad6324f1aa19b | 3,687,435 rows | 70 s 
+  hashing REF-augmented.rds                  (2.8 GB) ... 
+    md5 74eb9b4a6875b671f64d8aadd48a36d5 | 3,880,431 rows | 55 s 
+  hashing BMF-AUGMENTED-unified-fixed.csv    (4.0 GB) ... 
+    md5 dac8ff11b176beb31a7bc4da5d548caf | 3,880,431 rows | 10 s 
+  benchmark-1k-active.rds            md5 4239a0ded9e5bad269d277ca12df42ae | 4780 identities 
+  benchmark-1k-augmented.rds         md5 f877f9038aff7682bc8741f04d656b93 | 4842 identities 
+
+built             2026-08-21
+R                 4.5.3
+platform          x86_64-w64-mingw32
+pfmatch           befe695
+npmatch           f406543
+normalizer sig    v1-b42811fe6601afe6
+
+package versions:
+  npmatch      0.1.0.9000
+  data.table   1.18.2.1
+  stringi      1.8.7
+  stringr      1.6.0
+  reclin2      0.6.0
+  stringdist   0.9.17
+  duckdb       1.5.5
+  DBI          1.3.0
+
+ 
+wrote ./dev/BASELINE-2026-10/manifest.csv 
+                         artifact                              md5    rows
+1                  REF-active.rds 51954557f721bc282d1523884fa38ee2 1924822
+2                 REF-unified.rds 9d486da3e5e29dcb6f8ad6324f1aa19b 3687435
+3               REF-augmented.rds 74eb9b4a6875b671f64d8aadd48a36d5 3880431
+4 BMF-AUGMENTED-unified-fixed.csv dac8ff11b176beb31a7bc4da5d548caf 3880431
+5         benchmark-1k-active.rds 4239a0ded9e5bad269d277ca12df42ae    4780
+6      benchmark-1k-augmented.rds f877f9038aff7682bc8741f04d656b93    4842

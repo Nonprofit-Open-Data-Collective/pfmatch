@@ -165,7 +165,11 @@ write.csv(man, file.path(OUT, "manifest.csv"), row.names = FALSE)
 ## ---- environment -----------------------------------------------------------
 sig <- tryCatch(npmatch::np_normalize_signature(), error = function(e) NA_character_)
 env <- c(
-  sprintf("built             %s", Sys.getenv("PF_BASE_DATE", "2026-08-21")),
+  # Default to TODAY, not a pinned literal. The old default ("2026-08-21")
+  # stamped every later baseline with the original freeze date, which made a
+  # newly built baseline indistinguishable from the one it supersedes.
+  sprintf("built             %s",
+          Sys.getenv("PF_BASE_DATE", as.character(Sys.Date()))),
   sprintf("R                 %s", getRversion()),
   sprintf("platform          %s", R.version$platform),
   sprintf("pfmatch           %s", gitsha(PF)),
