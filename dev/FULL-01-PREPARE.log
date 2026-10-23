@@ -1,0 +1,41 @@
+------------------------------------------------------------------------------
+PHASE 1.1 -- INGEST
+------------------------------------------------------------------------------
+read 12,559,051 grants x 20 columns in 43 s
+memory held by the grant table: 2.6 GB
+tax years present: 2008 - 2024
+distinct filing foundations: 134,651
+median grants per filer-year: 5   (the dev samples had 1)
+filers with >=5 grants in a year: 51%
+------------------------------------------------------------------------------
+PHASE 1.2 -- PREPARE
+------------------------------------------------------------------------------
+dedup method: exact
+---------------------------------------------------------------------- 
+STAGE 1  prepare 
+recovered 385 recipient name(s) from the street field: United Teen Equality Center | The Freeman Center | Nashoba Valley Special Olympics | United Teen Equality Center
+  grant rows ......... 12,559,051 
+  in scope ........... 12,404,667 (98.8%) 
+exact dedup: 12,559,051 grant rows -> 3,377,452 distinct keys (3.72x collapse) 
+  distinct identities  3,337,585 (3.72x collapse) 
+  elapsed 2978.4 s 
+prepare + dedup took 2978 s (49.6 min)
+
+prepared rows: 12,559,051
+distinct recipient identities (all rows) : 3,377,452
+in-scope rows                            : 12,404,667
+in-scope identities (what gets matched)  : 3,337,585
+
+COLLAPSE RATIO: 3.72x overall | 3.72x on the in-scope rows that matter
+  for reference: 1.002x on 1k, 1.323x on 100k, 1.8x extrapolated in SCALE-PLAN
+
+Projected match cost, ONE shard (all that fits in 68 GB):
+  B2 on  (433 s/1k)    : 401 hours
+  B2 off (197 s/1k)    : 183 hours
+  budget on record     : 117 hours
+------------------------------------------------------------------------------
+PHASE 1.3 -- STAGE
+------------------------------------------------------------------------------
+wrote C:/Users/jdlec/Documents/grants/staging/PREPARED-FULL.rds (10.3 GB) in 63 s
+
+TOTAL PHASE 1 PREPARE: 52.1 min

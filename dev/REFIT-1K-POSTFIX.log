@@ -1,0 +1,128 @@
+============================================================================== 
+1  PREPARE -- inputs/1k_grants_01.csv 
+============================================================================== 
+---------------------------------------------------------------------- 
+STAGE 1  prepare 
+  grant rows ......... 1,000 
+  in scope ........... 980 (98.0%) 
+exact dedup: 1,000 grant rows -> 998 distinct keys (1.00x collapse) 
+fuzzy pass: 86 blocks with 2-2000 members (204 keys eligible) 
+  fuzzy   5%  4/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy   9%  8/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  14%  12/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  19%  16/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  23%  20/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  28%  24/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  33%  28/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  37%  32/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  42%  36/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  47%  40/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  51%  44/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  56%  48/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  60%  52/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  65%  56/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  70%  60/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  74%  64/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  79%  68/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  84%  72/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  88%  76/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  93%  80/86 blocks  0 s elapsed, ~0 s left 
+  fuzzy  98%  84/86 blocks  0 s elapsed, ~0 s left 
+  0 fuzzy joins accepted, 0 rejected by the number/ordinal/direction veto 
+fuzzy dedup: -> 998 distinct identities (1.00x total collapse) 
+  distinct identities  978 (1.00x collapse) 
+  elapsed 0.4 s 
+ 
+  [ OK] prepare completes                          1000 rows -> 978 identities (1.002x) in 0.4 s 
+============================================================================== 
+2  CASCADE COST -- 11 passes, all threads 
+============================================================================== 
+active: 1,924,822 rows loaded in 38 s (1.4 GB file) 
+  match 178 s | 183 s per 1,000 identities | 51,215 pairs | YES 552 MAYBE 192 NO 193 
+  peak memory 14.1 GB 
+  scored match cached at 40 MB (this is the 194 MB pairs finding, at 1k) 
+ 
+  [ OK] cost stable vs plan (active)               183 s/1k now vs 149 s/1k on record (+22%) 
+============================================================================== 
+3  DYAD POLICY MATRIX 
+============================================================================== 
+dyads: 566,653 pairs, 29,230 substitutable 
+collapsing against the active reference 
+query/keepveto         1.2 s | collapsed   30 | YES  563 MAYBE  181 NO  193 | M->Y  11 | pairs 51,181 
+operating/keepveto     1.0 s | collapsed   30 | YES  563 MAYBE  181 NO  193 | M->Y  11 | pairs 51,181 
+query/NOveto           1.0 s | collapsed   30 | YES  567 MAYBE  177 NO  193 | M->Y  15 | pairs 51,181 
+top/keepveto           0.9 s | collapsed   30 | YES  560 MAYBE  184 NO  193 | M->Y   8 | pairs 51,181 
+ 
+  [ OK] collapse never demotes to NO               0 demotions 
+  [ OK] tier changes only on collapsed rows        0 off-target 
+  [ OK] reduced pair set survives (modifyList fix) 51,215 -> 51,181 pairs (-0.07%) 
+  [ OK] soft-veto exposure = 0 (keep_soft_veto)    0 promotions overrode a veto and changed the pick 
+  [...] the guard binds on this sample             keep_soft_veto=FALSE exposes 4 (if 0, this sample cannot test it) 
+  [ OK] query policy switches are arm-named grants 2 EIN switches vs operating, 0 not arm-named 
+ 
+                              grant                        was
+ PHOENIX CHILDREN'S HOSPITAL FOUNDA PHOENIX CHILDRENS HOSPITAL
+ BOCA RATON REGIONAL HEALTH FOUNDAT BOCA RATON REGIONAL HOSPIT
+                        now
+ PHOENIX CHILDRENS HOSPITAL
+ BOCA RATON REGIONAL HOSPIT
+ 
+  [...] policy is EIN-only, not tier-moving        0 tier differences 
+============================================================================== 
+4  WIRED PATH -- pf_link with dyads, fresh checkpoints 
+============================================================================== 
+---------------------------------------------------------------------- 
+STAGE 3  link 
+  dyads: 566,653 pairs, 29,230 substitutable 
+pf_run_batches: 978 rows in 3 batches of 400 
+  [  1/  3]    400 rows | YES   232 MAYBE    73 NO    95 OOS    0 |  124.5 s (311.2 s/1k) 
+  [  2/  3]    400 rows | YES   233 MAYBE    63 NO   104 OOS    0 |  117.4 s (293.4 s/1k) 
+  [  3/  3]    178 rows | YES    98 MAYBE    45 NO    35 OOS    0 |   81.0 s (454.9 s/1k) 
+  dyad collapse fired on 30 identities (3.1%) 
+  elapsed 323.0 s 
+ 
+  [ OK] pf_link completes with dyads wired         323 s, 3 batches, 978 identities 
+  [ OK] status carries the documented dyad columns all four 
+  [...] geo columns survive the reduced pair set   bmf_state NA: 0.0% collapsed vs 0.0% not (scored rows) 
+  [ OK] grant rows reconcile to the input          1000 rows: YES 564 MAYBE 182 NO 234 OOS 20 
+  [...] collapse fires on the wired path           30 identities (3.1%) 
+  [...] checkpoint footprint                       0.9 MB for 978 identities -> 12 GB at 12.56M grants 
+============================================================================== 
+5  STALE CHECKPOINTS -- documented hazard, never tested 
+============================================================================== 
+re-running the SAME dir with policy='operating'. Before the checkpoint 
+stamp this returned the cached answer and the changed config never ran. 
+  [ OK] config change is refused, not silently ignored batch-0001.rds was written under different settings and cannot be resumed. 
+  [...] resume = FALSE recomputes under the new config 2 EINs differ from the query-policy run 
+============================================================================== 
+6  EXTRAPOLATION TO 12,559,051 GRANTS 
+============================================================================== 
+dedup on this sample .......... 1.002x (the full file repeats grantees far more) 
+ 
+reference      s per 1k     no dedup      at 1.8x    12 shards 
+active              183        637 h        354 h         29 h 
+ 
+Budget on record: 117 h. Phase 1 target config is augmented + 11 passes. 
+============================================================================== 
+FINDINGS 
+============================================================================== 
+[ OK] prepare completes                          1000 rows -> 978 identities (1.002x) in 0.4 s 
+[ OK] cost stable vs plan (active)               183 s/1k now vs 149 s/1k on record (+22%) 
+[ OK] collapse never demotes to NO               0 demotions 
+[ OK] tier changes only on collapsed rows        0 off-target 
+[ OK] reduced pair set survives (modifyList fix) 51,215 -> 51,181 pairs (-0.07%) 
+[ OK] soft-veto exposure = 0 (keep_soft_veto)    0 promotions overrode a veto and changed the pick 
+[...] the guard binds on this sample             keep_soft_veto=FALSE exposes 4 (if 0, this sample cannot test it) 
+[ OK] query policy switches are arm-named grants 2 EIN switches vs operating, 0 not arm-named 
+[...] policy is EIN-only, not tier-moving        0 tier differences 
+[ OK] pf_link completes with dyads wired         323 s, 3 batches, 978 identities 
+[ OK] status carries the documented dyad columns all four 
+[...] geo columns survive the reduced pair set   bmf_state NA: 0.0% collapsed vs 0.0% not (scored rows) 
+[ OK] grant rows reconcile to the input          1000 rows: YES 564 MAYBE 182 NO 234 OOS 20 
+[...] collapse fires on the wired path           30 identities (3.1%) 
+[...] checkpoint footprint                       0.9 MB for 978 identities -> 12 GB at 12.56M grants 
+[ OK] config change is refused, not silently ignored batch-0001.rds was written under different settings and cannot be resumed. 
+[...] resume = FALSE recomputes under the new config 2 EINs differ from the query-policy run 
+ 
+17 checks: 11 pass, 0 FAIL, 6 reported 
+wrote data-dev/REFIT-1K-{FINDINGS,COST,ARMS}.csv 

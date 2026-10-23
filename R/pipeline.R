@@ -124,6 +124,10 @@ pf_reference <- function(bmf, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
 #'   selection, which is what removes ties a grant has with itself. `NULL`
 #'   disables it. See [pf_dyads] and `dev/DYAD-FINDINGS.md`.
 #' @param dyad_config Settings for that collapse; see [pf_dyad_config()].
+#' @param resume Reuse checkpoints in `dir` whose run stamp matches this call.
+#'   A checkpoint written under different settings stops the run; `resume =
+#'   FALSE` recomputes and overwrites. See [pf_run_batches()], *Checkpoints are
+#'   stamped*.
 #' @param verbose Print progress.
 #' @return A list of class `pf_linked` with identity-level `status`, row-level
 #'   `grants`, and `timing`.
@@ -131,7 +135,8 @@ pf_reference <- function(bmf, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
 pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L,
                     passes = NULL, config = npmatch::np_config(),
                     method = "hier", dyads = NULL,
-                    dyad_config = pf_dyad_config(), verbose = TRUE) {
+                    dyad_config = pf_dyad_config(), resume = TRUE,
+                    verbose = TRUE) {
   stopifnot(inherits(prepared, "pf_prepared"))
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 3  link")
@@ -147,7 +152,7 @@ pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L
                            batch_size = batch_size, passes = passes,
                            config = config, method = method,
                            dyads = dyads, dyad_config = dyad_config,
-                           verbose = verbose)
+                           resume = resume, verbose = verbose)
   g <- pf_propagate_matches(prepared$grants, status)
   g$status[!g$in_scope] <- "OOS"
   if (!is.null(status$dyad_collapsed))

@@ -1,0 +1,33 @@
+reference vocabulary: 397,592 distinct tokens
+distinct query tokens (len>=4, non-stop): 76
+tokens never seen in the reference at all : 3
+--------------------------------------------------------------------------------
+UNSEEN QUERY TOKENS AND THEIR EDIT-DISTANCE-1 NEIGHBOURS
+--------------------------------------------------------------------------------
+query token              df  nearest reference tokens (df)
+CTRP                      0  CORP(1,587)  CTRL(  138)  CARP(   25)  CTRS(   20)
+HALOCHEN                  0  HALOCHEM(3)  HABOCHEN(2)
+VETFAM                    0  -- none at distance 1
+--------------------------------------------------------------------------------
+            kind     N
+          <char> <int>
+ rare-token typo     2
+--------------------------------------------------------------------------------
+AMBIGUITY: how many distance-1 candidates does each have?
+  exactly one candidate      : 0
+  two or more candidates     : 2
+
+A token with several distance-1 neighbours cannot be 'corrected' to one
+answer. Emitting ALL of them as extra blocking keys sidesteps that -- the
+comparator still has to pick. That is the argument for extra keys over
+correction, independent of the deliberate-misspelling worry.
+--------------------------------------------------------------------------------
+RISK OF REPLACING RATHER THAN ADDING
+--------------------------------------------------------------------------------
+  UCAP               df=3       would be pulled toward CAP (df=737)
+  SCHL               df=67      would be pulled toward SCH (df=3,195)
+  FRIDGE             df=22      would be pulled toward BRIDGE (df=4,725)
+  DOUNDATION         df=1       would be pulled toward FOUNDATION (df=39,733)
+
+4 of 73 real tokens sit next to a 20x commoner neighbour.
+Replacing would lose them; adding a second key keeps both paths open.

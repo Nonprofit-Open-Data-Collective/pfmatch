@@ -1,0 +1,103 @@
+cases with an adjudicated EIN: 25
+reference name rows: 7,419,570
+
+cases: 21   positives: 1294   negatives: 438
+wrote data-dev/NAMESIM-TESTSET.csv (1,732 rows)
+cases 21   positives 1294   negatives 438
+token idf entries: 397,566
+--------------------------------------------------------------------------------------
+NAME METRICS ON THE 21 NO-RESIDUAL CASES  (threshold 0.85, as in production)
+--------------------------------------------------------------------------------------
+metric              prec@1     auc   margin    finds   admits
+qgram_cosine           76%   0.717    0.150     8/21     2/21
+qgram_jaccard          76%   0.688    0.186     6/21     2/21
+token_jaccard          71%   0.679    0.133     6/21     2/21
+lcs                    71%   0.676    0.118     7/21     2/21
+jw                     67%   0.716    0.061    16/21    11/21
+lv                     67%   0.627    0.129     7/21     2/21
+token_set              62%   0.684    0.020    20/21    18/21
+idf_cosine             62%   0.558    0.012     7/21     3/21
+max_jw_idf             57%   0.718    0.078    18/21    12/21
+max_jw_idf_acr         57%   0.718    0.078    18/21    12/21
+monge_elkan            57%   0.718    0.046    17/21    14/21
+max_jw_me_acr          57%   0.716    0.040    18/21    14/21
+token_contain          57%   0.659    0.129    13/21     8/21
+jw_prod                57%   0.620    0.232    16/21    11/21
+idf_contain            52%   0.590    0.055    13/21     8/21
+acronym                 0%   0.500    0.000     0/21     0/21
+--------------------------------------------------------------------------------------
+finds  = cases where the CORRECT name reaches 0.85 (recall gained)
+admits = cases where a WRONG name reaches 0.85 (precision lost)
+
+wrote data-dev/NAMESIM-METRICS.csv and NAMESIM-SCORES.csv
+----------------------------------------------------------------------------------------------------
+JW: best CORRECT vs best WRONG, per case
+----------------------------------------------------------------------------------------------------
+id        best correct match             score  best WRONG match                   score  ok
+G002473   SAN JOSE MERCURY NEWS WISH BOO  0.47  Yes on B 2020                       0.72    <-- WRONG WINS
+G002885   ANIMAL SHELTER                  0.70  STERLING FAIR                       0.89    <-- WRONG WINS
+G000311   GIRLS INC OF WASHINGTON COUNTY  0.83  GIRLS                               1.00    <-- WRONG WINS
+G003722   EASTER SEALS                    0.88  EASTER SEAL SOCIETY OF WESTERN PEN  0.91    <-- WRONG WINS
+G002704   WGBH                            0.86  WGBH MUSIC                          0.87    <-- WRONG WINS
+G001777   CROSSROADS                      0.91  CROSSROADS SHELTER                  0.91    <-- WRONG WINS
+G002810   PLAYWORKS                       1.00  PLAYWORKS INC                       1.00    <-- WRONG WINS
+G000145   URBAN COLLABORATIVE             0.59  FUND FOR UCAP C/O URBAN COLLABORAT  0.58  
+G004078   CASA OF NEW JERSEY              0.91  CASA OF UNION COUNTY INC            0.87  
+G002181   THE SALVATION ARMY              1.00  Salvation Army - Nashua             0.93  
+G000304   AMERICAN NATIONAL RED CROSS     1.00  AMERICAN NATIONAL RIDING COMMISSIO  0.93  
+G000920   DALLAS FOUNDATION A TX NONPROF  0.92  DALLAS SEMINARY FOUNDATION VISION   0.83  
+G002405   BURROUGHS COMMUNITY CENTER      0.95  BOROUGHS FAM FOUNDATION             0.85  
+G004572   CROWN FINANCIAL MINISTRIES      0.97  CROWN OF LIFE MINISTRIES INC        0.85  
+G001170   MUSCULAR DYSTROPHY ASSOCIATION  1.00  MUSCULAR DYSTROPHY ASSOCIATION CHA  0.86  
+G000907   JUVENILE DIABETES RESEARCH FDN  1.00  JUVENILE JUSTICE FUND               0.85  
+G001460   UNIVERSITY OF DENVER            0.89  COMPASSION AND CHOICES GIFT PROCES  0.68  
+G003429   WE CARE                         0.85  FEED THE WORLD                      0.64  
+G001402   DANCE PLACE                     0.87  A WHEEL IN A WHEEL TECHNICAL INDUS  0.64  
+G004966   LIONS EYE FOUNDATION OF CALIFO  0.89  THE@ETHIOPIAN ORTHODOX TEWAHDO CHU  0.65  
+G002579   NORTHWEST CHILDRENS THEATER SC  0.76  ALLIANCE OF PROFESSIONAL PERFORMER  0.51  
+----------------------------------------------------------------------------------------------------
+IDF_CONTAIN: best CORRECT vs best WRONG, per case
+----------------------------------------------------------------------------------------------------
+id        best correct match             score  best WRONG match                   score  ok
+G000145   URBAN COLLABORATIVE             0.00  FUND FOR UCAP                       1.00    <-- WRONG WINS
+G003722   EASTER SEALS                    0.47  EASTER SEAL SOCIETY                 1.00    <-- WRONG WINS
+G004078   CASA OF MIDDLESEX COUNTY        0.51  MINISTERIO INTERNACIONAL CASA DEL   1.00    <-- WRONG WINS
+G002405   BURROUGHS COMMUNITY CENTER      0.39  BOROUGHS FAM FOUNDATION             0.64    <-- WRONG WINS
+G002473   SAN JOSE MERCURY NEWS WISH BOO  0.63  PROJECT 2020                        0.67    <-- WRONG WINS
+G000311   GIRLS INC OF WASHINGTON COUNTY  1.00  GIRLS                               1.00    <-- WRONG WINS
+G001170   MUSCULAR DYSTROPHY ASSOCIATION  1.00  MUSCULAR DYSTROPHY ASSOCIATION CHA  1.00    <-- WRONG WINS
+G002181   THE SALVATION ARMY              1.00  Salvation Army - Nashua             1.00    <-- WRONG WINS
+G002810   PLAYWORKS EDUCATION ENERGIZED   1.00  PLAYWORKS INC                       1.00    <-- WRONG WINS
+G002885   ANIMAL SHELTER                  1.00  STERLING                            1.00    <-- WRONG WINS
+G002579   NORTHWEST CHILDREN'S THEATER    0.30  ALLIANCE OF PROFESSIONAL PERFORMER  0.29  
+G004572   CROWN FINANCIAL MINISTRIES      0.79  CROWN OF GLORY EVANGELICAL MINISTR  0.71  
+G004966   LIONS EYE FOUNDATION OF CALIFO  0.53  THE@ETHIOPIAN ORTHODOX TEWAHDO CHU  0.38  
+G000920   THE DALLAS FOUNDATION           1.00  ONE DHARMA AWAKENING HEART DALLAS   0.73  
+G002704   WGBH                            1.00  WGBH MUSIC                          0.71  
+G001777   CROSSROADS                      1.00  CROSSROADS COMMUNITY FOUNDATION     0.69  
+G000304   AMERICAN NATIONAL RED CROSS     1.00  CROSS FAMILY FUND                   0.62  
+G003429   WE CARE                         1.00  FEED THE WORLD                      0.61  
+G000907   JDRF INTERNATIONAL AKA JUVENIL  1.00  JUVENILE JUSTICE FUND               0.56  
+G001460   UNIVERSITY OF DENVER            1.00  COMPASSION AND CHOICES GIFT PROCES  0.47  
+G001402   DANCE PLACE                     1.00  A WHEEL IN A WHEEL TECHNICAL INDUS  0.37  
+----------------------------------------------------------------------------------------------------
+The pattern: containment rewards a SHORT filed name for being a subset of
+anything longer, and this residual is full of short filed names -- that is
+exactly what made them hard. JW's length penalty, which looked like the bug,
+is what keeps the wrong answers out.
+----------------------------------------------------------------------------------------------------
+REPAIRED ACRONYM TEST
+----------------------------------------------------------------------------------------------------
+  original  : fires on 0 cases, admits 0 wrong
+  repaired  : fires on 2 cases, admits 1 wrong
+    G000145  UCAP SCHOOL                -> URBAN COLLABORATIVE ACCELERATED PROGRAM
+    G004078  CASA OF NJ                 -> COURT APPOINTED SPECIAL ADVOCATES OF NEW JER
+    G004078  CASA OF NJ                 -> COURT APPOINTED SPECIAL ADVOCATES OF NEW JER
+    G004078  CASA OF NJ                 -> COURT APPOINTED SPECIAL ADVOCATES OF NEW JER
+  false fires: 1
+    G000145  UCAP SCHOOL                -> FUND FOR UCAP C/O URBAN COLLABORATIVE ACCELE
+----------------------------------------------------------------------------------------------------
+JW alone vs JW + repaired acronym (max)
+----------------------------------------------------------------------------------------------------
+  jw       prec@1  67%   finds 16/21   admits 11/21
+  jw+acr   prec@1  62%   finds 17/21   admits 12/21

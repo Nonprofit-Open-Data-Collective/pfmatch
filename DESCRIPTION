@@ -11,6 +11,9 @@ Description: Recovers recipient EINs for grants reported on Form 990-PF Part XIV
     normalization, blocking, comparison, hierarchical scoring, vetoes, and
     YES/MAYBE/NO tiering - is provided by 'npmatch'; this package holds only what
     is specific to the 990-PF grant context.
+URL: https://nonprofit-open-data-collective.github.io/pfmatch,
+    https://github.com/Nonprofit-Open-Data-Collective/pfmatch
+BugReports: https://github.com/Nonprofit-Open-Data-Collective/pfmatch/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
@@ -24,9 +27,14 @@ Imports:
     stats,
     utils
 Suggests:
+    knitr,
+    rmarkdown,
+    pkgdown,
+    digest,
     stringdist,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+VignetteBuilder: knitr

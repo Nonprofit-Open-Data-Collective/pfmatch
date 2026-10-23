@@ -1,0 +1,10 @@
+data.table threads: 14 
+after setup, working set 6.88 GB 
+reclaim between passes: TRUE 
+ 
+threads 14 | cascade  624.1 s | cascade peak (R)  31.23 GB | process peak  31.98 GB | 77,664 pairs 
+data.table threads: 14 
+after setup, working set 6.88 GB 
+reclaim between passes: FALSE 
+ 
+threads 14 | cascade  462.1 s | cascade peak (R)  31.23 GB | process peak  31.90 GB | 77,664 pairs 

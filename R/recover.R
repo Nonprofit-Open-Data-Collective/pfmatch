@@ -166,6 +166,7 @@ pf_recovery_passes <- function(state = TRUE, max_ref_freq = 5000,
 #' @param verbose Report how many rows were repaired.
 #' @return `grants` with `recip_name` filled from `recip_street` where
 #'   applicable, and a logical `name_from_street` column recording it.
+#' @export
 pf_recover_name_from_street <- function(grants, verbose = TRUE) {
   st <- grants$recip_street
   nm <- grants$recip_name

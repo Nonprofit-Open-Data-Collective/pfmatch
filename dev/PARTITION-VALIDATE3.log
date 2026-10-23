@@ -1,0 +1,6 @@
+============================================================================== 
+PARTITION VALIDATION -- active reference, vs BASELINE-2026-08 rev 2 
+============================================================================== 
+baseline: 4733 identities 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+reference: 1,924,822 rows | working set 3.64 GB 

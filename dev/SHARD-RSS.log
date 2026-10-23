@@ -1,0 +1,73 @@
+=== RUNG 2000 ===
+============================================================================== 
+SHARD RSS -- augmented reference, batch of 2,000 identities 
+============================================================================== 
+baseline working set before anything is loaded: 0.17 GB 
+preparing inputs/100k_grants.csv (once; cached to SHARD-RSS-IDENTITIES.rds) ... 
+recovered 4 recipient name(s) from the street field: See A New Sun Fdn | Society of Jesus NY Province | United Teen Equality Center | AUSTIN
+  100,000 rows -> 74,673 identities (1.323x) in 50 s 
+queries: 2,000 of 74,673 available 
+reference: 3,880,431 rows, loaded in 76 s | working set now 3.60 GB 
+dyads: 566,653 pairs | working set now 3.71 GB (+0.11) 
+ 
+running ONE batch of 2,000 at the production config ... 
+pf_run_batches: 2,000 rows in 1 batches of 2,000 
+  [  1/  1]  2,000 rows | YES  1182 MAYBE   430 NO   388 OOS    0 |  747.5 s (373.8 s/1k) 
+ 
+elapsed 748 s | 374 s per 1,000 identities 
+YES 1182 MAYBE 430 NO 388 OOS 0 
+ 
+PEAK WORKING SET .......... 38.42 GB 
+  of which reference load   3.60 GB 
+  gc() max used (for scale) 38.15 GB 
+appended to SHARD-RSS.csv 
+rung 2000 exit=0
+=== RUNG 8000 ===
+============================================================================== 
+SHARD RSS -- augmented reference, batch of 8,000 identities 
+============================================================================== 
+baseline working set before anything is loaded: 0.17 GB 
+queries: 8,000 of 74,673 available 
+reference: 3,880,431 rows, loaded in 67 s | working set now 3.59 GB 
+dyads: 566,653 pairs | working set now 3.70 GB (+0.11) 
+ 
+running ONE batch of 8,000 at the production config ... 
+pf_run_batches: 8,000 rows in 1 batches of 8,000 
+  [  1/  1]  8,000 rows | YES  4616 MAYBE  1710 NO  1674 OOS    0 | 3467.2 s (433.4 s/1k) 
+ 
+elapsed 3467 s | 433 s per 1,000 identities 
+YES 4616 MAYBE 1710 NO 1674 OOS 0 
+ 
+PEAK WORKING SET .......... 37.41 GB 
+  of which reference load   3.59 GB 
+  gc() max used (for scale) 36.69 GB 
+appended to SHARD-RSS.csv 
+============================================================================== 
+SHARD BUDGET, fitted over 2 rungs 
+============================================================================== 
+peak working set = 38.76 GB fixed + -0.168 GB per 1,000 identities 
+ 
+batch_size     predicted GB shards in 68 GB       note 
+5,000                  37.9              1            
+10,000                 37.1              1            
+25,000                 34.6              1 <- the default 
+50,000                 30.4              1            
+ 
+Smaller batches buy shards and cost amortization (REFIT-1K-FINDINGS 4: 
+81 s/1k at 4,733 against 228 at 978). The two trade against each other and 
+this is the table that prices the trade. 
+Error: object 'far' not found
+Execution halted
+rung 8000 exit=0
+=== RUNG 25000 ===
+============================================================================== 
+SHARD RSS -- augmented reference, batch of 25,000 identities 
+============================================================================== 
+baseline working set before anything is loaded: 0.17 GB 
+queries: 25,000 of 74,673 available 
+reference: 3,880,431 rows, loaded in 124 s | working set now 3.60 GB 
+dyads: 566,653 pairs | working set now 3.71 GB (+0.11) 
+ 
+running ONE batch of 25,000 at the production config ... 
+pf_run_batches: 25,000 rows in 1 batches of 25,000 
+rung 25000 exit=0

@@ -1,0 +1,68 @@
+id,filed,basis,verdict,web_ein,web_name,note
+G000145,UCAP SCHOOL,web,REAL-ORG,050448102,Urban Collaborative,acronym; the BMF near-miss was already the right org at 0.38
+G000299,TIFFANY SHULL,web,INDIVIDUAL,,,no organisation of this name exists
+G000304,AMERICAN NATIONAL RED CROSS,web,REAL-ORG,530196605,American National Red Cross,filed name is the exact legal name
+G000311,GIRLS INC,web,REAL-ORG,237052207,Girls Inc of Washington County,same street address as filed
+G000694,Angela Renee Hoover,reference,INDIVIDUAL,,,person-shaped name; purpose Education
+G000906,TRI-CITY BAPTIST MISSIONS,web,NO-OWN-EIN,,Tri City Baptist Church,missions arm of the church at the filed street
+G000907,JUVENILE DIABETES RESEARCH FOUNDATION,web,REAL-ORG,231907729,JDRF / Breakthrough T1D,reference carries the older Juvenile Diabetes Foundation International name
+G000920,The Dallas Foundation for One Texas,web,REAL-ORG,752890371,The Dallas Foundation,same street and suite as filed; One Texas is a fund within it
+G000921,JOEL BASS,reference,INDIVIDUAL,,,person-shaped name; purpose Education
+G000966,THRIVE 1035,web,UNFINDABLE,,,nothing by this name in Placerville CA
+G001055,THE PURPOSEFUL LIVING CENTER,web,UNFINDABLE,,,nothing by this name in Oak Park MI
+G001170,MUSCULAR DYSTROPHY,web,REAL-ORG,131665552,Muscular Dystrophy Association,truncated name; both references surfaced the right org
+G001402,DANCE PLACE DC WHEEL PRODUCTIONS INC,web,REAL-ORG,521118504,DC Wheel Productions dba Dance Place,same street as filed
+G001422,BROOKLYN GARRISON-OSBORN,reference,INDIVIDUAL,,,person-shaped name; purpose Educational
+G001460,UNIVERSITY OF DENVER - OFFICE OF GIFT PROC,web,REAL-ORG,840404231,Colorado Seminary dba University of Denver,payee is an internal office of the university
+G001546,MOTHER MARIA ANNA BRUNNER CATHOLIC SCHOOL,web,NO-OWN-EIN,,Archdiocese of Cincinnati,parochial school under a group ruling
+G001777,CROSSROADS THE RIDE,web,REAL-ORG,042103837,Crossroads for Kids Inc,payee named as the fundraising event not the charity
+G001821,UNIVERSITY BAPTIST CHURCH,reference,UNCLEAR-GEO,,,exact name in reference but the EIN is an Ohio church not Hattiesburg MS
+G001827,RAINBOW PUSH AUTOMOTIVE PROJECT,web,NO-OWN-EIN,,Citizenship Education Fund,programme of the Rainbow PUSH affiliate
+G001912,MIRACULOUS LOVE MINISTRIES,web,REAL-ORG,208092403,Miraculous Love International Ministries,same city; exempt status later auto-revoked
+G001925,George Dupree,reference,INDIVIDUAL,,,purpose reads 2023 GRANT RECIPIENT
+G001935,Donovan Bank Foundation,web,REAL-ORG,872789816,Donovan and Bank Foundation,filed name drops the AND
+G002095,Marys Cupboard,web,NO-OWN-EIN,,Catholic Social Services of Bucks County,pantry operating inside a parent charity
+G002137,SHAW CANCER CENTER,web,NO-OWN-EIN,,Vail Health,a programme of the hospital system
+G002150,Cong Mesilas Hachessed,reference,REAL-ORG,,Congregation Mesilas Hachesed,Cong abbreviation; both references surfaced it
+G002181,The Salvation Army,web,REAL-ORG,580660607,The Salvation Army,exact name; local corps file under the territory
+G002273,CHRISTIAN FILM & TELEVISION CO,web,UNCLEAR,,Christian Film and Television Commission,organisation exists but no EIN confirmed
+G002284,UCSF FOUNDATION - CTRP,reference,REAL-ORG,,UCSF Foundation,payee is a fund inside the university foundation
+G002298,MERCY MISSIONS TO THE WORLD INC,web,UNFINDABLE,,,nothing by this name in Lebanon PA
+G002367,JASON SRIWIJAYA,web,INDIVIDUAL,,,no organisation of this name exists
+G002405,BOROUGHS COMMUNITY CENTER,web,REAL-ORG,061418097,Burroughs Community Center Inc,single-letter misspelling; same ZIP as filed
+G002418,STONEHENGE OF SPRINGVILLE,web,NOT-A-CHARITY,,,for-profit skilled nursing facility
+G002473,WISH BOOK 2020 FUND,web,REAL-ORG,770229665,San Jose Mercury News Wish Book Fund,filed name is the campaign year
+G002565,ST BARTHOLOMEWS CHURCH,reference,UNCLEAR-GEO,,,exact name in reference but the EIN is in MA not Cape Elizabeth ME
+G002579,NW CHILDREN'S THTR SCHL,web,REAL-ORG,931111344,Northwest Childrens Theater and School Inc,abbreviated to consonants
+G002602,WE ARE DOWN HERE,web,UNCLEAR,,,reference holds WE ARE DOWN HOME in the same town; filed name may be garbled
+G002630,BEIT HALOCHEN USA,web,REAL-ORG,133392711,Friends of Israel Disabled Veterans - Beit Halochem,same ZIP; both references hold the legal name
+G002704,WGBH Public TV,web,REAL-ORG,042104397,WGBH Educational Foundation,call sign plus a descriptor
+G002781,TRINITY LUTHERAN AT COLUMBUS - MARY ANN S,web,UNCLEAR,,,a named scholarship fund inside a church; parent not pinned down
+G002810,PLAYWORKS,web,REAL-ORG,943251867,Playworks Education Energized,both references agreed on 04-2752957 which is NOT this org; the agreed EIN was wrong
+G002832,CHILDREN'S NATIONAL HOSPITAL FOUNDATION,reference,REAL-ORG,,Children's National Hospital Foundation,matchdb holds the current name; the BMF the older one
+G002885,STERLING ANIMAL SHELTER,web,REAL-ORG,043236868,Animal Shelter Inc dba Sterling Animal Shelter,dba name; legal name omits the town
+G002951,FHDA FOOTHILL,reference,REAL-ORG,,Foothill-De Anza Community College Foundation,acronym; both references surfaced it
+G002972,MS STATE TUITION PROGRAM,web,UNCLEAR,,,a state aid programme rather than an organisation
+G003018,NATIONAL MS SOCIETY - SANTA ROSA WALK MS,reference,REAL-ORG,,National Multiple Sclerosis Society,acronym plus an event name
+G003086,UCI - OC VETFAM COLLABORATIVE,reference,REAL-ORG,,University of California Irvine,acronym plus a programme name
+G003299,DOCKS TO DOORWAYS,web,UNFINDABLE,,,nothing by this name in Belgrade Lakes ME
+G003331,STURGIS BROWN HS POST PROM,web,NO-OWN-EIN,,,a school committee with no separate exemption
+G003398,505 Main Street Canton,web,UNFINDABLE,,,payee recorded as a street address
+G003422,NEW DIRECTION ROOCH,web,UNCLEAR,,,reference holds ANEW DIRECTION; filed name may be garbled
+G003429,WE CARE INC FEED THE FRIDGE,web,REAL-ORG,364967718,We Care Inc dba Feed the Fridge,legal name plus programme name
+G003503,SMALL RANDALL,reference,INDIVIDUAL,,,surname-first person; purpose Wheelchair
+G003722,EASTER SEAL SOCIETY OF DEL-MAR,web,REAL-ORG,510066728,Easter Seals Delaware and Maryland's Eastern Shore,filed ZIP 19720 is New Castle DE but the filed state says PA
+G003733,SAAWTU USA,web,REAL-ORG,,SAAWTU America,USA for AMERICA; both references hold the org
+G003742,AMERICAN SHRINE ASSOCIATES,web,UNFINDABLE,,,nothing by this name in Washington DC
+G003745,Chabad House of Boston,web,UNCLEAR,,Chabad of Greater Boston,filed ZIP matches Chabad of Greater Boston but the name is not a legal name
+G003852,Family of Kiflom Mengesha,reference,INDIVIDUAL,,,payee is a family; purpose is repatriation of remains
+G004025,CHRIST CHURCH CATHEDRAL,reference,UNCLEAR-GEO,,,exact name in reference but the EINs are MI and OH not Louisville KY
+G004078,CASA OF NJ,web,REAL-ORG,223679194,Court Appointed Special Advocates of New Jersey Inc,acronym; same ZIP as filed
+G004211,JONES MAURICE,reference,INDIVIDUAL,,,surname-first person; purpose Furniture
+G004371,GERALD R MACCARTHY MEMORIAL FUND,web,UNFINDABLE,,,nothing by this name in Chapel Hill NC
+G004572,CROWN FINANCIAL MINISTRY,web,REAL-ORG,581260812,Crown Financial Ministries,reference holds the predecessor name Crown Ministries
+G004596,THISTLEBEND COTTAGE,web,REAL-ORG,450571304,Thistlebend Ministries,same town; COTTAGE is a programme not the org
+G004773,GIFTS TO THE NEEDYINDIGENT,reference,UNFINDABLE,,,payee recorded as a purpose description
+G004802,HEALTH LITERACY COALITION,web,UNFINDABLE,,,nothing by this name in Albuquerque NM
+G004816,Hamilton Co Gen Hlt Dist,web,NOT-A-CHARITY,316000063,Hamilton County General Health District,county government body
+G004966,LIONS EYE DOUNDATION OF CA & NV,web,REAL-ORG,941676055,Lions Eye Foundation of California-Nevada Inc,filed name misspells FOUNDATION

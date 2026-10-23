@@ -1,0 +1,7 @@
+loaded REF-augmented.rds: 3,880,431 rows in 110 s 
+pf_collapse_reference: 3,880,431 -> 3,527,242 rows (9.1% smaller) in 24 s 
+  152,825 groups hold more than one EIN, covering 506,014 EINs (13.0% of the reference) 
+  largest group: 6,710 EINs 
+  rebuilt name_freq / token_idf / ref_index in 304 s 
+wrote REF-augmented-collapsed.rds (2.61 GB) in 40 s 
+members table: 506,014 rows 

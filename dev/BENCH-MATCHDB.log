@@ -1,0 +1,12 @@
+reference: 6,671,061 rows (loaded in 1.5 min)
+matched 5,000 grants in 48.0 min
+
+tier             n    share
+YES           2924    60.1%
+MAYBE         1139    23.4%
+NO             799    16.4%
+identities 4862
+
+CLEAR RATE : 60.1%   (augmented BMF, same grants: 63.0%)
+YES+MAYBE  : 83.6%   (augmented BMF: 84.8%)
+wrote data-dev/BENCH-MATCHDB.rds

@@ -261,9 +261,24 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
 #'   the `*_grants*.csv` benchmark files and so will pull in **every** size
 #'   variant sitting in the folder — pass an explicit pattern or file vector to
 #'   pick one set.
+#' @param allow_mixed Set `TRUE` to suppress the vintage check described below.
+#'   Only do this when the mixture is genuinely wanted.
+#' @section Vintage check:
+#' Grant extracts from different sources do not share a schema, and silently
+#' concatenating them produces a population that is neither. The two vintages in
+#' this project are distinguished by `OBJECTID`: the NCCS e-file rebuild carries
+#' it, the older GT-derived extracts do not. Reading both at once also
+#' double-counts, because the two sources were sampled from overlapping filings.
+#'
+#' The default `pattern` matched 15 files across both vintages in `inputs/` —
+#' 422,806 rows where either population alone is a fraction of that — so this
+#' function now stops when the matched files disagree on `OBJECTID`, naming the
+#' files on each side. The check is on the column, not on filenames, so it keeps
+#' working whatever the samples are called.
 #' @return The prepared frame, with `source_file` recording provenance.
 #' @export
-pf_read_grants <- function(path = "inputs", pattern = "grants.*\\.csv$") {
+pf_read_grants <- function(path = "inputs", pattern = "grants.*\\.csv$",
+                           allow_mixed = FALSE) {
   files <- if (length(path) == 1L && dir.exists(path))
     list.files(path, pattern = pattern, full.names = TRUE) else path
   if (!length(files)) stop("no grant files found at: ", paste(path, collapse = ", "))
@@ -272,6 +287,19 @@ pf_read_grants <- function(path = "inputs", pattern = "grants.*\\.csv$") {
     d$source_file <- basename(f)
     d
   })
+  if (!isTRUE(allow_mixed) && length(parts) > 1L) {
+    has_oid <- vapply(parts, function(d) "OBJECTID" %in% names(d), logical(1))
+    if (any(has_oid) && !all(has_oid)) {
+      stop("pf_read_grants() matched grant files of two different vintages.\n",
+           "  with OBJECTID (e-file rebuild): ",
+           paste(basename(files[has_oid]), collapse = ", "), "\n",
+           "  without OBJECTID (older GT)   : ",
+           paste(basename(files[!has_oid]), collapse = ", "), "\n",
+           "Concatenating them double-counts overlapping filings and mixes two ",
+           "schemas. Pass an explicit `pattern` for one vintage, or ",
+           "allow_mixed = TRUE if the mixture is intended.", call. = FALSE)
+    }
+  }
   d <- as.data.frame(data.table::rbindlist(parts, fill = TRUE))
   pf_prepare_grants(d)
 }

@@ -1,0 +1,47 @@
+==============================================================================
+1k BENCHMARK ON THE REBUILT GRANT FILE   arm = augmented
+==============================================================================
+npmatch 0.1.0.9000   normalizer v1-b42811fe6601afe6
+grants: 5,000  tax years 2009-2025
+reference: 3,880,431 rows
+matched in 1025.8 s
+==============================================================================
+RESULT
+==============================================================================
+tier             n    share
+YES           3050    63.0%
+MAYBE         1058    21.9%
+NO             734    15.2%
+identities      4842
+
+CLEAR RATE (YES)  : 63.0%
+YES+MAYBE         : 84.8%
+
+for orientation, same arm on the OLD grant population:
+  BASELINE-2026-08 (old npmatch) : 62.9% YES
+  recheck (current npmatch)      : 63.1% YES
+  -- different grant population, so a difference here is not a regression
+
+tax-year mix of the new sample (the old one stopped at 2024 and
+under-represented 2022-2024 badly):
+ TAXYEAR     N
+  <char> <int>
+    2009    11
+    2010    86
+    2011   124
+    2012   156
+    2013   162
+    2014   193
+    2015   226
+    2016   216
+    2017   294
+    2018   308
+    2019   318
+    2020   562
+    2021   538
+    2022   558
+    2023   599
+    2024   455
+    2025   194
+
+wrote data-dev/BENCH-EFILEPF-augmented.rds

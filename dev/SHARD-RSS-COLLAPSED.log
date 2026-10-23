@@ -1,0 +1,19 @@
+============================================================================== 
+SHARD RSS -- collapsed reference, batch of 2,000 identities 
+============================================================================== 
+baseline working set before anything is loaded: 0.17 GB 
+queries: 2,000 of 74,673 available 
+reference: 3,527,242 rows, loaded in 105 s | working set now 3.41 GB 
+dyads: 566,653 pairs | working set now 3.52 GB (+0.11) 
+ 
+running ONE batch of 2,000 at the production config ... 
+pf_run_batches: 2,000 rows in 1 batches of 2,000 
+  [  1/  1]  2,000 rows | YES  1242 MAYBE   377 NO   381 OOS    0 |  732.0 s (366.0 s/1k) 
+ 
+elapsed 732 s | 366 s per 1,000 identities 
+YES 1242 MAYBE 377 NO 381 OOS 0 
+ 
+PEAK WORKING SET .......... 32.95 GB 
+  of which reference load   3.41 GB 
+  gc() max used (for scale) 32.17 GB 
+appended to SHARD-RSS.csv 

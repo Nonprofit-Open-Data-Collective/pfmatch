@@ -27,9 +27,15 @@ stored on \code{x}, falling back to \code{npmatch::np_config()}.}
 }
 \value{
 \code{x} with the selection recomputed, plus \code{dyad_collapsed}, \code{dyad_id},
-\code{dyad_from_ein}, \code{dyad_n_before} and \code{dyad_n_after} recording every merge —
-including merges that left the pick unchanged, which are the majority and
-are still the point.
+\code{dyad_class}, \code{dyad_alt_ein}, \code{dyad_from_ein}, \code{dyad_n_before} and
+\code{dyad_n_after} recording every merge — including merges that left the pick
+unchanged, which are the majority and are still the point.
+
+\code{dyad_alt_ein} and \code{dyad_from_ein} are not the same column and the
+difference matters. \code{dyad_from_ein} is the EIN that \emph{was} reported and only
+fills in when the collapse changed the pick; \code{dyad_alt_ein} is the member
+merged away and fills in on every merge. A rollup keyed on the reported EIN
+needs the second one.
 }
 \description{
 For every grant whose tie band holds two or more candidates joined by a

@@ -1,0 +1,71 @@
+============================================================================== 
+DEDUP RULE -- augmented reference 
+============================================================================== 
+reference: 3,880,431 rows, 3,687,435 distinct EINs 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+queries: 4,920 in scope 
+  [A1-name-zip5    ]   13,497 cand | resolved 1510 | pending 3410 
+  [A2-name-state   ]   40,373 cand | resolved  389 | pending 3021 
+  [A3-name-dba     ]      884 cand | resolved   78 | pending 2943 
+  [A4-dba-name     ]       11 cand | resolved    5 | pending 2938 
+  [A5-dba-dba      ] 0 candidates 
+  [B1-token-state  ]  321,479 cand | resolved  295 | pending 2643 
+  [B2-token-concat ]  633,279 cand | resolved   49 | pending 2594 
+  [C1-name-any     ]   62,890 cand | resolved    0 | pending 2594 
+  [C2-dba-any      ]    2,150 cand | resolved    0 | pending 2594 
+  [D1-acronym      ]  174,879 cand | resolved   15 | pending 2579 
+  [D2-prefix       ]      213 cand | resolved    1 | pending 2578 
+cascade replicated in 1955 s 
+ 
+RAW accumulator      : 1,249,655 pairs 
+distinct (.id,.ein)  : 674,511 
+duplicate rows       : 575,144 (46.0%)  <- pairs where the rule bites 
+ 
+(.id,.ein) seen more than once : 290,660 
+  ...with DIFFERENT scores      : 4,201 (1%)  <- the rule decides these 
+  median score spread            : 0.140 
+  max score spread               : 0.900 
+============================================================================== 
+TWO RULES, SAME PAIRS 
+============================================================================== 
+keep-FIRST     674,511 pairs | YES 3015 MAYBE 1041 NO  737 
+keep-HIGHEST   674,511 pairs | YES 3099 MAYBE 1017 NO  677 
+============================================================================== 
+SELF-CHECK -- keep-FIRST must reproduce BASELINE-2026-08 
+============================================================================== 
+rows: baseline 4793 | replicated 4793 
+columns identical: 22 / 22 
+tiers identical to the freeze: TRUE 
+============================================================================== 
+WHAT keep-HIGHEST MOVES, monolithically 
+============================================================================== 
+identities compared : 4793 
+  same tier         : 4650 (97.02%) 
+  same EIN          : 4646 (97.03%) 
+ 
+          keep_highest
+keep_first  YES MAYBE   NO
+     YES   2999    16    0
+     MAYBE   67   974    0
+     NO      33    27  677
+ 
+tier changes: 143 
+  score rises under keep-highest on 138 of them 
+     .id tier.a tier.b overall_score.a overall_score.b
+ G004628     NO    YES            0.22       0.9550000
+ G002715     NO  MAYBE            0.00       0.7200000
+ G001805     NO    YES            0.22       0.9350000
+ G001860     NO    YES            0.20       0.9000000
+ G002639     NO    YES            0.20       0.9000000
+ G004621     NO  MAYBE            0.08       0.7799990
+ G004584     NO    YES            0.22       0.9094118
+ G000990     NO    YES            0.22       0.9085714
+ G004848     NO    YES            0.22       0.9048600
+ G004176     NO  MAYBE            0.08       0.7600000
+ G004306     NO    YES            0.38       0.9675000
+ G000750     NO    YES            0.38       0.9550000
+ G000132     NO  MAYBE            0.22       0.7799990
+ G000710     NO    YES            0.36       0.9180952
+ G000638     NO    YES            0.38       0.9338462
+ 
+wrote data-dev/DEDUP-RULE-augmented.csv 

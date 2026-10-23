@@ -494,9 +494,15 @@ pf_dyad_annotate <- function(x, dyads, config = pf_dyad_config()) {
 #' @param rescore Re-run selection and tiering on the reduced pair set. See
 #'   *Collapse before selection*.
 #' @return `x` with the selection recomputed, plus `dyad_collapsed`, `dyad_id`,
-#'   `dyad_from_ein`, `dyad_n_before` and `dyad_n_after` recording every merge —
-#'   including merges that left the pick unchanged, which are the majority and
-#'   are still the point.
+#'   `dyad_class`, `dyad_alt_ein`, `dyad_from_ein`, `dyad_n_before` and
+#'   `dyad_n_after` recording every merge — including merges that left the pick
+#'   unchanged, which are the majority and are still the point.
+#'
+#'   `dyad_alt_ein` and `dyad_from_ein` are not the same column and the
+#'   difference matters. `dyad_from_ein` is the EIN that *was* reported and only
+#'   fills in when the collapse changed the pick; `dyad_alt_ein` is the member
+#'   merged away and fills in on every merge. A rollup keyed on the reported EIN
+#'   needs the second one.
 #' @export
 pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
                              np_config = NULL, rescore = TRUE) {
@@ -504,6 +510,7 @@ pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
   res <- as.data.frame(x$result)
   res$dyad_collapsed <- FALSE
   res$dyad_id <- NA_character_; res$dyad_from_ein <- NA_character_
+  res$dyad_alt_ein <- NA_character_; res$dyad_class <- NA_character_
   res$dyad_n_before <- NA_integer_; res$dyad_n_after <- NA_integer_
   done <- function() structure(
     .pf_setresult(x, .pf_reclass(res, x$result)), class = "pf_match")
@@ -574,8 +581,13 @@ pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
   win  <- merge(topr, keep, by = c(".id", "grp"))[rep != top_row]
   merged_ids <- unique(keep$.id)
 
-  # one dyad id per grant, for the audit trail
-  edk <- ed[!duplicated(ed$.id), list(.id, did)]
+  # one dyad id and class per grant, for the audit trail. A grant can carry both
+  # kinds of edge when config$use admits `related`; report the stronger one, the
+  # same precedence pf_dyad_annotate() uses. Safe to re-sort here: the union-find
+  # above has already consumed `ed` in full and order does not affect it.
+  ed[, .pri := data.table::fifelse(cls == "substitutable", 0L, 1L)]
+  data.table::setorderv(ed, c(".id", ".pri"))
+  edk <- ed[!duplicated(ed$.id), list(.id, did, cls)]
 
   mi <- match(merged_ids, res$.id)
   nb <- topr[match(merged_ids, topr$.id)]
@@ -584,10 +596,24 @@ pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
   res$dyad_n_before[mi[ok]]  <- nb$n_before[ok]
   res$dyad_n_after[mi[ok]]   <- nb$n_after[ok]
   res$dyad_id[mi[ok]]        <- edk$did[match(merged_ids[ok], edk$.id)]
+  res$dyad_class[mi[ok]]     <- edk$cls[match(merged_ids[ok], edk$.id)]
 
   # the losing members of every merged group, keyed for removal
   losers <- cand[gsz > 1L][!(.rowid %in% keep$rep)]
   drop_key <- paste(losers$.id, losers$.ein)
+
+  # `dyad_alt_ein` is the member merged away, and it is needed whether or not the
+  # pick changed -- `dyad_from_ein` only fills in when it did, so on its own it
+  # loses the majority of merges. An analyst rolling grants up to a recipient has
+  # to know the grant could equally have been reported against this EIN. Where a
+  # group merged three or more members, report the strongest loser; `dyad_n_before`
+  # and `dyad_n_after` already record that there were others.
+  if (nrow(losers)) {
+    alt <- losers[order(losers$.id, -losers$score)]
+    alt <- alt[!duplicated(alt$.id)]
+    ai <- match(alt$.id, res$.id)
+    res$dyad_alt_ein[ai[!is.na(ai)]] <- alt$.ein[!is.na(ai)]
+  }
 
   if (!rescore) {
     if (nrow(win)) {
@@ -673,7 +699,8 @@ pf_dyad_collapse <- function(x, dyads, config = pf_dyad_config(),
   new <- as.data.frame(new)
   # carry the audit columns onto the re-selected result
   j <- match(new$.id, res$.id)
-  for (col in c("dyad_collapsed", "dyad_id", "dyad_n_before", "dyad_n_after"))
+  for (col in c("dyad_collapsed", "dyad_id", "dyad_class", "dyad_alt_ein",
+                "dyad_n_before", "dyad_n_after"))
     new[[col]] <- res[[col]][j]
   new$dyad_collapsed[is.na(new$dyad_collapsed)] <- FALSE
   new$dyad_from_ein <- NA_character_

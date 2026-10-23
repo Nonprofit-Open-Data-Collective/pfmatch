@@ -89,3 +89,26 @@ the attribute unless the pairs are the point.
 
 The three scratch files were deleted after comparison; `data-dev/` is gitignored
 and the probe reproduces them in about eight minutes each.
+
+---
+
+## Update 2026-08-22: reproducible, and now also order-independent
+
+This memo established that the benchmark reproduces bit-for-bit across processes
+and thread counts. Both remain true. What it could not see is how much of that
+reproducibility depended on the *reference arriving in the same order every
+time*.
+
+Measured while validating state partitioning: with selection ties broken on
+`.ein` instead of on row position, **498 of 4,733 identities (10.52%) report a
+different EIN, and 0 change tier** — every one of the 498 a pair of candidates
+scoring identically. So one reported EIN in ten rested on row order, and three
+runs on one machine could never have detected it, because the row order was the
+same all three times.
+
+`npmatch@f14f1d9` fixes it and `BASELINE-2026-08` was re-frozen at revision 2
+(`BASELINE-2026-08/MANIFEST.md`). The benchmark is now deterministic across
+processes, thread counts, **and reference row order** — which is the property a
+partitioned run actually needs.
+
+The "not established" note below still stands on cross-platform determinism.

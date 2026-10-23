@@ -1,0 +1,40 @@
+============================================================================== 
+STATE-PARTITION EQUIVALENCE -- CA, 500 queries, 7 state-blocked passes 
+============================================================================== 
+full reference: 3,880,431 rows 
+queries: 500 
+full      331.1 s | peak  22.53 GB |  111,254 pairs | YES 328 MAYBE  80 NO  88 
+CA slice: 410,127 rows (10.6% of the reference) 
+naive      69.9 s | peak  12.88 GB |  128,731 pairs | YES 332 MAYBE  69 NO  94 
+grafted corpus stats: n_reference 3,880,431, 397,581 base tokens, 3,059,918 concat tokens 
+global    183.1 s | peak  10.59 GB |  113,988 pairs | YES 329 MAYBE  80 NO  87 
+============================================================================== 
+DOES THE SLICE REPRODUCE THE UNSLICED RUN? 
+============================================================================== 
+ 
+naive slice vs full 
+  pairs           128,731 vs  111,254   (+17477) 
+  in both         102,865 
+  only in full      8,389 
+  only in slice    25,866 
+  PAIR SETS IDENTICAL: FALSE 
+  identities compared 495 | same tier 480 | same EIN 449 
+  VERDICT: DIFFERS 
+ 
+slice + global corpus stats vs full 
+  pairs           113,988 vs  111,254   (+2734) 
+  in both         111,066 
+  only in full        188 
+  only in slice     2,922 
+  PAIR SETS IDENTICAL: FALSE 
+  identities compared 496 | same tier 495 | same EIN 470 
+  VERDICT: DIFFERS 
+============================================================================== 
+COST 
+============================================================================== 
+arm       seconds    peak GB 
+full        331.1      22.53 
+naive        69.9      12.88 
+global      183.1      10.59 
+ 
+wrote data-dev/STATE-EQUIVALENCE.csv 

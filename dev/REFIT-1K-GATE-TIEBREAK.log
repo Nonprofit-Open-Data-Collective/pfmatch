@@ -1,0 +1,8 @@
+============================================================================== 
+GATE: 5-file, no dyads, vs BASELINE-2026-08/benchmark-1k-active.rds 
+============================================================================== 
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+matched 4733 identities in 410 s 
+rows: baseline 4733, now 4733 
+columns identical: 12 / 24 
+  DIFFER: overall_ein, overall_name_y, overall_name_sim, overall_addr_sim, overall_veto_soft, overall_veto_reason, name_ein, name_name_y, addr_ein, addr_name_y, views_agree, pass 

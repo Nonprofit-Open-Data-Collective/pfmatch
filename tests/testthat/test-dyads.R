@@ -390,3 +390,29 @@ test_that("'query' falls back to the operating entity when the grant name is mis
 test_that("the default policy is 'query'", {
   expect_equal(pf_dyad_config()$policy, "query")
 })
+
+test_that("the collapse records the member it merged away, and its class", {
+  d <- build()
+  r <- as.data.frame(suppressMessages(
+    pf_dyad_collapse(fake_match(), d, rescore = FALSE))$result)
+  # G1's group is EAGLE RANCH / EAGLE RANCH FOUNDATION. The fixture carries no
+  # grant name, so the query policy falls back to operating and keeps the
+  # non-arm member; the arm is what gets merged away.
+  expect_equal(r$dyad_class[r$.id == "G1"], "substitutable")
+  expect_equal(r$dyad_alt_ein[r$.id == "G1"], "111111111")
+  # G2 is the Mayo pair: related, never merged, so it carries neither column
+  expect_true(is.na(r$dyad_alt_ein[r$.id == "G2"]))
+  expect_true(is.na(r$dyad_class[r$.id == "G2"]))
+})
+
+test_that("dyad_alt_ein records the merge even when the pick did not change", {
+  d <- build()
+  # "top" keeps the highest-scoring member, which is the one already reported,
+  # so no pick changes and dyad_from_ein stays empty. The merge still happened
+  # and a rollup still needs to know about the other EIN.
+  r <- as.data.frame(suppressMessages(pf_dyad_collapse(
+    fake_match(), d, pf_dyad_config(policy = "top"), rescore = FALSE))$result)
+  expect_true(all(is.na(r$dyad_from_ein)))
+  expect_equal(r$dyad_alt_ein[r$.id == "G1"], "222222222")
+  expect_equal(r$dyad_alt_ein[r$.id == "G3"], "888888888")
+})

@@ -1,0 +1,16 @@
+==========================================================================================
+SUBSTRING CREDIT -- 5,000 grant rows
+==========================================================================================
+                                     (A and B are in dev/BENCH-JW-AB.log)
+  A: Jaro, no substring [baseline]   YES=3051  MAYBE=1054  NO=738    (63.0% / 84.8%)
+  B: Jaro-Winkler, no substring      YES=3126  MAYBE=1176  NO=541    (64.5% / 88.8%)
+  C: Jaro + substring 0.90           YES=3050  MAYBE=1132  NO=661    (63.0% / 86.4%)
+  D: Jaro-Winkler + substring 0.90   YES=3125  MAYBE=1202  NO=516    (64.5% / 89.3%)
+==========================================================================================
+RECOVERY ON THE 25 ADJUDICATED CASES (biased toward current failures)
+==========================================================================================
+  arm  correct top pick surfaced w/ CORRECT ein      surfaced w/ WRONG ein
+  C    11/25            3                            0
+  D    11/25            7                            4
+==========================================================================================
+wrote data-dev/BENCH-SUBSTRING-AB.rds

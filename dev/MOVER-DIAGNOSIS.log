@@ -1,0 +1,145 @@
+baseline 4793 rows | partitioned 4794 rows | partitioned pairs 671,960 
+compared 4793 identities | movers 60 
+============================================================================== 
+DIRECTION 
+============================================================================== 
+        partitioned
+baseline MAYBE   NO  YES
+   MAYBE  1022    4   15
+   NO        8  723    6
+   YES      15   12 2988
+============================================================================== 
+H1  Are movers near a threshold? 
+============================================================================== 
+thresholds: yes >= 0.78, maybe >= 0.65, min_margin 0.05 
+  |score - yes threshold|    movers  0.133 | others  0.180 
+  |score - maybe threshold|  movers  0.250 | others  0.310 
+  |margin - min_margin|      movers  0.112 | others  0.570 
+ 
+  within 0.02 of the margin brake : movers 12% | others 2% 
+  within 0.02 of a tier threshold : movers 15% | others 6% 
+============================================================================== 
+H2  Are movers in near-tie bands? 
+============================================================================== 
+  median n_close  : movers 1.0 | others 1.0 
+  tie flagged     : movers 33% | others 22% 
+  n_close >= 2    : movers 33% | others 22% 
+============================================================================== 
+H4  Which pass resolved them in the baseline? 
+============================================================================== 
+            pass     n movers        pct
+          <char> <int>  <int>      <num>
+      D1-acronym    87      4 4.59770115
+ B2-token-concat   161      6 3.72670807
+  B1-token-state  1296     48 3.70370370
+     C1-name-any   186      1 0.53763441
+    A1-name-zip5  2375      1 0.04210526
+   A2-name-state   565      0 0.00000000
+     A3-name-dba    93      0 0.00000000
+     A4-dba-name     7      0 0.00000000
+      C2-dba-any    18      0 0.00000000
+ 
+C1/C2 are the passes whose position changed under partitioning. 
+============================================================================== 
+H5  Do movers involve rows the AUGMENTED reference adds? 
+============================================================================== 
+  reference carries no row_source column; using an EIN-duplication proxy. 
+  EINs carrying >1 reference row: 127,499 of 3,687,435 (3.5%) 
+  baseline pick sits on a multi-row EIN : movers 80% | others 51% 
+============================================================================== 
+CANDIDATE VOLUME for movers, partitioned side 
+============================================================================== 
+  median candidates : movers 46 | others 4 
+  n_close  baseline vs partitioned, movers: 1.0 -> 1.0 
+  margin   baseline vs partitioned, movers: 0.162 -> 0.160 
+============================================================================== 
+THE MOVERS 
+============================================================================== 
+     .id                         name   from     to  sc.b  sc.p  mg.b  mg.p
+  <char>                       <char> <char> <char> <num> <num> <num> <num>
+ G001505                  HORSE OF CT  MAYBE     NO 0.780 0.220 0.560 0.000
+ G003710     MISSION TO NORTH AMERICA  MAYBE     NO 0.780 0.594 0.560 0.374
+ G004103       SECOND HARVEST NC OHIO  MAYBE     NO 0.760 0.360 0.400 0.140
+ G004837   FRIENDS OF BEZALEL ACADEMY  MAYBE     NO 0.733 0.360 0.513 0.140
+ G000567 BH AREA HABITAT FOR HUMANITY  MAYBE    YES 0.740 0.900 0.380 0.120
+ G001056 UNIVERSITY OF VIRGINIA JEFFE  MAYBE    YES 0.923 0.923 0.047 0.165
+ G001173 AMERICAN FRIENDS OF NOAM ELI  MAYBE    YES 0.788 0.901 0.042 0.112
+ G001700 CUMMER MUSEUM OF ART FOUNDAT  MAYBE    YES 0.780 0.905 0.560 0.685
+ G001732 AMERICAN FOUNDATION FOR THE   MAYBE    YES 0.720 0.888 0.500 0.808
+ G002045 CENTRAL CONNECTICUT STATE UN  MAYBE    YES 0.900 0.954 0.022 0.054
+ G002435 FRIENDS OF ISRAEL DEFENSE FO  MAYBE    YES 0.738 0.900 0.023 0.185
+ G002664 GREATER NASHUA MENTAL HEALTH  MAYBE    YES 0.780 0.940 0.000 0.160
+ G002703 THE LOWER EAASTSIDE GIRLS CL  MAYBE    YES 0.921 0.972 0.001 0.053
+ G003505        SAINT MARYS FOOD BANK  MAYBE    YES 0.780 0.920 0.000 0.320
+ G003508 BIRTHRIGHT ISRAEL FOUNDATION  MAYBE    YES 0.935 0.900 0.035 0.131
+ G004202 ACHIEVEMENT FIRST BRIDGEPORT  MAYBE    YES 0.960 0.960 0.045 0.057
+ G004327   RON BROWN SCHOLARS PROGRAM  MAYBE    YES 0.751 0.972 0.531 0.752
+ G004426        GRACE BRETHREN CHURCH  MAYBE    YES 0.915 0.915 0.015 0.095
+ G004770                TEMPLE ISRAEL  MAYBE    YES 0.897 0.897 0.004 0.217
+ G000990           PLANNED PARENTHOOD     NO  MAYBE 0.220 0.720 0.000 0.000
+ G001110 IRIS INTERGRATED REFUGEE AND     NO  MAYBE 0.380 0.760 0.020 0.400
+ G002163 PROTESTANT EPISCOPAL CHURCH      NO  MAYBE 0.480 0.780 0.000 0.300
+ G002309         UNION GOSPEL MISSION     NO  MAYBE 0.628 0.680 0.037 0.080
+ G002350         VS JEWISH EXPERIENCE     NO  MAYBE 0.360 0.780 0.140 0.560
+ G003343 EZER MIZION ROOTS FOR TOMORR     NO  MAYBE 0.380 0.780 0.020 0.420
+ G004621             NHRMC FOUNDATION     NO  MAYBE 0.080 0.780 0.000 0.700
+ G004848 NY POLICE AND FIRE WIDOW AND     NO  MAYBE 0.220 0.755 0.000 0.535
+ G000703 NATIONAL MATH AND SCIENCE IN     NO    YES 0.633 0.933 0.273 0.573
+ G001521           THE SALVATION ARMY     NO    YES 0.380 0.902 0.000 0.522
+ G002451 COUNCIL OF SENIOR CENTERS DB     NO    YES 0.360 0.882 0.140 0.662
+ G003139 OCEAN RESEARCH AND CONSERV A     NO    YES 0.648 0.948 0.055 0.355
+ G003926    BAPTIST HEALTH FOUNDATION     NO    YES 0.627 0.945 0.000 0.317
+ G004222  INTERNATIONAL MISSION BOARD     NO    YES 0.380 0.918 0.160 0.698
+ G000248 INTERNATIONAL FOLK ART MARKE    YES  MAYBE 0.914 0.772 0.142 0.012
+ G001226 PLANNED PARENTHOOD SOUTHEAST    YES  MAYBE 0.915 0.935 0.322 0.020
+ G001286           PLANNED PARENTHOOD    YES  MAYBE 0.909 0.913 0.189 0.005
+ G001412 AMERICAN FRIENDS OF OCEAN CL    YES  MAYBE 0.931 0.931 0.055 0.048
+ G001820 AMERICAN FRIENDS MAGEN DAVID    YES  MAYBE 0.918 0.750 0.138 0.015
+ G001984 PEF ISRAEL ENDOWMENT FUNDS I    YES  MAYBE 0.873 0.780 0.513 0.420
+ G002491        CENTER FUND OF ISRAEL    YES  MAYBE 0.900 0.754 0.680 0.534
+     .id                         name   from     to  sc.b  sc.p  mg.b  mg.p
+  nc.b  nc.p          pass.b
+ <int> <int>          <char>
+     1     2      D1-acronym
+     1     1 B2-token-concat
+     1     1  B1-token-state
+     1     1  B1-token-state
+     1     1  B1-token-state
+     2     1 B2-token-concat
+     4     1  B1-token-state
+     1     1  B1-token-state
+     1     1     C1-name-any
+     2     1  B1-token-state
+     4     1  B1-token-state
+    12     1  B1-token-state
+     2     1  B1-token-state
+     2     1      D1-acronym
+     2     1  B1-token-state
+     2     1    A1-name-zip5
+     1     1  B1-token-state
+     2     1  B1-token-state
+     2     1  B1-token-state
+     2     3  B1-token-state
+     2     1  B1-token-state
+     3     1 B2-token-concat
+     3     1  B1-token-state
+     1     1  B1-token-state
+     8     1  B1-token-state
+     3     1  B1-token-state
+    11     1  B1-token-state
+     1     1  B1-token-state
+     3     1  B1-token-state
+     1     1  B1-token-state
+     1     1  B1-token-state
+     6     1 B2-token-concat
+     1     1  B1-token-state
+     1     2  B1-token-state
+     1     2  B1-token-state
+     1     2  B1-token-state
+     1     2  B1-token-state
+     1     3  B1-token-state
+     1     1  B1-token-state
+     1     1      D1-acronym
+  nc.b  nc.p          pass.b
+ 
+wrote data-dev/MOVERS-AUGMENTED.csv (60 rows) 

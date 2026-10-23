@@ -1,0 +1,128 @@
+── Building pkgdown site for package pfmatch ───────────────────────────────────
+Reading from: C:/Users/jlecy/Dropbox/00 - URBAN/00-GITHUB/pfmatch
+Writing to: C:/Users/jlecy/Dropbox/00 - URBAN/00-GITHUB/pfmatch/docs
+── Sitrep ──────────────────────────────────────────────────────────────────────
+✔ URLs ok.
+✔ Favicons ok.
+✔ Open graph metadata ok.
+✔ Articles metadata ok.
+✔ Reference metadata ok.
+── Initialising site ───────────────────────────────────────────────────────────
+── Building home ───────────────────────────────────────────────────────────────
+Reading README.md
+Writing `404.html`
+── Building function reference ─────────────────────────────────────────────────
+Reading man/nteev2.Rd
+Reading man/pfmatch-package.Rd
+Writing `reference/pfmatch-package.html`
+Reading man/pf_add_recovery_keys.Rd
+Reading man/pf_adjudicate.Rd
+Reading man/pf_affiliation.Rd
+Reading man/pf_arm_core.Rd
+Reading man/pf_arm_order.Rd
+Reading man/pf_attached.Rd
+Reading man/pf_attached_report.Rd
+Reading man/pf_attach_missions.Rd
+Reading man/pf_batch_doc.Rd
+Reading man/pf_batch_report.Rd
+Reading man/pf_bmf_augment.Rd
+Reading man/pf_bmf_context.Rd
+Reading man/pf_bmf_context_cols.Rd
+Reading man/pf_build_affiliation_links.Rd
+Reading man/pf_build_dyads.Rd
+Reading man/pf_build_org_text.Rd
+Reading man/pf_build_reference.Rd
+Reading man/pf_candidate_frame.Rd
+Reading man/pf_cluster_arms.Rd
+Reading man/pf_collapse_reference.Rd
+Reading man/pf_consistency.Rd
+Reading man/pf_crosstab.Rd
+Reading man/pf_dedup.Rd
+Reading man/pf_dedup_doc.Rd
+Reading man/pf_dedup_report.Rd
+Reading man/pf_default_passes.Rd
+Reading man/pf_drop_self_matches.Rd
+Reading man/pf_dyads.Rd
+Reading man/pf_dyad_annotate.Rd
+Reading man/pf_dyad_collapse.Rd
+Reading man/pf_dyad_config.Rd
+Reading man/pf_dyad_lookup.Rd
+Reading man/pf_dyad_sources.Rd
+Reading man/pf_dyad_summary.Rd
+Reading man/pf_efilepf.Rd
+Reading man/pf_efilepf_build.Rd
+Reading man/pf_efilepf_download.Rd
+Reading man/pf_efilepf_map.Rd
+Reading man/pf_efilepf_url.Rd
+Reading man/pf_enrich.Rd
+Reading man/pf_evaluate.Rd
+Reading man/pf_geo_agreement.Rd
+Reading man/pf_group_siblings.Rd
+Reading man/pf_initials.Rd
+Reading man/pf_is_arm.Rd
+Reading man/pf_is_placeholder.Rd
+Reading man/pf_link.Rd
+Reading man/pf_map_grants.Rd
+Reading man/pf_match.Rd
+Reading man/pf_match_grants.Rd
+Reading man/pf_ntee_text.Rd
+Reading man/pf_oos_details.Rd
+Reading man/pf_partition.Rd
+Reading man/pf_pass_stage.Rd
+Reading man/pf_pipeline.Rd
+Reading man/pf_placeholder_pattern.Rd
+Reading man/pf_population_id.Rd
+Reading man/pf_prepare.Rd
+Reading man/pf_prepare_grants.Rd
+Reading man/pf_propagate_matches.Rd
+Reading man/pf_purpose.Rd
+Reading man/pf_purpose_coverage.Rd
+Reading man/pf_purpose_is_contentful.Rd
+Reading man/pf_purpose_stopwords.Rd
+Reading man/pf_purpose_tiebreak.Rd
+Reading man/pf_purpose_tokens.Rd
+Reading man/pf_read_grants.Rd
+Reading man/pf_recipients.Rd
+Reading man/pf_recipient_type.Rd
+Reading man/pf_recover.Rd
+Reading man/pf_recovery_passes.Rd
+Reading man/pf_recover_name_from_street.Rd
+Reading man/pf_reference.Rd
+Reading man/pf_report.Rd
+Reading man/pf_run.Rd
+Reading man/pf_run_batches.Rd
+Reading man/pf_schedi.Rd
+Reading man/pf_schedi_alias.Rd
+Reading man/pf_schedi_build.Rd
+Reading man/pf_schedi_dir.Rd
+Reading man/pf_schedi_download.Rd
+Reading man/pf_schedi_url.Rd
+Reading man/pf_schedi_years.Rd
+Reading man/pf_schedule_a_status.Rd
+Reading man/pf_staged_passes.Rd
+Reading man/pf_standardize_status.Rd
+Reading man/pf_status.Rd
+Reading man/pf_status_audit.Rd
+Reading man/pf_text.Rd
+Reading man/pf_tiebreak_config.Rd
+Reading man/pf_truth_schema.Rd
+Reading man/pf_type_labels.Rd
+Reading man/pf_type_levels.Rd
+── Building articles ───────────────────────────────────────────────────────────
+Reading vignettes/cascade-workflow.Rmd
+── Building sitemap ────────────────────────────────────────────────────────────
+── Building docs for llms ──────────────────────────────────────────────────────
+── Building redirects ──────────────────────────────────────────────────────────
+── Building search index ───────────────────────────────────────────────────────
+── Checking for problems ───────────────────────────────────────────────────────
+── Finished building pkgdown site for package pfmatch ──────────────────────────
+
+=== VERIFY in-process ===
+reference html : 104 
+article html   : 2 
+total files    : 247 
+new export page: TRUE 
+diagram ok     : TRUE 
+article ok     : TRUE 
+index.html     : TRUE 
+no .nojekyll?  : TRUE <- needs one for Pages

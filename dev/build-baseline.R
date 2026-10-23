@@ -32,7 +32,27 @@ setDTthreads(0)
 PF   <- Sys.getenv("PFMATCH_DIR", ".")
 MODE <- Sys.getenv("PF_BASE", "manifest")
 DD   <- file.path(PF, "data-dev")
-OUT  <- file.path(PF, "dev", "BASELINE-2026-08")
+
+# A baseline is a historical record, so it is SUPERSEDED, never rewritten.
+# BASELINE-2026-08 was frozen on the GT-derived 1k samples, which are now known
+# to be truncated at the recent end (2024 under-represented ~10x, 2025 absent --
+# see inputs/archive-gt/README.md). Its clear rate is therefore not comparable
+# to anything measured on the e-file population, which is why dev/bench-efilepf.R
+# carries the note that a difference against it "is not a regression".
+#
+# PF_BASE_DIR      which baseline directory to write   (default: the current one)
+# PF_BASE_GRANTS   grant-file pattern for the arms     (default: e-file samples)
+# PF_BASE_FORCE=1  permit writing into a directory that already has a manifest
+BASE_DIR <- Sys.getenv("PF_BASE_DIR", "BASELINE-2026-10")
+GRANTS   <- Sys.getenv("PF_BASE_GRANTS", "^ef1k_grants_.*\\.csv$")
+OUT  <- file.path(PF, "dev", BASE_DIR)
+if (file.exists(file.path(OUT, "manifest.csv")) &&
+    !nzchar(Sys.getenv("PF_BASE_FORCE"))) {
+  stop(sprintf(paste0("%s already holds a frozen manifest.\n",
+       "  A baseline is a historical record: supersede it with a new ",
+       "PF_BASE_DIR rather than\n  overwriting it. Set PF_BASE_FORCE=1 only to ",
+       "repair a baseline you are certain is wrong."), BASE_DIR), call. = FALSE)
+}
 dir.create(OUT, recursive = TRUE, showWarnings = FALSE)
 say  <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr   <- function() cat(strrep("=", 78), "\n")
@@ -55,7 +75,7 @@ ARTIFACTS <- data.frame(
 run_bench <- function(which) {
   refpath <- file.path(DD, switch(which,
     active = "REF-active.rds", augmented = "REF-augmented.rds"))
-  grants <- pf_read_grants(file.path(PF, "inputs"), pattern = "^1k_grants_.*\\.csv$")
+  grants <- pf_read_grants(file.path(PF, "inputs"), pattern = GRANTS)
   grants <- pf_recover_name_from_street(grants)
   say("loading %s ...", basename(refpath))
   ref <- readRDS(refpath)
@@ -145,7 +165,11 @@ write.csv(man, file.path(OUT, "manifest.csv"), row.names = FALSE)
 ## ---- environment -----------------------------------------------------------
 sig <- tryCatch(npmatch::np_normalize_signature(), error = function(e) NA_character_)
 env <- c(
-  sprintf("built             %s", Sys.getenv("PF_BASE_DATE", "2026-08-21")),
+  # Default to TODAY, not a pinned literal. The old default ("2026-08-21")
+  # stamped every later baseline with the original freeze date, which made a
+  # newly built baseline indistinguishable from the one it supersedes.
+  sprintf("built             %s",
+          Sys.getenv("PF_BASE_DATE", as.character(Sys.Date()))),
   sprintf("R                 %s", getRversion()),
   sprintf("platform          %s", R.version$platform),
   sprintf("pfmatch           %s", gitsha(PF)),

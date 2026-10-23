@@ -1,0 +1,49 @@
+cases with an adjudicated EIN: 25
+reference: 3,891,187 rows (66 s)
+target rows present in reference: 25 of 25 cases
+passes: A1-name-zip5, A2-name-state, A3-name-dba, A4-dba-name, A5-dba-dba, B1-token-state, B2-token-concat, C1-name-any, C2-dba-any, D1-acronym, D2-prefix
+  A1-name-zip5       0 pairs
+  A2-name-state      0 pairs
+  A3-name-dba        0 pairs
+  A4-dba-name        0 pairs
+  A5-dba-dba         0 pairs
+  B1-token-state     1,118 pairs, correct EIN retrieved for 15 of 25 cases
+  B2-token-concat    1,216 pairs, correct EIN retrieved for 15 of 25 cases
+  C1-name-any        46 pairs, correct EIN retrieved for 4 of 25 cases
+  C2-dba-any         10 pairs, correct EIN retrieved for 0 of 25 cases
+  D1-acronym         1,054 pairs, correct EIN retrieved for 15 of 25 cases
+  D2-prefix          6 pairs, correct EIN retrieved for 2 of 25 cases
+------------------------------------------------------------------------------------
+RETRIEVAL: was the correct row ever offered to the comparator?
+------------------------------------------------------------------------------------
+  retrieved by at least one pass : 18 of 25
+  never retrieved                : 7 of 25
+
+id        filed                                cands  retrieved  passes that found it
+G000145   UCAP SCHOOL                              3        yes  D1-acronym
+G000304   AMERICAN NATIONAL RED CROSS             33        yes  B1-token-state B2-token-concat C1-name-any
+G000311   GIRLS INC                               15         NO  
+G000907   JUVENILE DIABETES RESEARCH FOUNDAT      20        yes  B1-token-state B2-token-concat C1-name-any D1-acronym D2-prefix
+G000920   The Dallas Foundation for One Texa      70         NO  
+G001170   MUSCULAR DYSTROPHY                      23        yes  C1-name-any
+G001402   DANCE PLACE DC WHEEL PRODUCTIONS I      21        yes  B1-token-state B2-token-concat D1-acronym
+G001460   UNIVERSITY OF DENVER - OFFICE OF G      36        yes  B1-token-state B2-token-concat D1-acronym D2-prefix
+G001777   CROSSROADS THE RIDE                     32         NO  
+G001912   MIRACULOUS LOVE MINISTRIES              33        yes  B1-token-state B2-token-concat D1-acronym
+G001935   Donovan Bank Foundation                  1        yes  B1-token-state B2-token-concat D1-acronym
+G002181   The Salvation Army                      25        yes  B1-token-state B2-token-concat C1-name-any D1-acronym
+G002405   BOROUGHS COMMUNITY CENTER                1         NO  
+G002473   WISH BOOK 2020 FUND                    248        yes  B1-token-state B2-token-concat D1-acronym
+G002579   NW CHILDREN'S THTR SCHL                126        yes  D1-acronym
+G002630   BEIT HALOCHEN USA                       79        yes  B1-token-state B2-token-concat D1-acronym
+G002704   WGBH Public TV                          22        yes  B1-token-state B2-token-concat D1-acronym
+G002810   PLAYWORKS                                6        yes  B1-token-state B2-token-concat D1-acronym
+G002885   STERLING ANIMAL SHELTER                 78        yes  B1-token-state B2-token-concat
+G003429   WE CARE INC FEED THE FRIDGE             61        yes  B1-token-state B2-token-concat D1-acronym
+G003722   EASTER SEAL SOCIETY OF DEL-MAR          99         NO  
+G004078   CASA OF NJ                              93         NO  
+G004572   CROWN FINANCIAL MINISTRY                77         NO  
+G004596   THISTLEBEND COTTAGE                      5        yes  B1-token-state B2-token-concat D1-acronym
+G004966   LIONS EYE DOUNDATION OF CA & NV        189        yes  B1-token-state B2-token-concat D1-acronym
+------------------------------------------------------------------------------------
+wrote data-dev/NO-RESIDUAL-BLOCKING-REPLAY.csv

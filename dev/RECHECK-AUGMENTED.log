@@ -1,0 +1,32 @@
+==============================================================================
+RECHECK vs npmatch 0.1.0.9000   arm = augmented
+==============================================================================
+normalizer signature now    : v1-b42811fe6601afe6
+normalizer signature pinned : v1-421e1e2a6afb024e
+
+reference recompiled: 3,880,431 rows in 16.0 min
+recovered 2 recipient name(s) from the street field: Society of Jesus NY Province | Westford Conserv Trust
+matching 5,000 grants, 11 passes ...
+  matched in 1023.4 s
+==============================================================================
+TIER COUNTS
+==============================================================================
+tier       baseline        now     delta     now %
+YES            3015       3020        +5     63.1%
+MAYBE          1041       1035        -6     21.6%
+NO              737        729        -8     15.2%
+total          4793       4784        -9
+
+YES rate   : 63.1%  (baseline 62.9%)
+YES+MAYBE  : 84.8%  (baseline 84.6%)
+==============================================================================
+PER-IDENTITY MOVEMENT (identities present in both)
+==============================================================================
+compared: 4,784 identities
+only in baseline: 9 | only in recheck: 0
+tier changed: 17 (0.36%)
+    MAYBE  -> YES        11
+    YES    -> MAYBE       6
+EIN changed while still YES: 0 of 3009
+
+wrote data-dev/RECHECK-bench-augmented.rds (baseline directory untouched)

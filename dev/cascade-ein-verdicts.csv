@@ -1,0 +1,45 @@
+n,id,filed,winner,note
+1,G003630,BATON ROUGE AREA FOUNDATION,A,B is Baton Rouge Bikeshare
+2,G000116,TOWSON UNIVERSITY FOUNDATION,A,B mission is a radio station holding company
+3,G002419,KANSAS UNIVERSITY ENDOWMENT ASSOCIATION,A,B is the Center for Research
+4,G000862,HORIZONS AT ST RICHARD'S EPISCOPAL SCHOOL,UNCLEAR,Horizons affiliate vs the host school
+5,G003356,CHILDREN'S HOSPITAL OF PITTSBURGH FOUNDATION,B,B mission says sole fundraising arm of UPMC Children's
+6,G001597,NEXT LEVEL SPORTS FOUNDATION,A,exact name city zip and mission
+7,G002400,UNIVERSITY OF MICHIGAN-BUSINESS SCHOOL,B,A is the House Officers Association a labor union
+8,G000669,DOWNTOWN CHURCHES UNITED INC,A,B is its low-income housing affiliate
+9,G004671,CHILDREN'S INSTITUTE,B,B BMF name is Campbell Institute but mission is verbatim Children's Institute
+10,G004868,SAFARI CLUB INTERNATIONAL FOUNDATION,NEITHER,A is the Club in TX B is the Arizona Chapter
+11,G001764,Wilderness Society,A,B is Wilderness Project Foundation
+12,G002442,FIRST PRESBYTERIAN CHURCH,B,A is First Presbyterian of Milpitas
+13,G000242,UNIVERSITY OF TENNESSEE,UNCLEAR,neither side named
+14,G004973,LEWISBORO VOLUNTEER AMBULANCE,B,A is the Soccer Club
+15,G002676,SPECIAL OLYMPICS,A,B unnamed
+16,G000294,St Margaret's Church,B,B is St Margarets Episcopal Church Annapolis
+17,G000442,ST JUDES RANCH FOR CHILDREN,A,filed is the plain name B is the Nevada Region
+18,G001031,The Rotary Foundation,A,B is Rotary/One Foundation of the Chicago club
+19,G002837,Refuah Helpline,B,B matches the filed city exactly
+20,G003993,SPECIAL OLYMPICS INC,A,B is the Endowment Fund
+21,G000121,OPPORTUNITY FINANCE NETWORK,A,B is a different EIN named Opportunity Finance
+22,G000752,GREENPEACE FUND,A,B is Greenpeace Vision Fund
+23,G003220,UNIVERSITY OF NEBRASKA FOUNDATION,A,B is the UNO Alumni Association
+24,G004937,EASTER SEALS MIDWEST,A,B is Life Skills Foundation
+25,G004787,Whitman Baseball-Softball Association,B,B mission names the filed organisation verbatim
+26,G000944,TOLEDO ZOO & AQUARIUM,B,A is the American Dental Assistants Association
+27,G001167,CANCER SUPPORT COMMUNITY,B,B is the Walnut Creek affiliate matching the filed city
+28,G003192,FLORIDA STATE COLLEGE AT JACKSONVILLE FOUNDATION,UNCLEAR,two similar foundation EINs
+29,G002988,VALLEY YOUTH HOUSE,B,A is the endowment arm purpose says services
+30,G004326,OHIO ENVIRONMENTAL COUNCIL,A,B is Ohio Environmental Voters
+31,G000499,MIAMI MUSIC PROJECT,A,B is Miami Music Teachers Foundation
+32,G003248,WEST END SYNAGOGUE,B,A is the West End Middle School PTO
+33,G002757,UNITED JEWISH APPEAL,B,A EIN is malformed B matches the filed ZIP
+34,G000962,SPOKANE COUNTY,NEITHER,A is a ministry B is the Country Club
+35,G002737,TOYS FOR TOTS FOUNDATION,B,same name both sides B matches the filed city Triangle VA
+36,G001525,FREEDOM HOUSE,A,A shares the filed ZIP B is the Foundation
+37,G003013,YESHIVA DARCHEI TORAH,A,filed says Yeshiva B is the Congregation
+38,G001729,INDIAN WATERS COUNCIL,UNCLEAR,both are Boy Scouts of America in Columbia SC
+39,G002274,GEORGIA TECH FOUNDATION INC,A,B is the Alumni Association
+40,G004233,GREENPEACE FUND INC,A,B is Greenpeace Vision Fund
+41,G002399,UNIVERSITY OF TEXAS (AUSTIN),NEITHER,A is Theta Tau B is a pharmacists academy
+42,G001098,HABITAT FOR HUMANITY,A,A matches the filed city and ZIP B is Williamson-Maury
+43,G000784,South Florida PBS,A,B is the Florida Police Benevolent Association
+44,G002002,SAINT LUKE'S HOSPITAL FOUNDATION,A,A is Saint Lukes Foundation Kansas City

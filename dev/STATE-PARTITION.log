@@ -1,0 +1,10 @@
+reference: 3,880,431 rows (slice = full) | working set 6.88 GB 
+queries: 500 CA identities (of 7603 available) 
+passes: 7 state-blocked (A2-name-state, A3-name-dba, A4-dba-name, A5-dba-dba, B1-token-state, B2-token-concat, D1-acronym) 
+ 
+slice full |  324.6 s | cascade peak  22.53 GB | process peak  23.40 GB | 111,254 pairs | YES 328 MAYBE 80 NO 88 
+reference: 410,127 rows (slice = CA) | working set 4.36 GB 
+queries: 500 CA identities (of 7603 available) 
+passes: 7 state-blocked (A2-name-state, A3-name-dba, A4-dba-name, A5-dba-dba, B1-token-state, B2-token-concat, D1-acronym) 
+ 
+slice CA   |   74.5 s | cascade peak   3.43 GB | process peak   5.01 GB | 128,731 pairs | YES 332 MAYBE 69 NO 94 

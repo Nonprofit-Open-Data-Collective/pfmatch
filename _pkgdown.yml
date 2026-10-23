@@ -1,0 +1,153 @@
+url: https://nonprofit-open-data-collective.github.io/pfmatch/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#1c4e63"
+
+navbar:
+  structure:
+    left:  [intro, reference, articles]
+    right: [search, github]
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: The matching cascade, step by step
+          href: articles/cascade-workflow.html
+
+
+reference:
+
+- title: Run the pipeline
+  desc: >
+    End to end. `pf_run()` is the whole thing; the staged functions are the
+    same work with the seams exposed.
+  contents:
+  - pf_pipeline
+  - pf_run
+  - pf_run_batches
+  - pf_link
+  - pf_batch_doc
+  - pf_batch_report
+
+- title: Stage 1 — read and prepare grants
+  desc: >
+    Parse Part XIV Table 3a, standardize the uncontrolled recipient-status
+    field, resolve the two-line recipient name, and decide what is in
+    scope.
+  contents:
+  - pf_prepare
+  - pf_read_grants
+  - pf_prepare_grants
+  - pf_recover_name_from_street
+  - pf_recipient_type
+  - pf_standardize_status
+  - pf_status_audit
+  - pf_schedule_a_status
+  - pf_is_placeholder
+  - pf_placeholder_pattern
+  - pf_attached
+  - pf_attached_report
+
+- title: Stage 2 — collapse to recipient identities
+  desc: >
+    Repeated grant rows become one identity, so the cascade scores each
+    recipient once rather than once per grant.
+  contents:
+  - pf_dedup_doc
+  - pf_dedup
+  - pf_recipients
+  - pf_dedup_report
+  - pf_propagate_matches
+  - pf_group_siblings
+
+- title: Stage 3 — the reference
+  desc: >
+    Compile the BMF side: layers, name variants, enrichment text.
+  contents:
+  - pf_reference
+  - pf_build_reference
+  - pf_bmf_augment
+  - pf_collapse_reference
+  - pf_partition
+  - pf_bmf_context
+  - pf_text
+  - pf_build_org_text
+  - pf_attach_missions
+  - nteev2
+
+- title: Stage 4 — the matching cascade
+  desc: >
+    The staged blocking passes and the match itself. See the cascade
+    article for what each pass does and which cases it clears.
+  contents:
+  - pf_match
+  - pf_match_grants
+  - pf_staged_passes
+  - pf_recover
+  - pf_recovery_passes
+  - pf_add_recovery_keys
+  - pf_drop_self_matches
+  - pf_status
+  - pf_crosstab
+  - pf_geo_agreement
+
+- title: Stage 5 — adjudication
+  desc: >
+    Build the sheet a human or an LLM reviews. There is no safe automatic
+    acceptance of the MAYBE tier; see `dev/ADJUDICATION-PLAN.md`.
+  contents:
+  - pf_adjudicate
+  - pf_candidate_frame
+  - pf_enrich
+  - pf_purpose
+  - pf_purpose_tiebreak
+  - pf_purpose_is_contentful
+  - pf_purpose_coverage
+  - pf_purpose_tokens
+
+- title: Evaluation against ground truth
+  desc: >
+    Score a configuration instead of arguing about its clear rate: a
+    clear-rate delta cannot separate recall from false accepts.
+  contents:
+  - pf_evaluate
+  - pf_consistency
+  - pf_truth_schema
+  - pf_population_id
+
+- title: Affiliates, dyads and sibling structure
+  desc: >
+    Parent, chapter and auxiliary relationships — the dominant source of
+    wrong-but-plausible matches.
+  contents:
+  - pf_affiliation
+  - pf_build_affiliation_links
+  - pf_dyads
+  - pf_build_dyads
+  - pf_dyad_annotate
+  - pf_dyad_collapse
+  - pf_dyad_config
+  - pf_dyad_lookup
+  - pf_dyad_sources
+  - pf_dyad_summary
+  - pf_cluster_arms
+  - pf_arm_core
+  - pf_arm_order
+  - pf_is_arm
+
+- title: Source data
+  desc: >
+    Build the grant file from the NCCS e-file extracts, and Schedule I
+    aliases.
+  contents:
+  - pf_efilepf
+  - pf_efilepf_build
+  - pf_efilepf_download
+  - pf_efilepf_map
+  - pf_efilepf_url
+  - pf_schedi
+  - pf_schedi_alias
+  - pf_schedi_build
+  - pf_schedi_download

@@ -331,3 +331,29 @@ returning 64 YES against 61 and 10 NO against 15.
 **Rule, restated operationally:** no absolute timing is recorded unless
 `Get-Process Rscript` shows nothing else running, and no per-1,000 figure is
 compared across different batch sizes.
+
+## 2026-10-22: the rule was broken again, and it coloured a conclusion
+
+Every long-running job in the 2026-10-22 session shared the machine with an
+unrelated 15-process job (`dev/partvii-panel/05-link.R` plus 14 parallel SOCK
+workers, started 20:28:52) and, later, an R process from a separate matchdb
+session. `Get-Process Rscript` was not checked before running anything.
+
+No absolute timing from that session should be quoted. Specifically affected:
+the ~40-minute reference probe, the ~15-minute token-IDF builds, and the
+agreement-cell scan.
+
+Worse than the lost timings, it coloured a diagnosis. `dev/scan-agreement-risk.R`
+ran 90 minutes with no output and was written off as "the `by = seq_len(nrow(a))`
+pattern is too slow". That pattern *is* slow and should be rewritten as two
+vectorised joins — but the attribution was made without noticing the machine was
+carrying a 15-worker job, so how much of the 90 minutes was the pattern and how
+much was CPU starvation is unknown. The honest statement is that the scan's cost
+was never measured.
+
+**Addition to the rule:** check for foreign R processes before *and* after any
+long run, and never diagnose a performance problem from wall-clock alone on a
+shared machine. Identify processes by command line (`Get-CimInstance
+Win32_Process`) rather than by count — most of the Rscript processes visible that
+evening belonged to other sessions, and killing by name would have destroyed
+someone else's work.
