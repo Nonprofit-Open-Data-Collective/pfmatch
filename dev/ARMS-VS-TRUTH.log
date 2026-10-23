@@ -2,3 +2,24 @@ truth: 177 rows, population d1c3db4c56a01709
 run population: d1c3db4c56a01709  (match: TRUE)
   A done
   B done
+  C done
+  D done
+============================================================================================
+FOUR ARMS AGAINST GROUND TRUTH
+============================================================================================
+arm                             YES    Y+M |     recall YES     recall Y+M | false clears
+Jaro, no substring [CURRENT]  63.0%  84.8% |    23/89    26% |    36/89    40% |    0/59   0.0%
+Jaro-Winkler                  64.5%  88.8% |    32/89    36% |    49/89    55% |    1/59   1.7%
+Jaro + substring              63.0%  86.4% |    23/89    26% |    43/89    48% |    0/59   0.0%
+Jaro-Winkler + substring      64.5%  89.3% |    32/89    36% |    52/89    58% |    1/59   1.7%
+============================================================================================
+recall  = of truth rows with a known correct EIN, how many the arm gets right
+false clears = of truth rows where NO organisation exists, how many went YES
+
+'picked an EIN adjudication ruled out', per arm:
+  Jaro, no substring [CURRENT] 15
+  Jaro-Winkler                 10
+  Jaro + substring             15
+  Jaro-Winkler + substring     10
+============================================================================================
+wrote data-dev/ARMS-VS-TRUTH.csv

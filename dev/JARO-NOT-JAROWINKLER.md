@@ -127,13 +127,41 @@ NO → **YES on the wrong EIN** (under Jaro its top pick was correct), and
 new YES in a sample of six — tiny, and biased toward current failures, but it
 is evidence the promotion is not clean.
 
-### What would settle it
+### Settled against ground truth — and it reverses the above
 
-Sample and adjudicate the three moved cells — **77 NO→YES**, **137 MAYBE→YES**,
-**138 YES→MAYBE** — exactly as `dev/CASCADE-STRATEGY.md` §3 did for the cascade.
-A clear-rate delta cannot distinguish recall from false accepts, and the
-adjudicated sample available here is deliberately drawn from current failures so
-it can only measure recovery.
+`dev/evaluate-arms.R` scores all four arms against `data-dev/PF-TRUTH.csv`
+(177 labels, 89 with a known correct EIN, 59 asserting no organisation exists at
+all, 40 carrying an EIN adjudication ruled out).
+
+| arm | recall YES | recall Y+M | false clears | ruled-out EINs picked |
+|---|---:|---:|---:|---:|
+| Jaro (current) | 23/89 **26%** | 36/89 **40%** | 0/59 | **15** |
+| Jaro-Winkler | 32/89 **36%** | 49/89 **55%** | 1/59 | **10** |
+| Jaro + substring | 23/89 26% | 43/89 48% | 0/59 | 15 |
+| both | 32/89 **36%** | 52/89 **58%** | 1/59 | **10** |
+
+**Jaro-Winkler is better on the negative checks, not worse.** It picks 10
+explicitly-ruled-out EINs against Jaro's 15, and costs **one** false clear out
+of 59 known-impossible cases. The caution recorded above — that Jaro-Winkler
+"carries all the risk" — came from eyeballing 2 apparent wrong YES in a 25-case
+sample drawn from current failures. It does not survive measurement against 59
+known-impossible cases and 40 negative constraints.
+
+Recall rises substantially: 23 → 32 correct-and-cleared, 36 → 49 surfaced.
+
+**The 138 demotions do not appear as damage.** A demoted correct answer would
+leave `recall YES` while remaining in `recall Y+M`; both rose. That is
+reassuring and **not** conclusive, because the truth table is built from cells
+the pipeline failed on and so under-samples cases that were already YES —
+precisely the population demotions would hurt. Still open.
+
+**Recommendation: adopt both** (`jw_p = 0.1`, `substring_p = 0.90`), which is
+best on every measured axis. Substring credit changes `recall YES` not at all
+and lifts `recall Y+M` by 7, exactly as a review-only path should.
+
+Do not read 26-36% as pipeline accuracy. These 89 cases were selected for being
+hard. It means "of known-hard cases, this arm recovers 36%". Precision on the
+3,051 YES mass remains unmeasured; the false-clear check is real but narrow.
 
 ## Do not just change it
 
