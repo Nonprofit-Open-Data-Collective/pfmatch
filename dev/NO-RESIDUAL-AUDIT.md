@@ -45,12 +45,18 @@ Adjudicated from the filed record, the web, and both references' near-misses:
 
 | | n |
 |---|---:|
-| payee is a person | 42 |
+| payee is a person | 37 |
 | **a real organisation, missed** | **32** |
-| no such organisation traceable | 9 |
-| payee has no exemption of its own | 8 |
-| exact name present, wrong place | 3 |
+| payee has no exemption of its own | 12 |
+| no such organisation traceable | 10 |
 | unresolved | 6 |
+| exact name present, wrong place | 3 |
+
+(An earlier version of this table read 42 persons and 8 without an exemption.
+The rollup in `dev/score-no-residual.R` labelled *every* non-organisation
+stratum "payee is a person", folding in 4 government bodies and 1 aggregate
+placeholder. The floor total of 59% was unaffected — only its composition, and
+the denominator estimate below, which depended on it.)
 
 "No exemption of its own" is the honest floor and it is structural: a parochial
 school under an archdiocesan group ruling, a food pantry operating inside
@@ -116,16 +122,22 @@ not in the geography term. That is a stronger and more actionable claim than
 
 ## Two findings that are not about the residual
 
-**1. The individual-payee flags miss half of what they should catch.** The
-pipeline's own signals (`looks_personal`, `recipient_type`, the filed status
+**1. The individual-payee flags miss about a quarter of what they should catch.**
+The pipeline's own signals (`looks_personal`, `recipient_type`, the filed status
 code) classified 28 of the 100 as individual payees. Adjudication puts the true
-count at **42**. Fourteen named people — `JOEL BASS`, `BROOKLYN GARRISON-OSBORN`,
-`JONES MAURICE`, `SMALL RANDALL`, `George Dupree` — were routed into the matching
-path, where they can only ever fail or match something wrong.
+count at **37**. Nine named people — `JOEL BASS`, `BROOKLYN GARRISON-OSBORN`,
+`JONES MAURICE`, `SMALL RANDALL`, `MITCHELL MILLER` — were routed into the
+matching path, where they can only ever fail or match something wrong.
+
+The cause is specific and fixable: `.pf_looks_personal()` requires a token from
+`.pf_given_names()`, and that list holds **202 names**. `GEORGE`, `TIFFANY`,
+`ANGELA` and `JASON` are in it and those cases were caught; `JOEL`, `MAURICE`,
+`RANDALL`, `MITCHELL`, `BETH`, `TANNER` and `BROOKLYN` are not, and those were
+missed. A 202-entry whitelist cannot cover US given names.
 
 This does not raise the clear rate; it cleans the denominator. Scoped to this
-cell alone, ~249 of the 592 are individuals. Removing just those from the 4,869
-moves the cascade's 69.0% to roughly **72.7%**. The real figure is higher still,
+cell alone, ~219 of the 592 are individuals. Removing just those from the 4,869
+moves the cascade's 69.0% to roughly **72.3%**. The real figure is higher still,
 because the other cells were not sampled — and the August audit found the error
 runs the other way too (the OOS flag was wrong 24% of the time, coding real
 organisations as individuals). Both directions are broken, and neither has been

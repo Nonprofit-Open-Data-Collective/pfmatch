@@ -82,10 +82,18 @@ v[, class := fcase(
   verdict == "UNFINDABLE",                       "floor: no such organisation",
   verdict == "INDIVIDUAL",                       "floor: payee is a person",
   default                                      = "unresolved")]
+# The non-organisation strata are NOT interchangeable, and an earlier version of
+# this rollup labelled all of them "payee is a person" -- folding the 4
+# government bodies and 1 aggregate placeholder into the person count and
+# reporting 42 persons where the true figure is 37. They are all floor, but the
+# composition was wrong and the denominator estimate downstream depended on it.
+s2 <- s[stratum != "organisation"]
+s2[, class := fcase(
+  stratum == "individual payee",      "floor: payee is a person",
+  stratum == "government body",       "floor: payee has no exemption",
+  default                           = "floor: no such organisation")]
 cls <- rbind(v[, .(n = .N), by = class],
-             s[stratum != "organisation",
-               .(class = "floor: payee is a person", n = .N)])[
-               , .(n = sum(n)), by = class]
+             s2[, .(n = .N), by = class])[, .(n = sum(n)), by = class]
 cls[, pct := 100 * n / 100]
 setorder(cls, -n)
 hr()

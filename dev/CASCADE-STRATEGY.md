@@ -168,7 +168,8 @@ Remaining, in priority order:
    of their own. All 21 independently established EINs were already in **both**
    references, so the residual is name resolution, not missing data — widening
    the reference again will not help. Two side findings matter more than the
-   split: the individual-payee flags miss half of what they should catch, which
+   split: the individual-payee flags miss about a quarter of what they should
+   catch (a 202-entry given-name whitelist), which
    inflates the denominator behind every clear rate in this project, and one
    case in 100 has a filed state that contradicts its own ZIP and so is invisible
    to state blocking.
