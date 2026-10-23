@@ -6,7 +6,7 @@
 \usage{
 pf_run(
   grants,
-  bmf,
+  bmf = NULL,
   pattern = "grants.*[.]csv$",
   dedup = c("fuzzy", "exact", "none"),
   ref_cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
@@ -15,13 +15,16 @@ pf_run(
   dyads = NULL,
   report = TRUE,
   verbose = TRUE,
+  ref_source = c("auto", "matchdb", "local"),
+  tier = getOption("pfmatch.matchdb_tier", "unified-observed"),
   ...
 )
 }
 \arguments{
 \item{grants, pattern, dedup}{Passed to \code{\link[=pf_prepare]{pf_prepare()}}.}
 
-\item{bmf, ref_cache}{Passed to \code{\link[=pf_reference]{pf_reference()}}.}
+\item{bmf, ref_cache}{Passed to \code{\link[=pf_reference]{pf_reference()}}. With no \code{bmf}, the reference
+is the matchdb tier, falling back to the bundle at \code{ref_cache}.}
 
 \item{dir, batch_size, dyads}{Passed to \code{\link[=pf_link]{pf_link()}}. \code{dyads} may be a table or
 a path to a cached one.}
@@ -30,12 +33,14 @@ a path to a cached one.}
 
 \item{verbose}{Print progress.}
 
+\item{ref_source, tier}{Passed to \code{\link[=pf_reference]{pf_reference()}} as \code{source} and \code{tier}.}
+
 \item{...}{Further arguments to \code{\link[=pf_link]{pf_link()}}.}
 }
 \value{
 A list of class \code{pf_run} with \code{grants}, \code{recipients}, \code{status}, and
 \code{timing}. The reference bundle is deliberately \strong{not} returned — it is
-~1.3 GB and is on disk at \code{ref_cache}.
+~1.3 GB and is on disk (at \code{ref_cache}, or in matchdb's cache).
 }
 \description{
 \code{\link[=pf_prepare]{pf_prepare()}} -> \code{\link[=pf_reference]{pf_reference()}} -> \code{\link[=pf_link]{pf_link()}} -> \code{\link[=pf_report]{pf_report()}}.
