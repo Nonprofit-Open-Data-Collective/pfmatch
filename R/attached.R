@@ -73,15 +73,15 @@ pf_attached_report <- function(grants, verbose = TRUE) {
   # requires the calling namespace to be data.table-aware, and pfmatch imports
   # only selected functions.
   g <- as.data.frame(grants, stringsAsFactors = FALSE)
-  need <- c("FILEREIN", "TAXYEAR", "SIGOCPYAMOUN", "URL")
+  need <- c("ORG_EIN", "TAX_YEAR", "PF_15_G_PAID_AMT", "URL")
   miss <- setdiff(need, names(g))
   if (length(miss))
     stop("grants is missing raw column(s): ", paste(miss, collapse = ", "), call. = FALSE)
 
   ph  <- pf_is_placeholder(g)
-  amt <- suppressWarnings(as.numeric(g$SIGOCPYAMOUN)); amt[is.na(amt)] <- 0
+  amt <- suppressWarnings(as.numeric(.pf_col(g, "PF_15_G_PAID_AMT"))); amt[is.na(amt)] <- 0
   fnm <- if (!is.null(g$FILERNAME1)) g$FILERNAME1 else rep(NA_character_, nrow(g))
-  key <- paste(g$FILEREIN, g$TAXYEAR, sep = "\r")
+  key <- paste(.pf_col(g, "ORG_EIN"), .pf_col(g, "TAX_YEAR"), sep = "\r")
 
   keep <- unique(key[ph])                       # returns with at least one pointer row
   idx  <- split(seq_len(nrow(g)), key)[keep]
@@ -89,9 +89,9 @@ pf_attached_report <- function(grants, verbose = TRUE) {
   out <- do.call(rbind, lapply(idx, function(i) {
     p <- ph[i]
     data.frame(
-      filer_ein          = g$FILEREIN[i][1],
+      filer_ein          = .pf_col(g, "ORG_EIN")[i][1],
       filer_name         = fnm[i][1],
-      taxyear            = g$TAXYEAR[i][1],
+      taxyear            = .pf_col(g, "TAX_YEAR")[i][1],
       n_placeholder_rows = sum(p),
       placeholder_amount = sum(amt[i][p]),
       n_itemized_rows    = sum(!p),

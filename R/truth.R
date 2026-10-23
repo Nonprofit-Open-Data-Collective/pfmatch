@@ -20,7 +20,7 @@
 #' @return A character vector of required column names.
 #' @export
 pf_truth_schema <- function() {
-  c("truth_id",    # content-derived stable key (see dev/build-truth.R)
+  c("truth_id",    # OBJECTID | TABLE_ID -- the published ef2 row key
     "grant_id",    # positional id; valid only within `population`
     "population",  # fingerprint of the grant-file set this row was adjudicated on
     "verdict",     # ORG_FOUND | NO_ORG_INDIVIDUAL | NO_ORG_NOT_EXEMPT |

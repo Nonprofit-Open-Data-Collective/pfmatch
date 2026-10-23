@@ -1,0 +1,54 @@
+rows: 17,560,767
+multi-filing units: 10,073  (981,179 grant rows)
+--------------------------------------------------------------------------------------
+WHAT THE DUPLICATE UNITS LOOK LIKE
+                                cls units
+                             <char> <int>
+      no amended, content identical  4273
+ amended present, content identical  4004
+   amended present, content DIFFERS  1481
+        no amended, content DIFFERS   315
+--------------------------------------------------------------------------------------
+CAN THEY BE ORDERED IN TIME?
+                                cls ts_distinct units
+                             <char>      <lgcl> <int>
+   amended present, content DIFFERS        TRUE  1473
+   amended present, content DIFFERS       FALSE     8
+ amended present, content identical        TRUE  3989
+ amended present, content identical       FALSE    15
+        no amended, content DIFFERS        TRUE   305
+        no amended, content DIFFERS       FALSE    10
+      no amended, content identical       FALSE  4269
+      no amended, content identical        TRUE     4
+--------------------------------------------------------------------------------------
+ROW-COUNT SPREAD WITHIN A UNIT (max - min)
+                                cls same_rowcount units
+                             <char>        <lgcl> <int>
+   amended present, content DIFFERS         FALSE   662
+   amended present, content DIFFERS          TRUE   819
+ amended present, content identical          TRUE  4004
+        no amended, content DIFFERS          TRUE    79
+        no amended, content DIFFERS         FALSE   236
+      no amended, content identical          TRUE  4273
+--------------------------------------------------------------------------------------
+SAFE-TO-DEDUP TALLY
+  content identical -> dropping a copy loses nothing : 8,277 (82.2%)
+  content differs   -> needs a rule or review        : 1,796 (17.8%)
+
+  of the differing ones, an amended filing exists in : 1,481
+  ... and no amended filing exists in                : 315
+--------------------------------------------------------------------------------------
+EXAMPLES: two ORIGINAL filings, different content
+  unit (EIN|year)            filings  rows_min  rows_max
+  770557004|2023                   2        10       267
+  900647568|2023                   2         2       144
+  237301323|2021                   2        44       153
+  203932106|2021                   2       132       214
+  363375377|2021                   2         5        84
+  366062451|2024                   2        15        93
+  943256579|2024                   2         1        76
+  222612047|2023                   2         1        70
+  260348290|2021                   2         5        73
+  260558990|2015                   2         1        67
+--------------------------------------------------------------------------------------
+wrote data-dev/AMENDED-UNIT-DETAIL.csv

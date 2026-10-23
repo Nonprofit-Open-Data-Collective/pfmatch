@@ -1,0 +1,49 @@
+raw ef2 files: 17 in C:\Users\jlecy/Documents/grants/efilepf
+grant rows: 17,560,767
+--------------------------------------------------------------------------------------
+FLAG DISTRIBUTIONS
+  RETURN_AMENDED_X   [FALSE]=16,930,081  [TRUE]=   630,686
+  RETURN_GROUP_X     [FALSE]=17,560,767
+  RETURN_TYPE        [990PF]=17,560,767
+  TABLE_ID non-blank : 100.0%
+  OBJECTID+TABLE_ID unique over all rows: YES
+
+distinct filings (OBJECTID): 977,677
+--------------------------------------------------------------------------------------
+THE FOUR COMBINATIONS
+    grp amended filings
+ <lgcl>  <lgcl>   <int>
+  FALSE   FALSE  971234
+  FALSE    TRUE    6443
+--------------------------------------------------------------------------------------
+DEDUP UNIT = (ORG_EIN, TAX_YEAR, group flag)
+  units total                       : 967,425
+  units with ONE filing             : 957,352 (99.0%)
+  units with SEVERAL filings        : 10,073 (1.0%)
+ n_filings units
+     <int> <int>
+         2  9912
+         3   144
+         4    16
+         5     1
+--------------------------------------------------------------------------------------
+WITHIN MULTI-FILING UNITS
+  newest filing IS the amended one  : 5,481 (54.4%)
+  newest is NOT amended      [FLAG] : 4,592 (45.6%)
+  no amended filing at all in unit  : 4,588
+  timestamps tied (cannot order)    : 4,302
+--------------------------------------------------------------------------------------
+GROUP vs PRIMARY FOR ONE EIN-YEAR
+  primary only : 967,425
+  group only   : 0
+  BOTH         : 0  <- legitimately distinct filings, must NOT be merged
+--------------------------------------------------------------------------------------
+HOW MUCH DO THE GRANT ROWS DIFFER WITHIN A UNIT?
+  (an amendment often exists BECAUSE a grant changed, so exact row-set
+   equality is the wrong test for 'the same filing')
+
+  rows per filing, multi-filing units only:
+     Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+     1.00      2.00      6.00     48.27     17.00 363675.00 
+--------------------------------------------------------------------------------------
+wrote data-dev/AMENDED-UNITS.csv and AMENDED-UNIT-CHECKS.csv

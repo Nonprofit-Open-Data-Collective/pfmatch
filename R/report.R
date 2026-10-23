@@ -40,14 +40,14 @@ pf_status <- function(x) {
   j <- match(paste(g$grant_id, ein), paste(pr$.id, pr$.ein))
   out <- data.frame(
     grant_id       = g$grant_id,
-    filer_ein      = if (!is.null(g$FILEREIN)) g$FILEREIN else NA_character_,
+    filer_ein      = .pf_col(g, "ORG_EIN"),
     filer_name     = if (!is.null(g$FILERNAME1)) g$FILERNAME1 else NA_character_,
     recip_name     = g$recip_name,
     recip_name_alt = g$recip_name_alt,
     recip_city     = g$recip_city,
     recip_state    = g$recip_state_raw,
     recip_zip5     = g$recip_zip5,
-    status_raw     = if (!is.null(g$SIGOCPYRFSTA)) g$SIGOCPYRFSTA else NA_character_,
+    status_raw     = .pf_col(g, "PF_15_G_PAID_RECIP_STAT"),
     recipient_type = factor(as.character(g$recipient_type), pf_type_levels()),
     recipient_type_detail = g$recipient_type_detail,
     looks_personal = g$looks_personal,

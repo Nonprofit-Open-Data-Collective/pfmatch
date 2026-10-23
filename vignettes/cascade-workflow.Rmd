@@ -125,6 +125,24 @@ IRS Business Master File through a **staged cascade**: a sequence of blocking
 passes that start tight and loosen, each one only looking at what the previous
 passes could not settle.
 
+### Where the grants come from
+
+Grants are the `PF-P15-T01-SUPPLEMENTARY-INFO-GRANT-PAID` table of the NCCS
+e-file (ef2) release, retrieved with `pf_efilepf_fetch()`, which delegates
+release resolution to
+[`panel990`](https://github.com/Nonprofit-Open-Data-Collective/panel990).
+Columns carry the
+[concordance990 v2](https://nonprofit-open-data-collective.github.io/concordance990/articles/data-dictionary-990pf.html)
+research variable names, so the recipient name arrives as
+`PF_15_G_PAID_RECIP_NAME_ORG_L1` rather than a positional or legacy label.
+
+`pf_efilepf_build()` deduplicates superseded filings as it builds — identical
+filings collapse, an amended filing supersedes its original, and filings that
+disagree with no amendment to settle them are all kept and flagged. It removes
+1.75% of grant rows corpus-wide and never drops a short-period return for
+sharing a tax year with a full-year one. Rows are addressed by
+`OBJECTID | TABLE_ID`, the published row key.
+
 This article walks the passes in order and shows, for each, real cases that
 clear and real cases that are carried forward. Every number and name below comes
 from one run — 5,000 grant rows against the augmented unified reference

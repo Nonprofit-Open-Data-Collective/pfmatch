@@ -158,10 +158,13 @@ pf_map_grants <- function() {
 #' @export
 pf_prepare_grants <- function(grants, id_prefix = "G") {
   g <- as.data.frame(grants, stringsAsFactors = FALSE)
-  get <- function(col) if (!is.null(g[[col]])) as.character(g[[col]]) else rep(NA_character_, nrow(g))
-  pnam <- .pf_blank_to_na(get("SIGOCPYRPNAM"))
-  bn1  <- .pf_blank_to_na(get("SIGOCPYRBNBN1"))
-  bn2  <- .pf_blank_to_na(get("SIGOCPYRBNBN2"))
+  # Columns are named by the current concordance990 v2 schema. .pf_col() falls
+  # back to the legacy v1/GTDC name, so files built before the migration still
+  # read correctly -- see R/schema.R.
+  get <- function(col) .pf_col(g, col)
+  pnam <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_NAME_PERS"))
+  bn1  <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_NAME_ORG_L1"))
+  bn2  <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_NAME_ORG_L2"))
   # -- line 2 disposition (see [pf_prepare]) --------------------------------
   fbo <- !is.na(bn1) & grepl("\\bF\\s*/?B\\s*/?O\\b|\\bFOR (THE )?BENEFIT OF\\b",
                              bn1, ignore.case = TRUE)
@@ -177,8 +180,8 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   name <- ifelse(!is.na(pnam), pnam, bn1_clean)
   name_alt <- ifelse(keep2, trimws(paste(bn1_clean, bn2)), NA_character_)
   # -- address ---------------------------------------------------------------
-  state <- toupper(trimws(.pf_blank_to_na(get("SIGOCPYRFAPO"))))
-  zipr  <- .pf_blank_to_na(get("SIGOCPYRFAPC"))
+  state <- toupper(trimws(.pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_STATE"))))
+  zipr  <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_ZIP"))
   zip5  <- ifelse(grepl("^[0-9]{5}", gsub("[^0-9]", "", zipr)),
                   substr(gsub("[^0-9]", "", zipr), 1, 5), NA_character_)
   # a 4-digit ZIP is a New-England/Puerto-Rico leading zero the extract dropped
@@ -194,7 +197,7 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   st_abb[!is.na(full)] <- c(datasets::state.abb, "DC", "PR")[full[!is.na(full)]]
   is_foreign <- !is.na(state) & !(st_abb %in% .pf_us_states())
   # -- recipient type --------------------------------------------------------
-  ty <- pf_standardize_status(get("SIGOCPYRFSTA"))
+  ty <- pf_standardize_status(get("PF_15_G_PAID_RECIP_STAT"))
   # foreign geography overrides an otherwise-plausible status: a "PC" in London
   # still has no BMF row.
   detail <- ty$recipient_type_detail
@@ -205,7 +208,7 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   # column (c) describes the grant's *beneficiary* while the check is written to
   # the *payee*. A foundation paying a student's tuition to a college codes the
   # grant `I`, and the college is very much in the BMF. See dev/AUDIT-FINDINGS.md.
-  street   <- .pf_blank_to_na(get("SIGOCPYRFAAL1"))
+  street   <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_L1"))
   has_name <- !is.na(name)
   has_addr <- !is.na(zip5) | (!is.na(street) & !is.na(st_abb))
   oos_reason <- rep(NA_character_, nrow(g))
@@ -234,8 +237,8 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
                         ifelse(careof, "care-of",
                         ifelse(fbo, "fbo-beneficiary", "continuation"))))
   out$recip_street <- street
-  out$recip_unit   <- .pf_blank_to_na(get("SIGOCPYRFAAL2"))
-  out$recip_city   <- .pf_blank_to_na(get("SIGOCPYRFACI"))
+  out$recip_unit   <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_L2"))
+  out$recip_city   <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_CITY"))
   out$recip_state  <- ifelse(is_foreign, NA_character_, st_abb)
   out$recip_state_raw <- state
   out$recip_zip5   <- zip5

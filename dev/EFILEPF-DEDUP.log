@@ -1,0 +1,45 @@
+reading 17 raw ef2 files ...
+corpus: 17,560,767 grant rows, 977,677 filings
+--------------------------------------------------------------------------------------
+pf_efilepf_dedup: 17,560,767 -> 17,253,199 grant rows
+  filings: 977,677 -> 967,795 (9,882 dropped)
+  contexts: 967,790 | multi-filing: 9,712
+  kept           kept     966,310
+  kept           dropped  8,342
+  kept_amended   kept     1,475
+  kept_amended   dropped  1,540
+  kept_flagged   kept     10
+  FLAGGED: 36 grant rows across 10 contexts where filings disagree and no amendment settles it -- all kept.
+--------------------------------------------------------------------------------------
+INVARIANTS
+  OBJECTID + TABLE_ID unique            : TRUE
+  no grant row invented                 : TRUE
+  all kept OBJECTIDs came from the input: TRUE
+  partial filings dropped               : 46
+  ... dropped for a NON-partial [MUST BE 0]: 0
+--------------------------------------------------------------------------------------
+WHAT WAS DROPPED, AND WHY
+  total filings dropped : 9,882
+  of them amended       : 172
+  of them partial       : 46
+--------------------------------------------------------------------------------------
+THE FLAGGED CONTEXTS (kept in full, needing review)
+  grant rows flagged : 36
+  filings flagged    : 10
+  contexts flagged   : 5
+
+  EIN2             year      OBJECTID
+  EIN-46-3453349   2024      OID-202500589349100520
+  EIN-46-3453349   2024      OID-202630479349100503
+  EIN-46-5459064   2021      OID-202241329349102739
+  EIN-46-5459064   2021      OID-202241329349103214
+  EIN-55-0759703   2019      OID-202023109349100512
+  EIN-55-0759703   2019      OID-202032309349100133
+  EIN-84-4042129   2020      OID-202141039349100209
+  EIN-84-4042129   2020      OID-202243119349100894
+  EIN-85-4381155   2021      OID-202201339349102235
+  EIN-85-4381155   2021      OID-202221339349102757
+--------------------------------------------------------------------------------------
+wrote data-dev/EFILEPF-DEDUP-AUDIT.rds and EFILEPF-DEDUP-FLAGGED.csv
+
+rows removed: 307,568 (1.75% of the corpus)

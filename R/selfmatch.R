@@ -18,7 +18,7 @@ pf_drop_self_matches <- function(x, verbose = TRUE) {
   stopifnot(inherits(x, "pf_match"))
   pairs <- attr(x$result, "pairs")
   g <- x$grants
-  if (is.null(g$FILEREIN)) {
+  if (all(is.na(.pf_col(g, "ORG_EIN")))) {
     if (verbose) message("no FILEREIN column; nothing to guard against")
     return(x)
   }
@@ -29,7 +29,7 @@ pf_drop_self_matches <- function(x, verbose = TRUE) {
     v[ok] <- formatC(v[ok], width = 9, flag = "0")
     v
   }
-  filer <- stats::setNames(digits(g$FILEREIN), g$grant_id)
+  filer <- stats::setNames(digits(.pf_col(g, "ORG_EIN")), g$grant_id)
   df <- as.data.frame(pairs)
   self <- !is.na(filer[df$.id]) & digits(df$.ein) == unname(filer[df$.id])
   self[is.na(self)] <- FALSE

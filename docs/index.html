@@ -62,13 +62,49 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># npmatch first — pfmatch Imports it</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"../npmatch"</span>, repos <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"source"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"."</span>,          repos <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"source"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"."</span>,          repos <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"source"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># suggested: retrieval and the variable dictionary</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"Nonprofit-Open-Data-Collective/panel990"</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"Nonprofit-Open-Data-Collective/concordance990"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="the-data-source">The data source<a class="anchor" aria-label="anchor" href="#the-data-source"></a>
+</h2>
+<p>Grants come from the <strong>NCCS e-file (ef2) release</strong>, retrieved through <a href="https://github.com/Nonprofit-Open-Data-Collective/panel990" class="external-link"><code>panel990</code></a>, which owns release resolution and defaults to the current published version and to parquet:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/pf_efilepf_fetch.html">pf_efilepf_fetch</a></span><span class="op">(</span>years <span class="op">=</span> <span class="fl">2015</span><span class="op">:</span><span class="fl">2025</span><span class="op">)</span>       <span class="co"># panel990 picks the release</span></span>
+<span><span class="fu"><a href="reference/pf_efilepf_build.html">pf_efilepf_build</a></span><span class="op">(</span>out <span class="op">=</span> <span class="st">"inputs/grants.csv"</span><span class="op">)</span>   <span class="co"># schema = "v2", dedup = TRUE</span></span>
+<span><span class="fu"><a href="reference/pf_source_provenance.html">pf_source_provenance</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $efile_version  "v3_1"</span></span>
+<span><span class="co">#&gt; $efile_root     "https://nccs-efile.s3.us-east-1.amazonaws.com/public/efilepf_v3_1/"</span></span>
+<span><span class="co">#&gt; $efile_format   "parquet"</span></span>
+<span><span class="co">#&gt; $concordance_version "2.0.3"</span></span></code></pre></div>
+<p>Column names are the <strong>concordance990 v2</strong> research variables (<code>PF_15_G_PAID_RECIP_NAME_ORG_L1</code>, <code>ORG_EIN</code>, …), documented in the <a href="https://nonprofit-open-data-collective.github.io/concordance990/articles/data-dictionary-990pf.html" class="external-link">990-PF data dictionary</a>. <code><a href="reference/pf_concordance_vars.html">pf_concordance_vars()</a></code> reads them from the installed concordance rather than hardcoding them, and warns if pfmatch expects a name the concordance has renamed — so a dictionary change surfaces as a warning instead of a column that silently reads as all-missing.</p>
+<div class="section level3">
+<h3 id="a-note-on-the-earlier-source">A note on the earlier source<a class="anchor" aria-label="anchor" href="#a-note-on-the-earlier-source"></a>
+</h3>
+<p>This package was prototyped against GT’s Data Mart extract, whose columns carry the concordance990 <strong>v1</strong> names (<code>SIGOCPYRPNAM</code>, <code>SIGOCPYRBNBN1</code>, <code>FILEREIN</code>, …). Those are superseded. The GT extract is also truncated at the recent end — 2024 is under-represented roughly tenfold and 2025 is absent — so it is kept only in <code>inputs/archive-gt/</code> for reproducing pre-migration artifacts, never for measurement. <code><a href="reference/pf_read_grants.html">pf_read_grants()</a></code> refuses to concatenate the two vintages.</p>
+<p>Readers accept either naming through an internal resolver, so files built before the migration still work; new code should use the v2 names.</p>
+</div>
+<div class="section level3">
+<h3 id="duplicate-and-superseded-filings">Duplicate and superseded filings<a class="anchor" aria-label="anchor" href="#duplicate-and-superseded-filings"></a>
+</h3>
+<p><code><a href="reference/pf_efilepf_build.html">pf_efilepf_build()</a></code> deduplicates by default. The unit is <code>(EIN2, TAX_YEAR, group flag, partial flag)</code> — a filing can only supersede another covering the same reporting context — and within a context identical filings collapse, an amended filing supersedes the original, and filings that disagree with no amendment to settle them are <strong>all kept</strong> and flagged.</p>
+<p>On the 17,560,767-row corpus that removes 307,568 rows (<strong>1.75%</strong>) across 9,882 of 977,677 filings, leaving 5 contexts flagged for review. Two properties are deliberate and tested:</p>
+<ul>
+<li>a <strong>short-period</strong> return is never dropped for sharing a tax year with a full-year one — they cover different periods, and in 97 of 310 such pairs the partial return reports <em>more</em> grants</li>
+<li>the dedup unit is <strong>not</strong> keyed on the tax period, because in 18 units an amendment corrected the period dates; keying on it would stop the amendment superseding its original</li>
+</ul>
+<p>990-PF filers do not file group returns (<code>RETURN_GROUP_X</code> is <code>FALSE</code> on every row), but the flag stays in the key so the behaviour holds if that changes.</p>
+<p>Rows are addressed by <code>OBJECTID | TABLE_ID</code>, the published ef2 row key — <code>OBJECTID</code> identifies the filing, <code>TABLE_ID</code> counts rows within it. Verified unique across all 17.5M rows.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="use">Use<a class="anchor" aria-label="anchor" href="#use"></a>
 </h2>
 <p>Four stages, or one call:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pfmatch</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pf_run.html">pf_run</a></span><span class="op">(</span>grants <span class="op">=</span> <span class="st">"inputs"</span>, bmf <span class="op">=</span> <span class="st">".../bmf_2026_01_processed.csv"</span><span class="op">)</span></span>
@@ -135,8 +171,8 @@ dev/             benchmarks, probes, findings                          (not ship
 <h2 id="what-is-specific-to-this-problem">What is specific to this problem<a class="anchor" aria-label="anchor" href="#what-is-specific-to-this-problem"></a>
 </h2>
 <div class="section level3">
-<h3 id="id_1-rrecipient-typer--standardizing-sigocpyrfsta">1. <code>R/recipient-type.R</code> — standardizing <code>SIGOCPYRFSTA</code>
-<a class="anchor" aria-label="anchor" href="#id_1-rrecipient-typer--standardizing-sigocpyrfsta"></a>
+<h3 id="id_1-rrecipient-typer--standardizing-pf_15_g_paid_recip_stat">1. <code>R/recipient-type.R</code> — standardizing <code>PF_15_G_PAID_RECIP_STAT</code>
+<a class="anchor" aria-label="anchor" href="#id_1-rrecipient-typer--standardizing-pf_15_g_paid_recip_stat"></a>
 </h3>
 <p>Column (c) of the grants table asks the filer for the “foundation status of recipient” and the IRS supplies no controlled vocabulary. Across 155,000 sample grants the field carries <strong>~1,400 distinct spellings</strong> of about eight concepts.</p>
 <p><code><a href="reference/pf_standardize_status.html">pf_standardize_status()</a></code> is a rule cascade, not a lookup table, so unseen spellings land in the right bucket. Two normalizations do most of the work:</p>
@@ -191,14 +227,14 @@ dev/             benchmarks, probes, findings                          (not ship
 <p>The data dictionary settles the name-field question. There are three columns:</p>
 <ul>
 <li>
-<code>SIGOCPYRPNAM</code> — “Name of Grantee — <strong>Person</strong>”</li>
+<code>PF_15_G_PAID_RECIP_NAME_PERS</code> — “Recipient Person Name”</li>
 <li>
-<code>SIGOCPYRBNBN1</code> — “Name of Grantee — <strong>Business</strong> Line 1”</li>
+<code>PF_15_G_PAID_RECIP_NAME_ORG_L1</code> — “…business name line 1”</li>
 <li>
-<code>SIGOCPYRBNBN2</code> — “Name of Grantee — <strong>Business</strong> Line 2”</li>
+<code>PF_15_G_PAID_RECIP_NAME_ORG_L2</code> — “…business name line 2”</li>
 </ul>
-<p>So <code>BNBN1</code>/<code>BNBN2</code> are a two-line <strong>wrap of one name</strong>, not a main name and a DBA — confirming the working assumption. <code>PNAM</code> and <code>BNBN1</code> never co-occur (0 of 155,000 rows carry both), so the recipient name is a straight coalesce.</p>
-<p><code>PNAM</code> is <strong>not</strong> a usable individual flag: filers routinely put organizations in it (“World Central Kitchen”, “Surfrider Foundation”), which is why scope is decided from <code>SIGOCPYRFSTA</code> instead.</p>
+<p>So The two <code>_ORG_L1</code>/<code>_ORG_L2</code> columns are a two-line <strong>wrap of one name</strong>, not a main name and a DBA — confirming the working assumption. <code>_NAME_PERS</code> and <code>_ORG_L1</code> never co-occur (0 of 155,000 rows carry both), so the recipient name is a straight coalesce.</p>
+<p><code>_NAME_PERS</code> is <strong>not</strong> a usable individual flag: filers routinely put organizations in it (“World Central Kitchen”, “Surfrider Foundation”), which is why scope is decided from <code>PF_15_G_PAID_RECIP_STAT</code> instead.</p>
 <p>Line 2, when present, is one of four things and each is handled separately:</p>
 <table class="table">
 <colgroup>
@@ -235,7 +271,7 @@ dev/             benchmarks, probes, findings                          (not ship
 </tbody>
 </table>
 <p>The joined continuation is carried in npmatch’s <code>dba</code> slot. That is a deliberate reuse rather than a claim that it is a DBA: <code>np_compare()</code> scores the full name/DBA cross-product and keeps the best, so a record can match on either the truncated line-1 form or the complete one — whichever the BMF happens to hold. It earns its keep: the <code>exact-name-dba</code> pass resolves 86 YES on the 5k sample.</p>
-<p>Other handling: 4-digit ZIPs are repaired (a dropped New-England leading zero), spelled-out state names are folded to postal codes, and a state value that is not a US postal jurisdiction marks the record foreign. <code>SIGOCAFFRFACO</code> (country) is in the schema but empty throughout the sample, so foreign detection has to come from the state field.</p>
+<p>Other handling: 4-digit ZIPs are repaired (a dropped New-England leading zero), spelled-out state names are folded to postal codes, and a state value that is not a US postal jurisdiction marks the record foreign. <code>PF_15_G_PAID_RECIP_ADDR_CNTR</code> (country) is in the schema but empty throughout the sample, so foreign detection has to come from the state field.</p>
 <p><code>looks_personal</code> is a diagnostic only and never drives scope: a 2-3 token name with no institutional token <em>and</em> a positive person signal (a single-letter initial, or a common given name). It fires on 0.7% of YES matches and 18% of out-of-sample rows, which is the right direction.</p>
 </div>
 <div class="section level3">
@@ -329,10 +365,10 @@ geo   = max( 1.00·zip9,  0.95·street,  0.90·zip5,  0.90·pobox,
 <div class="section level2">
 <h2 id="benchmarks-and-development">Benchmarks and development<a class="anchor" aria-label="anchor" href="#benchmarks-and-development"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="va">PF_SET</span><span class="op">=</span>1k <span class="ex">Rscript</span> dev/run-test-match.R      <span class="co"># the five 1,000-row files</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="va">PF_SET</span><span class="op">=</span>50k <span class="ex">Rscript</span> dev/run-test-match.R</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="va">PF_SET</span><span class="op">=</span>100k <span class="ex">Rscript</span> dev/run-test-match.R</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="ex">Rscript</span> dev/run-full-file.R                 <span class="co"># checkpointed production run</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="va">PF_SET</span><span class="op">=</span>1k <span class="ex">Rscript</span> dev/run-test-match.R      <span class="co"># the five 1,000-row files</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="va">PF_SET</span><span class="op">=</span>50k <span class="ex">Rscript</span> dev/run-test-match.R</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="va">PF_SET</span><span class="op">=</span>100k <span class="ex">Rscript</span> dev/run-test-match.R</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="ex">Rscript</span> dev/run-full-file.R                 <span class="co"># checkpointed production run</span></span></code></pre></div>
 <p>The first run builds <code>data-dev/BMF-REFERENCE-BUNDLE.rds</code> (~5 min, 1.3 GB) and reuses it thereafter. Set <code>NPMATCH_DIR</code> / <code>PFMATCH_DIR</code> to relocate.</p>
 <p><code>dev/</code> scripts use <code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code> rather than <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library(pfmatch)</a></code>, so they can reach internal and unexported functions. They are not part of the package.</p>
 <p>Planning documents: <code>dev/PACKAGE-PLAN.md</code> (what packaging still owes), <code>dev/NPMATCH-PROMOTION-PLAN.md</code> (three modules to move upstream, and one npmatch defect this project found).</p>
