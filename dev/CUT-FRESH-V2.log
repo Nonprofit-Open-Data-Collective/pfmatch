@@ -1,0 +1,60 @@
+﻿Rscript : ==============================================================================
+At line:1 char:382
++ ... env:PFMATCH_DIR = "."; Rscript dev/cut-fresh-v2-sample.R 2>&1 | Tee-O ...
++                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (===============...===============:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+cut-fresh-v2-sample  2026-10-23 18:24:38
+==============================================================================
+corpus  6.78 GB, 33 columns
+rows    17,253,199
+drawing 5,000 rows, seed 20261023
+  chunk  1    1,000,000 scanned,   298 drawn
+  chunk  2    2,000,000 scanned,   585 drawn
+  chunk  3    3,000,000 scanned,   859 drawn
+  chunk  4    4,000,000 scanned, 1,134 drawn
+  chunk  5    5,000,000 scanned, 1,427 drawn
+  chunk  6    6,000,000 scanned, 1,745 drawn
+  chunk  7    7,000,000 scanned, 2,037 drawn
+  chunk  8    8,000,000 scanned, 2,342 drawn
+  chunk  9    9,000,000 scanned, 2,647 drawn
+  chunk 10   10,000,000 scanned, 2,941 drawn
+  chunk 11   11,000,000 scanned, 3,224 drawn
+  chunk 12   12,000,000 scanned, 3,512 drawn
+  chunk 13   13,000,000 scanned, 3,819 drawn
+  chunk 14   14,000,000 scanned, 4,095 drawn
+  chunk 15   15,000,000 scanned, 4,397 drawn
+  chunk 16   16,000,000 scanned, 4,679 drawn
+  chunk 17   17,000,000 scanned, 4,941 drawn
+  chunk 18   17,253,199 scanned, 5,000 drawn
+==============================================================================
+writing
+  effresh_1k_grants_01.csv       1,000 rows
+  effresh_1k_grants_02.csv       1,000 rows
+  effresh_1k_grants_03.csv       1,000 rows
+  effresh_1k_grants_04.csv       1,000 rows
+  effresh_1k_grants_05.csv       1,000 rows
+==============================================================================
+tax-year profile
+  2009       8    0.2%
+  2010      99    2.0%
+  2011     124    2.5%
+  2012     137    2.7%
+  2013     179    3.6%
+  2014     192    3.8%
+  2015     209    4.2%
+  2016     212    4.2%
+  2017     255    5.1%
+  2018     293    5.9%
+  2019     340    6.8%
+  2020     589   11.8%
+  2021     583   11.7%
+  2022     599   12.0%
+  2023     583   11.7%
+  2024     423    8.5%
+  2025     175    3.5%
+
+filings 4,232 | flagged rows 0
+==============================================================================
+done  2026-10-23 18:27:06

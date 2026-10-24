@@ -1,0 +1,45 @@
+﻿Rscript : 
+At line:1 char:382
++ ... :PFMATCH_DIR = "."; Rscript dev/validate-lifted-sample.R 2>&1 | Tee-O ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+##############################################################################
+# ^ef1k_grants_[0-9]+\.csv$
+##############################################################################
+----------------------------------------------------------------------------
+pf_validate_grants
+----------------------------------------------------------------------------
+  INFO  rows                         5,000
+  PASS  schema                       legacy v1/GTDC names -- readable, but superseded; rebuild with schema = "v2"
+  WARN  row key OBJECTID|TABLE_ID    TABLE_ID absent -- the published row key is unavailable, so rows cannot be 
+addressed stably across rebuilds
+  WARN  superseded filings           cannot check: missing EIN2, TAX_YEAR, RETURN_AMENDED_X, RETURN_PARTIAL_X
+  PASS  matcher columns resolve      6 of 6 resolve and are non-empty
+  PASS  per-year column coverage     no unexplained empty year over 17 years; PF_15_G_PAID_RECIP_STAT absent from 2025 
+(expected)
+  PASS  state/ZIP not transposed     state 99.5% two-letter, ZIP 99.6% numeric
+  INFO  source provenance            efile v3_1 (parquet), concordance990 2.0.3
+----------------------------------------------------------------------------
+  0 FAIL | 2 WARN
+population id d1c3db4c56a01709
+
+##############################################################################
+# ^efv2_1k_grants_[0-9]+\.csv$
+##############################################################################
+----------------------------------------------------------------------------
+pf_validate_grants
+----------------------------------------------------------------------------
+  INFO  rows                         4,903
+  PASS  schema                       concordance990 v2 names
+  PASS  row key OBJECTID|TABLE_ID    unique
+  PASS  superseded filings           no reporting context holds more than one filing
+  PASS  matcher columns resolve      6 of 6 resolve and are non-empty
+  PASS  per-year column coverage     no unexplained empty year over 17 years; PF_15_G_PAID_RECIP_STAT absent from 2025 
+(expected)
+  PASS  state/ZIP not transposed     state 99.5% two-letter, ZIP 99.6% numeric
+  INFO  source provenance            efile v3_1 (parquet), concordance990 2.0.3
+----------------------------------------------------------------------------
+  0 FAIL | 0 WARN
+population id 0b5126ef02f2a8b0

@@ -302,6 +302,19 @@ pf_read_grants <- function(path = "inputs", pattern = "grants.*\\.csv$",
            "schemas. Pass an explicit `pattern` for one vintage, or ",
            "allow_mixed = TRUE if the mixture is intended.", call. = FALSE)
     }
+    # The OBJECTID test above separates GT from e-file, but BOTH e-file schemas
+    # carry OBJECTID, so a v1 build and a v2 build of the same source passed it
+    # and concatenated into a frame where every column is half empty. `fill`
+    # below makes that silent rather than fatal. Check the schema too.
+    sch <- vapply(parts, .pf_schema_of, character(1))
+    real <- setdiff(unique(sch), "unknown")
+    if (length(real) > 1L) {
+      stop("pf_read_grants() matched grant files of two different SCHEMAS.\n",
+           paste(sprintf("  %-6s %s", sch, basename(files)), collapse = "\n"), "\n",
+           "Concatenating them yields a frame where each schema's columns are ",
+           "NA on the other's rows. Pass an explicit `pattern` for one schema, ",
+           "or allow_mixed = TRUE if the mixture is intended.", call. = FALSE)
+    }
   }
   d <- as.data.frame(data.table::rbindlist(parts, fill = TRUE))
   pf_prepare_grants(d)

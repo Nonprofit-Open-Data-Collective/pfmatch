@@ -1,0 +1,41 @@
+﻿Rscript : ==============================================================================
+At line:1 char:382
++ ... ; $env:PFMATCH_DIR = "."; Rscript dev/relabel-truth-v2.R 2>&1 | Tee-O ...
++                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (===============...===============:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+relabel-truth-v2  2026-10-23 16:54:38
+==============================================================================
+truth in    PF-TRUTH.csv            177 rows, population d1c3db4c56a01709
+crosswalk   LIFT-CROSSWALK-V2.csv  4903 rows
+population  v2 0b5126ef02f2a8b0  (4,903 rows)
+==============================================================================
+TRANSLATION
+  labels in            177
+  carried over         172
+  grant left the sample  5
+  same filing          172 of 172   OK
+  same recipient name  172 of 172   OK
+
+  dropped labels (their grant was a superseded filing):
+    G000304  ORG_FOUND     AMERICAN NATIONAL RED CROSS
+    G002737  ORG_FOUND     TOYS FOR TOTS FOUNDATION
+    G002972  UNRESOLVED    MS STATE TUITION PROGRAM
+    G003399  UNRESOLVED    BIRTHRIGHT
+    G004802  NO_ORG_UNFINDABLE HEALTH LITERACY COALITION
+  -> dev/RELABEL-DROPPED-LABELS.csv
+==============================================================================
+wrote data-dev/PF-TRUTH-V2.csv  (172 rows, population 0b5126ef02f2a8b0)
+           verdict     N
+            <char> <int>
+         ORG_FOUND    94
+ NO_ORG_INDIVIDUAL    37
+        UNRESOLVED    20
+ NO_ORG_NOT_EXEMPT    12
+ NO_ORG_UNFINDABLE     9
+
+  with a CORRECT ein (scoreable for recall) : 87
+  with a WRONG ein   (negative constraint)  : 39
+  asserting NO org exists                   : 58
+==============================================================================

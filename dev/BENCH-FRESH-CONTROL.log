@@ -1,0 +1,24 @@
+﻿Rscript : ======================================================================================
+At line:1 char:382
++ ... env:PFMATCH_DIR = "."; Rscript dev/bench-fresh-control.R 2>&1 | Tee-O ...
++                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (===============...===============:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+bench-fresh-control  2026-10-23 18:27:15
+======================================================================================
+reference BMF-REF-AUG-2026-08-20.rds
+  3,891,187 rows
+======================================================================================
+ARM A (current config) on both v2 populations
+  lifted     4,749 identities | YES 62.77% | Y+M 84.65% | 1415.3 s
+  fresh      4,873 identities | YES 62.36% | Y+M 84.10% | 1215.7 s
+======================================================================================
+CONTROL
+  lifted  62.77%  (n = 4,749)
+  fresh   62.36%  (n = 4,873)
+  diff    -0.41 points   95% CI +/- 1.93
+
+  WITHIN sampling error: the lifted sample represents the deduplicated population.
+======================================================================================
+wrote data-dev/FRESH-CONTROL.csv

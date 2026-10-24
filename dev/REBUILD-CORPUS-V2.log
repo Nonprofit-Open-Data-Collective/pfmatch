@@ -1,0 +1,82 @@
+﻿Rscript : ==============================================================================
+At line:1 char:382
++ ...  $env:PFMATCH_DIR = "."; Rscript dev/rebuild-corpus-v2.R 2>&1 | Tee-O ...
++                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (===============...===============:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+rebuild-corpus-v2  2026-10-23 16:41:25
+source cache : C:\Users\jlecy/Documents/grants/efilepf
+out          : C:/Users/jlecy/Documents/grants/PF-GRANTS-PAID-V2-2009-2025.csv
+==============================================================================
+  2009  dedup: 34,933 -> 34,876 rows
+  2009  34,876 rows
+  2010  dedup: 301,258 -> 299,941 rows
+  2010  299,941 rows
+  2011  dedup: 409,242 -> 406,955 rows
+  2011  406,955 rows
+  2012  dedup: 559,962 -> 508,283 rows
+  2012  508,283 rows
+  2013  dedup: 613,008 -> 608,457 rows
+  2013  608,457 rows
+  2014  dedup: 711,162 -> 704,638 rows
+  2014  704,638 rows
+  2015  dedup: 790,979 -> 746,402 rows
+  2015  746,402 rows
+  2016  dedup: 797,068 -> 789,964 rows
+  2016  789,964 rows
+  2017  dedup: 876,766 -> 856,843 rows
+  2017  856,843 rows
+  2018  dedup: 983,450 -> 938,136 rows
+  2018  938,136 rows
+  2019  dedup: 1,151,964 -> 1,145,091 rows
+  2019  1,145,091 rows
+  2020  dedup: 1,962,611 -> 1,933,750 rows
+  2020  1,933,750 rows
+  2021  dedup: 2,031,798 -> 2,001,168 rows
+  2021  2,001,168 rows
+  2022  dedup: 2,052,042 -> 2,022,639 rows
+  2022  2,022,639 rows
+  2023  dedup: 2,047,052 -> 2,029,751 rows
+  2023  2,029,751 rows
+  2024  dedup: 1,576,516 -> 1,567,494 rows
+  2024  1,567,494 rows
+  2025  NOTE: absent, emitted blank -- PF_15_G_PAID_RECIP_STAT
+  2025  dedup: 660,956 -> 658,811 rows
+  2025  658,811 rows
+total: 17,253,199 rows -> C:/Users/jlecy/Documents/grants/PF-GRANTS-PAID-V2-2009-2025.csv
+==============================================================================
+built in 7.2 min; 6.78 GB
+ year    rows            missing_cols
+ 2009   34876                        
+ 2010  299941                        
+ 2011  406955                        
+ 2012  508283                        
+ 2013  608457                        
+ 2014  704638                        
+ 2015  746402                        
+ 2016  789964                        
+ 2017  856843                        
+ 2018  938136                        
+ 2019 1145091                        
+ 2020 1933750                        
+ 2021 2001168                        
+ 2022 2022639                        
+ 2023 2029751                        
+ 2024 1567494                        
+ 2025  658811 PF_15_G_PAID_RECIP_STAT
+==============================================================================
+verifying the written file
+  rows            17,253,199
+  filings         967,795
+  row key unique  TRUE
+ dedup_action        N
+       <char>    <int>
+         kept 16852942
+ kept_amended   400221
+ kept_flagged       36
+  flagged rows    36
+
+against the undeduped corpus: 17,560,767 -> 17,253,199  (1.75% removed)
+==============================================================================
+done  2026-10-23 16:48:59

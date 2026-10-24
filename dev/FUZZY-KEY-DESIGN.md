@@ -1,5 +1,13 @@
 # Spell correction, fuzzy blocking keys, and what each is good for
 
+> **Population note, added 2026-10-23.** The figures below are measured on
+> `ef1k` (population `d1c3db4c56a01709`), the undeduplicated v1 samples, which
+> `BASELINE-2026-10B` supersedes. They were re-measured on the deduplicated v2
+> population and the *conclusions hold* — every clear rate moves by about a
+> fifth of a point and the ordering of the arms is unchanged. Quote
+> `dev/BASELINE-2026-10B/MANIFEST.md` for current numbers, not this file.
+
+
 Measured 2026-10-22. Scripts: `dev/spellcheck-diagnose.R`,
 `dev/namesim-worked-examples.R`. Follows from
 `dev/NO-RESIDUAL-BLOCKING-REPLAY.csv`, which found 7 of 25 audited cases never
