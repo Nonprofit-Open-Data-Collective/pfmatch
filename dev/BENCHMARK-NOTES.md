@@ -1,5 +1,16 @@
 # Benchmark notes — 990-PF grant recipients vs. IRS BMF
 
+> **Historical, 2026-08-19. The rates below are obsolete — do not quote them.**
+> The 54.9% YES here predates state blocking, the apostrophe fix, the augmented
+> reference and the e-file rebuild; blocking ran with **no geographic key on any
+> pass**, which is the single biggest difference. The current figure is 62.81%
+> on the augmented reference — see `dev/BASELINE-2026-10B/MANIFEST.md`.
+>
+> What is still worth reading here: the cost profile (the token pass dominates,
+> §5), the recipient-type gradient, the score-band corroboration table, and the
+> cross-state analysis. Those are structural and have replicated; only the
+> headline rates moved.
+
 Reference: `bmf_2026_01_processed.csv`, 1,924,822 records.
 Config: npmatch defaults (`hier` scoring, YES ≥ 0.78, MAYBE ≥ 0.65, margin ≥ 0.05).
 Blocking: `pf_default_passes()` — **no geographic key on any pass**.

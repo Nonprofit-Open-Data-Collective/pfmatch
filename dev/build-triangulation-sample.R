@@ -2,6 +2,23 @@
 # ============================================================================
 # Wire address-triangulation in as a testing sample.
 #
+# POPULATION NOTE, 2026-10-23. These artifacts are keyed to 6e3e985e05a5f364 --
+# the in-scope subset of the FILER sample (data-dev/FILER-SAMPLE-MATCH.rds,
+# built from inputs/effiler100k_grants.csv), NOT the 1k benchmark population.
+# That is deliberate: triangulation needs whole filer portfolios, which the
+# random-grant samples shred, and a 1k sample holds too few repeated renderings
+# of one organisation to group.
+#
+# It was therefore NOT part of the v2 recalibration, and the five artifacts
+# below are untouched by it. They sit on the v1 UNDEDUPLICATED build, so before
+# scoring a v2 run against them they need the same treatment the 1k sample got
+# in dev/lift-sample-to-v2.R: lift the rows onto the deduplicated corpus and
+# translate the ids through a crosswalk, never renumber. grant_id is positional
+# here too.
+#
+# Re-running this script against a v2 filer sample would also work, and is
+# cleaner, but it discards the ~30 cases already eyeballed.
+#
 # One organisation is written many ways across grants; some renderings clear and
 # others do not. Grouping renderings by ADDRESS is independent of the name
 # comparator, which is the thing under test, so the groups are usable even

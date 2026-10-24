@@ -394,7 +394,8 @@ relocate.
 
 `dev/` scripts use
 [`devtools::load_all()`](https://devtools.r-lib.org/reference/load_all.html)
-rather than [`library(pfmatch)`](https://rdrr.io/r/base/library.html),
+rather than
+[`library(pfmatch)`](https://nonprofit-open-data-collective.github.io/pfmatch),
 so they can reach internal and unexported functions. They are not part
 of the package.
 
@@ -402,10 +403,36 @@ Planning documents: `dev/PACKAGE-PLAN.md` (what packaging still owes),
 `dev/NPMATCH-PROMOTION-PLAN.md` (three modules to move upstream, and one
 npmatch defect this project found).
 
-## Results, 5,000-grant sample
+## Results
 
-See `dev/BENCHMARK-NOTES.md` for the full read-out and what it implies
-for the next round.
+The current frozen measurement is `dev/BASELINE-2026-10B/`, taken on the
+deduplicated v2 population (`inputs/efv2_1k_grants_0*.csv`, 4,903
+grants):
+
+| reference                 | identities |   YES | MAYBE |    NO | clear rate |
+|---------------------------|-----------:|------:|------:|------:|-----------:|
+| active, 1,924,822 rows    |      4,687 | 2,665 |   987 | 1,035 | **56.86%** |
+| augmented, 3,880,431 rows |      4,748 | 2,982 | 1,041 |   725 | **62.81%** |
+
+Read `dev/BASELINE-2026-10B/MANIFEST.md` before quoting either: it
+records what the figures do and do not establish, and the baseline is
+gated on `np_normalize_signature()`, so it goes stale when npmatch’s
+normalizer changes.
+
+**This is a clear rate, not an accuracy.** Precision on the YES mass has
+never been measured, because every ground-truth label this project holds
+came from a cell the pipeline itself produced. To score a configuration
+rather than argue about its clear rate, use
+[`pf_evaluate()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_evaluate.md)
+and
+[`pf_consistency()`](https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_consistency.md).
+
+Two older read-outs are kept as history and should not be quoted as
+current: `dev/BASELINE-2026-10/` (the same measurement on the
+undeduplicated v1 population, 63.01% augmented) and
+`dev/BENCHMARK-NOTES.md` (54.9%, from before state blocking, the
+apostrophe fix, the augmented reference and the e-file rebuild — it
+remains useful for its cost and recipient-type breakdowns).
 
 ## Audits
 
