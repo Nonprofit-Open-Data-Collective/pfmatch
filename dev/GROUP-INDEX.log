@@ -1,0 +1,43 @@
+﻿Rscript : ================================================================================
+At line:1 char:382
++ ...  $env:PFMATCH_DIR = "."; Rscript dev/build-group-index.R 2>&1 | Tee-O ...
++                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (===============...===============:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+build-group-index  2026-10-23 22:14:29
+================================================================================
+  chunk  1    2,000,000 rows scanned
+  chunk  2    4,000,000 rows scanned
+  chunk  3    6,000,000 rows scanned
+  chunk  4    8,000,000 rows scanned
+  chunk  5   10,000,000 rows scanned
+  chunk  6   12,000,000 rows scanned
+  chunk  7   14,000,000 rows scanned
+  chunk  8   16,000,000 rows scanned
+  chunk  9   17,253,199 rows scanned
+folding ...
+================================================================================
+CORPUS-WIDE ADDRESS GROUPS   (17,253,199 rows scanned)
+  distinct address keys            2,326,459
+  keys with >1 grant               1,380,763
+  keys with >1 NAME rendering      596,151
+  keys with >1 name AND >1 year    577,538
+
+THE MATCH BILL for the multi-rendering universe
+  groups                           596,151
+  grants inside them               10,586,075  (61.4% of the corpus)
+  median grants per group          7   mean 17.8   max 19,274
+  median names per group           2   max 10,363
+  median years per group           5   max 17
+================================================================================
+GROUP SIZE DISTRIBUTION (multi-rendering groups)
+  3-4     groups    75,861   grants     151,722
+  5-9     groups   114,848   grants     396,889
+  10-24   groups   176,448   grants   1,165,969
+  25-99   groups   142,399   grants   2,123,922
+  100+    groups    72,288   grants   3,251,608
+  x       groups    14,307   grants   3,495,965
+================================================================================
+wrote ./data-dev/GROUP-INDEX.rds (15.5 MB)
+done  2026-10-23 22:18:45

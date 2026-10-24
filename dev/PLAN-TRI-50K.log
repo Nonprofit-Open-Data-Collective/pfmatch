@@ -1,0 +1,49 @@
+﻿Rscript : ====================================================================================
+At line:1 char:382
++ ... :PFMATCH_DIR = "."; Rscript dev/plan-triangulation-50k.R 2>&1 | Tee-O ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (===============...===============:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+plan-triangulation-50k   target 50,000 informative cases
+====================================================================================
+index: 2,326,459 address keys
+  multi-rendering groups          596,151
+  ... P.O. box keys dropped       86,903  (14.6%)
+  ... >= 25 names at one address  4,509  (fiscal sponsors, DAF custodians)
+      they hold 1,539,629 grants between them -- 17% of the universe's rows
+====================================================================================
+ELIGIBLE UNIVERSE AFTER FILTERS
+  groups                          504,739
+  grant rows                      7,434,953
+  identities (the match bill)     1,754,177
+  multi-year groups               487,884  (96.7%)
+  matching ALL of it would take   62.1 hours
+====================================================================================
+COST PER GROUP BY SIZE   (identities are what the matcher charges for)
+  size        groups    identities      ids/group      hours
+  2           67,790       135,580            2.0        4.8
+  3-4        100,809       228,952            2.3        8.1
+  5-9        149,059       399,204            2.7       14.1
+  10-24      118,731       459,686            3.9       16.3
+  25-99       59,555       421,517            7.1       14.9
+  100+         8,795       109,238           12.4        3.9
+====================================================================================
+PILOT  (stratified, 600 groups per size bucket)
+  groups                          3,600
+  grant rows to extract           150,606
+  identities to match             18,129
+  estimated match time            38.5 min
+  -> data-dev/TRI-PILOT-GROUPS.rds
+====================================================================================
+WHAT THE PILOT DECIDES
+  Current yield is 0.66 informative cases per group (2,853 from 4,326),
+  measured on PARTIAL groups -- the old sample only held renderings from
+  sampled filers. Corpus-first groups are complete, so yield should rise,
+  but by how much is exactly what cannot be assumed.
+
+  At 0.66/group, 50,000 cases needs ~75,800 groups. Reading that off the
+  table above at the cheap end (sizes 2 and 3-4) puts the full run near
+  5.8 hours; drawn at the universe average it is far more.
+  The pilot replaces both of those arithmetic guesses with a measurement.
+====================================================================================
