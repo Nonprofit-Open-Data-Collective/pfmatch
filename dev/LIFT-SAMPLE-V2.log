@@ -1,0 +1,68 @@
+﻿Rscript : ==============================================================================
+At line:1 char:382
++ ...  $env:PFMATCH_DIR = "."; Rscript dev/lift-sample-to-v2.R 2>&1 | Tee-O ...
++                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (===============...===============:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+lift-sample-to-v2  2026-10-23 16:51:34
+==============================================================================
+sample      5,000 rows, 5 parts, 4,249 filings -- order verified against pf_read_grants()
+v2 corpus   6.78 GB, 33 columns
+  chunk  1    1,000,000 rows scanned, 90,824 kept
+  chunk  2    2,000,000 rows scanned, 250,871 kept
+  chunk  3    3,000,000 rows scanned, 379,962 kept
+  chunk  4    4,000,000 rows scanned, 477,640 kept
+  chunk  5    5,000,000 rows scanned, 564,975 kept
+  chunk  6    6,000,000 rows scanned, 711,931 kept
+  chunk  7    7,000,000 rows scanned, 765,279 kept
+  chunk  8    8,000,000 rows scanned, 1,165,212 kept
+  chunk  9    9,000,000 rows scanned, 1,309,741 kept
+  chunk 10   10,000,000 rows scanned, 1,792,950 kept
+  chunk 11   11,000,000 rows scanned, 1,880,230 kept
+  chunk 12   12,000,000 rows scanned, 2,352,535 kept
+  chunk 13   13,000,000 rows scanned, 2,453,895 kept
+  chunk 14   14,000,000 rows scanned, 2,574,623 kept
+  chunk 15   15,000,000 rows scanned, 3,028,654 kept
+  chunk 16   16,000,000 rows scanned, 3,108,867 kept
+  chunk 17   17,000,000 rows scanned, 3,158,625 kept
+  chunk 18   17,253,199 rows scanned, 3,174,610 kept
+scanned 17,253,199 rows; 3,174,610 belong to a sampled filing
+  NOTE 118,175 v2 rows share a (OBJECTID, content) key; lowest TABLE_ID wins
+==============================================================================
+LIFT RESULT
+  sampled grants              5,000
+  found in the v2 corpus      4,903  (98.06%)
+  absent -- removed by dedup  97  (1.94%)
+
+  corpus-wide the dedup removed 1.75% of rows. A sample rate far from
+  that would mean the sample is not representative of what it touches.
+
+  lost rows by tax year:
+    2011      1
+    2012     13
+    2014      2
+    2015     12
+    2016      2
+    2017     13
+    2018     16
+    2020     10
+    2021      9
+    2022     10
+    2023      5
+    2024      3
+    2025      1
+  -> dev/LIFT-LOST-ROWS.csv
+==============================================================================
+writing
+  efv2_1k_grants_01.csv          983 rows
+  efv2_1k_grants_02.csv          981 rows
+  efv2_1k_grants_03.csv          976 rows
+  efv2_1k_grants_04.csv          982 rows
+  efv2_1k_grants_05.csv          981 rows
+  LIFT-CROSSWALK-V2.csv        4,903 rows  (recipient name agrees on every one)
+
+population id  v1 d1c3db4c56a01709
+population id  v2 0b5126ef02f2a8b0
+==============================================================================
+done  2026-10-23 16:54:28
