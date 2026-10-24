@@ -2,32 +2,67 @@
 % Please edit documentation in R/pipeline.R
 \name{pf_reference}
 \alias{pf_reference}
-\title{Stage 2 — the BMF reference bundle}
+\title{Stage 2 — the reference bundle}
 \usage{
 pf_reference(
-  bmf,
+  bmf = NULL,
   cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
   active_col = NULL,
   recovery = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  source = c("auto", "matchdb", "local"),
+  tier = getOption("pfmatch.matchdb_tier", "unified-observed")
 )
 }
 \arguments{
-\item{bmf}{Processed BMF: a path or a data frame.}
+\item{bmf}{Processed BMF: a path or a data frame. Needed only for the local
+bundle, and only when \code{cache} does not exist.}
 
-\item{cache}{Path to cache the bundle (\code{.rds}). \code{NULL} disables caching.}
+\item{cache}{Path to cache the local bundle (\code{.rds}). \code{NULL} disables caching.}
 
-\item{active_col}{Optional BMF-active flag column.}
+\item{active_col}{Optional BMF-active flag column (local bundle only).}
 
 \item{recovery}{Add acronym / prefix blocking keys to the reference.}
 
 \item{verbose}{Print progress.}
+
+\item{source}{\code{"auto"}, \code{"matchdb"} or \code{"local"}; see above.}
+
+\item{tier}{The matchdb tier. Defaults to
+\code{getOption("pfmatch.matchdb_tier", "unified-observed")}.}
 }
 \value{
-The reference bundle list from \code{\link[=pf_build_reference]{pf_build_reference()}}.
+A reference bundle: \code{reference}, \code{name_freq}, \code{token_idf},
+\code{ref_index}, and \code{source} (\code{"matchdb"} or \code{"local"}). A matchdb bundle also
+carries \code{clusters} and its publication \code{stamp}.
 }
 \description{
-Wraps \code{\link[=pf_build_reference]{pf_build_reference()}} with an on-disk cache and adds the stage-4
-recovery keys (\code{\link[=pf_add_recovery_keys]{pf_add_recovery_keys()}}), so the bundle handed to the cascade
-is complete. This is preprocessing and is excluded from match timings.
+Returns the reference the cascade matches against, with the stage-4 recovery
+keys (\code{\link[=pf_add_recovery_keys]{pf_add_recovery_keys()}}) added, so the bundle is complete. This is
+preprocessing and is excluded from match timings.
 }
+\section{Where the reference comes from}{
+
+\describe{
+\item{\code{source = "matchdb"}}{A published matchdb reference,
+\code{matchdb::md_reference(tier, fetch = "missing")}: downloaded once from
+the public NCCS copy, checked against its md5s and against the installed
+npmatch normalizer, and cached under matchdb's data root. Nothing is
+built locally.}
+\item{\code{source = "local"}}{The bundle built here from \code{bmf} by
+\code{\link[=pf_build_reference]{pf_build_reference()}}, cached at \code{cache}.}
+\item{\code{source = "auto"} (the default)}{A \code{bmf} given is a request for
+that file, so it is honoured: the local bundle, exactly as before.
+Without one, matchdb when the package is installed and the tier loads;
+otherwise, with a message saying why, the local bundle at \code{cache}. A
+matchdb bundle built by a different npmatch normalizer is refused by
+\code{md_reference()}, so a normalizer update falls back here until the tier
+is republished.}
+}
+
+\code{tier = "unified-observed"} is the matchdb equivalent of the augmented BMF
+pfmatch has built so far: every BMF release, legal names and DBAs, plus
+Schedule I and R aliases written by two or more filers. \code{"active-observed"}
+drops the inactive tranche (\code{matchdb::md_reference()} lists the tiers).
+}
+
