@@ -1,5 +1,16 @@
 # The two-tier cascade: BMF first, matchdb on the residual
 
+> **Population note, added 2026-10-23.** The figures below are measured on
+> `ef1k` (population `d1c3db4c56a01709`), the undeduplicated v1 samples, which
+> `BASELINE-2026-10B` supersedes. The two-tier cascade has **not** been
+> re-measured on the deduplicated v2 population — the recalibration covered the
+> single-reference comparator arms only, where every clear rate moved by about
+> a fifth of a point and no ordering changed. The 69.0% here is therefore an
+> untested carry-over, and the 62.6% it is compared against is now 62.81%.
+> Re-run `dev/simulate-two-tier.R` against `^efv2_1k_grants_[0-9]+\.csv$`
+> before acting on the recommendation.
+
+
 **Recommendation: tier 1 against the augmented BMF, tier 2 against matchdb on
 everything tier 1 did not clear, with candidate lists unioned rather than
 replaced. Measured 69.0% against 62.6% for the best single reference.**

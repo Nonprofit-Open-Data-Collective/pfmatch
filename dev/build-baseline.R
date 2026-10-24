@@ -128,7 +128,12 @@ gitsha <- function(dir) {
 }
 nrows <- function(p) {
   if (grepl("\\.csv$", p)) {
-    as.integer(sub(" .*$", "", system2("wc", c("-l", shQuote(p)), stdout = TRUE))) - 1L
+    # Counted in R, not by shelling out to `wc`: that is absent under
+    # PowerShell, and the manifest step died there after both arms -- 30
+    # minutes of matching -- had already run. Reading one column of a 4 GB
+    # file is slower than wc but it works wherever R does.
+    nrow(data.table::fread(p, select = 1L, colClasses = "character",
+                           showProgress = FALSE))
   } else {
     b <- readRDS(p); n <- nrow(if (!is.null(b$reference)) b$reference else b)
     rm(b); invisible(gc()); n
