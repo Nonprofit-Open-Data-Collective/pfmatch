@@ -1,0 +1,19 @@
+# dev/bench-md-reference.R, 2026-10-23, ef1k_grants_01-05 (5,000 grants), lean+concat passes + state recovery
+# pfmatch@706cd46, npmatch v1-b42811fe6601afe6, matchdb tiers published 2026-10-23 (matchdb@15f9456)
+
+arm augmented: local reference, 3,891,187 rows (loaded in 1.3 min)
+matched 5,000 grants in 26.7 min
+YES      3051   63.0%MAYBE    1054   21.8%NO        738   15.2%
+identities 4843   clear rate 63.0%   YES+MAYBE 84.8%
+
+arm unified-observed: matchdb reference, 5,136,818 rows (loaded in 7.3 min)
+  spec 3de00d653e8cb205, normalizer v1-b42811fe6601afe6
+matched 5,000 grants in 40.7 min
+YES      3111   64.1%MAYBE    1086   22.4%NO        654   13.5%
+identities 4851   clear rate 64.1%   YES+MAYBE 86.5%
+
+arm active-observed: matchdb reference, 2,890,598 rows (loaded in 4.1 min)
+  spec 9cc7b76e3e144a87, normalizer v1-b42811fe6601afe6
+matched 5,000 grants in 18.0 min
+YES      3082   63.9%MAYBE     959   19.9%NO        780   16.2%
+identities 4821   clear rate 63.9%   YES+MAYBE 83.8%
