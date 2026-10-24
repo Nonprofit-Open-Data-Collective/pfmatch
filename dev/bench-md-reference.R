@@ -1,7 +1,8 @@
 #!/usr/bin/env Rscript
 # ============================================================================
 # bench-md-reference.R -- the published matchdb tiers against the augmented
-# BMF, on the same ef1k grants, through pf_reference() itself.
+# BMF, on the current benchmark population (efv2_1k, the population of
+# BASELINE-2026-10B), through pf_reference() itself.
 #
 # One arm per process (memory: the augmented bundle alone peaks near 37 GB):
 #   MD_ARM=augmented         the local bundle pfmatch has used so far
@@ -9,7 +10,7 @@
 #   MD_ARM=active-observed   the same without the inactive-BMF tranche
 #
 #   PFMATCH_DIR=<checkout>  REF_CACHE=<augmented .rds>  OUT=<dir>  [GRANTS_DIR=<inputs>]
-#   [MATCHDB_CODE=<matchdb checkout, if not installed>]
+#   [MATCHDB_CODE=<matchdb checkout, if not installed>]  [PF_BENCH_GRANTS=<pattern>]
 #   Rscript dev/bench-md-reference.R
 #
 # Written with the Write tool: a bash heredoc strips one backslash level.
@@ -37,7 +38,8 @@ say("arm %s: %s reference, %s rows (loaded in %.1f min)", ARM, ref$source,
 if (!is.null(ref$stamp)) say("  spec %s, normalizer %s", ref$stamp$spec_hash,
                              ref$stamp$normalize_signature)
 
-grants <- pf_read_grants(Sys.getenv("GRANTS_DIR", file.path(PF, "inputs")), pattern = "^ef1k_grants_")
+grants <- pf_read_grants(Sys.getenv("GRANTS_DIR", file.path(PF, "inputs")),
+                         pattern = Sys.getenv("PF_BENCH_GRANTS", "^efv2_1k_grants_"))
 grants <- pf_recover_name_from_street(grants)
 passes <- c(pf_staged_passes("lean", concat = TRUE), pf_recovery_passes(state = TRUE))
 t1 <- proc.time()[["elapsed"]]
