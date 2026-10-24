@@ -76,24 +76,95 @@ pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
             class = "pf_prepared")
 }
 
-#' Stage 2 — the BMF reference bundle
+#' Stage 2 — the reference bundle
 #'
-#' Wraps [pf_build_reference()] with an on-disk cache and adds the stage-4
-#' recovery keys ([pf_add_recovery_keys()]), so the bundle handed to the cascade
-#' is complete. This is preprocessing and is excluded from match timings.
+#' Returns the reference the cascade matches against, with the stage-4 recovery
+#' keys ([pf_add_recovery_keys()]) added, so the bundle is complete. This is
+#' preprocessing and is excluded from match timings.
 #'
-#' @param bmf Processed BMF: a path or a data frame.
-#' @param cache Path to cache the bundle (`.rds`). `NULL` disables caching.
-#' @param active_col Optional BMF-active flag column.
+#' @section Where the reference comes from:
+#' \describe{
+#'   \item{`source = "matchdb"`}{A published matchdb reference,
+#'     `matchdb::md_reference(tier, fetch = "missing")`: downloaded once from
+#'     the public NCCS copy, checked against its md5s and against the installed
+#'     npmatch normalizer, and cached under matchdb's data root. Nothing is
+#'     built locally.}
+#'   \item{`source = "local"`}{The bundle built here from `bmf` by
+#'     [pf_build_reference()], cached at `cache`.}
+#'   \item{`source = "auto"` (the default)}{A `bmf` given is a request for
+#'     that file, so it is honoured: the local bundle, exactly as before.
+#'     Without one, matchdb when the package is installed and the tier loads;
+#'     otherwise, with a message saying why, the local bundle at `cache`. A
+#'     matchdb bundle built by a different npmatch normalizer is refused by
+#'     `md_reference()`, so a normalizer update falls back here until the tier
+#'     is republished.}
+#' }
+#'
+#' `tier = "unified-observed"` is the matchdb equivalent of the augmented BMF
+#' pfmatch has built so far: every BMF release, legal names and DBAs, plus
+#' Schedule I and R aliases written by two or more filers. `"active-observed"`
+#' drops the inactive tranche (`matchdb::md_reference()` lists the tiers).
+#'
+#' @param bmf Processed BMF: a path or a data frame. Needed only for the local
+#'   bundle, and only when `cache` does not exist.
+#' @param cache Path to cache the local bundle (`.rds`). `NULL` disables caching.
+#' @param active_col Optional BMF-active flag column (local bundle only).
 #' @param recovery Add acronym / prefix blocking keys to the reference.
 #' @param verbose Print progress.
-#' @return The reference bundle list from [pf_build_reference()].
+#' @param source `"auto"`, `"matchdb"` or `"local"`; see above.
+#' @param tier The matchdb tier. Defaults to
+#'   `getOption("pfmatch.matchdb_tier", "unified-observed")`.
+#' @return A reference bundle: `reference`, `name_freq`, `token_idf`,
+#'   `ref_index`, and `source` (`"matchdb"` or `"local"`). A matchdb bundle also
+#'   carries `clusters` and its publication `stamp`.
 #' @export
-pf_reference <- function(bmf, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
-                         active_col = NULL, recovery = TRUE, verbose = TRUE) {
+pf_reference <- function(bmf = NULL, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
+                         active_col = NULL, recovery = TRUE, verbose = TRUE,
+                         source = c("auto", "matchdb", "local"),
+                         tier = getOption("pfmatch.matchdb_tier", "unified-observed")) {
+  source <- match.arg(source)
+  if (source == "auto" && !is.null(bmf)) source <- "local"
+  if (source != "local") {
+    ref <- .pf_matchdb_reference(tier, recovery, verbose,
+                                 required = source == "matchdb")
+    if (!is.null(ref)) return(ref)
+  }
+  .pf_local_reference(bmf, cache, active_col, recovery, verbose)
+}
+
+# The matchdb tier, or NULL (with a message) when it cannot be had and the
+# caller will fall back. `required` turns every failure into an error.
+.pf_matchdb_reference <- function(tier, recovery, verbose, required) {
+  fail <- function(why) {
+    if (required) stop("matchdb reference ", tier, ": ", why, call. = FALSE)
+    message(sprintf("STAGE 2  matchdb reference %s unavailable (%s); using the local bundle",
+                    tier, why))
+    NULL
+  }
+  if (!requireNamespace("matchdb", quietly = TRUE)) return(fail("matchdb is not installed"))
+  t0 <- .pf_tick()
+  .pf_hr(verbose); .pf_say(verbose, "STAGE 2  reference (matchdb %s)", tier)
+  ref <- tryCatch(matchdb::md_reference(tier, fetch = "missing", build_index = TRUE),
+                  error = function(e) e)
+  if (inherits(ref, "error")) return(fail(conditionMessage(ref)))
+  if (recovery) ref$reference <- pf_add_recovery_keys(ref$reference)
+  ref$source <- "matchdb"
+  .pf_say(verbose, "  %s records, spec %s, normalizer %s | elapsed %.1f s",
+          format(nrow(ref$reference), big.mark = ","), ref$stamp$spec_hash,
+          ref$stamp$normalize_signature, .pf_tick() - t0)
+  ref
+}
+
+.pf_local_reference <- function(bmf, cache, active_col, recovery, verbose) {
   if (!is.null(cache) && file.exists(cache)) {
     .pf_say(verbose, "STAGE 2  reference (cached: %s)", cache)
-    return(readRDS(cache))
+    ref <- readRDS(cache)
+    ref$source <- "local"
+    return(ref)
+  }
+  if (is.null(bmf)) {
+    stop("no reference: the matchdb tier is unavailable, `cache` (", cache %||% "NULL",
+         ") does not exist, and no `bmf` was given to build one", call. = FALSE)
   }
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 2  reference (building)")
@@ -105,6 +176,7 @@ pf_reference <- function(bmf, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
     if (!dir.exists(dirname(cache))) dir.create(dirname(cache), recursive = TRUE)
     saveRDS(ref, cache, compress = FALSE)
   }
+  ref$source <- "local"
   ref
 }
 
@@ -206,7 +278,9 @@ pf_adjudicate <- function(x, bmf, ids = NULL, k = 5, tiebreak = FALSE,
 #' [pf_prepare()] -> [pf_reference()] -> [pf_link()] -> [pf_report()].
 #'
 #' @param grants,pattern,dedup Passed to [pf_prepare()].
-#' @param bmf,ref_cache Passed to [pf_reference()].
+#' @param bmf,ref_cache Passed to [pf_reference()]. With no `bmf`, the reference
+#'   is the matchdb tier, falling back to the bundle at `ref_cache`.
+#' @param ref_source,tier Passed to [pf_reference()] as `source` and `tier`.
 #' @param dir,batch_size,dyads Passed to [pf_link()]. `dyads` may be a table or
 #'   a path to a cached one.
 #' @param report Print the outcome tables when done.
@@ -214,17 +288,20 @@ pf_adjudicate <- function(x, bmf, ids = NULL, k = 5, tiebreak = FALSE,
 #' @param ... Further arguments to [pf_link()].
 #' @return A list of class `pf_run` with `grants`, `recipients`, `status`, and
 #'   `timing`. The reference bundle is deliberately **not** returned — it is
-#'   ~1.3 GB and is on disk at `ref_cache`.
+#'   ~1.3 GB and is on disk (at `ref_cache`, or in matchdb's cache).
 #' @export
-pf_run <- function(grants, bmf, pattern = "grants.*[.]csv$",
+pf_run <- function(grants, bmf = NULL, pattern = "grants.*[.]csv$",
                    dedup = c("fuzzy", "exact", "none"),
                    ref_cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
                    dir = "data-dev/batches", batch_size = 25000L,
-                   dyads = NULL, report = TRUE, verbose = TRUE, ...) {
+                   dyads = NULL, report = TRUE, verbose = TRUE,
+                   ref_source = c("auto", "matchdb", "local"),
+                   tier = getOption("pfmatch.matchdb_tier", "unified-observed"), ...) {
   t0 <- .pf_tick()
   prep <- pf_prepare(grants, pattern = pattern, dedup = match.arg(dedup),
                      verbose = verbose)
-  ref  <- pf_reference(bmf, cache = ref_cache, verbose = verbose)
+  ref  <- pf_reference(bmf, cache = ref_cache, verbose = verbose,
+                       source = match.arg(ref_source), tier = tier)
   lnk  <- pf_link(prep, ref, dir = dir, batch_size = batch_size,
                   dyads = dyads, verbose = verbose, ...)
   rm(ref); invisible(gc())
