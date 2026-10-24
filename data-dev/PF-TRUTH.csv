@@ -1,0 +1,178 @@
+truth_id,grant_id,population,object_id,recip_name,verdict,correct_ein,wrong_ein,basis,confidence,source,note
+0b8f894e7b262072,G000060,d1c3db4c56a01709,OID-202543219349105519,CONNELL SCHNEIDER,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+fc993cb09061dd42,G000116,d1c3db4c56a01709,OID-202233369349100203,TOWSON UNIVERSITY FOUNDATION,ORG_FOUND,520939453,464929867,reference,medium,cascade-ein-verdicts.csv,B mission is a radio station holding company
+34ee129ef2254e31,G000121,d1c3db4c56a01709,OID-201303169349100535,OPPORTUNITY FINANCE NETWORK,ORG_FOUND,205189202,042939243,reference,medium,cascade-ein-verdicts.csv,B is a different EIN named Opportunity Finance
+aa46a7c7eb4d9be6,G000145,d1c3db4c56a01709,OID-201901349349103200,UCAP SCHOOL,ORG_FOUND,050448102,,web,high,no-residual-verdicts.csv,acronym; the BMF near-miss was already the right org at 0.38
+4bc714f540eece9f,G000242,d1c3db4c56a01709,OID-202200119349100425,UNIVERSITY OF TENNESSEE,UNRESOLVED,,,reference,medium,cascade-ein-verdicts.csv,neither side named
+fcb680646b1566d1,G000293,d1c3db4c56a01709,OID-202103199349106350,NARRAGANSETT COUNCIL BOY SCOUTS OF AMERICA,ORG_FOUND,050308384,,reference,medium,cascade-cleared-verdicts.csv,the Rhode Island BSA council
+0e3238c2e53dd056,G000294,d1c3db4c56a01709,OID-202141329349102309,St Margaret's Church,ORG_FOUND,520808437,530204629,reference,medium,cascade-ein-verdicts.csv,B is St Margarets Episcopal Church Annapolis
+2124bf5d960e7f6e,G000299,d1c3db4c56a01709,OID-201431929349100503,TIFFANY SHULL,NO_ORG_INDIVIDUAL,,,web,high,no-residual-verdicts.csv,no organisation of this name exists
+3cee66bb618b069a,G000304,d1c3db4c56a01709,OID-201621209349101212,AMERICAN NATIONAL RED CROSS,ORG_FOUND,530196605,,web,high,no-residual-verdicts.csv,filed name is the exact legal name
+d7f45c0feb3b04bc,G000311,d1c3db4c56a01709,OID-202223159349102502,GIRLS INC,ORG_FOUND,237052207,,web,high,no-residual-verdicts.csv,same street address as filed
+ebaf8bf84f4c9907,G000442,d1c3db4c56a01709,OID-201600779349100600,ST JUDES RANCH FOR CHILDREN,ORG_FOUND,886006970,202917263,reference,medium,cascade-ein-verdicts.csv,filed is the plain name B is the Nevada Region
+a5fece51a31f8bfa,G000461,d1c3db4c56a01709,OID-202531979349100028,JEWISH FAMILY SERVICE,ORG_FOUND,951691013,,reference,medium,cascade-cleared-verdicts.csv,Jewish Family Service of Los Angeles
+925c5f1a47725a7c,G000499,d1c3db4c56a01709,OID-201613199349101706,MIAMI MUSIC PROJECT,ORG_FOUND,264084871,591890244,reference,medium,cascade-ein-verdicts.csv,B is Miami Music Teachers Foundation
+3f39941a646f1943,G000532,d1c3db4c56a01709,OID-201610999349100011,JUSTIN E ROEPSCH,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+b7323c3c7e9532f2,G000546,d1c3db4c56a01709,OID-201541319349102069,HABITAT FOR HUMANITY,UNRESOLVED,,841278922,reference,medium,cascade-cleared-verdicts.csv,chose Vail Valley; Woody Creek is the Roaring Fork area
+cd7a42e1b5129ae8,G000576,d1c3db4c56a01709,OID-201232129349100113,MULTIPLE SCLEROSIS FOUNDATION,UNRESOLVED,,,reference,medium,cascade-cleared-verdicts.csv,MS Foundation is a distinct org but the chosen Society matches the filed ZIP
+4fafe8b63203f5ad,G000669,d1c3db4c56a01709,OID-202013219349105091,DOWNTOWN CHURCHES UNITED INC,ORG_FOUND,541931020,510226980,reference,medium,cascade-ein-verdicts.csv,B is its low-income housing affiliate
+14dbfd18bacab40f,G000694,d1c3db4c56a01709,OID-201522289349100102,Angela Renee Hoover,NO_ORG_INDIVIDUAL,,,reference,medium,no-residual-verdicts.csv,person-shaped name; purpose Education
+d4ba7fa2479261e0,G000752,d1c3db4c56a01709,OID-201823139349100882,GREENPEACE FUND,ORG_FOUND,953313195,201810247,reference,medium,cascade-ein-verdicts.csv,B is Greenpeace Vision Fund
+d046c35174f9b8bb,G000757,d1c3db4c56a01709,OID-201900869349100310,Tatiana Evans-Beals,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+3f63a7471598bf7a,G000784,d1c3db4c56a01709,OID-202301509349100025,South Florida PBS,ORG_FOUND,590737868,591354844,reference,medium,cascade-ein-verdicts.csv,B is the Florida Police Benevolent Association
+6fc857c75d9fcd39,G000804,d1c3db4c56a01709,OID-202520569349100917,FAMILY SERVICE AGENCY,ORG_FOUND,951644031,,reference,medium,cascade-cleared-verdicts.csv,Family Service Agency of Santa Barbara
+09407c18aee8f8ac,G000842,d1c3db4c56a01709,OID-202611359349102966,ANAIYA NICHELLE RICE,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+77f2fc35e09b6e83,G000846,d1c3db4c56a01709,OID-201601099349100720,JF & CS,UNRESOLVED,,,reference,medium,cascade-cleared-verdicts.csv,chose the Foundation; unrestricted purpose suggests the operating agency
+3b4e545d07f5744c,G000862,d1c3db4c56a01709,OID-202033179349101928,HORIZONS AT ST RICHARD'S EPISCOPAL SCHOOL,UNRESOLVED,,,reference,medium,cascade-ein-verdicts.csv,Horizons affiliate vs the host school
+48f48d66fd6a985c,G000906,d1c3db4c56a01709,OID-201402039349100305,TRI-CITY BAPTIST MISSIONS,NO_ORG_NOT_EXEMPT,,,web,high,no-residual-verdicts.csv,missions arm of the church at the filed street
+c1d9fcc61ada66d8,G000907,d1c3db4c56a01709,OID-201420919349100502,JUVENILE DIABETES RESEARCH FOUNDATION,ORG_FOUND,231907729,,web,high,no-residual-verdicts.csv,reference carries the older Juvenile Diabetes Foundation International name
+aeadc12397bf8112,G000920,d1c3db4c56a01709,OID-202443149349100004,The Dallas Foundation for One Texas,ORG_FOUND,752890371,,web,high,no-residual-verdicts.csv,same street and suite as filed; One Texas is a fund within it
+f75e4f039ceb2a89,G000921,d1c3db4c56a01709,OID-202231109349100123,JOEL BASS,NO_ORG_INDIVIDUAL,,,reference,medium,no-residual-verdicts.csv,person-shaped name; purpose Education
+c9c6a0cce766bc6f,G000944,d1c3db4c56a01709,OID-202543219349105954,TOLEDO ZOO & AQUARIUM,ORG_FOUND,344440256,237026387,reference,medium,cascade-ein-verdicts.csv,A is the American Dental Assistants Association
+a74b87bd545017bd,G000954,d1c3db4c56a01709,OID-202301019349101275,JET NUYGEN,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+20fa6653283e3c8d,G000962,d1c3db4c56a01709,OID-201242999349100404,SPOKANE COUNTY,UNRESOLVED,,,reference,medium,cascade-ein-verdicts.csv,A is a ministry B is the Country Club
+d567368e5aaf37ab,G000966,d1c3db4c56a01709,OID-201943109349101219,THRIVE 1035,NO_ORG_UNFINDABLE,,,web,high,no-residual-verdicts.csv,nothing by this name in Placerville CA
+f7d5c2ce718bfdfe,G001018,d1c3db4c56a01709,OID-202621499349100307,Tanner Ozuna,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+24f5e07c8074cb78,G001031,d1c3db4c56a01709,OID-201603209349104295,The Rotary Foundation,ORG_FOUND,363245072,366067138,reference,medium,cascade-ein-verdicts.csv,B is Rotary/One Foundation of the Chicago club
+286b109b8663a89b,G001055,d1c3db4c56a01709,OID-202111339349101026,THE PURPOSEFUL LIVING CENTER,NO_ORG_UNFINDABLE,,,web,high,no-residual-verdicts.csv,nothing by this name in Oak Park MI
+20e329d1403ef73c,G001098,d1c3db4c56a01709,OID-201641379349102029,HABITAT FOR HUMANITY,ORG_FOUND,621506881,621506788,reference,medium,cascade-ein-verdicts.csv,A matches the filed city and ZIP B is Williamson-Maury
+30fb15d0d44b7ded,G001112,d1c3db4c56a01709,OID-201611379349102946,MITCHELL MILLER,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+b13faaed995bdd0c,G001167,d1c3db4c56a01709,OID-202143199349105099,CANCER SUPPORT COMMUNITY,ORG_FOUND,680157858,943007536,reference,medium,cascade-ein-verdicts.csv,B is the Walnut Creek affiliate matching the filed city
+55f80ad12d6299d3,G001170,d1c3db4c56a01709,OID-201442249349100224,MUSCULAR DYSTROPHY,ORG_FOUND,131665552,,web,high,no-residual-verdicts.csv,truncated name; both references surfaced the right org
+417c28f81bca19a6,G001244,d1c3db4c56a01709,OID-202103169349104760,SHUSTARICH GARRETT,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+ea4e59e803ec9ec1,G001283,d1c3db4c56a01709,OID-201613149349100316,CHARLES A LINDBERGH ELEMENTARY SCHOOL - MI,NO_ORG_NOT_EXEMPT,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: government body
+4a572f03bb686267,G001328,d1c3db4c56a01709,OID-202103139349100305,VARIOUS CHARITABLE ORGANIZATIONS,NO_ORG_UNFINDABLE,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: aggregate placeholder
+c961aa5c01b8cf55,G001383,d1c3db4c56a01709,OID-202221259349101862,BETH LIVENSPERGER,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+71d284e1fb9bd3e1,G001402,d1c3db4c56a01709,OID-201430149349100303,DANCE PLACE DC WHEEL PRODUCTIONS INC,ORG_FOUND,521118504,,web,high,no-residual-verdicts.csv,same street as filed
+84b0303e10de9792,G001409,d1c3db4c56a01709,OID-202443069349100909,MAKE A WISH FOUNDATION,ORG_FOUND,760116615,,reference,medium,cascade-cleared-verdicts.csv,Make-A-Wish Texas Gulf Coast same city
+102f7d151ee8ad4a,G001422,d1c3db4c56a01709,OID-202440409349100624,BROOKLYN GARRISON-OSBORN,NO_ORG_INDIVIDUAL,,,reference,medium,no-residual-verdicts.csv,person-shaped name; purpose Educational
+fd936e2bdaffe3d6,G001436,d1c3db4c56a01709,OID-202331509349100138,RUBEN AGUIRRE,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+918e2972aa111adc,G001460,d1c3db4c56a01709,OID-201633139349100038,UNIVERSITY OF DENVER - OFFICE OF GIFT PROCESSING,ORG_FOUND,840404231,,web,high,no-residual-verdicts.csv,payee is an internal office of the university
+67c2529b4559cc43,G001525,d1c3db4c56a01709,OID-202221819349101227,FREEDOM HOUSE,ORG_FOUND,222638093,223529889,reference,medium,cascade-ein-verdicts.csv,A shares the filed ZIP B is the Foundation
+cd6f2e37b1285055,G001546,d1c3db4c56a01709,OID-201410599349100101,MOTHER MARIA ANNA BRUNNER CATHOLIC SCHOOL,NO_ORG_NOT_EXEMPT,,,web,high,no-residual-verdicts.csv,parochial school under a group ruling
+a817312215015d5e,G001597,d1c3db4c56a01709,OID-202113099349100141,NEXT LEVEL SPORTS FOUNDATION,ORG_FOUND,462161844,863923983,reference,medium,cascade-ein-verdicts.csv,exact name city zip and mission
+bbc3c2dd8605029c,G001659,d1c3db4c56a01709,OID-201933179349100103,DR ARUNMOZHI PALANIVELU,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+7e21df12f8f84429,G001665,d1c3db4c56a01709,OID-202441349349103359,NJIT SCHOLARSHIPS,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+2506465fdf066d80,G001729,d1c3db4c56a01709,OID-202013179349102116,INDIAN WATERS COUNCIL,UNRESOLVED,,,reference,medium,cascade-ein-verdicts.csv,both are Boy Scouts of America in Columbia SC
+2817867b28def0d3,G001738,d1c3db4c56a01709,OID-201913129349101306,Research Triangle Inst,ORG_FOUND,560686338,,reference,medium,cascade-cleared-verdicts.csv,Research Triangle Institute
+04fd588622dfdc2c,G001764,d1c3db4c56a01709,OID-201323199349100127,Wilderness Society,ORG_FOUND,530167933,831279703,reference,medium,cascade-ein-verdicts.csv,B is Wilderness Project Foundation
+0e65c1e64f077401,G001777,d1c3db4c56a01709,OID-202043219349105689,CROSSROADS THE RIDE,ORG_FOUND,042103837,,web,high,no-residual-verdicts.csv,payee named as the fundraising event not the charity
+6fb46b1c3d9512f0,G001803,d1c3db4c56a01709,OID-202343189349104134,NATIONAL MS SOCIETY,ORG_FOUND,741266225,,reference,medium,cascade-cleared-verdicts.csv,National Multiple Sclerosis Society Houston
+c309c345acaf106a,G001812,d1c3db4c56a01709,OID-202343199349106254,DREW HORTON,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+73bb6d36b0f5d858,G001818,d1c3db4c56a01709,OID-201803199349100600,Jewish Family Services,ORG_FOUND,951691013,,reference,medium,cascade-cleared-verdicts.csv,Jewish Family Service of Los Angeles
+4867b281a9a2f11e,G001821,d1c3db4c56a01709,OID-201721159349100207,UNIVERSITY BAPTIST CHURCH,UNRESOLVED,,,reference,medium,no-residual-verdicts.csv,exact name in reference but the EIN is an Ohio church not Hattiesburg MS
+e41fd67ec327a416,G001827,d1c3db4c56a01709,OID-202001419349100700,RAINBOW PUSH AUTOMOTIVE PROJECT,NO_ORG_NOT_EXEMPT,,,web,high,no-residual-verdicts.csv,programme of the Rainbow PUSH affiliate
+979162b927821a3e,G001912,d1c3db4c56a01709,OID-201203179349100230,MIRACULOUS LOVE MINISTRIES,ORG_FOUND,208092403,,web,high,no-residual-verdicts.csv,same city; exempt status later auto-revoked
+c5006d2cab3dfe36,G001925,d1c3db4c56a01709,OID-202510879349100406,George Dupree,NO_ORG_INDIVIDUAL,,,reference,medium,no-residual-verdicts.csv,purpose reads 2023 GRANT RECIPIENT
+a6242131f95f127a,G001935,d1c3db4c56a01709,OID-202433409349100623,Donovan Bank Foundation,ORG_FOUND,872789816,,web,high,no-residual-verdicts.csv,filed name drops the AND
+4aa093eeb2e561e1,G002002,d1c3db4c56a01709,OID-201131659349100408,SAINT LUKE'S HOSPITAL FOUNDATION,ORG_FOUND,446014699,440545297,reference,medium,cascade-ein-verdicts.csv,A is Saint Lukes Foundation Kansas City
+855e00ee98bcba00,G002095,d1c3db4c56a01709,OID-201913129349101306,Marys Cupboard,NO_ORG_NOT_EXEMPT,,,web,high,no-residual-verdicts.csv,pantry operating inside a parent charity
+4f369c3737641caa,G002118,d1c3db4c56a01709,OID-202221229349101082,TALLER SAN JOSE,ORG_FOUND,593816355,,reference,medium,cascade-cleared-verdicts.csv,Taller San Jose Hope Builders; a rename
+ff4e09943921950b,G002137,d1c3db4c56a01709,OID-202311319349103006,SHAW CANCER CENTER,NO_ORG_NOT_EXEMPT,,,web,high,no-residual-verdicts.csv,a programme of the hospital system
+eaee2b1415031ce6,G002150,d1c3db4c56a01709,OID-202541889349100759,Cong Mesilas Hachessed,ORG_FOUND,,,reference,medium,no-residual-verdicts.csv,Cong abbreviation; both references surfaced it
+ad3a8f7b1e7440e3,G002152,d1c3db4c56a01709,OID-202542769349100009,CAMP,ORG_FOUND,742095766,,reference,medium,cascade-cleared-verdicts.csv,Childrens Association for Maximum Potential; mission opens CAMP'S MISSION
+47ec33a9358f75e1,G002181,d1c3db4c56a01709,OID-202131339349102008,The Salvation Army,ORG_FOUND,580660607,,web,high,no-residual-verdicts.csv,exact name; local corps file under the territory
+2de4ea4e035c8d25,G002241,d1c3db4c56a01709,OID-201333089349100003,St Francis Hospital,UNRESOLVED,,141338503,reference,medium,cascade-cleared-verdicts.csv,chose a St Francis Hospital in Manhattan not Poughkeepsie
+8698b0174e62f7d2,G002264,d1c3db4c56a01709,OID-202313219349101111,KAREN LEO,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+217218a3e81f9de0,G002273,d1c3db4c56a01709,OID-202511349349100616,CHRISTIAN FILM & TELEVISION CO,UNRESOLVED,,,web,high,no-residual-verdicts.csv,organisation exists but no EIN confirmed
+f5d50a24dd2817ef,G002274,d1c3db4c56a01709,OID-201313099349100001,GEORGIA TECH FOUNDATION INC,ORG_FOUND,586043294,580634853,reference,medium,cascade-ein-verdicts.csv,B is the Alumni Association
+768831024a70a6f3,G002284,d1c3db4c56a01709,OID-202213079349101421,UCSF FOUNDATION - CTRP,ORG_FOUND,,,reference,medium,no-residual-verdicts.csv,payee is a fund inside the university foundation
+9ec1ecf1cce4a2de,G002298,d1c3db4c56a01709,OID-202413189349102131,MERCY MISSIONS TO THE WORLD INC,NO_ORG_UNFINDABLE,,,web,high,no-residual-verdicts.csv,nothing by this name in Lebanon PA
+2f869cdb2d35fe5a,G002367,d1c3db4c56a01709,OID-202503189349103495,JASON SRIWIJAYA,NO_ORG_INDIVIDUAL,,,web,high,no-residual-verdicts.csv,no organisation of this name exists
+5618c6c7ce59d30e,G002399,d1c3db4c56a01709,OID-201840109349100014,UNIVERSITY OF TEXAS (AUSTIN),UNRESOLVED,,,reference,medium,cascade-ein-verdicts.csv,A is Theta Tau B is a pharmacists academy
+9f965271446962f0,G002400,d1c3db4c56a01709,OID-202132809349100308,UNIVERSITY OF MICHIGAN-BUSINESS SCHOOL,ORG_FOUND,386006309,382038109,reference,medium,cascade-ein-verdicts.csv,A is the House Officers Association a labor union
+a459f38065716e07,G002405,d1c3db4c56a01709,OID-202540289349100314,BOROUGHS COMMUNITY CENTER,ORG_FOUND,061418097,,web,high,no-residual-verdicts.csv,single-letter misspelling; same ZIP as filed
+40861f705607bc43,G002415,d1c3db4c56a01709,OID-201732439349100103,Ronald McDonald House of Western WA,ORG_FOUND,911061043,,reference,medium,cascade-cleared-verdicts.csv,RMH Charities of Western Washington
+290748648d39ea8b,G002418,d1c3db4c56a01709,OID-202201939349100435,STONEHENGE OF SPRINGVILLE,NO_ORG_NOT_EXEMPT,,,web,high,no-residual-verdicts.csv,for-profit skilled nursing facility
+0d5f6880941921ed,G002419,d1c3db4c56a01709,OID-201922039349100022,KANSAS UNIVERSITY ENDOWMENT ASSOCIATION,ORG_FOUND,480547734,480680117,reference,medium,cascade-ein-verdicts.csv,B is the Center for Research
+a96136918c1263cd,G002442,d1c3db4c56a01709,OID-202111349349102651,FIRST PRESBYTERIAN CHURCH,ORG_FOUND,951660358,942256936,reference,medium,cascade-ein-verdicts.csv,A is First Presbyterian of Milpitas
+01dcb8eb7ffbeb17,G002473,d1c3db4c56a01709,OID-202223089349101327,WISH BOOK 2020 FUND,ORG_FOUND,770229665,,web,high,no-residual-verdicts.csv,filed name is the campaign year
+68bcd20ec6b2c1d1,G002504,d1c3db4c56a01709,OID-201620439349100422,KEVIN KITE,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+61415e6f999ed02b,G002508,d1c3db4c56a01709,OID-202601699349100800,RONALD MCDONALD HOUSE,ORG_FOUND,621310717,,reference,medium,cascade-cleared-verdicts.csv,RMH Charities of Nashville
+39bcde9b7c275ee5,G002516,d1c3db4c56a01709,OID-202243119349100019,ALLEGHENY TOWNSHIP,NO_ORG_NOT_EXEMPT,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: government body
+085cd01229a918ab,G002565,d1c3db4c56a01709,OID-201203209349102130,ST BARTHOLOMEWS CHURCH,UNRESOLVED,,,reference,medium,no-residual-verdicts.csv,exact name in reference but the EIN is in MA not Cape Elizabeth ME
+ee675c432b3e2dda,G002579,d1c3db4c56a01709,OID-201311359349102026,NW CHILDREN'S THTR SCHL,ORG_FOUND,931111344,,web,high,no-residual-verdicts.csv,abbreviated to consonants
+ec808a25f2e75328,G002599,d1c3db4c56a01709,OID-202513149349100201,Edwards Family,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+a54944a403774735,G002602,d1c3db4c56a01709,OID-202122449349100402,WE ARE DOWN HERE,UNRESOLVED,,,web,high,no-residual-verdicts.csv,reference holds WE ARE DOWN HOME in the same town; filed name may be garbled
+af07e6f8f8f841b3,G002630,d1c3db4c56a01709,OID-202242659349100504,BEIT HALOCHEN USA,ORG_FOUND,133392711,,web,high,no-residual-verdicts.csv,same ZIP; both references hold the legal name
+9f325f6f7934f963,G002643,d1c3db4c56a01709,OID-201720709349100202,JOSHUA RAMIREZ-MEDRANO,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+21fd2d99e430e581,G002669,d1c3db4c56a01709,OID-202143159349102404,ANDREW MWUMVANEZA,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+e3e38b6f1cf5e7cb,G002676,d1c3db4c56a01709,OID-201222289349100602,SPECIAL OLYMPICS,ORG_FOUND,520889518,521585896,reference,medium,cascade-ein-verdicts.csv,B unnamed
+8de64c39b0e9e26f,G002704,d1c3db4c56a01709,OID-201820929349100302,WGBH Public TV,ORG_FOUND,042104397,,web,high,no-residual-verdicts.csv,call sign plus a descriptor
+a600c130c4db7ea8,G002710,d1c3db4c56a01709,OID-202320149349100707,WISCONSIN TECHNICAL COLLEGE SYSTEM,ORG_FOUND,391273103,,reference,medium,cascade-cleared-verdicts.csv,the System is a government body; the Foundation is the payee
+0172490fb73c11c7,G002721,d1c3db4c56a01709,OID-201921349349104217,LAKE GROVE ELEMENTARY SCHOOL,NO_ORG_NOT_EXEMPT,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: government body
+b86d2edc35f3a55d,G002737,d1c3db4c56a01709,OID-202132789339303143,TOYS FOR TOTS FOUNDATION,ORG_FOUND,203021444,223050009,reference,medium,cascade-ein-verdicts.csv,same name both sides B matches the filed city Triangle VA
+727042e94479d645,G002757,d1c3db4c56a01709,OID-201512749349100206,UNITED JEWISH APPEAL,ORG_FOUND,510172429,002025886,reference,medium,cascade-ein-verdicts.csv,A EIN is malformed B matches the filed ZIP
+00a3791c546ea5a0,G002781,d1c3db4c56a01709,OID-201400639349100705,TRINITY LUTHERAN AT COLUMBUS - MARY ANN SIEFKE,UNRESOLVED,,,web,high,no-residual-verdicts.csv,a named scholarship fund inside a church; parent not pinned down
+88370aab0597d368,G002810,d1c3db4c56a01709,OID-201511559349100201,PLAYWORKS,ORG_FOUND,943251867,,web,high,no-residual-verdicts.csv,both references agreed on 04-2752957 which is NOT this org; the agreed EIN was wrong
+db68d58af991eebf,G002832,d1c3db4c56a01709,OID-202201089349100130,CHILDREN'S NATIONAL HOSPITAL FOUNDATION,ORG_FOUND,,,reference,medium,no-residual-verdicts.csv,matchdb holds the current name; the BMF the older one
+c8650de532471aae,G002837,d1c3db4c56a01709,OID-202231469349100008,Refuah Helpline,ORG_FOUND,821778227,201820738,reference,medium,cascade-ein-verdicts.csv,B matches the filed city exactly
+04fd538ebd15656b,G002885,d1c3db4c56a01709,OID-202001929349100835,STERLING ANIMAL SHELTER,ORG_FOUND,043236868,,web,high,no-residual-verdicts.csv,dba name; legal name omits the town
+57efc45f02fb5a40,G002939,d1c3db4c56a01709,OID-201203199349100615,SPECIAL OLYMPICS,ORG_FOUND,237181560,,reference,medium,cascade-cleared-verdicts.csv,Special Olympics Florida; the operating entity not the foundation
+cf2393a083fc1391,G002951,d1c3db4c56a01709,OID-201722869349100227,FHDA FOOTHILL,ORG_FOUND,,,reference,medium,no-residual-verdicts.csv,acronym; both references surfaced it
+2ab2855cb61b107b,G002972,d1c3db4c56a01709,OID-201602869349100710,MS STATE TUITION PROGRAM,UNRESOLVED,,,web,high,no-residual-verdicts.csv,a state aid programme rather than an organisation
+dd6eee54acfbbb60,G002988,d1c3db4c56a01709,OID-201723179349101952,VALLEY YOUTH HOUSE,ORG_FOUND,237178820,223119386,reference,medium,cascade-ein-verdicts.csv,A is the endowment arm purpose says services
+7b7b78bb81539b53,G002994,d1c3db4c56a01709,OID-202113269349100406,SHAY MITTON,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+113fec90e7d0b129,G003013,d1c3db4c56a01709,OID-202323149349100737,YESHIVA DARCHEI TORAH,ORG_FOUND,237227494,112545173,reference,medium,cascade-ein-verdicts.csv,filed says Yeshiva B is the Congregation
+cea93f2ed498b134,G003018,d1c3db4c56a01709,OID-202513149349102831,NATIONAL MS SOCIETY - SANTA ROSA WALK MS,ORG_FOUND,,,reference,medium,no-residual-verdicts.csv,acronym plus an event name
+625e239badec7cca,G003086,d1c3db4c56a01709,OID-202322829349101227,UCI - OC VETFAM COLLABORATIVE,ORG_FOUND,,,reference,medium,no-residual-verdicts.csv,acronym plus a programme name
+39964e102d4296f6,G003192,d1c3db4c56a01709,OID-201841849349100004,FLORIDA STATE COLLEGE AT JACKSONVILLE FOUNDATION I,UNRESOLVED,,,reference,medium,cascade-ein-verdicts.csv,two similar foundation EINs
+786e7913c8a035d1,G003220,d1c3db4c56a01709,OID-201823199349101322,UNIVERSITY OF NEBRASKA FOUNDATION,ORG_FOUND,470379839,476027511,reference,medium,cascade-ein-verdicts.csv,B is the UNO Alumni Association
+248361b56d7bbf89,G003248,d1c3db4c56a01709,OID-202133169349103068,WEST END SYNAGOGUE,ORG_FOUND,620513743,621858482,reference,medium,cascade-ein-verdicts.csv,A is the West End Middle School PTO
+95a783ca3fc5809b,G003253,d1c3db4c56a01709,OID-202020499349100502,WEST END UNITED METHODIST CHURCH,ORG_FOUND,620475752,,reference,medium,cascade-cleared-verdicts.csv,West End Methodist Church same ZIP
+053aa252268abdad,G003299,d1c3db4c56a01709,OID-201121749349100402,DOCKS TO DOORWAYS,NO_ORG_UNFINDABLE,,,web,high,no-residual-verdicts.csv,nothing by this name in Belgrade Lakes ME
+3dfa109b0f0fd758,G003331,d1c3db4c56a01709,OID-202423129349101387,STURGIS BROWN HS POST PROM,NO_ORG_NOT_EXEMPT,,,web,high,no-residual-verdicts.csv,a school committee with no separate exemption
+ed1b3c1bc096cd20,G003356,d1c3db4c56a01709,OID-201703199349100950,CHILDREN'S HOSPITAL OF PITTSBURGH FOUNDATION,ORG_FOUND,251865744,251594857,reference,medium,cascade-ein-verdicts.csv,B mission says sole fundraising arm of UPMC Children's
+86689dcaaabc10cf,G003379,d1c3db4c56a01709,OID-201741229349100419,BETHESDA MISSION,ORG_FOUND,231389397,,reference,medium,cascade-cleared-verdicts.csv,Bethesda Mission of Harrisburg
+773fd18d6d2bfc3a,G003392,d1c3db4c56a01709,OID-202343179349104459,AFRICAN ECONOMIC RESEARCH CONSORTIUM INC,ORG_FOUND,521580447,,reference,medium,cascade-cleared-verdicts.csv,exact name
+cb8ef25367f700c7,G003398,d1c3db4c56a01709,OID-202501359349102480,505 Main Street Canton,NO_ORG_UNFINDABLE,,,web,high,no-residual-verdicts.csv,payee recorded as a street address
+b0c9db64f5e167f7,G003399,d1c3db4c56a01709,OID-201843199349104934,BIRTHRIGHT,UNRESOLVED,,,reference,medium,cascade-cleared-verdicts.csv,chose Ethos California; possibly a rename; not established
+e2f4fb7f984ae8eb,G003422,d1c3db4c56a01709,OID-201233209349100803,NEW DIRECTION ROOCH,UNRESOLVED,,,web,high,no-residual-verdicts.csv,reference holds ANEW DIRECTION; filed name may be garbled
+52a717fad133e929,G003429,d1c3db4c56a01709,OID-202611559349100711,WE CARE INC FEED THE FRIDGE,ORG_FOUND,364967718,,web,high,no-residual-verdicts.csv,legal name plus programme name
+fc063541b442450c,G003457,d1c3db4c56a01709,OID-202401279349102120,VRBKA CORDELL,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+1c122ba8835c3f39,G003503,d1c3db4c56a01709,OID-201732129349100118,SMALL RANDALL,NO_ORG_INDIVIDUAL,,,reference,medium,no-residual-verdicts.csv,surname-first person; purpose Wheelchair
+08d86c610b5564b0,G003558,d1c3db4c56a01709,OID-202612239349100711,CLARK COUNTY SCHOOL DISTRICT POLICE DEPARTMENT K9 UNIT,NO_ORG_NOT_EXEMPT,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: government body
+1788dd05da561f12,G003628,d1c3db4c56a01709,OID-202213209349100836,Ms Amber Cooper,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+bc65524a736c8ec2,G003630,d1c3db4c56a01709,OID-201742559349100514,BATON ROUGE AREA FOUNDATION,ORG_FOUND,726030391,812507052,reference,medium,cascade-ein-verdicts.csv,B is Baton Rouge Bikeshare
+1186119e4a4fc1ee,G003722,d1c3db4c56a01709,OID-202320139349100317,EASTER SEAL SOCIETY OF DEL-MAR,ORG_FOUND,510066728,,web,high,no-residual-verdicts.csv,filed ZIP 19720 is New Castle DE but the filed state says PA
+39756e5a907935a1,G003733,d1c3db4c56a01709,OID-202221369349104452,SAAWTU USA,ORG_FOUND,,,web,high,no-residual-verdicts.csv,USA for AMERICA; both references hold the org
+6c05aac6c47bc7d3,G003742,d1c3db4c56a01709,OID-202122549349100652,AMERICAN SHRINE ASSOCIATES,NO_ORG_UNFINDABLE,,,web,high,no-residual-verdicts.csv,nothing by this name in Washington DC
+89af8e46a5b53628,G003745,d1c3db4c56a01709,OID-201601529349100025,Chabad House of Boston,UNRESOLVED,,,web,high,no-residual-verdicts.csv,filed ZIP matches Chabad of Greater Boston but the name is not a legal name
+c6e4b1483e2816cc,G003852,d1c3db4c56a01709,OID-202521349349103837,Family of Kiflom Mengesha,NO_ORG_INDIVIDUAL,,,reference,medium,no-residual-verdicts.csv,payee is a family; purpose is repatriation of remains
+2e1b1bd1da7365b4,G003993,d1c3db4c56a01709,OID-202213159349101881,SPECIAL OLYMPICS INC,ORG_FOUND,520889518,521585896,reference,medium,cascade-ein-verdicts.csv,B is the Endowment Fund
+9c16b77b9a2c7a46,G004011,d1c3db4c56a01709,OID-202203199349104625,CULTURE REFRAMED,ORG_FOUND,261284665,,reference,medium,cascade-cleared-verdicts.csv,exact name
+ae5f2e2c1f51d8d2,G004025,d1c3db4c56a01709,OID-201742009349100704,CHRIST CHURCH CATHEDRAL,UNRESOLVED,,,reference,medium,no-residual-verdicts.csv,exact name in reference but the EINs are MI and OH not Louisville KY
+d3cceaffb28e8928,G004075,d1c3db4c56a01709,OID-201641319349102054,MONTROSE COMMUNITY COLLEGE,UNRESOLVED,,770633769,reference,medium,cascade-cleared-verdicts.csv,chose Montrose Community Band
+d5816fe9f15eb016,G004078,d1c3db4c56a01709,OID-202311449349100631,CASA OF NJ,ORG_FOUND,223679194,,web,high,no-residual-verdicts.csv,acronym; same ZIP as filed
+c2e9f461e0a25ad4,G004093,d1c3db4c56a01709,OID-202341119349101619,MICHAELA DENNIE,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+25ab904f64bf89b7,G004211,d1c3db4c56a01709,OID-202442129349100704,JONES MAURICE,NO_ORG_INDIVIDUAL,,,reference,medium,no-residual-verdicts.csv,surname-first person; purpose Furniture
+8cbf27283c6a783a,G004222,d1c3db4c56a01709,OID-202031619349100623,PUNTA GORDA ELKS,ORG_FOUND,591996354,,reference,medium,cascade-cleared-verdicts.csv,Benevolent and Protective Order of Elks Punta Gorda
+950d00c0a1f24d9b,G004233,d1c3db4c56a01709,OID-202223179349100607,GREENPEACE FUND INC,ORG_FOUND,953313195,201810247,reference,medium,cascade-ein-verdicts.csv,B is Greenpeace Vision Fund
+f6c6305ee9354a7d,G004274,d1c3db4c56a01709,OID-202233259349100808,MIT,ORG_FOUND,042103594,,reference,medium,cascade-cleared-verdicts.csv,Massachusetts Institute of Technology - acronym expansion
+9174c1fffaaf48ac,G004304,d1c3db4c56a01709,OID-202400469349100700,Kiwanis Club of New Orleans,ORG_FOUND,720441357,,reference,medium,cascade-cleared-verdicts.csv,Kiwanis International local club same ZIP with matching mission
+12e35e3bcd9f1779,G004326,d1c3db4c56a01709,OID-201721229349100417,OHIO ENVIRONMENTAL COUNCIL,ORG_FOUND,310805578,270049424,reference,medium,cascade-ein-verdicts.csv,B is Ohio Environmental Voters
+685cdcd07161794c,G004371,d1c3db4c56a01709,OID-202523009349100442,GERALD R MACCARTHY MEMORIAL FUND,NO_ORG_UNFINDABLE,,,web,high,no-residual-verdicts.csv,nothing by this name in Chapel Hill NC
+ab450b3ac07666a0,G004535,d1c3db4c56a01709,OID-202343179349104054,CASINO ROAD KIDS MINISTRIES,ORG_FOUND,208535545,,reference,medium,cascade-cleared-verdicts.csv,mission names the filed organisation
+6a7813ad3d29f2aa,G004572,d1c3db4c56a01709,OID-201523079349100502,CROWN FINANCIAL MINISTRY,ORG_FOUND,581260812,,web,high,no-residual-verdicts.csv,reference holds the predecessor name Crown Ministries
+8a2528b1fdc563ce,G004593,d1c3db4c56a01709,OID-202311359349102941,NICOLETTE D FORD,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+ab448b5031cb6b37,G004596,d1c3db4c56a01709,OID-202540919349100629,THISTLEBEND COTTAGE,ORG_FOUND,450571304,,web,high,no-residual-verdicts.csv,same town; COTTAGE is a programme not the org
+649e9064d80362a9,G004625,d1c3db4c56a01709,OID-202413209349107436,KNOTT DANIELLE,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+72463386c0cfffa3,G004655,d1c3db4c56a01709,OID-202323189349104007,American Transplant Foundation,ORG_FOUND,020744032,,reference,medium,cascade-cleared-verdicts.csv,legal name is Transplant Foundation same city and ZIP
+63f49d2b6537ce27,G004667,d1c3db4c56a01709,OID-201602959349100105,LOYOLA HIGH SCHOOL,ORG_FOUND,951664109,,reference,medium,cascade-cleared-verdicts.csv,Loyola High School of Los Angeles
+605a0efa72b97dd8,G004671,d1c3db4c56a01709,OID-202221329349103712,CHILDREN'S INSTITUTE,ORG_FOUND,931095351,943154529,reference,medium,cascade-ein-verdicts.csv,B BMF name is Campbell Institute but mission is verbatim Children's Institute
+a0a223d4ad830489,G004693,d1c3db4c56a01709,OID-202511699349100906,YWCA,ORG_FOUND,910482890,,reference,medium,cascade-cleared-verdicts.csv,Young Womens Christian Association of Seattle
+edd70c193b227d38,G004706,d1c3db4c56a01709,OID-202343179349104459,COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK,ORG_FOUND,135598093,,reference,medium,cascade-cleared-verdicts.csv,Trustees of Columbia University
+4cf4384478584283,G004718,d1c3db4c56a01709,OID-202601059349100800,JORDAN FENENDAEL,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+19342121a17c598d,G004757,d1c3db4c56a01709,OID-202542629349100014,MARY GRAVES,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+b1ee18439c34e4cd,G004773,d1c3db4c56a01709,OID-202143199349108514,GIFTS TO THE NEEDYINDIGENT,NO_ORG_UNFINDABLE,,,reference,medium,no-residual-verdicts.csv,payee recorded as a purpose description
+b3ec66762388ecae,G004785,d1c3db4c56a01709,OID-201741359349102784,DOMINQUE PEREZ,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+59fd9781dd9ec0de,G004787,d1c3db4c56a01709,OID-202641269349102209,Whitman Baseball-Softball Association,ORG_FOUND,426617740,042740604,reference,medium,cascade-ein-verdicts.csv,B mission names the filed organisation verbatim
+f430dadb788c895a,G004802,d1c3db4c56a01709,OID-201901499349100105,HEALTH LITERACY COALITION,NO_ORG_UNFINDABLE,,,web,high,no-residual-verdicts.csv,nothing by this name in Albuquerque NM
+eaebc2508a00f295,G004816,d1c3db4c56a01709,OID-201413169349101166,Hamilton Co Gen Hlt Dist,NO_ORG_NOT_EXEMPT,,,web,high,no-residual-verdicts.csv,county government body
+69678fdeab04f0fe,G004868,d1c3db4c56a01709,OID-201322839349100102,SAFARI CLUB INTERNATIONAL FOUNDATION,UNRESOLVED,,,reference,medium,cascade-ein-verdicts.csv,A is the Club in TX B is the Arizona Chapter
+0f010c743e38c39b,G004874,d1c3db4c56a01709,OID-202030559349100208,BROOKLYN BOTANIC GARDEN,ORG_FOUND,112417338,,reference,medium,cascade-cleared-verdicts.csv,exact name and ZIP
+3d4a19035f3617a4,G004935,d1c3db4c56a01709,OID-202411169349101411,CONNECTICUT FOODSHARE INC,ORG_FOUND,061063025,,reference,medium,cascade-cleared-verdicts.csv,exact name and ZIP
+5ec175625d20cf74,G004937,d1c3db4c56a01709,OID-202213159349101881,EASTER SEALS MIDWEST,ORG_FOUND,430979927,430827160,reference,medium,cascade-ein-verdicts.csv,B is Life Skills Foundation
+a1c029e22976d36d,G004940,d1c3db4c56a01709,OID-201301489349100265,COMBS KIERSTEN AMBER,NO_ORG_INDIVIDUAL,,,inference,medium,AUDIT-NO-RESIDUAL-100.csv stratum,stratified from the filed record: individual payee
+0da336bde16903ff,G004966,d1c3db4c56a01709,OID-202523219349108327,LIONS EYE DOUNDATION OF CA & NV,ORG_FOUND,941676055,,web,high,no-residual-verdicts.csv,filed name misspells FOUNDATION
+4723059a3d499abf,G004973,d1c3db4c56a01709,OID-201421339349100807,LEWISBORO VOLUNTEER AMBULANCE,ORG_FOUND,510192543,133853367,reference,medium,cascade-ein-verdicts.csv,A is the Soccer Club

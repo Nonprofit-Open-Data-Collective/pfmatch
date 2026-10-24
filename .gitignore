@@ -19,6 +19,26 @@ data-dev/*
 !data-dev/AUDIT-NO-100-PROBE.csv
 !data-dev/AUDIT-OOS-100.csv
 
+# ... and the ground truth, which the header above already says is tracked and
+# which these rules did not in fact cover. Hand adjudication is the one thing
+# here that cannot be regenerated from inputs/ plus the BMF at any price, and
+# until 2026-10-23 all of it lived only in a Dropbox folder. ~7 MB in total.
+!data-dev/PF-TRUTH.csv
+!data-dev/PF-TRUTH-V2.csv
+!data-dev/LIFT-CROSSWALK-V2.csv
+
+# ... and the address-triangulation set: 2,853 informative cases over 4,326
+# address groups, where one organisation is written several ways and the
+# renderings got different verdicts. TRIANGULATION-GROUPS is the artifact worth
+# trusting -- it carries no labels, only (grant_id, group_id), and feeds
+# pf_consistency(). SAMPLE is an adjudication queue at ~50-60% precision, not
+# an answer key. See dev/build-triangulation-sample.R for which is which.
+!data-dev/TRIANGULATION-GROUPS.csv
+!data-dev/TRIANGULATION-SAMPLE.csv
+!data-dev/TRIANGULATION-CANDIDATES.csv
+!data-dev/TRIANGULATION-GATED.csv
+!data-dev/PF-TRUTH-TRIANGULATED.csv
+
 # ---- source data (625 MB) --------------------------------------------------
 inputs/*
 # ... except the benchmark fixtures and the NTEE source, all small and public,
@@ -29,6 +49,12 @@ inputs/*
 # 1k_grants_0*, so overwriting those would make the frozen reference point
 # unreproducible.
 !inputs/ef1k_grants_0*.csv
+# ... and the v2 lift, which BASELINE-2026-10B is defined over, plus the
+# independent draw that shows the lift still represents the deduplicated
+# population. Same reasoning again: a frozen baseline whose population is not
+# in the repository is not reproducible.
+!inputs/efv2_1k_grants_0*.csv
+!inputs/effresh_1k_grants_0*.csv
 !inputs/nteev2-descriptions.csv
 !inputs/nteev2-descriptions-tidy-format.csv
 !inputs/GTDC*.xlsx
