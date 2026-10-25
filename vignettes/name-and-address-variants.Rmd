@@ -1,0 +1,287 @@
+---
+title: "Name and address variants"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Name and address variants}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", echo = FALSE)
+library(pfmatch)
+v <- pf_variants
+fmt <- function(x) formatC(x, big.mark = ",", format = "d")
+pct <- function(a, b) sprintf("%.1f%%", 100 * a / b)
+tab <- function(d, ...) knitr::kable(d, format = "html", row.names = FALSE, ...)
+# knitr::kable is the only rendering dependency; everything below is computed
+# from the bundled pf_variants, so this vignette needs no reference, no corpus
+# and no cascade run.
+```
+
+How recipient names and addresses actually vary in the 990-PF filings, which
+of those variations the pipeline already absorbs, and which ones decide whether
+a grant resolves to an EIN.
+
+Everything here is computed from `pf_variants`: `r fmt(nrow(v))` pairs of
+recipient renderings filed at the same street and ZIP, across
+`r fmt(length(unique(v$group_id)))` addresses. In each pair the cascade
+resolved one rendering (`YES`) and returned `MAYBE` on the other. They come
+from the 50,000-case triangulation run over population
+`` `r attr(v, "population")` ``.
+
+## Read this first: these pairs survived normalization
+
+The pairs are not a random sample of variation. They are the residue.
+
+Before any pass runs, `npmatch::np_normalize()` has already uppercased, dropped
+a leading `THE`, rewritten `&` as `AND`, expanded `FDN` to `FOUNDATION` and
+contracted USPS street suffixes; `pf_dedup()` has then collapsed renderings
+sharing an identity key into a single recipient. So a pair that differs *only*
+in a way the pipeline handles never reaches the comparator as two things and
+never appears here.
+
+What that buys: the table is a regression corpus. Every row is a live case that
+reached the comparator and split. Tighten the normalizer and specific rows
+should move; the rows recorded as already closed should stay closed.
+
+What it costs: `pf_variants` tells you nothing about variation the normalizer
+already fixes. For that, compare the `*_differs` columns (the filed text)
+against the `*_key_equal` columns (what the normalizer made of it).
+
+```{r survived}
+d <- data.frame(
+  check = c("ZIP5 agrees inside the pair",
+            "filed street text differs",
+            "...but the normalized street key agrees",
+            "normalized name keys agree anyway",
+            "blocking intact (ZIP5 and state both usable)"),
+  pairs = fmt(c(sum(v$zip5_equal), sum(v$street_differs),
+                sum(v$street_differs & v$street_key_equal),
+                sum(v$name_key_equal), sum(v$blocking_intact))),
+  share = c(pct(sum(v$zip5_equal), nrow(v)), pct(sum(v$street_differs), nrow(v)),
+            pct(sum(v$street_differs & v$street_key_equal), sum(v$street_differs)),
+            pct(sum(v$name_key_equal), nrow(v)),
+            pct(sum(v$blocking_intact), nrow(v))),
+  stringsAsFactors = FALSE)
+tab(d, col.names = c("", "pairs", "share"))
+```
+
+ZIP5 agrees in every pair because the group is *defined* by street-plus-ZIP5,
+which is also why this table cannot be used to study ZIP variation.
+
+## It is not ground truth
+
+The triangulation verdicts are silver, `confidence = "low"`, and
+unadjudicated. Writing the anchor's EIN onto every other rendering at the
+address is the assumption under test, not a fact.
+
+So `expected_same_org` is `TRUE` on `r sum(!is.na(v$expected_same_org))` rows —
+where the two names are the same string under a documented cosmetic
+transformation at an identical address — and `NA`, never `FALSE`, on the other
+`r fmt(sum(is.na(v$expected_same_org)))`. Two examples of why a string test
+cannot decide it:
+
+- `US OLYMPIC AND PARALYMPIC FOUNDATION` and `USOC` share no tokens and are
+  the same family of organization.
+- `MARINE CORPS UNIVERSITY FOUNDATION` and `MARINE CORP SCHOLARSHIP FUND`
+  share a distinctive token and are two different charities.
+
+`label_basis` records which rows are waiting for a human.
+
+## Name variants
+
+```{r name-classes}
+nc <- as.data.frame(table(v$name_class), stringsAsFactors = FALSE)
+names(nc) <- c("name_class", "pairs")
+nc <- nc[order(-nc$pairs), ]
+nc$share <- pct(nc$pairs, nrow(v))
+nc$med_lev <- round(tapply(v$name_lev, v$name_class, median)[nc$name_class], 1)
+nc$med_jaccard <- round(tapply(v$name_jaccard, v$name_class, median)[nc$name_class], 2)
+nc$key_agrees <- tapply(v$name_key_equal, v$name_class, sum)[nc$name_class]
+nc$pairs <- fmt(nc$pairs)
+tab(nc, col.names = c("class", "pairs", "share", "median edit distance",
+                      "median token Jaccard", "name keys agree"))
+```
+
+The cosmetic classes everyone expects to dominate are almost absent, and that
+is the normalizer working: it has already closed them upstream. What is left is
+dominated by names that are genuinely different strings.
+
+`name keys agree` is the column to watch. Where it is non-zero the normalizer
+*did* close the name difference and the two renderings still reached the
+comparator separately — covered in "A seam" below.
+
+### Exemplars
+
+Six per class, from the `curated` subset.
+
+```{r name-examples, results = "asis"}
+ord <- names(sort(table(v$name_class), decreasing = TRUE))
+for (k in ord) {
+  s <- v[v$curated & v$name_class == k, ]
+  if (!nrow(s)) next
+  s <- s[order(-s$a_score), ][seq_len(min(4L, nrow(s))), ]
+  cat("\n**", k, "**\n\n", sep = "")
+  print(tab(data.frame(
+    `resolved (YES)` = s$a_name, `unresolved (MAYBE)` = s$b_name,
+    `name key agrees` = s$name_key_equal, `edit dist` = s$name_lev,
+    jaccard = s$name_jaccard, `YES score` = round(s$a_score, 3),
+    `MAYBE score` = ifelse(is.na(s$b_score), "-", sprintf("%.3f", s$b_score)),
+    check.names = FALSE, stringsAsFactors = FALSE)))
+  cat("\n")
+}
+```
+
+## Address variants
+
+```{r addr-classes}
+ac <- as.data.frame(table(v$addr_class), stringsAsFactors = FALSE)
+names(ac) <- c("addr_class", "pairs")
+ac <- ac[order(-ac$pairs), ]
+ac$share <- pct(ac$pairs, nrow(v))
+ac$blocking_intact <- pct(tapply(v$blocking_intact, v$addr_class, sum)[ac$addr_class],
+                          table(v$addr_class)[ac$addr_class])
+ac$pairs <- fmt(ac$pairs)
+tab(ac, col.names = c("class", "pairs", "share", "blocking still intact"))
+```
+
+### There is no address score
+
+Worth stating plainly, because it is the single most common wrong assumption
+about this pipeline. `pf_staged_passes()` blocks on `name_key` or `dba_key`
+crossed with `zip5` or `state`, and nothing else:
+
+```{r passes}
+p <- pf_staged_passes("lean", concat = TRUE)
+tab(data.frame(
+  pass = vapply(p, function(x) x$name, ""),
+  criteria = vapply(p, function(x) x$desc, ""),
+  stringsAsFactors = FALSE))
+```
+
+`street`, `unit` and `city` are carried through `pf_map_grants()` and
+normalized into `street_key`, but **no pass reads them**. The address is a
+blocking constraint, never a score. Consequences:
+
+- A city spelling difference — `FT LAUDERDALE` against `Fort Lauderdale` —
+  cannot change the outcome. There are `r fmt(sum(v$city_differs))` such pairs
+  here and blocking stays intact in every one of them.
+- A suite line cannot separate two organizations in one building, however
+  carefully it is filed.
+- The one address field that *can* break a match is the **state**, which blocks
+  stages A2–A5 and all of stage B. It disagrees in
+  `r sum(v$state_differs)` pairs, and the disagreements are adjacent-letter
+  filing errors:
+
+```{r state}
+s <- v[v$state_differs, c("a_name", "a_state", "b_name", "b_state")]
+s <- s[seq_len(min(6L, nrow(s))), ]
+tab(s, col.names = c("resolved (YES)", "state", "unresolved (MAYBE)", "state"))
+```
+
+Since ZIP5 is present and agrees in every one of these pairs, a ZIP5-to-state
+repair would fix them outright.
+
+### Where street normalization does pay
+
+Not inside a group — by construction every pair already keyed to the same
+street. It pays in *forming* groups at all. The filed street text differs in
+`r fmt(sum(v$street_differs))` pairs here, and the normalizer reconciles
+`r sum(v$street_differs & v$street_key_equal)` of them:
+
+```{r street}
+s <- v[v$street_differs & v$street_key_equal,
+       c("a_street", "b_street", "a_street_key")]
+s <- unique(s)[seq_len(min(6L, nrow(unique(s)))), ]
+tab(s, col.names = c("filed (YES side)", "filed (MAYBE side)", "normalized key"))
+```
+
+A missing space before `SUITE`, `Street` against `ST`, `ROAD` against `RD`.
+Measured over the whole corpus rather than these pairs, normalizing the street
+collapses 528,862 of 2,326,459 distinct address keys — 22.7% — and brings
+58,815 addresses above the two-rendering threshold that are currently split
+across spellings and so form no group at all.
+
+The caution: a normalizer that drops the secondary-unit designator to achieve
+that will also merge `STE 100` with `STE 200`, which are different tenants.
+Distinct units are rare at these addresses, so the trade is probably worth
+making, but it is a trade.
+
+## What decides YES against MAYBE
+
+```{r pass-strength}
+k <- v[!is.na(v$a_score) & !is.na(v$b_score), ]
+tab(data.frame(
+  side = c("resolved (YES)", "unresolved (MAYBE)"),
+  `median score` = round(c(median(k$a_score), median(k$b_score)), 3),
+  `exact name+ZIP5` = c(pct(sum(k$a_pass == "A1-name-zip5"), nrow(k)),
+                        pct(sum(k$b_pass == "A1-name-zip5"), nrow(k))),
+  `token-blocked` = c(pct(sum(grepl("^B", k$a_pass)), nrow(k)),
+                      pct(sum(grepl("^B", k$b_pass)), nrow(k))),
+  check.names = FALSE, stringsAsFactors = FALSE))
+```
+
+### A seam: identity is keyed on one thing, blocking on another
+
+`pf_dedup()` keys identity on `name_full` — deliberately, so that an
+organization is not merged with its affiliate by a `name_key` that has already
+thrown the affiliate suffix away. The cascade then blocks stage A1 on
+`name_key` crossed with `zip5`. The two disagree, and
+`r sum(v$name_key_equal)` pairs land in the gap: same normalized name key,
+same street key, same ZIP5, two identities, two different tiers.
+
+```{r seam}
+s <- v[v$name_key_equal, c("a_name", "b_name", "a_name_key", "a_score", "b_score")]
+s <- s[order(-s$a_score), ][seq_len(min(6L, nrow(s))), ]
+s$a_score <- round(s$a_score, 3); s$b_score <- round(s$b_score, 3)
+tab(s, col.names = c("resolved (YES)", "unresolved (MAYBE)", "shared name key",
+                     "YES score", "MAYBE score"))
+```
+
+### When the unresolved side has the better match
+
+The most useful flag in the table. Triangulation writes the anchor's EIN onto
+the candidate as `correct_ein`. On `r fmt(sum(v$b_outscores_a))` pairs
+(`r pct(sum(v$b_outscores_a), nrow(v))`) the candidate's own match was
+*better* than the anchor's — a higher score, or an exact name-plus-ZIP5 hit
+against a token-blocked one. On those the silver label runs against the
+system's own evidence.
+
+```{r outscore}
+s <- v[v$b_outscores_a & !is.na(v$b_score), ]
+s <- s[order(s$a_pass_rank - s$b_pass_rank, -s$b_score), ]
+s <- s[seq_len(min(8L, nrow(s))), ]
+tab(data.frame(
+  `anchor (YES)` = s$a_name, `score` = round(s$a_score, 3), pass = s$a_pass,
+  `candidate (MAYBE)` = s$b_name, ` score` = round(s$b_score, 3), ` pass` = s$b_pass,
+  check.names = FALSE, stringsAsFactors = FALSE))
+```
+
+`BETHEL COLLEGE` against `BETHEL UNIVERSITY` is the shape to recognise: a
+renamed organization, where the rendering being labelled wrong found the better
+reference row. Filter on `b_outscores_a` before trusting a triangulated label.
+
+## Using this as a regression corpus
+
+The pairs carry both the raw filed strings and the keys `np_normalize()` made
+of them, so the keys can be recomputed and compared. `tests/testthat/test-variants.R`
+does exactly that, in two layers:
+
+- **Invariants** that must hold under any sane normalizer: a leading `THE` never
+  decides a name key; streets differing only by suffix spelling or a missing
+  space normalize together; streets recorded as genuinely different stay
+  different; a city difference never breaks blocking.
+- **A pinned check** that every recorded key still reproduces, scoped to the
+  `np_normalize_signature()` the fixture was built under
+  (`` `r attr(v, "normalizer")` ``). It skips when the normalizer moves, because
+  an intentional improvement *should* move keys — and the skip message tells you
+  to rebuild with `data-raw/make-pf-variants.R`.
+
+To test a change, re-run the fixture build against the new normalizer and diff
+the class table: cosmetic classes should shrink, `name_key_equal` should grow,
+and no pair should move from a different-street class into an agreeing one
+unless you meant it to.
