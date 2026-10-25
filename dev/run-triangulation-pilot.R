@@ -29,7 +29,8 @@ sq  <- function(x) { x <- as.character(x); x[is.na(x)] <- ""; x }
 e9  <- function(v) { v <- gsub("[^0-9]", "", as.character(v))
                      ifelse(nchar(v) == 9L, v, NA_character_) }
 
-V2    <- "C:/Users/jlecy/Documents/grants/PF-GRANTS-PAID-V2-2009-2025.csv"
+source(file.path(PF, "dev", "grants-path.R"))
+V2    <- pf_grants_v2()
 CHUNK <- 2000000L
 hr(); say("run-triangulation-pilot  %s", format(Sys.time())); hr()
 
