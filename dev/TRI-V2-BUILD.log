@@ -1,0 +1,54 @@
+========================================================================================
+build-triangulation-v2   target 50,000 cases   2026-10-24 20:05:31
+========================================================================================
+eligible universe: 504,739 groups, 7,434,953 grant rows
+expected 1.51 cases/group over the universe -> drawing 36,366 groups
+drawn: 36,366 groups, 540,683 grant rows, 126,184 index-names (~88,241 identities)
+  chunk 1  2,000,000 scanned, 68,551 kept
+  chunk 2  4,000,000 scanned, 140,800 kept
+  chunk 3  6,000,000 scanned, 214,090 kept
+  chunk 4  8,000,000 scanned, 281,691 kept
+  chunk 5  10,000,000 scanned, 349,572 kept
+  chunk 6  12,000,000 scanned, 416,229 kept
+  chunk 7  14,000,000 scanned, 488,899 kept
+  chunk 8  16,000,000 scanned, 553,112 kept
+  chunk 9  17,253,199 scanned, 596,539 kept
+extracted 596,539 grant rows for 36,366 keys
+recovered 4 recipient name(s) from the street field: Second Mile | Second Mile | Second Mile | Second Mile
+identities to match: 91,690
+reference: REF-augmented.rds, 3,880,431 rows
+pf_run_batches: 91,690 rows in 4 batches of 25,000 
+  [  1/  4] 25,000 rows | YES 11592 MAYBE  6930 NO  6478 OOS    0 | 5225.9 s (209.0 s/1k) 
+  [  2/  4] 25,000 rows | YES 11099 MAYBE  6658 NO  7243 OOS    0 | 4496.9 s (179.9 s/1k) 
+  [  3/  4] 25,000 rows | YES 12261 MAYBE  6034 NO  6705 OOS    0 | 4383.5 s (175.3 s/1k) 
+  [  4/  4] 16,690 rows | YES  6304 MAYBE  4485 NO  5901 OOS    0 | 2699.7 s (161.8 s/1k) 
+matched in 280.1 min (0.183 s/identity)
+population id: cb3c78ff0f1a9546
+groups with >=2 renderings after matching: 36,114
+wrote TRIANGULATION-V2-GROUPS.csv  (no labels: grouping only)
+========================================================================================
+INFORMATIVE CASES: 58,680
+  against a target of 50,000  (117%)
+  eligible groups      12,474 of 36,114  (34.5%)
+ n_flags cases
+   <int> <int>
+       0  6967
+       1 35442
+       2 13856
+       3  2353
+       4    62
+  0 flags is the cleanest slice; review that first.
+
+  by group size:
+ bucket groups cases
+ <fctr>  <int> <int>
+      2    992  1227
+    3-4   1576  3093
+    5-9   2479  8078
+  10-24   2267 14834
+  25-99   1244 18694
+   100+    248 12754
+wrote TRIANGULATION-V2-SAMPLE.csv  (adjudication QUEUE, 58,680 cases)
+wrote PF-TRUTH-V2-TRIANGULATED.csv  (silver, confidence = low)
+========================================================================================
+done  2026-10-25 00:54:05

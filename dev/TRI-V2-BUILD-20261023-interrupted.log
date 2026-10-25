@@ -1,0 +1,12 @@
+﻿Rscript : ========================================================================================
+At line:1 char:382
++ ... :PFMATCH_DIR = "."; Rscript dev/build-triangulation-v2.R 2>&1 | Tee-O ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (===============...===============:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+build-triangulation-v2   target 50,000 cases   2026-10-23 23:04:44
+========================================================================================
+eligible universe: 504,739 groups, 7,434,953 grant rows
+expected 1.51 cases/group over the universe -> drawing 36,366 groups
+drawn: 36,366 groups, 540,683 grant rows, 126,184 index-names (~88,241 identities)
