@@ -258,14 +258,32 @@ regression hard to attribute if several things move at once.
    blocking a run that is probably fine. Checkpoints stop in both cases because
    recomputing one is cheap. 14 assertions in
    `tests/testthat/test-reference-stamp.R`.
-2. **Rebuild the reference.** npmatch is already reinstalled, so this is the
-   open item: `REF-augmented.rds` holds keys from `v1-6dcb298522cc5118` and
-   warns on every run. It needs the processed BMF, which is not in the repo, so
-   it is a deliberate step rather than something to do in passing. *Check:*
-   `np_normalize_signature()` is recorded from the installed commit, not
-   compared against a quoted value; the rebuilt
-   `REF-augmented.rds` loads; `PF_SET=1k` is re-measured and the change recorded
-   — expect movement, since `street_key` changes on 1.78% of rows.
+2. ~~**Rebuild the reference.**~~ **Done**, 23.4 min from
+   `BMF-AUGMENTED-unified-fixed.csv`; full record in `dev/REF-REBUILD.log`.
+   3,880,431 rows unchanged, 38 columns (was 35, gaining `name_core`,
+   `name_placeholder`, `street_unit_id`), stamped and passing
+   `pf_check_reference()`. The previous bundle is kept as
+   `REF-augmented-v1-6dcb298522cc5118.rds`, its normalizer in the filename
+   since it carries no stamp.
+
+   It was not a cosmetic bump. `street_key` moved on 55,740 rows (1.436%,
+   matching npmatch's 1.78% on their smaller BMF), and in **5,134** of them the
+   old key was a strict *prefix* of the new one — the old pattern read `RM`
+   inside `FARM` as a room designator and cut the street there, so
+   `20 GILSLAND FARM RD` was keyed `20 GILSLAND FA`. Every farm road in the
+   reference was keyed to its own truncation and could not match on street.
+   `name_key` moved on 2,565 rows (990 abbreviations now expand: `FDN` to
+   `FOUNDATION`, `MGMT` to `MANAGEMENT`, `HOSP` to `HOSPITAL`). And 413,417
+   rows (10.65%) now carry a parsed `street_unit_id` across 19,878 distinct
+   ids, which is what feeds the `building` class and the suite credit.
+
+   Two consequences recorded rather than resolved: every measurement taken
+   against the old bundle — `BASELINE-2026-10B`, the triangulation run — is now
+   on a different footing and a rerun will not reproduce it; and matchdb's
+   Phase 2 gate target has moved with it, so its comparison needs the new
+   bundle rather than the kept one. `REF-active.rds`, `REF-unified.rds` and
+   `REF-augmented-collapsed.rds` are all still on the old normalizer and
+   unstamped.
 3. **Retire `pf_parse_unit()`.** Follow `dev/UNIT-UPSTREAM-SYNC.md` §4: diff the
    upstream parser against `pf_variants`' 5,410 recorded verdicts and the
    queue's 121 conflicts first, then delete `R/unit.R`, keeping

@@ -1,0 +1,106 @@
+==============================================================================
+rebuild REF-augmented.rds under npmatch v1-3e7b9f9d59bbb19e   2026-10-26
+==============================================================================
+Reason: npmatch PR #18 moved the normalizer. The cached bundle was built
+2026-08-21 under v1-6dcb298522cc5118 and holds name_key / street_key, with
+name_freq, token_idf and ref_index all derived from them, so it had stopped
+meeting a query normalized at run time.
+
+source : data-dev/BMF-AUGMENTED-unified-fixed.csv (3,809 MB, 3,880,431 rows)
+         provenance confirmed by row count -- dev/BUILD-AUGMENTED-FIXED.log
+         reports 3,880,431 augmented BMF rows, matching the bundle exactly
+call   : pf_reference(src, active_col = NULL, recovery = TRUE)
+built  : 23.4 min, 2.83 GB
+kept   : data-dev/REF-augmented-v1-6dcb298522cc5118.rds (the previous bundle,
+         normalizer in the filename since it carries no stamp)
+
+==============================================================================
+VERIFIED
+==============================================================================
+  rows            3,880,431   (unchanged)
+  reference cols  38          (was 35)
+  columns added   name_core, name_placeholder, street_unit_id
+  columns dropped none
+  stamp           v1-3e7b9f9d59bbb19e == np_normalize_signature()
+  recovery keys   name_acro, name_pre present
+  name_freq       2,797,111   (was 2,797,423)
+  token_idf         397,566   (was   397,581)
+  pf_check_reference()  PASSED
+
+==============================================================================
+WHAT MOVED  (positional alignment confirmed: 0 rows differ on raw name/street)
+==============================================================================
+  street_key      55,740  1.436%
+  name_full        3,832  0.099%
+  name_key         2,565  0.066%
+  dba_key          1,328  0.034%
+  is_po_box           25  0.001%
+
+npmatch measured street_key moving on 34,280 of 1.92M unified-BMF rows (1.78%);
+1.44% over this 3.88M-row augmented BMF is the same effect at the same scale.
+
+==============================================================================
+THE OLD NORMALIZER WAS TRUNCATING STREETS -- 5,134 rows
+==============================================================================
+Not a cosmetic signature bump. The old unit pattern had no word boundary, so a
+designator spelled inside an ordinary word was read as one and the street was
+cut there. In 5,134 rows the old street_key is a strict prefix of the new:
+
+  street                 old key            new key
+  20 GILSLAND FARM RD    20 GILSLAND FA     20 GILSLAND FARM RD
+  34 WING FARM PKWY      34 WING FA         34 WING FARM PKWY
+  13 COUNTRY CHARM RD    13 COUNTRY CHA     13 COUNTRY CHARM RD
+  356 VLY STRM CIR       356 VLY ST         356 VLY STRM CIR
+  16 INDIAN STRM RD      16 INDIAN ST       16 INDIAN STRM RD
+  74 HORSE FARM RD       74 HORSE FA        74 HORSE FARM RD
+
+RM inside FARM, ST inside STRM, CHA from CHARM. Every farm road in the
+reference was keyed to its own truncation and could not match on street. This
+is npmatch's 27,954-row false-extraction bug (11.3% of extractions, masking the
+real unit on 3,636) as it landed in pfmatch's own reference.
+
+==============================================================================
+THE SUITE IS NOW AVAILABLE
+==============================================================================
+  rows with a parsed street_unit_id   413,417  10.654%
+  distinct unit ids                    19,878
+
+Examples of the extraction the old pattern missed or mangled:
+  4325 E 29TH ST LOT 108        key kept "LOT 108"     -> unit 108
+  225 E 36TH ST STE 1-P         key became "... ST P"  -> unit 1P
+  633 3RD AVE FL 21             key kept "FL 21"       -> unit 21
+  50 MARKET ST STE 1A PMB 395   key kept "PMB 395"     -> unit 1A
+  1 CITY CTR STOP 1 105         key kept "STOP 1 105"  -> unit 1
+
+==============================================================================
+NAME_KEY: 990 abbreviations now expand
+==============================================================================
+  PERCIVAL P BAXTER FDN FOR ...        -> ... FOUNDATION FOR ...
+  ... SOCIETY FOR HUMAN RESOURCE MGMT  -> ... MANAGEMENT
+  CHURCH OF CHRIST CHRISTIAN CNTR ...  -> ... CENTER ...
+  MEDICAL STAFF OF JOHN MUIR MED ...   -> ... MEDICAL ...
+  ... FBO AUGUSTA GEN HOSP 90574       -> ... HOSPITAL 90574
+  COMPASSIONATE FRIENDS LAKES REG ...  -> ... REGIONAL ...
+A trailing foundation token is dropped as a legal form rather than expanded
+(ALBERT MIKELS RESEARCH FDTN -> ALBERT MIKELS RESEARCH).
+
+==============================================================================
+STILL OPEN
+==============================================================================
+* Every measurement taken against the old reference is now on a different
+  footing. BASELINE-2026-10B and the triangulation run (population
+  cb3c78ff0f1a9546, dev/TRI-V2-BUILD.log) were matched against the old bundle.
+  Nothing is retracted by this rebuild, but a rerun will not reproduce them and
+  should not be expected to.
+* REF-augmented.rds is matchdb's Phase 2 gate target ("md_compile(*-observed)
+  must reproduce this", dev/build-baseline.R). That target has now moved.
+  matchdb re-froze its own Phase 1 baseline on the fixed normalizer in its
+  PR #16; this is the same move on pfmatch's side, and matchdb's Phase 2
+  comparison needs the new bundle, not the kept one.
+* pf_variants still records keys under v1-6dcb298522cc5118, so
+  test-variants.R's pinned test skips. Rebuilding it would pair new keys with
+  match statuses produced under the old normalizer, so it is left alone until
+  the match is rerun.
+* REF-active.rds, REF-unified.rds and REF-augmented-collapsed.rds are all
+  still on the old normalizer and unstamped.
+==============================================================================
