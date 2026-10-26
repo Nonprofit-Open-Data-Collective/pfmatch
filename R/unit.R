@@ -1,6 +1,12 @@
 # ============================================================================
 # The secondary-unit line as adjudication evidence.
 #
+# THIS FILE IS A STOPGAP. npmatch and matchdb are integrating unit parsing and
+# promotion of the unit to the adjudication stage; when that merges, this goes.
+# Read dev/UNIT-UPSTREAM-SYNC.md BEFORE changing anything here -- it lists the
+# decisions to diff against upstream, the retirement order, and the four
+# behaviours any replacement has to keep.
+#
 # PF_15_G_PAID_RECIP_ADDR_L2 is where a suite number lands, and two renderings
 # at one street that give DIFFERENT suites are very likely different
 # organizations -- which is the one address fact that bears directly on a
