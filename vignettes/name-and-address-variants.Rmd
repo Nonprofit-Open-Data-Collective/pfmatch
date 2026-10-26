@@ -149,11 +149,11 @@ ac$pairs <- fmt(ac$pairs)
 tab(ac, col.names = c("class", "pairs", "share", "blocking still intact"))
 ```
 
-### There is no address score
+### The address is scored, but inside a group it is saturated
 
-Worth stating plainly, because it is the single most common wrong assumption
-about this pipeline. `pf_staged_passes()` blocks on `name_key` or `dba_key`
-crossed with `zip5` or `state`, and nothing else:
+Blocking and scoring are separate layers and the address behaves differently in
+each. `pf_staged_passes()` blocks on `name_key` or `dba_key` crossed with
+`zip5` or `state`, and nothing else:
 
 ```{r passes}
 p <- pf_staged_passes("lean", concat = TRUE)
@@ -163,19 +163,63 @@ tab(data.frame(
   stringsAsFactors = FALSE))
 ```
 
-`street`, `unit` and `city` are carried through `pf_map_grants()` and
-normalized into `street_key`, but **no pass reads them**. The address is a
-blocking constraint, never a score. Consequences:
+So no pass *blocks* on street, unit or city. But scoring is a different
+layer, and there the address carries real weight. pfmatch runs
+`method = "hier"`, whose score is
+
+```
+score = 0.6 * name_key_similarity + 0.4 * geo_score
+```
+
+and `geo_score` is the **maximum** over a tier ladder:
+
+```{r geo}
+g <- npmatch::np_config()$geo_weights
+tab(data.frame(
+  `geo term` = names(g),
+  weight = as.numeric(g),
+  `fires when` = c(
+    "ZIP+4 agrees",
+    "street number agrees AND normalized street key similarity >= 0.9, not a PO box",
+    "ZIP5 agrees",
+    "PO box number agrees",
+    "ZIP3 agrees (zeroed on a state conflict)",
+    "city Jaro-Winkler, floored at jw_threshold (zeroed on a state conflict)",
+    "state agrees"),
+  check.names = FALSE, stringsAsFactors = FALSE))
+```
+
+`street_key` — npmatch's normalized street — is compared directly and is worth
+0.95, second only to ZIP+4. The address normalizer is very much in use.
+
+The catch is the `max()`. Inside a triangulation group ZIP5 agrees by
+construction, so `geo_score` is already at least 0.90 before the street is
+considered, and a street hit can lift it only to 0.95. That is 0.05 of geo,
+0.02 of the final score. City at 0.50 and state at 0.20 are dominated outright
+and cannot bind at all while ZIP5 agrees.
+
+So the address is not inert — it is **saturated**, and only in this corpus.
+Outside it, wherever ZIP5 does *not* agree, `street_hit` is the best geo term
+available and street normalization is carrying the match. That is the opposite
+of what these pairs alone would suggest, and it is why `pf_variants` is the
+wrong instrument for judging the address comparator's value.
+
+Consequences that do hold here:
 
 - A city spelling difference — `FT LAUDERDALE` against `Fort Lauderdale` —
-  cannot change the outcome. There are `r fmt(sum(v$city_differs))` such pairs
-  here and blocking stays intact in every one of them.
-- A suite line cannot separate two organizations in one building, however
-  carefully it is filed.
-- The one address field that *can* break a match is the **state**, which blocks
-  stages A2–A5 and all of stage B. It disagrees in
-  `r sum(v$state_differs)` pairs, and the disagreements are adjacent-letter
-  filing errors:
+  cannot change the outcome while ZIP5 agrees, because the 0.50 city term is
+  dominated by the 0.90 ZIP5 term. There are `r fmt(sum(v$city_differs))` such
+  pairs, and blocking stays intact in all of them.
+- A suite line cannot separate two organizations in one building. `.np_hier_score()`
+  has no unit term at all, so under `method = "hier"` the unit is never
+  compared. `method = "weighted"` does have a `street_unit_full` profile that
+  weights it 0.06 — but `np_detect_geo()` only selects a profile whose every
+  field clears 50% coverage, and filers populate the unit on 3.84% of the
+  identities in this run. Both routes are closed.
+- The **state** costs twice when wrong: it blocks stages A2–A5 and all of
+  stage B, *and* a state conflict zeroes the city and ZIP3 geo terms. It
+  disagrees in `r sum(v$state_differs)` pairs, all adjacent-letter filing
+  errors:
 
 ```{r state}
 s <- v[v$state_differs, c("a_name", "a_state", "b_name", "b_state")]

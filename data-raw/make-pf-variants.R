@@ -208,8 +208,14 @@ p[, addr_class := fifelse(unit_differs, "unit differs",
                   fifelse(street_differs, "street spelling",
                   fifelse(zip4_differs, "zip4 differs",
                   fifelse(state_differs, "state differs", "identical")))))]
-# what the cascade can actually see: it blocks on name_key/dba_key x zip5/state
-# and never reads street, unit or city (R/match.R, pf_staged_passes()).
+# Blocking and scoring are different layers. pf_staged_passes() blocks on
+# name_key/dba_key x zip5/state only. Scoring under method = "hier" is
+# 0.6 * name + 0.4 * max(geo ladder), and the ladder DOES compare street_key
+# (weight 0.95, second only to ZIP+4) -- so the address normalizer is in use.
+# But the ladder is a max() and zip5 agrees by construction inside a group,
+# putting geo at >= 0.90 before the street is read, so a street hit is worth
+# 0.02 of the final score here. Saturated, not unused. The unit is absent from
+# .np_hier_score() entirely.
 p[, name_key_equal   := sq(a_name_key) == sq(b_name_key) & nzchar(sq(a_name_key))]
 p[, street_key_equal := sq(a_street_key) == sq(b_street_key)]
 p[, zip5_equal       := sq(a_zip5) == sq(b_zip5)]
