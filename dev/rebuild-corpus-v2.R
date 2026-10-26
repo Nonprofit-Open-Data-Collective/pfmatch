@@ -24,7 +24,8 @@ suppressWarnings(suppressMessages(devtools::load_all(PF, quiet = TRUE)))
 say <- function(...) message(sprintf(...))
 hr  <- function() message(strrep("=", 78))
 
-HOME <- "C:/Users/jlecy/Documents/grants"
+source(file.path(PF, "dev", "grants-path.R"))
+HOME <- pf_grants_home()
 OUT  <- file.path(HOME, "PF-GRANTS-PAID-V2-2009-2025.csv")
 
 hr(); say("rebuild-corpus-v2  %s", format(Sys.time()))

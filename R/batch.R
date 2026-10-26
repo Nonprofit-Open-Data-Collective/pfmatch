@@ -73,7 +73,12 @@ pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
                            config = npmatch::np_config(), method = "hier",
                            recover = TRUE, self_guard = TRUE,
                            dyads = NULL, dyad_config = pf_dyad_config(),
-                           resume = TRUE, verbose = TRUE) {
+                           resume = TRUE, verbose = TRUE,
+                           check_reference = c("auto", "stop", "warn", "ignore")) {
+  check_reference <- match.arg(check_reference)
+  # Check once here rather than once per batch: the message is identical every
+  # time and a four-batch run would print it four times.
+  pf_check_reference(ref, check_reference)
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   say <- function(...) if (verbose) cat(sprintf(...), "\n")
   n <- nrow(grants)
@@ -107,7 +112,8 @@ pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
     ok <- tryCatch({
       t0 <- proc.time()[["elapsed"]]
       m <- pf_match_grants(sub, ref, config = config, method = method,
-                           passes = passes, recover = recover, verbose = FALSE)
+                           passes = passes, recover = recover, verbose = FALSE,
+                           check_reference = "ignore")
       if (self_guard) m <- pf_drop_self_matches(m, verbose = FALSE)
       # The dyad collapse has to run HERE. It needs the scored pairs, and
       # pf_status() is where they stop being available -- the status frame keeps

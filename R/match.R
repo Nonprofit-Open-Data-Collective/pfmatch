@@ -189,9 +189,73 @@ pf_build_reference <- function(bmf, active_col = NULL) {
   token_idf <- npmatch::np_token_idf(ref$name_key)
   ref_index <- npmatch::np_ref_index(ref)
   t_index <- tic() - t0
+  # Stamp the bundle with the normalizer that produced it. `reference` holds
+  # name_key and street_key, and name_freq, token_idf and ref_index are all
+  # derived from those keys, so the whole bundle is a function of the
+  # normalizer. Nothing recorded that until now: a cached bundle outliving an
+  # npmatch upgrade would be reused against a query normalized under the new
+  # rules, the two keys would stop meeting, and the run would simply resolve
+  # fewer rows with nothing saying why. npmatch measured street_key changing on
+  # 34,280 BMF rows (1.78%) in one release. See pf_check_reference().
   list(reference = ref, name_freq = name_freq, token_idf = token_idf,
        ref_index = ref_index,
+       normalizer = tryCatch(npmatch::np_normalize_signature(),
+                             error = function(e) NA_character_),
        timing = c(read = t_read, normalize = t_norm, index = t_index))
+}
+
+#' Refuse a reference bundle built by a different normalizer
+#'
+#' Checkpoints have carried a normalizer stamp since `.pf_run_stamp()`, but a
+#' *fresh* run against a stale `REF-augmented.rds` had nothing to catch it.
+#' This closes that gap, on the same principle: recomputing wastes time, reusing
+#' a mismatched key produces a result that looks correct and is not.
+#'
+#' Two cases, deliberately different in severity. A bundle stamped with a
+#' *different* signature is known wrong, so `"auto"` stops. A bundle with *no*
+#' stamp is merely unknown — it predates stamping and may well be current — and
+#' a reference is 2.8 GB and hours to rebuild from the BMF, so `"auto"` warns
+#' rather than blocking a run that is probably fine. Checkpoints stop in both
+#' cases because recomputing one is cheap; this is the same principle applied
+#' to a much more expensive artifact.
+#'
+#' The signature is read from either place a reference records it: `normalizer`
+#' on a bundle from [pf_build_reference()], or `stamp$normalize_signature` on a
+#' matchdb tier fetched by [pf_reference()]. Reading only the first would report
+#' a stamped matchdb tier as unstamped and downgrade a real mismatch to a
+#' warning — and a warning nobody can act on is worse than no check.
+#'
+#' @param ref A bundle from [pf_build_reference()], a matchdb tier from
+#'   [pf_reference()], or a bare reference frame.
+#' @param action `"auto"` (default: stop on a mismatch, warn on a missing
+#'   stamp), or force `"stop"`, `"warn"` or `"ignore"`.
+#' @return `ref`, invisibly.
+#' @export
+pf_check_reference <- function(ref, action = c("auto", "stop", "warn", "ignore")) {
+  action <- match.arg(action)
+  if (identical(action, "ignore")) return(invisible(ref))
+  if (!is.list(ref) || is.null(ref$reference)) return(invisible(ref))
+  live <- tryCatch(npmatch::np_normalize_signature(),
+                   error = function(e) NA_character_)
+  have <- .pf_ref_signature(ref)
+  if (is.na(live)) return(invisible(ref))
+  if (identical(action, "auto"))
+    action <- if (is.null(have)) "warn" else "stop"
+  msg <- if (is.null(have))
+    paste0("this reference bundle carries no normalizer stamp, so it cannot be ",
+           "shown to match the installed npmatch (", live, ").\n",
+           "  It predates reference stamping. Rebuild it with ",
+           "pf_build_reference(), or pass action = \"warn\" if you have ",
+           "established by other means that the keys are current.")
+  else if (!identical(as.character(have), live))
+    paste0("this reference bundle was built by a different normalizer.\n",
+           "  bundle:    ", have, "\n  installed: ", live, "\n",
+           "  Its name_key and street_key -- and the name_freq, token_idf and ",
+           "ref_index derived from them -- no longer match what the query will ",
+           "be normalized to. Rebuild it with pf_build_reference().")
+  else return(invisible(ref))
+  if (identical(action, "stop")) stop(msg, call. = FALSE) else warning(msg, call. = FALSE)
+  invisible(ref)
 }
 #' Collapse reference rows the matcher cannot tell apart
 #'
@@ -338,8 +402,10 @@ pf_collapse_reference <- function(ref, by = c("name_key", "state", "zip5"),
 #' @export
 pf_match_grants <- function(grants, ref, config = npmatch::np_config(),
                             method = "hier", passes = pf_default_passes(),
-                            recover = FALSE, verbose = TRUE) {
+                            recover = FALSE, verbose = TRUE,
+                            check_reference = c("auto", "stop", "warn", "ignore")) {
   stopifnot(!is.null(grants$in_scope), !is.null(grants$grant_id))
+  pf_check_reference(ref, match.arg(check_reference))
   bundle <- if (is.list(ref) && !is.null(ref$reference)) ref
             else list(reference = ref, name_freq = NULL, token_idf = NULL,
                       ref_index = NULL)
@@ -399,4 +465,14 @@ print.pf_match <- function(x, ...) {
   cat(sprintf("  match time: %.1f s (%.1f s per 1,000 in-scope grants)\n",
               x$timing[["match"]], x$timing[["match_per_1k"]]))
   invisible(x)
+}
+
+# Where a reference records the normalizer that built it. A pf_build_reference()
+# bundle uses `normalizer`; a matchdb tier carries matchdb's own stamp, whose
+# `normalize_signature` field pf_reference() already prints when it loads one.
+.pf_ref_signature <- function(ref) {
+  if (!is.null(ref$normalizer)) return(as.character(ref$normalizer)[1])
+  s <- ref$stamp$normalize_signature
+  if (!is.null(s) && length(s)) return(as.character(s)[1])
+  NULL
 }

@@ -17,7 +17,8 @@ pf_run_batches(
   dyads = NULL,
   dyad_config = pf_dyad_config(),
   resume = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  check_reference = c("auto", "stop", "warn", "ignore")
 )
 }
 \arguments{

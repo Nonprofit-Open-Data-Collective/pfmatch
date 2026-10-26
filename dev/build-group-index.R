@@ -29,7 +29,8 @@ say <- function(...) message(sprintf(...))
 hr  <- function() message(strrep("=", 80))
 
 PF    <- Sys.getenv("PFMATCH_DIR", ".")
-V2    <- "C:/Users/jlecy/Documents/grants/PF-GRANTS-PAID-V2-2009-2025.csv"
+source(file.path(PF, "dev", "grants-path.R"))
+V2    <- pf_grants_v2()
 OUT   <- file.path(PF, "data-dev", "GROUP-INDEX.rds")
 CHUNK <- 2000000L
 

@@ -11,7 +11,8 @@ pf_match_grants(
   method = "hier",
   passes = pf_default_passes(),
   recover = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  check_reference = c("auto", "stop", "warn", "ignore")
 )
 }
 \arguments{
