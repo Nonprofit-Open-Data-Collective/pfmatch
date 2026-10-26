@@ -1,18 +1,24 @@
 # ============================================================================
 # The secondary-unit line as adjudication evidence.
 #
-# THIS FILE IS A STOPGAP. npmatch and matchdb are integrating unit parsing and
-# promotion of the unit to the adjudication stage; when that merges, this goes.
-# Read dev/UNIT-UPSTREAM-SYNC.md BEFORE changing anything here -- it lists the
-# decisions to diff against upstream, the retirement order, and the four
-# behaviours any replacement has to keep.
+# THIS FILE IS SUPERSEDED. npmatch PR #18 (merged 2026-10-26) parses the suite
+# into street_unit_id, carries it to review and scores it, so this goes as soon
+# as npmatch is reinstalled here. Two designators below are measurably WRONG:
+# npmatch excludes NO (it is North far more often than Number) and OFC (the C2
+# designators match street names), both of which .PF_UNIT_DESIG lists.
+# Read dev/PLACES-SYNC.md and then dev/UNIT-UPSTREAM-SYNC.md BEFORE changing
+# anything here: they carry the retirement order, the decisions to diff, and
+# the four behaviours any replacement has to keep.
 #
 # PF_15_G_PAID_RECIP_ADDR_L2 is where a suite number lands, and two renderings
 # at one street that give DIFFERENT suites are very likely different
 # organizations -- which is the one address fact that bears directly on a
-# triangulated label. It cannot help the matcher: np_detect_geo() only selects
-# the unit-bearing weight profile when unit coverage clears 50% and it runs at
-# 2-3%, and .np_hier_score() has no unit term at all. It can help a human.
+# triangulated label. Against the npmatch build installed here it cannot help
+# the matcher: np_detect_geo() only selects the unit-bearing weight profile when
+# unit coverage clears 50% and it runs at 2-3%, and .np_hier_score() has no unit
+# term. It can help a human, which is what this is for. (Upstream both have
+# changed -- PR #18 adds geo_weights["unit"] = 0.97 and stops auto-selecting a
+# unit-bearing profile. See dev/PLACES-SYNC.md 3b.)
 #
 # Two things make it unusable raw. The field is polluted -- street lines, city
 # names, PO boxes and prose all appear in it -- and the designator is not

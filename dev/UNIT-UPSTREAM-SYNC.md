@@ -1,9 +1,20 @@
 # Secondary-unit handling: retire the local copy when npmatch lands its own
 
-**Trigger: npmatch and matchdb are integrating unit parsing/normalization and
-promotion of the unit to the adjudication stage. When those merge, come back
-here.** pfmatch has its own implementation, written because npmatch did not
-have one at the time, and two implementations of the same thing will drift.
+> **TRIGGER FIRED, 2026-10-26.** npmatch PR #18 is merged: the suite is parsed
+> into `street_unit_id`, carried to review, and scored. This note's §3–§5 still
+> apply and are what to diff against — but **§1 is now a description of the
+> pre-PR npmatch**, and two of its three facts are false upstream (the
+> hierarchical scorer gained `unit = 0.97`; a unit-bearing profile is no longer
+> auto-selected at all). Two of pfmatch's designator decisions are also known
+> wrong: npmatch excludes `NO` and `OFC`, measured, and `R/unit.R` includes
+> both. Read `dev/PLACES-SYNC.md` first — it covers the whole merge, including
+> the address classes that came with it, and carries the ordered plan.
+
+**Original trigger: npmatch and matchdb are integrating unit parsing/
+normalization and promotion of the unit to the adjudication stage. When those
+merge, come back here.** pfmatch has its own implementation, written because
+npmatch did not have one at the time, and two implementations of the same thing
+will drift.
 
 By the rule in `dev/NPMATCH-PROMOTION-PLAN.md` — *generic machinery, anything
 whose correctness does not depend on the query file being 990-PF Part XIV,
@@ -14,9 +25,15 @@ parsing would be equally correct applied to SAM or USASpending. It goes.
 
 ## 1. Why pfmatch grew its own
 
+**This section describes npmatch as it was before PR #18 and as it still is on
+this machine, where the installed build is `v1-6dcb298522cc5118`. Upstream, the
+second and third bullets no longer hold.** They are kept because they are why
+the local code exists and because the coverage figure in the third is still the
+number to re-measure before letting the unit into scoring.
+
 Three facts, measured on the 50,000-case triangulation run (population
-`cb3c78ff0f1a9546`, 91,817 identities). All three are reasons the *upstream*
-version has to change, not just reasons we wrote a local one:
+`cb3c78ff0f1a9546`, 91,817 identities). All three were reasons the *upstream*
+version had to change, not just reasons we wrote a local one:
 
 * **`np_normalize()` maps the unit but does not usefully parse it.** `unit` is
   in `pf_map_grants()` and `np_query()` carries it, but `street_unit` comes
