@@ -219,7 +219,14 @@ pf_build_reference <- function(bmf, active_col = NULL) {
 #' cases because recomputing one is cheap; this is the same principle applied
 #' to a much more expensive artifact.
 #'
-#' @param ref A bundle from [pf_build_reference()], or a bare reference frame.
+#' The signature is read from either place a reference records it: `normalizer`
+#' on a bundle from [pf_build_reference()], or `stamp$normalize_signature` on a
+#' matchdb tier fetched by [pf_reference()]. Reading only the first would report
+#' a stamped matchdb tier as unstamped and downgrade a real mismatch to a
+#' warning — and a warning nobody can act on is worse than no check.
+#'
+#' @param ref A bundle from [pf_build_reference()], a matchdb tier from
+#'   [pf_reference()], or a bare reference frame.
 #' @param action `"auto"` (default: stop on a mismatch, warn on a missing
 #'   stamp), or force `"stop"`, `"warn"` or `"ignore"`.
 #' @return `ref`, invisibly.
@@ -230,7 +237,7 @@ pf_check_reference <- function(ref, action = c("auto", "stop", "warn", "ignore")
   if (!is.list(ref) || is.null(ref$reference)) return(invisible(ref))
   live <- tryCatch(npmatch::np_normalize_signature(),
                    error = function(e) NA_character_)
-  have <- ref$normalizer
+  have <- .pf_ref_signature(ref)
   if (is.na(live)) return(invisible(ref))
   if (identical(action, "auto"))
     action <- if (is.null(have)) "warn" else "stop"
@@ -458,4 +465,14 @@ print.pf_match <- function(x, ...) {
   cat(sprintf("  match time: %.1f s (%.1f s per 1,000 in-scope grants)\n",
               x$timing[["match"]], x$timing[["match_per_1k"]]))
   invisible(x)
+}
+
+# Where a reference records the normalizer that built it. A pf_build_reference()
+# bundle uses `normalizer`; a matchdb tier carries matchdb's own stamp, whose
+# `normalize_signature` field pf_reference() already prints when it loads one.
+.pf_ref_signature <- function(ref) {
+  if (!is.null(ref$normalizer)) return(as.character(ref$normalizer)[1])
+  s <- ref$stamp$normalize_signature
+  if (!is.null(s) && length(s)) return(as.character(s)[1])
+  NULL
 }

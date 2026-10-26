@@ -65,3 +65,20 @@ test_that("pf_build_reference stamps what it returns", {
   expect_identical(got$normalizer, live)
   expect_silent(pf_check_reference(got))
 })
+
+test_that("a matchdb tier's own stamp is read, not reported as missing", {
+  # pf_reference(source = "matchdb") returns a tier whose signature lives at
+  # stamp$normalize_signature. Reading only `normalizer` would call a stamped
+  # tier unstamped and downgrade a real mismatch to a warning.
+  skip_if(is.na(live))
+  tier <- function(sig) list(
+    reference = data.frame(ein = "1", name_key = "A", stringsAsFactors = FALSE),
+    source = "matchdb", stamp = list(spec_hash = "abc",
+                                     normalize_signature = sig))
+  expect_silent(pf_check_reference(tier(live)))
+  expect_error(pf_check_reference(tier("v1-deadbeefdeadbeef")),
+               "built by a different normalizer")
+  # and a tier with no stamp at all still falls back to the warning
+  t0 <- tier(live); t0$stamp$normalize_signature <- NULL
+  expect_warning(pf_check_reference(t0), "no normalizer stamp")
+})

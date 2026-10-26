@@ -7,7 +7,8 @@
 pf_check_reference(ref, action = c("auto", "stop", "warn", "ignore"))
 }
 \arguments{
-\item{ref}{A bundle from \code{\link[=pf_build_reference]{pf_build_reference()}}, or a bare reference frame.}
+\item{ref}{A bundle from \code{\link[=pf_build_reference]{pf_build_reference()}}, a matchdb tier from
+\code{\link[=pf_reference]{pf_reference()}}, or a bare reference frame.}
 
 \item{action}{\code{"auto"} (default: stop on a mismatch, warn on a missing
 stamp), or force \code{"stop"}, \code{"warn"} or \code{"ignore"}.}
@@ -29,4 +30,10 @@ a reference is 2.8 GB and hours to rebuild from the BMF, so \code{"auto"} warns
 rather than blocking a run that is probably fine. Checkpoints stop in both
 cases because recomputing one is cheap; this is the same principle applied
 to a much more expensive artifact.
+
+The signature is read from either place a reference records it: \code{normalizer}
+on a bundle from \code{\link[=pf_build_reference]{pf_build_reference()}}, or \code{stamp$normalize_signature} on a
+matchdb tier fetched by \code{\link[=pf_reference]{pf_reference()}}. Reading only the first would report
+a stamped matchdb tier as unstamped and downgrade a real mismatch to a
+warning — and a warning nobody can act on is worse than no check.
 }
