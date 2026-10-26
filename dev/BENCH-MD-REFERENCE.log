@@ -1,0 +1,25 @@
+# dev/bench-md-reference.R, 2026-10-23, efv2_1k_grants_01-05 (4,903 grants, the BASELINE-2026-10B population)
+# lean+concat passes + state recovery; pfmatch@286a59b; npmatch@ddfd967 (v1-6dcb298522cc5118)
+# matchdb tiers republished 2026-10-23 from matchdb@e4f5a6b
+# The augmented bundle is the cached BMF-REF-AUG-2026-08-20.rds, built under the previous
+# normalizer; the two differ only on missing streets and names (npmatch PR #17).
+
+arm augmented: local reference, 3,891,187 rows (loaded in 1.3 min)
+matched 4,903 grants in 23.2 min
+YES      2981   62.8%MAYBE    1039   21.9%NO        729   15.4%
+identities 4749   clear rate 62.8%   YES+MAYBE 84.6%
+
+arm unified-observed: matchdb reference, 5,136,818 rows (loaded in 7.1 min)
+  spec 3de00d653e8cb205, normalizer v1-6dcb298522cc5118
+matched 4,903 grants in 28.7 min
+YES      3040   63.9%MAYBE    1071   22.5%NO        646   13.6%
+identities 4757   clear rate 63.9%   YES+MAYBE 86.4%
+
+arm active-observed: matchdb reference, 2,890,597 rows (loaded in 3.2 min)
+  spec 9cc7b76e3e144a87, normalizer v1-6dcb298522cc5118
+matched 4,903 grants in 11.5 min
+YES      3016   63.8%MAYBE     944   20.0%NO        767   16.2%
+identities 4727   clear rate 63.8%   YES+MAYBE 83.8%
+
+# Superseded: the same arms on ef1k (v1 schema, undeduplicated), npmatch v1-b42811fe6601afe6:
+#   augmented 63.0%  unified-observed 64.1%  active-observed 63.9% clear
