@@ -255,6 +255,56 @@ that will also merge `STE 100` with `STE 200`, which are different tenants.
 Distinct units are rare at these addresses, so the trade is probably worth
 making, but it is a trade.
 
+### The suite line as an adjudication tie-breaker
+
+The one address fact that bears directly on a triangulated label is the door.
+Two renderings at one street giving *different* suites are very likely
+different organizations, so the anchor's EIN should not be written onto the
+candidate. The matcher cannot use this — `.np_hier_score()` has no unit term,
+and the unit-bearing weight profile needs 50% coverage against an actual
+3.84% — but a reviewer can.
+
+`pf_unit_evidence()` parses line 2 and compares it. Parsing is most of the
+work, because the field is not a unit field: it holds street continuations,
+city names, PO boxes, and in one case a sequential counter written once per
+grantee.
+
+```{r unit}
+ue <- as.data.frame(table(v$unit_evidence), stringsAsFactors = FALSE)
+names(ue) <- c("evidence", "pairs")
+ue <- ue[order(-ue$pairs), ]
+ue$share <- pct(ue$pairs, nrow(v))
+ue$reading <- c(absent = "neither side filed a parseable unit",
+  one_sided = "one side did; silence is not disagreement",
+  agree = "same door — NOT evidence of one organization, see below",
+  conflict = "different doors — the label is probably wrong")[ue$evidence]
+tab(ue, col.names = c("evidence", "pairs", "share", "how to read it"))
+```
+
+```{r unit-conflict}
+s <- v[v$unit_evidence == "conflict", ]
+if (nrow(s)) tab(data.frame(
+  `anchor (YES)` = substr(s$a_name, 1, 34), unit = s$a_unit,
+  `candidate (MAYBE)` = substr(s$b_name, 1, 34), ` unit` = s$b_unit,
+  check.names = FALSE, stringsAsFactors = FALSE))
+```
+
+Two cautions, both measured rather than assumed.
+
+**`agree` is not support.** Generic suites are shared by unrelated tenants —
+`MIDDLE EAST CHILDRENS ALLIANCE` and `IRISH REPERTORY THEATER` are both at
+Suite 100, `GLOBAL FUND FOR WOMEN` and `THAKKER CHARITABLE TRUST` both at
+Suite 400 — a fiscal sponsor's suite is shared by everything it sponsors, and
+some values are not units at all (`15219` is a Pittsburgh ZIP code on line 2).
+It is recorded for completeness and carries nothing.
+
+**`conflict` concentrates.** Over the whole triangulation run it fires on 69 of
+14,790 anchor/candidate pairs (0.47%), but one address produced 31 of them: a
+fellowship program writing `291 BROADWAY STE 1901`, `STE 1902`, … one per
+individual grantee. Always read the raw columns, never the flag alone. In the
+adjudication queue the flag lands on 121 of 58,680 rows, 26 of which sit in the
+zero-flag band — cases that looked clean until the address was read.
+
 ## What decides YES against MAYBE
 
 ```{r pass-strength}

@@ -203,6 +203,13 @@ p[, `:=`(street_differs = nrm(a_street) != nrm(b_street),
          city_differs   = nrm(a_city)   != nrm(b_city),
          state_differs  = sq(a_state_abb) != sq(b_state_abb),
          zip4_differs   = z4(a_zip)     != z4(b_zip))]
+# The secondary-unit line parsed and compared, not just "the text differs":
+# most of what lands in ADDR_L2 is a street fragment, a city or a PO box, and
+# a difference in those says nothing. pf_unit_evidence() rejects them and
+# reconciles designators, so UNIT 1200 and STE 1200 agree. `conflict` is the
+# only value that carries weight -- see its documentation for why `agree` does
+# not.
+p[, unit_evidence := pf_unit_evidence(a_unit, b_unit, a_street, b_street)]
 p[, addr_class := fifelse(unit_differs, "unit differs",
                   fifelse(city_differs, "city differs",
                   fifelse(street_differs, "street spelling",
@@ -281,6 +288,7 @@ pf_variants <- as.data.frame(p[, .(
   # normalizer made of it. A pair with street_differs & street_key_equal is one
   # the normalizer already reconciles; the two together are the address test.
   street_differs, unit_differs, city_differs, zip4_differs, state_differs,
+  unit_evidence,
   name_key_equal, street_key_equal, zip5_equal, blocking_intact,
   a_pass_rank, b_pass_rank, b_outscores_a, n_names_at_addr = n_names,
   expected_same_org, label_basis, label_confidence)][

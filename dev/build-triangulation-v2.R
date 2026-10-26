@@ -83,6 +83,28 @@ say("drawn: %s groups, %s grant rows, %s index-names (~%s identities)",
 saveRDS(sel, file.path(PF, "data-dev", "TRI-V2-GROUPS-SELECTED.rds"))
 want <- sel$key
 
+## ---- 3/4 or reuse -----------------------------------------------------------
+# The match is the only expensive step -- 4h40m for 91,690 identities -- and
+# everything after it is seconds. PF_TRI_REUSE_MATCH=1 loads a saved
+# TRI-V2-MATCH.rds and jumps straight to the artifacts, so a change to the
+# queue (a new flag, a new column) does not cost a rematch. Steps 1 and 2 still
+# run: they are cheap and seeded, so the draw is identical either way.
+MATCH_RDS <- file.path(PF, "data-dev", "TRI-V2-MATCH.rds")
+REUSE <- nzchar(Sys.getenv("PF_TRI_REUSE_MATCH")) && file.exists(MATCH_RDS)
+
+if (REUSE) {
+  hr(); say("PF_TRI_REUSE_MATCH set -- loading %s and skipping the match", MATCH_RDS)
+  .m <- readRDS(MATCH_RDS)
+  st <- .m$status
+  gg <- as.data.table(.m$grants)
+  rm(.m); invisible(gc())
+  POP <- pf_population_id(gg)
+  say("reused: %s grant rows, %s identities, population %s",
+      format(nrow(gg), big.mark = ","),
+      format(uniqueN(gg$recipient_uid), big.mark = ","), POP)
+  stopifnot(!is.null(gg$key), !is.null(gg$status))
+} else {
+
 ## ---- 3. extract -------------------------------------------------------------
 hdr <- names(fread(V2, nrows = 0L))
 hit <- list(); i <- 0L; seen <- 0L
@@ -126,8 +148,9 @@ gg <- as.data.table(pf_propagate_matches(prep$grants, st))
 gg[, key := keyv]
 POP <- pf_population_id(gg)
 say("population id: %s", POP)
-saveRDS(list(status = st, grants = gg),
-        file.path(PF, "data-dev", "TRI-V2-MATCH.rds"), compress = FALSE)
+saveRDS(list(status = st, grants = gg), MATCH_RDS, compress = FALSE)
+
+}  # end of the match branch
 
 ## ---- 5. the artifacts, same definitions as the original ---------------------
 a <- gg[!is.na(key) & nzchar(key)]
@@ -147,12 +170,22 @@ fwrite(a[, .(grant_id, group_id, population = POP, recip_name, recip_city,
        file.path(PF, "data-dev", "TRIANGULATION-V2-GROUPS.csv"))
 say("wrote TRIANGULATION-V2-GROUPS.csv  (no labels: grouping only)")
 
+# Carry the anchor's secondary-unit line forward, preferring a value that
+# actually parses to a unit: a group's YES rows may differ on line 2, and the
+# one worth comparing is the one holding a door number rather than a street
+# fragment or a PO box. See pf_parse_unit().
+a[, unit_raw := sq(PF_15_G_PAID_RECIP_ADDR_L2)]
+a[, unit_id := pf_parse_unit(unit_raw, PF_15_G_PAID_RECIP_ADDR_L1)$id]
 anch <- a[, {
   yes <- status == "YES" & !is.na(ein9)
+  yu <- unit_raw[yes & nzchar(unit_id)]
+  ys <- PF_15_G_PAID_RECIP_ADDR_L1[yes & nzchar(unit_id)]
   .(n_yes = sum(yes), n_other = sum(status != "YES"),
     yes_eins = uniqueN(ein9[yes]),
     anchor = if (sum(yes)) ein9[yes][1] else NA_character_,
     anchor_name = if (sum(yes)) sq(bmf_name[yes])[1] else "",
+    anchor_unit = if (length(yu)) yu[1] else "",
+    anchor_unit_street = if (length(ys)) ys[1] else "",
     anchor_score = if (sum(yes)) suppressWarnings(max(as.numeric(score[yes]), na.rm = TRUE)) else NA_real_)
 }, by = group_id]
 elig <- anch[n_yes >= 1L & n_other >= 1L & yes_eins == 1L]
@@ -165,6 +198,29 @@ q[, flag_shared := n_names_at_addr >= 4L]
 q[, flag_weak_anchor := is.na(anchor_score) | anchor_score < 0.90]
 q[, flag_single_anchor := n_yes < 2L]
 q[, n_flags := flag_person + flag_shared + flag_weak_anchor + flag_single_anchor]
+
+# The secondary-unit line as a tie-breaker. Two renderings at one street giving
+# DIFFERENT doors are very likely different organizations, which is the one
+# address fact that bears on the label -- and the queue never showed line 2 at
+# all before this, so a reviewer could not see it.
+#
+# It is deliberately NOT added into n_flags. n_flags counts reasons to doubt a
+# case and drives the review order; a unit conflict is not another weak doubt,
+# it is near-decisive on the cases where it fires, and folding it in would both
+# bury it and redefine the zero-flag "cleanest slice". It gets its own column.
+#
+# Measured on this run: 69 conflicts in 14,790 anchor/candidate pairs (0.47%),
+# 19 of them on MAYBE candidates. One address contributed 31 -- a fellowship
+# program writing a sequential counter into line 2, one per individual grantee
+# -- so read the raw columns, never the flag alone. `agree` is recorded but is
+# NOT evidence of one organization: generic suites are shared by unrelated
+# tenants. See pf_unit_evidence().
+q[, unit_evidence := pf_unit_evidence(anchor_unit, unit_raw,
+                                      anchor_unit_street, PF_15_G_PAID_RECIP_ADDR_L1)]
+q[, flag_unit_conflict := unit_evidence == "conflict"]
+say("")
+say("  unit evidence (a tie-breaker, not part of n_flags):")
+print(q[, .(cases = .N), by = unit_evidence][order(-cases)], row.names = FALSE)
 
 hr(); say("INFORMATIVE CASES: %s", format(nrow(q), big.mark = ","))
 say("  against a target of %s  (%.0f%%)", format(TARGET, big.mark = ","),
@@ -185,10 +241,16 @@ qcols <- c("group_id", "grant_id", "recip_name", "recip_street", "recip_city",
            "n_names_at_addr", "recip_state", "recip_zip5", "status", "ein9",
            "score", "anchor", "anchor_name", "anchor_score", "n_yes", "n_other",
            "flag_person", "flag_shared", "flag_weak_anchor",
-           "flag_single_anchor", "n_flags")
+           "flag_single_anchor", "n_flags",
+           # line 2 for both sides, raw, so the reviewer can judge the flag
+           "anchor_unit", "unit_raw", "unit_evidence", "flag_unit_conflict")
 qout <- q[, intersect(qcols, names(q)), with = FALSE]
+setnames(qout, "unit_raw", "cand_unit", skip_absent = TRUE)
 qout[, c("verdict", "note") := ""]
-setorder(qout, n_flags, group_id)
+# A unit conflict sorts to the top of its flag band rather than reordering the
+# queue: n_flags still drives the review order, but within a band the cases
+# that can be settled from the address come first.
+setorder(qout, n_flags, -flag_unit_conflict, group_id)
 fwrite(qout, file.path(PF, "data-dev", "TRIANGULATION-V2-SAMPLE.csv"))
 say("wrote TRIANGULATION-V2-SAMPLE.csv  (adjudication QUEUE, %s cases)",
     format(nrow(qout), big.mark = ","))
