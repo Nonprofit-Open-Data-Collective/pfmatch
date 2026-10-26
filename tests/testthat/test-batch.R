@@ -4,9 +4,14 @@
 # produces output nothing distinguishes from a real run
 # (dev/REFIT-1K-FINDINGS.md 3a).
 
-fake_ref <- function(n = 3L) list(reference = data.frame(
-  ein = sprintf("%09d", seq_len(n)), name_key = letters[seq_len(n)],
-  stringsAsFactors = FALSE))
+fake_ref <- function(n = 3L) list(
+  reference = data.frame(ein = sprintf("%09d", seq_len(n)),
+                         name_key = letters[seq_len(n)],
+                         stringsAsFactors = FALSE),
+  # Stamped so pf_check_reference() stays quiet: these tests are about
+  # checkpoint reuse, and an unstamped bundle would warn on every one of them.
+  normalizer = tryCatch(npmatch::np_normalize_signature(),
+                        error = function(e) NA_character_))
 
 fake_dyads <- function(n = 2L) data.frame(
   ein_a = rep("111111111", n), ein_b = rep("222222222", n),

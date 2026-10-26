@@ -64,26 +64,51 @@ test_that("& and AND normalize together", {
   expect_identical(side(v, "a")$name_key, side(v, "b")$name_key)
 })
 
-test_that("street normalization reconciles what the raw text does not", {
-  # These are the pairs the address normalizer exists for: the filed street
-  # text differs -- "4550 WEST 77TH STREETSUITE 200" against "4550 West 77th
-  # Street Suite 200", a missing space and a spelled-out suffix -- and the
-  # normalized street key still agrees. If the street normalizer weakens,
-  # these stop agreeing and this test is how you find out.
-  v <- pfmatch::pf_variants
-  v <- v[v$street_differs & v$street_key_equal, ]
-  skip_if(nrow(v) == 0L)
-  expect_identical(side(v, "a")$street_key, side(v, "b")$street_key)
+## These two were written against the fixture's recorded `street_key_equal`,
+## which made them look like invariants while actually pinning them to the
+## normalizer that built the fixture. When npmatch's word-boundary fix landed
+## they failed, and the failure was the stale column, not a regression. State
+## the invariant on literal strings instead, so it holds across any normalizer,
+## and leave fixture-column comparisons to the signature-gated test below.
+
+street_key_of <- function(st) {
+  g <- data.frame(grant_id = seq_along(st), recip_name = "X",
+                  recip_name_alt = NA_character_, recip_street = st,
+                  recip_unit = NA_character_, recip_city = "A",
+                  recip_state = "VA", recip_zip5 = "22030",
+                  stringsAsFactors = FALSE)
+  as.data.frame(npmatch::np_normalize(
+    npmatch::np_query(g, pf_map_grants())))$street_key
+}
+
+test_that("street normalization reconciles the spellings it must", {
+  # A spelled-out suffix, a separated suite in any of its three forms, and a
+  # directional: these are what the street normalizer exists for.
+  expect_equal(length(unique(street_key_of(c("2 Oak Road", "2 OAK RD")))), 1L)
+  expect_equal(length(unique(street_key_of(
+    c("2121 I Street NW", "2121 I ST NW")))), 1L)
+  expect_equal(length(unique(street_key_of(
+    c("1 Main Street Suite 5", "1 MAIN ST STE 5", "1 MAIN ST # 5")))), 1L)
 })
 
 test_that("street normalization does not over-reach", {
-  # The complement: streets recorded as genuinely different must stay
-  # different. A normalizer that collapsed these would merge distinct
-  # addresses and silently inflate every group.
-  v <- pfmatch::pf_variants
-  v <- v[v$street_differs & !v$street_key_equal, ]
-  skip_if(nrow(v) == 0L)
-  expect_true(all(side(v, "a")$street_key != side(v, "b")$street_key))
+  # Genuinely different streets must stay different. A normalizer that
+  # collapsed these would merge distinct addresses and inflate every group.
+  expect_equal(length(unique(street_key_of(c("1 MAIN ST", "2 MAIN ST")))), 2L)
+  expect_equal(length(unique(street_key_of(c("1 MAIN ST", "1 MAIN AVE")))), 2L)
+  expect_equal(length(unique(street_key_of(c("1 N MAIN ST", "1 S MAIN ST")))), 2L)
+})
+
+test_that("a suite fused to the street word is NOT silently split", {
+  # "4550 WEST 77TH STREETSUITE 200" has no boundary before SUITE. npmatch
+  # deliberately refuses it: the pattern that caught this form also matched
+  # inside ordinary words, false on 27,954 BMF rows (SHERMAN WAY giving room
+  # "AN WAY"), and masked the real unit on 3,636 of them. pfmatch measured 9
+  # pairs reconciled by the permissive form; that is the price and it is worth
+  # paying. Asserted so nobody "fixes" it back.
+  k <- street_key_of(c("4550 WEST 77TH STREETSUITE 200",
+                       "4550 West 77th Street Suite 200"))
+  expect_false(identical(k[1], k[2]))
 })
 
 test_that("city spelling cannot change a blocked pass", {

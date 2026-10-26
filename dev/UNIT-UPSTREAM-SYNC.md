@@ -1,7 +1,11 @@
 # Secondary-unit handling: retire the local copy when npmatch lands its own
 
 > **TRIGGER FIRED, 2026-10-26.** npmatch PR #18 is merged: the suite is parsed
-> into `street_unit_id`, carried to review, and scored. This note's §3–§5 still
+> into `street_unit_id`, carried to review, and scored. matchdb has shipped its
+> side too (PR #17). Read `dev/PLACES-SYNC.md` first; note in particular that
+> the normalizer signature must be **read** from the commit being built, never
+> quoted — npmatch PR #20 struck a literal from its own NEWS for that reason.
+> This note's §3–§5 still
 > apply and are what to diff against — but **§1 is now a description of the
 > pre-PR npmatch**, and two of its three facts are false upstream (the
 > hierarchical scorer gained `unit = 0.97`; a unit-bearing profile is no longer

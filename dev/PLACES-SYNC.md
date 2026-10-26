@@ -1,18 +1,42 @@
 # Places: staying in step with npmatch's address classes and matchdb's place tables
 
-**Status: plan, 2026-10-26. Nothing here is built, and nothing is broken yet.**
+**Status: plan, revised 2026-10-26 (second pass). Nothing here is built in
+pfmatch, and nothing is broken yet. Upstream, both sides have now shipped.**
 
 Two upstream changes land on the same ground pfmatch's triangulation stands on:
 
-* **npmatch PR #18, merged 2026-10-26** — "Normalizer: fold special letters,
-  parse the suite, classify shared addresses". Moves
-  `np_normalize_signature()` to **`v1-77a3842ce517e353`**, parses the suite into
-  `street_unit_id`, adds `np_addr_freq()` and an `addr_class`, gives
-  `.np_hier_score()` a unit term, and annotates every candidate pair for the
-  reviewer. (PR #19 was folded into it.)
-* **matchdb `dev/PLACES.md`, 2026-10-26** — a proposal to precompute place
-  crowding, class and evidence per address, published per bundle as
-  `addr_freq.parquet` plus a `place` / `place_layer` / `place_unit` sidecar.
+* **npmatch PR #18, merged** — "Normalizer: fold special letters, parse the
+  suite, classify shared addresses". Parses the suite into `street_unit_id`,
+  adds `np_addr_freq()` and an `addr_class`, gives `.np_hier_score()` a unit
+  term, annotates every candidate pair for the reviewer, and moves the
+  normalizer signature. (PR #19 folded in; PR #20 is a correction, see below.)
+* **matchdb PR #17 (`fix/bmf-reingest`), commits `935f846` and `07c7856`** —
+  `dev/PLACES.md` has gone from *proposal* to **built and fixture-tested**:
+  `md_place_key()`, `md_unit_id()`, `md_addr_freq()` and `md_build_places()`
+  are exported, every bundle ships `addr_freq.parquet`, and `md_reference()`
+  returns `addr_freq` and `places`. Full-database checks are still pending.
+
+## Do not quote a normalizer signature. Read it.
+
+The first pass of this note named `v1-77a3842ce517e353` as the value to expect.
+**That value never existed on npmatch `main`.** It was measured on PR #18's
+feature branch; PR #17 landed a one-line `.np_replace_tokens()` change in
+between, which moved the signature, and on the merge commit `de52bb9` the value
+was `v1-3e7b9f9d59bbb19e` instead.
+
+npmatch PR #20 exists to strike that literal from its own `NEWS.md`, for a
+reason worth quoting: *a published signature that never existed is worse than no
+signature at all, because that is exactly the value downstream callers stamp
+cached artifacts with.* pfmatch is one of those downstream callers, and this
+note carried the bad value for a day — which is precisely the drift it was
+written to prevent.
+
+`NEWS.md` on main now says it plainly: **read the value with
+`np_normalize_signature()` on the commit you are building from, rather than
+from any value quoted anywhere.** So no literal target signature appears below.
+The only literal kept is the one pfmatch's own artifacts were *built under*,
+`v1-6dcb298522cc5118`, because that is a record of this machine's state rather
+than a prediction about upstream.
 
 **The short version.** pfmatch invented crude versions of all of this —
 `flag_shared`, an `n_names < 25` filter, `pf_parse_unit()`, a hand-rolled
@@ -29,23 +53,57 @@ half of this landed in the same PR.
 
 ## 1. Where pfmatch actually stands today
 
-The installed npmatch is **pre-PR**:
+**The install has happened.** The first pass of this note was written against a
+pre-PR npmatch and said "nothing needs doing until that install"; npmatch was
+reinstalled on this machine during the same session. The step change is no
+longer hypothetical:
 
-| | installed here | after PR #18 |
+| | pfmatch artifacts were built under | installed now |
 |---|---|---|
-| `np_normalize_signature()` | `v1-6dcb298522cc5118` | `v1-77a3842ce517e353` |
-| `np_addr_freq()`, `np_addr_class()` | absent | present |
+| normalizer signature | `v1-6dcb298522cc5118` | `v1-3e7b9f9d59bbb19e` |
+| `np_addr_freq()` | absent | present, **exported** |
+| `np_addr_key()`, `np_unit_id()`, `np_addr_class()` | absent | present, **not exported** |
 | `street_unit_id` | absent | present |
 | `geo_weights` has a `unit` term | no | yes, `0.97` |
+| `np_compare(addr_freq = )` | absent | present |
 
-So every claim pfmatch currently makes about npmatch is true *of the build on
-this machine* and stops being true the moment someone runs
-`remotes::install_github(...npmatch)`. That is the whole risk: not a gradual
-drift but a step change on one `install` call, touching the reference cache,
-the fixture, two dev notes and three commit messages at once.
+Both values above are records of this machine, read with
+`np_normalize_signature()`, not predictions — see the warning above about
+quoting a signature.
 
-Nothing needs doing until that install. Everything below is what to do when it
-happens, and §2 is worth reading before it does.
+### What that broke, and what caught it
+
+* **The signature tripwire fired as designed.** `test-variants.R`'s pinned test
+  now skips with *"normalizer moved (fixture `v1-6dcb298522cc5118`, installed
+  `v1-3e7b9f9d59bbb19e`); rebuild with `data-raw/make-pf-variants.R`"*. That is
+  the mechanism working: a silent key change announced itself without anyone
+  checking.
+* **Two tests failed that should not have.** "street normalization reconciles
+  what the raw text does not" and "its complement" were written as invariants
+  but selected their rows using the fixture's *recorded* `street_key_equal`,
+  which pinned them to the old normalizer without saying so. Fixed: the
+  invariants are now asserted on literal strings, and fixture-column
+  comparisons live only under the signature gate.
+* **`REF-augmented.rds` is now stale**, built 2026-08-21 under the old
+  normalizer. It is also unstamped, so until §4.1 landed nothing would have
+  said so. It now warns.
+
+### One deliberate loss worth recording
+
+npmatch's new `.np_unit_pat` requires a word boundary, which means a suite
+*fused* to the street word is no longer split:
+
+```
+4550 WEST 77TH STREETSUITE 200  ->  street_key "4550 W 77TH STREETSUITE 200", no unit
+4550 West 77th Street Suite 200 ->  street_key "4550 W 77TH ST",  unit id "200"
+```
+
+pfmatch measured 9 pairs that the old permissive pattern reconciled this way.
+npmatch measured the same pattern firing falsely on 27,954 rows (11.3% of all
+extractions) — `SHERMAN WAY` yielding room `AN WAY` — and masking the real unit
+on 3,636 of them. The trade is obviously right, and
+`test-variants.R` now asserts the fused form stays unsplit so nobody "fixes" it
+back. Separated forms all still reconcile, including `# 5`.
 
 ---
 
@@ -94,14 +152,25 @@ groups should produce labels at all. Recommended once the class is available:
 emit labels for `cluster`, and for `building` only where the suite agrees;
 report `shared` and `federated` separately rather than labelling them.
 
-**One subtlety that must not be glossed.** npmatch computes `addr_class` over
-the **reference** frame (the BMF). pfmatch's triangulation groups live on the
-**query** side (grant rows). These are different measurements of the same
-street: the BMF knows who *files* from it, the grant file knows who a foundation
-*paid* there. Both are wanted and neither substitutes for the other —
-`np_addr_freq()` over the grant corpus classifies the triangulation group, while
-the BMF-side class is evidence about the anchor. Do not join one and call it the
-other.
+**Three populations, not two, and they are not interchangeable.** "How crowded
+is this address" now has three answers, each counting something different:
+
+| who | counts | caveat |
+|---|---|---|
+| `npmatch::np_addr_freq()` | **reference rows** | a compiled tier has one row per EIN per name and address, so record counts are inflated relative to EINs |
+| `matchdb` `place` / `place_layer` | **EINs, per layer**, over each layer's own *current* addresses; historical spells feed churn instead | matchdb's own note says its figures "will differ by design" from npmatch's; `place_layer` can select the BMF layers to compare |
+| pfmatch's triangulation | **grant-row renderings**, query side | written by third parties — a foundation naming a grantee's address, not an occupant filing from it |
+
+The BMF knows who *files* from a street; the grant file knows who a foundation
+*paid* there; matchdb knows who has *occupied* it over time. pfmatch wants its
+own count to classify the triangulation group, and the BMF-side class as
+evidence about the anchor. Do not join one and call it the other, and do not
+expect pfmatch's numbers to reproduce npmatch's published BMF figures.
+
+A caution that follows: `top_name_share` and `unit_coverage` were calibrated on
+filings by occupants. On grant rows, where a third party wrote the address, they
+may not behave the same way. Measure before adopting npmatch's thresholds
+wholesale on the query side.
 
 ---
 
@@ -180,13 +249,21 @@ instruction; `test-unit.R` will fail outright, which is what it is for.
 Each step ends with a check. Do not batch them; the signature change makes any
 regression hard to attribute if several things move at once.
 
-1. **Stamp the reference bundle.** Add the signature to
-   `pf_build_reference()`'s output and refuse a mismatch on load, reusing
-   `.pf_check_stamp()`. *Check:* a bundle built under the current normalizer
-   loads; the same bundle with the attribute tampered is refused.
-   **Do this before reinstalling npmatch.**
-2. **Reinstall npmatch and rebuild the reference.** *Check:*
-   `np_normalize_signature()` reads `v1-77a3842ce517e353`; the rebuilt
+1. ~~**Stamp the reference bundle.**~~ **Done.** `pf_build_reference()` now
+   returns a `normalizer` element, and `pf_check_reference()` enforces it from
+   `pf_match_grants()` and `pf_run_batches()` (both take `check_reference=`).
+   Severity is deliberately split: a bundle stamped with a *different*
+   signature is known wrong and stops; an *unstamped* one is merely unknown,
+   and since a reference is 2.8 GB and hours to rebuild it warns instead of
+   blocking a run that is probably fine. Checkpoints stop in both cases because
+   recomputing one is cheap. 14 assertions in
+   `tests/testthat/test-reference-stamp.R`.
+2. **Rebuild the reference.** npmatch is already reinstalled, so this is the
+   open item: `REF-augmented.rds` holds keys from `v1-6dcb298522cc5118` and
+   warns on every run. It needs the processed BMF, which is not in the repo, so
+   it is a deliberate step rather than something to do in passing. *Check:*
+   `np_normalize_signature()` is recorded from the installed commit, not
+   compared against a quoted value; the rebuilt
    `REF-augmented.rds` loads; `PF_SET=1k` is re-measured and the change recorded
    — expect movement, since `street_key` changes on 1.78% of rows.
 3. **Retire `pf_parse_unit()`.** Follow `dev/UNIT-UPSTREAM-SYNC.md` §4: diff the
@@ -197,34 +274,72 @@ regression hard to attribute if several things move at once.
    `addr_note`) rather than keeping pfmatch's four values beside them.
    *Check:* every verdict that changes is traced to one of the designator
    decisions, `NO` and `OFC` among them.
-4. **Adopt `street_key` as the triangulation group key.** This is the change
-   worth the most. pfmatch's key differs from npmatch's `place_key` in three
-   ways, the same three matchdb's note lists for its own `ein_key`: a raw
+4. **Adopt `place_key` as the triangulation group key.** The change worth the
+   most. pfmatch's key differs from npmatch's in three ways — the same three
+   matchdb's note lists for its own `ein_key`: a raw
    `gsub("[^A-Z0-9]", "", toupper(ADDR_L1))` instead of `street_key`, a `|`
    separator instead of a space, and a regex PO-box test instead of
-   `is_po_box`. Measured cost of the first alone: 528,862 of 2,326,459 address
+   `is_po_box`. npmatch's rule, as matchdb's port records it, is
+   `paste(street_key, zip5)`, empty for a PO box, with the box pattern
+   `^(P ?O ?BOX|P ?O ?B|BOX|P ?O) ?#? ?[0-9]+`.
+
+   Measured cost of the first divergence alone: 528,862 of 2,326,459 address
    keys (22.7%) are redundant spellings, and 58,815 addresses never reach the
-   two-rendering threshold because their spellings never meet. PR #18 makes this
-   better still — `street_key` now also strips the suite, so grouping by
-   `street_key` and discriminating by `street_unit_id` is the clean split
-   pfmatch's hand-rolled version was groping toward. *Check:* the group count
-   moves as measured; `np_addr_key()` output equals pfmatch's key for addresses
-   where nothing should change.
+   two-rendering threshold because their spellings never meet. PR #18 improves
+   it again — `street_key` now also strips the suite — so grouping by
+   `place_key` and discriminating by `street_unit_id` is the clean split
+   pfmatch's hand-rolled version was groping toward.
+
+   **Call npmatch's function; do not port it.** matchdb ported only because it
+   needs SQL macros, and even then it pins the port with a parity test against
+   `.np_addr_key()` on 4,000 random rows covering every PO-box spelling.
+   pfmatch already `Imports: npmatch`, so it has no such excuse: use
+   `np_addr_key()` once exported, or `npmatch:::.np_addr_key()` with the same
+   parity test until then. Three implementations of one address key is the
+   state this note exists to prevent. *Check:* the group count moves as
+   measured, and the key is byte-identical to npmatch's on addresses where
+   nothing should change.
 5. **Classify the groups with `np_addr_freq()` over the grant corpus.** Replace
    `flag_shared` and the `n_names < 25` filter with `addr_class`, keeping the
-   raw counts in the queue beside it. *Check:* the classes land where §2
-   predicts — fiscal sponsors as `shared`, chapter networks as `federated`,
-   the suite-conflict cases as `building`.
+   raw counts in the queue beside it. Note the §2 caution on thresholds
+   calibrated against filings rather than grant rows. *Check:* the classes land
+   where §2 predicts — fiscal sponsors as `shared`, chapter networks as
+   `federated`, the suite-conflict cases as `building`.
+5a. **Carry `addr_freq` on the reference and pass it to the comparer.** This is
+   now a specified interface rather than a guess. `np_compare()` takes
+   `addr_freq =` (verified on `origin/main`), and `np_addr_freq()` is the one
+   place function npmatch exports. So `pf_build_reference()` should gain an
+   `addr_freq` element computed over **exactly** the reference rows it returns —
+   which is what `md_addr_freq()` does for a matchdb bundle and what
+   `md_publish()` ships as `addr_freq.parquet` — and `pf_match_grants()` should
+   pass it through. Reference-side counts are safe from the slice footgun in
+   pfmatch because the whole reference goes to every batch (see §5). *Check:*
+   `np_addr_freq()` recomputed over the bundle's reference equals the stored
+   element exactly, the same round-trip check matchdb runs.
 6. **Restrict the silver labels by class.** `cluster` yields labels;
    `building` only where the suite agrees; `shared` and `federated` are
    reported, not labelled. *Check:* re-measure what fraction of
    `PF-TRUTH-V2-TRIANGULATED.csv` survives, and say so in the artifact's note.
    This will shrink the set, and that is the point.
-7. **Consume matchdb's `addr_freq` when it ships.** pfmatch builds its own
-   reference rather than reading matchdb bundles, so it will not get
-   `r$addr_freq` for free. Decide then whether pfmatch reads matchdb bundles or
-   keeps computing `np_addr_freq()` itself. *Check:* if both are available, they
-   agree over the same population.
+7. **Decide whether pfmatch reads matchdb bundles.** It already ships:
+   `md_reference()` returns `addr_freq` (class `np_addr_freq`) and `places`,
+   and every bundle carries `addr_freq.parquet` over its own rows. pfmatch
+   builds its own reference from a BMF CSV via `pf_build_reference()`, so it
+   gets none of it for free — step 5a is the alternative, computing the same
+   object locally. The richer half is only available by reading bundles:
+   matchdb's `place_flags` (`flag_care_of`, `flag_bank_trust`, `flag_cmra`,
+   `flag_group_confirmed`, `flag_agent_churn`, `flag_military_or_gd`), the
+   occupancy history behind `churn`, and `building_id` from rooftop geocodes
+   are signals npmatch cannot reach at run time and pfmatch cannot compute at
+   all. Those name exactly the addresses whose triangulation groups are
+   spurious — the "fiscal sponsors, DAF custodians and bank trust departments"
+   the `n_names < 25` filter is a blunt stand-in for. *Check:* if both routes
+   are available, they agree over the same population.
+
+   Precedent worth following: matchdb now forms a `co_tenant` cluster **only**
+   at a plain `cluster` place without the care-of, mailbox-store, bank-trust or
+   churn flags. That is the same move step 6 proposes for pfmatch's silver
+   labels, made by the package that owns the evidence.
 
 Steps 1–3 are maintenance and should happen together with the reinstall. Steps
 4–6 are a redesign of the triangulation set and want their own measurement
@@ -248,11 +363,13 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
 ## 6. What to feed back upstream
 
 * **Second matchdb's ask** (`PLACES.md` §8.2) that npmatch export
-  `np_addr_key()` and `np_addr_class()` with its thresholds. pfmatch needs both
-  for exactly the reason matchdb does: its triangulation key *should be*
-  `np_addr_key()` output, and its group classes should come from npmatch's rule
-  rather than a third copy of it. Three implementations of one address key is
-  the state this note exists to prevent.
+  `np_addr_key()`, `np_unit_id()` and `np_addr_class()` with its thresholds.
+  Confirmed still outstanding: `np_addr_freq` is the only one of the four in
+  npmatch's `NAMESPACE` on main. pfmatch needs them for exactly the reason
+  matchdb does — its triangulation key *should be* `np_addr_key()` output, and
+  its group classes should come from npmatch's rule rather than a third copy of
+  it. matchdb has already paid for a port and a parity harness; a second
+  consumer asking for the same export is the argument for making it.
 * **Report the grant-side use case.** npmatch's `addr_class` is documented over
   a reference frame. pfmatch wants it over a query corpus, where "records" are
   grant rows written by third parties rather than filings by occupants —
@@ -262,6 +379,11 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   the geo `max()` ladder from the triangulation corpus that npmatch reached from
   304,274 labelled pairs. Two independent routes to one answer is worth
   recording in npmatch's note.
+* **Report the two bad designators as a found defect, not a preference.**
+  `R/unit.R` lists `NO` and `OFC`, which npmatch's BMF scan excludes for
+  measured reasons. pfmatch found them independently by shipping them and is
+  evidence the exclusions are right, which is worth saying while the designator
+  table is still new.
 
 ---
 
@@ -273,6 +395,11 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
 * `tests/testthat/test-unit.R` asserts `pf_unit_evidence()` reproduces
   `pf_variants$unit_evidence` and caps `conflict` at 2% of pairs.
 * `.pf_check_stamp()` refuses a checkpoint whose stamped normalizer differs.
-* **Missing, and §4.1 adds it:** nothing guards the cached reference bundle.
-  Until that exists, treat `REF-augmented.rds` as unsafe across any npmatch
-  upgrade.
+* `pf_check_reference()` stops on a reference bundle from a different
+  normalizer and warns on an unstamped one (§4.1). `REF-augmented.rds` is
+  currently in the warning case and will stay there until it is rebuilt.
+* **Still missing:** nothing tells you that *matchdb* or *npmatch* moved. Both
+  tripwires above fire only on a local reinstall. Checking
+  `gh pr list --repo Nonprofit-Open-Data-Collective/npmatch` and matchdb's
+  `dev/PLACES.md` status line is still a manual step, and the first pass of
+  this note went stale within a day for exactly that reason.
