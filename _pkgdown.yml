@@ -124,7 +124,7 @@ reference:
   - pf_purpose_is_contentful
   - pf_purpose_coverage
   - pf_purpose_tokens
-  - pf_parse_unit
+  - pf_street_unit
   - pf_unit_evidence
 
 - title: Evaluation against ground truth

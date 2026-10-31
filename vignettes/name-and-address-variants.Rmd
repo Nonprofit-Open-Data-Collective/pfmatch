@@ -225,8 +225,9 @@ Consequences that do hold here:
   coverage against an actual 3.84%. npmatch has since added the `unit` rung
   above — so the mechanism now exists, gated on the suite discriminating at
   that address rather than merely being present. The pairs in this table
-  predate it, which is why `pf_unit_evidence()` exists here at all and why
-  `dev/UNIT-UPSTREAM-SYNC.md` plans its retirement.
+  predate it, which is why `pf_unit_evidence()` exists here at all. Its own
+  parser has since been retired in favour of npmatch's; see
+  `dev/UNIT-UPSTREAM-SYNC.md`.
 - The **state** costs twice when wrong: it blocks stages A2–A5 and all of
   stage B, *and* a state conflict zeroes the city and ZIP3 geo terms. It
   disagrees in `r sum(v$state_differs)` pairs, all adjacent-letter filing
@@ -271,14 +272,21 @@ making, but it is a trade.
 The one address fact that bears directly on a triangulated label is the door.
 Two renderings at one street giving *different* suites are very likely
 different organizations, so the anchor's EIN should not be written onto the
-candidate. The matcher cannot use this — `.np_hier_score()` has no unit term,
-and the unit-bearing weight profile needs 50% coverage against an actual
-3.84% — but a reviewer can.
+candidate. When these pairs were cut the matcher could not use this at all;
+npmatch has since given the hierarchical scorer a `unit` rung (0.97) and
+annotates every candidate pair with `geo_unit`, so the mechanism now exists
+there too. A reviewer still needs the four-way reading below, which `geo_unit`
+does not give: it cannot separate "one side filed nothing" from "neither did".
 
-`pf_unit_evidence()` parses line 2 and compares it. Parsing is most of the
-work, because the field is not a unit field: it holds street continuations,
-city names, PO boxes, and in one case a sequential counter written once per
-grantee.
+`pf_unit_evidence()` compares the two lines. The parse is npmatch's —
+`pf_street_unit()` hands line 2 to `np_normalize()` and reads `street_unit`
+back, so pfmatch reads a suite the same way the matcher does. What is still
+pfmatch's is the two rejections the field needs, because it is not a unit
+field: it holds street continuations, city names, PO boxes, and in one case a
+sequential counter written once per grantee. The verdicts tabulated below were
+recorded under the normalizer the corpus was built with; retiring the local
+parser moved 22 of the `r fmt(nrow(v))` pairs, every one traced in
+`dev/UNIT-UPSTREAM-SYNC.md`.
 
 ```{r unit}
 ue <- as.data.frame(table(v$unit_evidence), stringsAsFactors = FALSE)

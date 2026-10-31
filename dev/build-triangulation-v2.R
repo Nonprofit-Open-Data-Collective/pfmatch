@@ -173,13 +173,13 @@ say("wrote TRIANGULATION-V2-GROUPS.csv  (no labels: grouping only)")
 # Carry the anchor's secondary-unit line forward, preferring a value that
 # actually parses to a unit: a group's YES rows may differ on line 2, and the
 # one worth comparing is the one holding a door number rather than a street
-# fragment or a PO box. See pf_parse_unit().
+# fragment or a PO box. See pf_street_unit().
 a[, unit_raw := sq(PF_15_G_PAID_RECIP_ADDR_L2)]
-a[, unit_id := pf_parse_unit(unit_raw, PF_15_G_PAID_RECIP_ADDR_L1)$id]
+a[, unit_parsed := pf_street_unit(unit_raw, PF_15_G_PAID_RECIP_ADDR_L1)]
 anch <- a[, {
   yes <- status == "YES" & !is.na(ein9)
-  yu <- unit_raw[yes & nzchar(unit_id)]
-  ys <- PF_15_G_PAID_RECIP_ADDR_L1[yes & nzchar(unit_id)]
+  yu <- unit_raw[yes & nzchar(unit_parsed)]
+  ys <- PF_15_G_PAID_RECIP_ADDR_L1[yes & nzchar(unit_parsed)]
   .(n_yes = sum(yes), n_other = sum(status != "YES"),
     yes_eins = uniqueN(ein9[yes]),
     anchor = if (sum(yes)) ein9[yes][1] else NA_character_,
