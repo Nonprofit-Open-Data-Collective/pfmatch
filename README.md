@@ -373,6 +373,14 @@ under normalizer `v1-3e7b9f9d59bbb19e`:
 **The clear rate is YES over identities.** YES+MAYBE is 77.94% and 84.73%, and
 is not a clear rate — there is no safe automatic acceptance of the MAYBE tier.
 
+Those are the two local BMF bundles. matchdb's published tiers and the YES-tier
+grant dictionary are measured against them — on sources, clear rate and
+wall-clock time — in the
+[Choosing a matching dictionary](https://nonprofit-open-data-collective.github.io/pfmatch/articles/matching-dictionaries.html)
+article. Short version: `active-observed` is both faster and about a point
+better than the augmented BMF, and the dictionary adds roughly a point more on
+the residue.
+
 Read `dev/BASELINE-2026-10C/MANIFEST.md` before quoting either: it records what
 the figures do and do not establish, and the baseline is gated on
 `np_normalize_signature()`, so it goes stale when npmatch's normalizer changes.

@@ -1,0 +1,14 @@
+﻿Rscript.exe : read TRI-V2-MATCH grants: 596,539 rows in 10.4 s
+At line:1 char:324
++ ... CH_DIR="."; & "C:\Program Files\R\R-4.5.1\bin\Rscript.exe" "C:\Users\ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (read TRI-V2-MAT... rows in 10.4 s:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+pool 369,260 cleared rows
+from 369,260 rows: 88,750 distinct (rendering, address, EIN) over 31,722 EINs
+no ambiguous (name, zip5) keys
+dictionary: 88,750 renderings, 31,722 EINs, statistics dictionary-native
+DICTIONARY BUILD: 24.4 s  (88,750 renderings, 31,722 EINs)
+saveRDS: 0.7 s, 63.9 MB
+readRDS: 0.9 s
