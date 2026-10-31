@@ -1,0 +1,45 @@
+﻿============================================================================== 
+CALIBRATION PACKET  (target ~200 scorable cases) 
+============================================================================== 
+easy stratum capped at 68; seed 20261031; k 5 
+
+[M] data-dev/AUDIT-MAYBE-100.csv 
+  485 candidate rows over 100 grants 
+  verdicts: AMBIGUOUS=13 CORRECT_DEEPER=10 CORRECT_TOP=53 NO_CORRECT=24 
+  resolved: 63 MATCH (ein found for 63), 24 NONE, 13 dropped (AMBIGUOUS) 
+
+[A] rebuilding the autoaccept 200 at full schema 
+  autoaccept verdicts: AMBIGUOUS=19 CORRECT=144 WRONG=37 
+  enrichment outcomes: HELPS=9 RESOLVED_ALT=14 RESOLVED_NONE=23 RESOLVED_PICK=8 SILENT=2 
+  loading PF-MATCH-RESULT-50k.rds (2.4 GB) ... 
+    loaded in 28 s 
+  rescored; building BMF context from bmf_2026_01_processed.csv ... 
+    1924822 EINs with context 
+  895 candidate rows over 200 grants 
+  rebuild drift: the recorded pick is no longer rank 1 on 0 of 144 CORRECT cases 
+  resolved: 166 MATCH, 23 NONE, 11 unresolved 
+
+  easy stratum subsampled 68 of 144 (see header, note 2) 
+
+assembling: 87 from M, 68 from E, 45 from H = 200 cases 
+
+990 text from ORG-TEXT-BUNDLE.rds ... 
+  mission 45.9%  programs 36.2%  ntee_text 45.9% 
+============================================================================== 
+cases     : 200 
+
+E-easy-rule-correct  H-hard-rule-failed      M-maybe-random 
+                 68                  45                  87 
+
+targets   : 153 MATCH, 47 NONE 
+                     target
+stratum               MATCH NONE
+  E-easy-rule-correct    68    0
+  H-hard-rule-failed     22   23
+  M-maybe-random         63   24
+
+candidate rows: 944  (median 5 per case) 
+
+wrote data-dev/ADJ-CAL-{PACKET,CASES,TRUTH}.rds 
+next: PF_ADJ_SET=cal Rscript dev/adjudicate-01-light.R 
+============================================================================== 

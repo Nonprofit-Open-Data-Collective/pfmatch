@@ -1,0 +1,38 @@
+﻿============================================================================== 
+ADJUDICATION EXPERIMENT  stage 2: deep research adjudicator 
+============================================================================== 
+model=claude-opus-5-5  effort=high  search=OFF (ablation)  workers=4 
+200 cases 
+system prompt: 13155 characters 
+
+round 1: 200 requests ... 
+  200 finished, 0 paused mid-turn 
+
+268.2 s elapsed (1.3 s/case wall) 
+============================================================================== 
+
+verdicts returned: 200 of 200  (tool call used on 200) 
+verdict
+AMBIGUOUS     MATCH      NONE 
+        5       144        51 
+ 
+search_confirmed
+NOT_SEARCHED 
+         200 
+ 
+          evidence_class
+confidence INFER NONE NTEE QUOTE
+    high      52    1    2    81
+    low        9    0    0     1
+    medium    34    0    0    20
+
+searches: 0 total, 0.0/case, 200 cases with none 
+ground-truth name established on 158 of 200 cases 
+
+tokens: 601,297 in, 141,948 out   cache: 1,122,615 read, 28,785 WRITTEN 
+token cost: $5.613 over 200 cases ($0.028063/case) 
+  PLUS 0 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/ADJ-CAL-DEEP-nosearch.rds 
+next: Rscript dev/adjudicate-03-score.R 
+============================================================================== 

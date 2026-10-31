@@ -21,15 +21,18 @@ navbar:
           href: articles/cascade-workflow.html
         - text: Name and address variants
           href: articles/name-and-address-variants.html
+        - text: Adjudicating the MAYBE tier
+          href: articles/adjudicating-maybe.html
 
 articles:
 - title: Articles
   desc: >
-    How the cascade resolves a grant, and what the variation it has to absorb
-    actually looks like.
+    How the cascade resolves a grant, what the variation it has to absorb
+    actually looks like, and what the tier it cannot decide is worth reviewing.
   contents:
   - cascade-workflow
   - name-and-address-variants
+  - adjudicating-maybe
 
 
 

@@ -1,0 +1,169 @@
+============================================================================== 
+CALIBRATION -- the ablation on ~200 labelled cases 
+============================================================================== 
+cases with all three arms: 200 
+complete on all three  : 200 
+no-search arm searches (must be 0): 0 
+
+------------------------------------------------------------------------------ 
+1. ACCURACY WITHIN STRATUM -- never pooled, and here is why 
+------------------------------------------------------------------------------ 
+200 cases: E-easy-rule-correct=68  H-hard-rule-failed=45  M-maybe-random=87
+ 
+stratum (n)            light                        deep-                        deep+ 
+  E-easy-rule-co (68)   59/68  =  86.8% (95% CI 76.7-92.9)   63/68  =  92.6% (95% CI 83.9-96.8)   63/68  =  92.6% (95% CI 83.9-96.8) 
+  H-hard-rule-fa (45)   34/45  =  75.6% (95% CI 61.3-85.8)   41/45  =  91.1% (95% CI 79.3-96.5)   39/45  =  86.7% (95% CI 73.8-93.7) 
+  M-maybe-random (87)   72/87  =  82.8% (95% CI 73.5-89.3)   85/87  =  97.7% (95% CI 92.0-99.4)   79/87  =  90.8% (95% CI 82.9-95.3) 
+
+The E stratum is cases a geographic rule already got right, so every arm 
+should score high there and it carries little information. H is the rule's 
+failures and M a broader MAYBE draw: those are where the arms separate. 
+A single pooled accuracy over these three would be an artefact of the mix. 
+
+target mix per stratum (MATCH means the right EIN is among the candidates) 
+                     target
+stratum               MATCH NONE
+  E-easy-rule-correct    68    0
+  H-hard-rule-failed     22   23
+  M-maybe-random         63   24
+
+------------------------------------------------------------------------------ 
+2. THE PAIRED TESTS -- valid pooled, and this is the power 
+------------------------------------------------------------------------------ 
+calibration set alone, 200 cases 
+  model   light -> deep-      25 gained,   1 lost,  26 discordant, p = 0.0000 
+  search  deep- -> deep+       0 gained,   8 lost,   8 discordant, p = 0.0078 
+  total   light -> deep+      23 gained,   7 lost,  30 discordant, p = 0.0052 
+
+pooled with the experiment's 27 scorable cases = 227 paired cases 
+  model   light -> deep-      29 gained,   3 lost,  32 discordant, p = 0.0000 
+  search  deep- -> deep+       1 gained,   8 lost,   9 discordant, p = 0.0391 
+  total   light -> deep+      27 gained,   8 lost,  35 discordant, p = 0.0019 
+
+what the sample can now resolve 
+  model   32 discordant pairs -> SIGNIFICANT at 0.05 (p = 0.0000) -- the second arm is better 
+  search  9 discordant pairs -> SIGNIFICANT at 0.05 (p = 0.0391) -- THE SECOND ARM IS WORSE 
+  total   35 discordant pairs -> SIGNIFICANT at 0.05 (p = 0.0019) -- the second arm is better 
+
+  minimum detectable split at 0.05, given the discordant pairs observed: 
+    model   n=32  needs 23 of 32 one way (observed 29 gained / 3 lost) 
+    search  n=9   needs 8 of 9 one way (observed 1 gained / 8 lost) 
+    total   n=35  needs 24 of 35 one way (observed 27 gained / 8 lost) 
+
+------------------------------------------------------------------------------ 
+3. DOES CONFIDENCE STILL ORDER ACCURACY? -- the routing policy's premise 
+------------------------------------------------------------------------------ 
+The cascade rests on the light arm's own confidence separating its right 
+answers from its wrong ones. At n=27 that was high 12/12, medium 10/11, 
+low 0/4 -- four cases deciding the escalation tier. Re-tested here.
+ 
+light  Haiku, packet 
+  high    98/98  = 100.0% (95% CI 96.2-100.0) 
+  medium  60/74  =  81.1% (95% CI 70.7-88.4) 
+  low      7/28  =  25.0% (95% CI 12.7-43.4) 
+deep-  Opus, packet 
+  high   136/136 = 100.0% (95% CI 97.3-100.0) 
+  medium  47/54  =  87.0% (95% CI 75.6-93.6) 
+  low      6/10  =  60.0% (95% CI 31.3-83.2) 
+deep+  Opus + search 
+  high   162/166 =  97.6% (95% CI 94.0-99.1) 
+  medium  18/28  =  64.3% (95% CI 45.8-79.3) 
+  low      1/6   =  16.7% (95% CI 3.0-56.4) 
+
+light arm by evidence class 
+  QUOTE   62/65  =  95.4% (95% CI 87.3-98.4) 
+  NTEE    16/16  = 100.0% (95% CI 80.6-100.0) 
+  INFER   57/87  =  65.5% (95% CI 55.1-74.7) 
+  NONE    30/32  =  93.8% (95% CI 79.9-98.3) 
+
+high+medium vs low, Fisher exact: p = 0.00000  -- confidence DOES separate right from wrong 
+
+------------------------------------------------------------------------------ 
+4. PRECISION ON WHAT EACH ARM CLEARS -- what the vignette needs 
+------------------------------------------------------------------------------ 
+Among the cases each arm called MATCH, how often was that the right EIN? 
+(target-bearing cases only; a MATCH where the target is NONE is an error)
+ 
+arm                    precision on its own MATCHes   share it called MATCH 
+  light  Haiku, packet 118/118 = 100.0% (95% CI 96.8-100.0)    59.0% 
+  deep-  Opus, packet  143/144 =  99.3% (95% CI 96.2-99.9)    72.0% 
+  deep+  Opus + search 136/140 =  97.1% (95% CI 92.9-98.9)    70.0% 
+
+same, within the two informative strata 
+  M-maybe-random (n=87) 
+    light  Haiku, packet  48/48  = 100.0% (95% CI 92.6-100.0) 
+    deep-  Opus, packet   61/61  = 100.0% (95% CI 94.1-100.0) 
+    deep+  Opus + search  55/56  =  98.2% (95% CI 90.6-99.7) 
+  H-hard-rule-failed (n=45) 
+    light  Haiku, packet  11/11  = 100.0% (95% CI 74.1-100.0) 
+    deep-  Opus, packet   19/19  = 100.0% (95% CI 83.2-100.0) 
+    deep+  Opus + search  18/20  =  90.0% (95% CI 69.9-97.2) 
+
+and restricted to high+medium confidence, which is what a cascade accepts 
+  light  Haiku, packet 116/116 = 100.0% (95% CI 96.8-100.0)   ( 58.0% of all cases) 
+  deep-  Opus, packet  137/138 =  99.3% (95% CI 96.0-99.9)   ( 69.0% of all cases) 
+  deep+  Opus + search 135/139 =  97.1% (95% CI 92.8-98.9)   ( 69.5% of all cases) 
+
+------------------------------------------------------------------------------ 
+5. THE CASCADE, re-priced on this sample 
+------------------------------------------------------------------------------ 
+measured per-case token cost on this run 
+  light 0.000642   deep- 0.028063   deep+ 0.065648 
+
+escalating the light arm's low-confidence 28 of 200 (14.0%): 
+  escalate low -> deep-, no search   180/200 =  90.0% (95% CI 85.1-93.4)   $4,611 over the tier 
+  escalate low -> deep+, with search 178/200 =  89.0% (95% CI 83.9-92.6)   $9,919 over the tier 
+  light only, no escalation   165/200 =  82.5% (95% CI 76.6-87.1)   $648 
+  deep-, no search on everything 189/200 =  94.5% (95% CI 90.4-96.9)   $28,307 
+  deep+, with search on everything 181/200 =  90.5% (95% CI 85.6-93.8)   $66,220 
+
+(Tier-wide dollars use the 1,008,713 projected MAYBE identities and this run's 
+ measured per-case costs. The ACCURACIES beside them are this sample's, 
+ which is not a sample of that tier -- they rank the policies, they do not 
+ predict the tier's accuracy.) 
+
+------------------------------------------------------------------------------ 
+6. CASES WHERE SEARCH FLIPPED A WRONG ANSWER RIGHT 
+------------------------------------------------------------------------------ 
+search fixed 0, broke 8 
+
+--- BROKE --- 
+
+A-G022040  TEN YAD HACHNOSAS KALLAH  [H-hard-rule-failed, RESOLVED_NONE] 
+  target NONE  
+  deep- NONE  -> CORRECT 
+  deep+ MATCH 030385999 (CONFIRMED) -> WRONG 
+  Same ZIP 11225 (Crown Heights). GuideStar lists www.tenyad.org as this EIN's website, the site Ten Yad Hachnosas Kallah  
+
+M-G003779  APERTURE  [M-maybe-random, CORRECT_TOP] 
+  target MATCH 133120824 
+  deep- MATCH 133120824 -> CORRECT 
+  deep+ NONE  (INCONCLUSIVE) -> MISS 
+  Filed Itasca IL 60143; Aperture Foundation is NYC with mail at Denville NJ; Itasca 60143 hosts Aperture Education LLC, n 
+
+M-G003269  BUNKER HILL COMMUNITY COLLEGE  [M-maybe-random, CORRECT_TOP] 
+  target MATCH 222757389 
+  deep- MATCH 222757389 -> CORRECT 
+  deep+ NONE  (INCONCLUSIVE) -> MISS 
+  Grant named the college itself, a state public college, with a program purpose. The candidate is its separate foundation 
+
+A-G030511  Seeds of Hope  [H-hard-rule-failed, RESOLVED_PICK] 
+  target MATCH 841437053 
+  deep- MATCH 841437053 -> CORRECT 
+  deep+ AMBIGUOUS 841437053 (INCONCLUSIVE) -> AMBIGUOUS_RIGHT 
+  Cand 1 mission: "INCLUDING SUPPORTING THE OPERATIONS OF SEEDS OF HOPE OF NORTHERN COLORADO, INC." Both Trust and Inc. us 
+
+M-G003648  ERLANGER LIONS CLUB  [M-maybe-random, CORRECT_TOP] 
+  target MATCH 611206997 
+  deep- MATCH 611206997 -> CORRECT 
+  deep+ NONE  (CONTRADICTED) -> MISS 
+  Filed name is the club itself. Erlanger Lions Club Inc has its own EIN, 61-6034245, which is not a candidate. Candidate  
+
+M-G003856  HABITAT FOR HUMANITY NEW YORK CITY AND WESTCHESTER COUNTY  [M-maybe-random, CORRECT_TOP] 
+  target MATCH 871564526 
+  deep- MATCH 871564526 -> CORRECT 
+  deep+ NONE  (CONTRADICTED) -> MISS 
+  The filed name is exactly the legal name of EIN 11-2857055 (111 John St, 10038). Cand 1 is a separate small entity forme 
+============================================================================== 
+wrote dev/ADJ-CAL-RESULTS.log and data-dev/ADJ-CAL-SCORED.{rds,csv} 
+============================================================================== 

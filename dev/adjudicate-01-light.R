@@ -48,7 +48,14 @@ WORKERS <- as.integer(Sys.getenv("PF_ADJ_WORKERS", "6"))
 EFFORT  <- Sys.getenv("PF_ADJ_EFFORT_LIGHT", "medium")
 TAG     <- Sys.getenv("PF_ADJ_TAG", "")
 MODEL   <- ADJ_MODEL_LIGHT
-OUT     <- file.path(DD, sprintf("ADJ-EXP-LIGHT%s.rds", TAG))
+# PF_ADJ_SET picks which frozen packet to adjudicate: "exp" is the 100-case
+# experiment, "cal" the ~200-case calibration set from dev/adjudicate-05-calib-packet.R.
+# Outputs take the same prefix, so the two sets' verdicts never overwrite each
+# other and a scoring run cannot silently mix them.
+SET     <- tolower(Sys.getenv("PF_ADJ_SET", "exp"))
+stopifnot(SET %in% c("exp", "cal"))
+PFX     <- if (SET == "cal") "ADJ-CAL" else "ADJ-EXP"
+OUT     <- file.path(DD, sprintf("%s-LIGHT%s.rds", PFX, TAG))
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr  <- function() cat(strrep("=", 78), "\n")
@@ -57,12 +64,13 @@ hr(); say("ADJUDICATION EXPERIMENT  stage 1: light adjudicator"); hr()
 say("model=%s  effort=%s  workers=%d%s", MODEL, EFFORT, WORKERS,
     if (LIMIT > 0) sprintf("  LIMIT=%d (smoke test)", LIMIT) else "")
 
-pkf <- file.path(DD, "ADJ-EXP-PACKET.rds")
+pkf <- file.path(DD, sprintf("%s-PACKET.rds", PFX))
 if (!file.exists(pkf))
-  stop("data-dev/ADJ-EXP-PACKET.rds absent. Run dev/adjudicate-00-packet.R first.",
+  stop(sprintf("%s absent. Run %s first.", basename(pkf),
+       if (SET == "cal") "dev/adjudicate-05-calib-packet.R" else "dev/adjudicate-00-packet.R"),
        call. = FALSE)
 pk    <- as.data.table(readRDS(pkf))
-cases <- as.data.table(readRDS(file.path(DD, "ADJ-EXP-CASES.rds")))
+cases <- as.data.table(readRDS(file.path(DD, sprintf("%s-CASES.rds", PFX))))
 setorder(cases, batch_order)
 if (LIMIT > 0) cases <- head(cases, LIMIT)
 say("%d cases, %d candidate rows", nrow(cases), nrow(pk[grant_id %in% cases$grant_id]))
@@ -186,8 +194,12 @@ cost <- adj_cost(MODEL, tin, tout, cr, cw)
 say("\ntokens: %s in, %s out   cache: %s read, %s written",
     format(tin, big.mark = ","), format(tout, big.mark = ","),
     format(cr, big.mark = ","), format(cw, big.mark = ","))
-say("cost: $%.4f over %d cases  ($%.4f/case, $%.2f projected for all 1,044 MAYBEs)",
-    cost, nrow(out), cost / nrow(out), cost / nrow(out) * 1044)
+say("cost: $%.4f over %d cases  ($%.6f/case)", cost, nrow(out), cost / nrow(out))
+# The 1,044 projection is the experiment set's MAYBE tier. The calibration set
+# is not a sample of that tier (see adjudicate-05-calib-packet.R, note 2), so
+# projecting from it would be arithmetic on the wrong denominator.
+if (SET == "exp")
+  say("  projected for all 1,044 MAYBEs: $%.2f", cost / nrow(out) * 1044)
 if (cr == 0 && nrow(out) > 1) {
   # Two different causes, and the distinction decides whether it is worth
   # acting on. With every request fired at once, none of them can read a cache

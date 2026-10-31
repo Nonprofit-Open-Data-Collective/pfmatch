@@ -1,0 +1,290 @@
+---
+title: "Adjudicating the MAYBE tier"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Adjudicating the MAYBE tier}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", echo = FALSE)
+tab <- function(d, ...) knitr::kable(d, format = "html", ...)
+```
+
+```{r data}
+# Every figure below is measured, not illustrative. Sources:
+#   dev/BASELINE-2026-10C/   the tier counts
+#   dev/ADJ-EXP-RESULTS.log  clearance, from a 68-case simple random draw
+#   dev/ADJ-CAL-RESULTS.log  quality, from 200 hand-adjudicated cases
+#   dev/ADJ-EXP-ABLATION.log the search ablation
+# Embedded as literals so this vignette builds without the reference, a
+# cascade run, or an API key. Regenerate with dev/adjudicate-0*.R.
+
+tier_tbl <- data.frame(
+  tier       = c("YES", "MAYBE", "NO"),
+  identities = c(2979L, 1044L, 725L),
+  share      = c("62.74%", "21.99%", "15.27%"),
+  meaning    = c("accepted automatically",
+                 "candidates surfaced, none decisive",
+                 "nothing surfaced, or vetoed"),
+  stringsAsFactors = FALSE)
+
+strat_tbl <- data.frame(
+  strategy = c("light", "deep", "deep + search",
+               "cascade to deep", "cascade to deep + search"),
+  model    = c("Haiku 5.5", "Opus 5.5", "Opus 5.5", "Haiku then Opus",
+               "Haiku then Opus"),
+  web      = c("no", "no", "yes", "no", "yes"),
+  clears   = c("57.8%", "74.2%", "70.7%", "67.2%", "64.8%"),
+  precision = c("100.0%", "99.3%", "97.1%", "99.3%", "97.8%"),
+  accuracy = c("82.5%", "94.5%", "90.5%", "90.0%", "89.0%"),
+  cost     = c("1", "44", "102", "7", "15"),
+  stringsAsFactors = FALSE)
+
+match_tbl <- data.frame(
+  strategy = c("none (the cascade alone)", "light", "deep", "deep + search",
+               "cascade to deep", "ceiling (YES + MAYBE)"),
+  maybes_won = c("--", "603", "770", "717", "696", "1,044"),
+  match_rate = c("62.74%", "75.44%", "78.95%", "77.84%", "77.41%", "84.73%"),
+  cost       = c("0", "1", "44", "102", "7", "--"),
+  stringsAsFactors = FALSE)
+
+conf_tbl <- data.frame(
+  confidence = c("high", "medium", "low"),
+  light = c("98/98 = 100.0%", "60/74 = 81.1%", "7/28 = 25.0%"),
+  deep  = c("136/136 = 100.0%", "47/54 = 87.0%", "6/10 = 60.0%"),
+  deep_search = c("162/166 = 97.6%", "18/28 = 64.3%", "1/6 = 16.7%"),
+  stringsAsFactors = FALSE)
+
+abl_tbl <- data.frame(
+  comparison = c("model: light to deep", "search: deep to deep + search",
+                 "total: light to deep + search"),
+  discordant = c("32", "9", "35"),
+  better = c("29 / 3", "1 / 8", "27 / 8"),
+  p = c("< 0.0001", "0.039", "0.0019"),
+  reading = c("deep is better", "search is WORSE", "deep + search is better"),
+  stringsAsFactors = FALSE)
+```
+
+## The tier this is about
+
+A pfmatch run sorts every grant identity into three tiers. On
+`BASELINE-2026-10C`'s augmented arm, over 4,748 identities:
+
+```{r}
+tab(tier_tbl, col.names = c("tier", "identities", "share", "what it means"))
+```
+
+The clear rate is **YES over identities, 62.74%**. YES+MAYBE is 84.73% and is
+**not** a clear rate: `pf_status()` returns MAYBE precisely because the cascade
+could not choose, and `dev/ADJUDICATION-PLAN.md` records two separate attempts
+to accept the tier automatically, both of which failed. The second measured
+**72% precision** on 200 cases after the first had measured 100% on 18.
+
+So the 22 points between 62.74% and 84.73% are recoverable only by review, and
+the question is what kind of reviewer is worth paying for.
+
+## What a reviewer is given
+
+`pf_adjudicate()` builds the packet: up to five candidate EINs per grant with
+BMF name, address, NTEE code and definition, activity text, subsection, assets
+and revenue, plus the filed grant and the filing foundation's own sector. On
+top of that, for **every** candidate and not just the top pick, the NTEEv2
+description and the Form 990 Part III mission and program text — which on 56
+otherwise-unresolvable cases decided 45.
+
+Two fields in that packet carry more weight than their size suggests.
+
+**`cand_name` is not the whole name.** The BMF's own display name differs from
+the matched name on 29% of candidate rows, and where it differs it often
+settles the case: two candidates both matched as "Wake Forest University" are
+in fact *Mortar Board* and *Psi Chi The International Honor Society in
+Psychology*. Omit it and the case reads as an unresolvable same-name tie.
+
+**`NONE` has to be a first-class answer.** In the labelled sets, roughly a
+quarter of cases have no correct candidate in the packet at all. A reviewer
+that cannot decline will manufacture exactly that many false positives, and a
+scoring scheme that assumes an answer exists will not notice.
+
+## Three strategies
+
+Each adjudicates the same frozen packet. They differ in the model and in
+whether the reviewer may leave the packet and search the web.
+
+**light** — Haiku 5.5, packet only, one request per case, structured JSON out.
+This is the only tier that is obviously affordable at a million cases.
+
+**deep** — Opus 5.5 at high effort, still packet only. Same text, same
+instructions, bigger model.
+
+**deep + search** — Opus 5.5 with the server-side web search tool, instructed
+to establish who the filed recipient actually is before deciding, and to record
+what it found. This is the only configuration that can discover the right
+answer is *absent* rather than merely unproven.
+
+**cascade** — light everywhere, escalating only the cases light itself flags
+low-confidence (14–16% of the tier) to one of the deep tiers.
+
+## Clearance, quality, and cost
+
+Clearance is measured on 68 MAYBEs drawn simple-random and post-stratified on
+the tier's tie rate. Precision and accuracy are measured on 200 cases with
+hand-adjudicated answers. Cost is token cost per case with cache traffic
+included, **expressed as a ratio with light set to 1**.
+
+```{r}
+tab(strat_tbl, col.names = c("strategy", "model", "web", "clears",
+                             "precision on what it clears", "overall accuracy",
+                             "cost (light = 1)"))
+```
+
+*Precision* is the share of an arm's own `MATCH` verdicts that name the right
+EIN. *Accuracy* is the share of all its verdicts that are right, including its
+declines. The two differ because an arm can be cautious: light commits to only
+59% of cases and is right on every one of them.
+
+Three things to read out of that table.
+
+**Precision is not the problem.** Every tier is at or near 100% on what it
+commits to — 118 of 118 for light, 143 of 144 for deep. These reviewers do not
+invent matches. They differ almost entirely in how *much* they are willing to
+clear, which makes clearance, not precision, the lever.
+
+**light is extraordinary value.** At 1/44th the cost of deep it clears 57.8% of
+the tier with perfect precision on this sample. It is not as good — its overall
+accuracy is 82.5% against 94.5% — but its errors are declines, not false
+matches.
+
+**deep + search is dominated.** It clears less than deep (70.7% vs 74.2%), is
+less precise (97.1% vs 99.3%), is less accurate (90.5% vs 94.5%), and costs
+**2.3 times more**. There is no column in which it wins.
+
+## Where that leaves the match rate
+
+The honest figure is `YES + (MAYBE × clearance × precision)` — a MAYBE cleared
+to the wrong EIN is not a match, it is a silent error that is never reviewed
+again.
+
+```{r}
+tab(match_tbl, col.names = c("adjudication strategy", "MAYBEs won",
+                             "overall match rate", "cost (light = 1)"))
+```
+
+So adjudication moves the match rate from **62.74% to between 75% and 79%**,
+and the choice of tier is worth about **3.5 points** while the choice of
+*whether to adjudicate at all* is worth **12 to 16**.
+
+The cost-quality frontier has three points on it and two of them are not
+obvious:
+
+* **light, at cost 1, buys 12.7 of those points.**
+* **cascade to deep, at cost 7, buys 14.7.**
+* **deep everywhere, at cost 44, buys 16.2.**
+
+`deep + search` and `cascade to deep + search` are both off the frontier —
+strictly worse and strictly dearer. Whether the last 1.5 points are worth
+going from cost 7 to cost 44 depends on what an uncleared MAYBE costs
+downstream, which is a judgement this vignette cannot make for you.
+
+## Why confidence is the thing to route on
+
+Each tier reports its own confidence. On the 200 labelled cases that
+self-report separates right answers from wrong ones very sharply
+(Fisher exact, high+medium vs low, *p* < 0.00001):
+
+```{r}
+tab(conf_tbl, col.names = c("stated confidence", "light", "deep",
+                            "deep + search"))
+```
+
+A high-confidence verdict from light or deep was right on **every one** of 98
+and 136 cases respectively. That is what makes the cascade work: the cheap
+tier knows which of its answers not to trust, so escalation can be targeted at
+the 14% it flags rather than sprayed across the tier.
+
+It also means the cheap tier's *failures announce themselves*, which is exactly
+what the geographic auto-accept rule could not do — that rule was 72% precise
+and silent about which 28%.
+
+By evidence class, light's weak spot is `INFER`: 65.5% correct, against 95.4%
+for `QUOTE` and 100% for `NTEE`. Reasoning over the whole packet without a
+quotable fact is where it goes wrong, and `INFER` plus low confidence is a
+better escalation trigger than either alone.
+
+## The search result, and what it actually means
+
+Search was expected to be the most valuable tier. It is not, and the
+ablation — Opus at the same effort on the identical packet with search removed
+— says so on 227 paired cases (exact McNemar on discordant pairs):
+
+```{r}
+tab(abl_tbl, col.names = c("comparison", "discordant pairs",
+                           "gained / lost", "p", "reading"))
+```
+
+**The model effect is large and certain. The search effect is significant in
+the wrong direction**: search fixed 0 cases and broke 8.
+
+That finding needs its mechanism stated, because "search makes it worse" is
+not quite what happened. Every one of the eight is search holding a *stricter
+standard of entity identity* than the human labellers did:
+
+* `ERLANGER LIONS CLUB` — search found the club's own EIN (61-6034245), saw it
+  was not among the candidates, and answered `NONE`. The label accepts the
+  candidate as correct.
+* `HABITAT FOR HUMANITY NEW YORK CITY AND WESTCHESTER COUNTY` — search found
+  the filed name is exactly the legal name of a *different* EIN, and declined.
+* `BUNKER HILL COMMUNITY COLLEGE` — search noted the candidate is the college's
+  separate foundation, not the college, and declined.
+
+In each, search is arguably *more* right than the label. The labels encode
+"the best available BMF row"; search applies "the exact legal entity". Those
+are different conventions, and this project has never written down which one it
+means — `dev/ADJUDICATION-PLAN.md` flags the entity-versus-fundraising-arm
+question as unsettled policy and that is precisely what is biting here.
+
+So the defensible conclusion is narrower than the p-value: **against the
+convention these labels encode, search costs accuracy and money.** Settle the
+convention before concluding search is useless.
+
+One thing search does that nothing else can: it establishes that an answer is
+**absent**. 39 of its verdicts came back `CONTRADICTED` — it found the
+organisation and showed its EIN is not among the candidates. A packet-only
+`NONE` means "I cannot tell"; a searched `NONE` means "I checked". The first
+needs a human, the second can be closed. That is worth keeping for the residue
+even if it is wrong for the bulk.
+
+Search also makes the model *surer* without making it righter: it puts 83% of
+verdicts at high confidence against deep's 68%, while scoring lower. Rising
+confidence with falling accuracy is the one pattern that should worry anyone
+routing on confidence.
+
+## What none of this establishes
+
+* **Precision over the YES mass is still unmeasured.** Every ground-truth label
+  this project holds came from a cell the pipeline itself produced, so nothing
+  here speaks to the 62.74% that was never in doubt.
+* **The accuracy figures are not tier-level.** They come from three
+  separately-drawn label sets, one deliberately subsampled. Accuracy is
+  reported within stratum in `dev/ADJ-CAL-RESULTS.log` for that reason, and the
+  only unbiased clearance estimate is the 68-case random draw.
+* **One run is one draw.** `temperature` cannot be set on this API version, so
+  determinism is not available; run-to-run variance is measured by repeating a
+  stage, not assumed away.
+* **The packet shows five candidates.** On 7 of 100 cases the close band held
+  more than five — 41, in one case — so a `NONE` can mean "not in the five"
+  rather than "not in the BMF".
+* **Cost ratios are token costs.** Web search is billed per use on top, at
+  about 2 searches per case, so the `deep + search` ratio of 102 understates
+  it.
+
+## Reproducing
+
+`dev/ADJUDICATION-EXPERIMENT.md` is the design note. The stages are
+`dev/adjudicate-*.R`: a preflight, the packet builders, the three arms, and
+the two scoring passes. They need `ANTHROPIC_API_KEY`; the packets are frozen
+to disk so the arms and the scoring can be re-run without touching the matcher.

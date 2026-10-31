@@ -74,7 +74,10 @@ ROUNDS    <- as.integer(Sys.getenv("PF_ADJ_ROUNDS", "4"))
 NOSEARCH  <- nzchar(Sys.getenv("PF_ADJ_NOSEARCH"))
 TAG       <- Sys.getenv("PF_ADJ_TAG", "")
 MODEL     <- ADJ_MODEL_DEEP
-OUT       <- file.path(DD, sprintf("ADJ-EXP-DEEP%s.rds", TAG))
+SET       <- tolower(Sys.getenv("PF_ADJ_SET", "exp"))
+stopifnot(SET %in% c("exp", "cal"))
+PFX       <- if (SET == "cal") "ADJ-CAL" else "ADJ-EXP"
+OUT       <- file.path(DD, sprintf("%s-DEEP%s.rds", PFX, TAG))
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr  <- function() cat(strrep("=", 78), "\n")
@@ -84,12 +87,13 @@ say("model=%s  effort=%s  search=%s  workers=%d%s", MODEL, EFFORT,
     if (NOSEARCH) "OFF (ablation)" else sprintf("max %d uses", MAXSEARCH), WORKERS,
     if (LIMIT > 0) sprintf("  LIMIT=%d (smoke test)", LIMIT) else "")
 
-pkf <- file.path(DD, "ADJ-EXP-PACKET.rds")
+pkf <- file.path(DD, sprintf("%s-PACKET.rds", PFX))
 if (!file.exists(pkf))
-  stop("data-dev/ADJ-EXP-PACKET.rds absent. Run dev/adjudicate-00-packet.R first.",
+  stop(sprintf("%s absent. Run %s first.", basename(pkf),
+       if (SET == "cal") "dev/adjudicate-05-calib-packet.R" else "dev/adjudicate-00-packet.R"),
        call. = FALSE)
 pk    <- as.data.table(readRDS(pkf))
-cases <- as.data.table(readRDS(file.path(DD, "ADJ-EXP-CASES.rds")))
+cases <- as.data.table(readRDS(file.path(DD, sprintf("%s-CASES.rds", PFX))))
 setorder(cases, batch_order)
 if (LIMIT > 0) cases <- head(cases, LIMIT)
 say("%d cases", nrow(cases))
@@ -288,8 +292,9 @@ say("\ntokens: %s in, %s out   cache: %s read, %s WRITTEN",
     format(tin, big.mark = ","), format(tout, big.mark = ","),
     format(sum(out$cache_read), big.mark = ","),
     format(sum(out$cache_write), big.mark = ","))
-say("token cost: $%.3f over %d cases ($%.4f/case, $%.2f projected for 1,044)",
-    cost, nrow(out), cost / nrow(out), cost / nrow(out) * 1044)
+say("token cost: $%.3f over %d cases ($%.6f/case)", cost, nrow(out), cost / nrow(out))
+if (SET == "exp")
+  say("  projected for 1,044 MAYBEs: $%.2f", cost / nrow(out) * 1044)
 say("  PLUS %d web searches, billed per search and NOT in that figure.",
     sum(out$searches))
 
