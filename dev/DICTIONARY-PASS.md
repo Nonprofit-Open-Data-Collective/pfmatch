@@ -167,3 +167,20 @@ constraint is the precision of the uncorroborated half, which is a labelling
 problem rather than a data-volume one. That is the same conclusion
 `dev/FEATURE-ENGINEERING.md` reached about the accept decision generally:
 label-limited, not feature-limited.
+
+## Published as an article
+
+`vignettes/matching-dictionaries.Rmd` puts this pass beside the alternatives it
+competes with — the active BMF, the augmented BMF, and matchdb's
+`active-observed` and `unified-observed` tiers — on three axes: what each is
+made of, what each is worth on the 1k benchmark, and what each costs in
+wall-clock time. Two things the article establishes that this note did not:
+
+* **matchdb's `active-observed` tier dominates the augmented BMF** on both axes
+  at once — 11.5 min against 23.2 for the same 4,903 grants, for +1.0 point
+  (`dev/BENCH-MD-REFERENCE.log`). The dictionary pass is additive on top of
+  whichever reference runs, so that result does not compete with this one.
+* **Building the dictionary is nearly free**: 24.4 s from 369,260 cleared rows,
+  63.9 MB on disk, 0.9 s to read back (`dev/DICT-TIMING.log`). At full scale the
+  pass is ~12 h single-stream against ~186 h for the cascade it supplements. Its
+  real cost is the ~62,700 queued cases, not the compute.
