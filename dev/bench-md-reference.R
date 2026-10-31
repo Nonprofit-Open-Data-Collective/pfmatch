@@ -6,8 +6,9 @@
 #
 # One arm per process (memory: the augmented bundle alone peaks near 37 GB):
 #   MD_ARM=augmented         the local bundle pfmatch has used so far
-#   MD_ARM=unified-observed  pf_reference(source = "matchdb"), the new default
-#   MD_ARM=active-observed   the same without the inactive-BMF tranche
+#   MD_ARM=unified-observed  the matchdb tier closest to the augmented bundle
+#   MD_ARM=active-observed   the same without the inactive-BMF tranche -- the
+#                            default since this benchmark, which it won outright
 #
 #   PFMATCH_DIR=<checkout>  REF_CACHE=<augmented .rds>  OUT=<dir>  [GRANTS_DIR=<inputs>]
 #   [MATCHDB_CODE=<matchdb checkout, if not installed>]  [PF_BENCH_GRANTS=<pattern>]

@@ -179,7 +179,9 @@ wall-clock time. Two things the article establishes that this note did not:
 * **matchdb's `active-observed` tier dominates the augmented BMF** on both axes
   at once — 11.5 min against 23.2 for the same 4,903 grants, for +1.0 point
   (`dev/BENCH-MD-REFERENCE.log`). The dictionary pass is additive on top of
-  whichever reference runs, so that result does not compete with this one.
+  whichever reference runs, so that result does not compete with this one. It
+  is now the default tier for `pf_reference()` and `pf_run()`, replacing
+  `unified-observed`; the option `pfmatch.matchdb_tier` still overrides it.
 * **Building the dictionary is nearly free**: 24.4 s from 369,260 cleared rows,
   63.9 MB on disk, 0.9 s to read back (`dev/DICT-TIMING.log`). At full scale the
   pass is ~12 h single-stream against ~186 h for the cascade it supplements. Its

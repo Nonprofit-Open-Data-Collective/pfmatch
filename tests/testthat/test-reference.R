@@ -54,6 +54,31 @@ test_that("with no BMF the matchdb tier is used, with recovery keys added", {
   expect_equal(r$stamp$spec_hash, "abc123")
 })
 
+# The default is a decision, not an implementation detail: `active-observed`
+# matched the benchmark in half the time of the augmented BMF and cleared a
+# point higher (dev/BENCH-MD-REFERENCE.log), and `unified-observed` buys 0.1
+# point for two and a half times the match time. Pin it so a change is
+# deliberate.
+test_that("the default matchdb tier is active-observed, and the option overrides it", {
+  skip_if_not_installed("matchdb")
+  local <- pf_build_reference(tiny_bmf())
+  seen <- NULL
+  stub <- function(label, ..., fetch, build_index) {
+    seen <<- label
+    c(local[c("reference", "name_freq", "token_idf", "ref_index")],
+      list(clusters = data.frame(cluster_id = character(0), ein = character(0)),
+           stamp = list(spec_hash = "abc123", normalize_signature = "v1-test")))
+  }
+  testthat::local_mocked_bindings(md_reference = stub, .package = "matchdb")
+  pf_reference(cache = NULL, verbose = FALSE)
+  expect_equal(seen, "active-observed")
+
+  old <- options(pfmatch.matchdb_tier = "unified-observed")
+  on.exit(options(old), add = TRUE)
+  pf_reference(cache = NULL, verbose = FALSE)
+  expect_equal(seen, "unified-observed")
+})
+
 test_that("a matchdb failure falls back to the local bundle, or errors when required", {
   skip_if_not_installed("matchdb")
   f <- tempfile(fileext = ".rds")

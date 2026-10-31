@@ -23,6 +23,8 @@ navbar:
           href: articles/name-and-address-variants.html
         - text: Adjudicating the MAYBE tier
           href: articles/adjudicating-maybe.html
+        - text: What lives outside the BMF
+          href: articles/outside-the-bmf.html
         - text: Choosing a matching dictionary
           href: articles/matching-dictionaries.html
 
@@ -30,12 +32,13 @@ articles:
 - title: Articles
   desc: >
     How the cascade resolves a grant, what the variation it has to absorb
-    actually looks like, what the tier it cannot decide is worth reviewing, and
-    which database to match against in the first place.
+    actually looks like, what the two tiers it cannot clear are worth reviewing,
+    and which database to match against in the first place.
   contents:
   - cascade-workflow
   - name-and-address-variants
   - adjudicating-maybe
+  - outside-the-bmf
   - matching-dictionaries
 
 

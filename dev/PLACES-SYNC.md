@@ -61,12 +61,22 @@ longer hypothetical:
 | | pfmatch artifacts were built under | installed now |
 |---|---|---|
 | normalizer signature | `v1-6dcb298522cc5118` | `v1-3e7b9f9d59bbb19e` |
-| `np_addr_freq()` | absent | present, **exported** |
-| `np_addr_key()`, `np_unit_id()` | absent | present, **exported** — from `npnormalize` 0.1.1, after the normalizer's move (`dev/NPNORMALIZE.md`); npmatch does not re-export these two |
-| `np_addr_class()` | absent | present, **not exported** (`npnormalize:::.np_addr_class`) |
+| `np_addr_freq()` | absent | present, **exported** — and `np_cascade()` calls it itself, so pfmatch already has it (see step 5a) |
+| `np_addr_key()`, `np_unit_id()` | absent | present, **exported** from `npnormalize` 0.1.1 and **not** re-exported by npmatch — but also present as `npmatch:::.np_addr_key()` / `.np_unit_id()`, byte-identical (see step 4) |
+| `np_addr_class()` | absent | present, **not exported** — internal in *both* (`npmatch:::.np_addr_class`, `npnormalize:::.np_addr_class`), bodies identical |
 | `street_unit_id` | absent | present |
-| `geo_weights` has a `unit` term | no | yes, `0.97` |
-| `np_compare(addr_freq = )` | absent | present |
+| `geo_weights` has a `unit` term | no | yes, `0.97`, and it fires — measured 0.988 vs 0.980 on a suite conflict |
+| `np_compare(addr_freq = )` | absent | present — but reachable only *through* `np_cascade()`, which has no `addr_freq =` of its own (step 5a) |
+
+**The installed npmatch has not had its normalizer extracted.** npmatch 0.1.1
+`Imports` does not list npnormalize; it carries its own full copy, with the same
+`np_normalize()` body, the same signature and its own `.np_addr_key`,
+`.np_unit_id`, `.np_addr_class` and `.np_extract_unit`. npnormalize 0.1.1 is
+installed *beside* it as an independent duplicate, and attaching it prints
+*"Registered S3 methods overwritten by 'npnormalize': print.np_addr_freq,
+print.np_signature"*. The extraction described in `dev/NPNORMALIZE.md` is
+npmatch 0.1.1.9000 / 0.2.0 and is **not** the build pfmatch runs against, so
+every normalizer call pfmatch makes today is npmatch's own, not a re-export.
 
 Both values above are records of this machine, read with
 `np_normalize_signature()`, not predictions — see the warning above about
@@ -331,29 +341,75 @@ regression hard to attribute if several things move at once.
    **Call npmatch's function; do not port it.** matchdb ported only because it
    needs SQL macros, and even then it pins the port with a parity test against
    `.np_addr_key()` on 4,000 random rows covering every PO-box spelling.
-   pfmatch already `Imports: npmatch`, so it has no such excuse: use
-   `np_addr_key()` once exported, or `npmatch:::.np_addr_key()` with the same
-   parity test until then. Three implementations of one address key is the
-   state this note exists to prevent. *Check:* the group count moves as
-   measured, and the key is byte-identical to npmatch's on addresses where
-   nothing should change.
+   pfmatch already `Imports: npmatch`, so it has no such excuse. Three
+   implementations of one address key is the state this note exists to prevent.
+   *Check:* the group count moves as measured, and the key is byte-identical to
+   npmatch's on addresses where nothing should change.
+
+   **Revised 2026-10-31, and it reverses which route to take.** The earlier
+   advice — `npnormalize::np_addr_key()` in preference to a `:::` — was written
+   expecting the installed npmatch to import npnormalize. It does not (see §1).
+   On this build `npmatch:::.np_addr_key()` is byte-identical to
+   npnormalize's and is the *same lineage* as the `street_key` it would
+   consume, whereas reaching the exported function means declaring a dependency
+   on a second, independent copy of the whole normalizer, with the S3 collision
+   above. So: `npmatch:::.np_addr_key()` with the parity test now, and switch to
+   the exported `npnormalize::np_addr_key()` when pfmatch is on an npmatch that
+   actually imports npnormalize (0.2.0). The parity test is what makes the
+   switch safe either way, so write it first.
+
+   Measured cost of the current hand-rolled key, beyond the 22.7% above: it
+   keys on raw `ADDR_L1` with `gsub("[^A-Z0-9]", "")`, so it never gets USPS
+   suffix contraction and splits renderings npmatch unifies —
+   `100 MAIN STREET` → `100MAINSTREET|12210` against `100 MAIN ST` →
+   `100MAINST|12210`, where `.np_addr_key()` gives `100 MAIN ST 12210` for
+   both. Its PO-box test (`^P?O?BOX|^POST`) is also weaker than npmatch's.
 5. **Classify the groups with `np_addr_freq()` over the grant corpus.** Replace
    `flag_shared` and the `n_names < 25` filter with `addr_class`, keeping the
    raw counts in the queue beside it. Note the §2 caution on thresholds
    calibrated against filings rather than grant rows. *Check:* the classes land
    where §2 predicts — fiscal sponsors as `shared`, chapter networks as
    `federated`, the suite-conflict cases as `building`.
-5a. **Carry `addr_freq` on the reference and pass it to the comparer.** This is
-   now a specified interface rather than a guess. `np_compare()` takes
-   `addr_freq =` (verified on `origin/main`), and `np_addr_freq()` is the one
-   place function npmatch exports. So `pf_build_reference()` should gain an
-   `addr_freq` element computed over **exactly** the reference rows it returns —
-   which is what `md_addr_freq()` does for a matchdb bundle and what
-   `md_publish()` ships as `addr_freq.parquet` — and `pf_match_grants()` should
-   pass it through. Reference-side counts are safe from the slice footgun in
-   pfmatch because the whole reference goes to every batch (see §5). *Check:*
-   `np_addr_freq()` recomputed over the bundle's reference equals the stored
-   element exactly, the same round-trip check matchdb runs.
+5a. ~~**Carry `addr_freq` on the reference and pass it to the comparer.**~~
+   **Mostly moot, and the rest is not implementable as written. Rewritten
+   2026-10-31 after reading `np_cascade()`'s body.**
+
+   The original step said `pf_build_reference()` should gain an `addr_freq`
+   element and `pf_match_grants()` should "pass it through". It cannot:
+   **`np_cascade()` has no `addr_freq` parameter.** What it does instead is
+   compute the statistic itself, once, before the pass loop:
+
+   ```r
+   addr_freq <- np_addr_freq(r$street_key, r$zip5, r$street_unit_id, r$name_key)
+   ```
+
+   and hand it to `np_compare()` on every pass. Note what is *missing* beside
+   it: `name_freq`, `token_idf` and `ref_index` each sit behind an
+   `if (is.null(...))` guard and each has a parameter, so a caller can supply
+   them. `addr_freq` has neither.
+
+   So pfmatch has had the whole address-frequency layer since the npmatch
+   install, for free, without writing a line. Verified by running a cascade
+   through `pf_default_passes()` on a synthetic multi-unit building: the pairs
+   come back carrying `geo_unit`, `addr_shared`, `addr_units`,
+   `addr_unit_shared`, `addr_unit_coverage` and `addr_note`, with
+   `addr_units = 6` for a six-suite address. Nothing to adopt.
+
+   **What is actually left is a cost, not a capability.** Because the statistic
+   is recomputed per `np_cascade()` call and `pf_run_batches()` calls it once
+   per batch, the whole-reference `np_addr_freq()` runs once for every batch —
+   on the order of 40 times over a 1M-identity run against a 1.9M-row
+   reference, for a value that cannot change between batches. The fix is
+   upstream, not here (see §6): an `addr_freq =` parameter with the same
+   `is.null()` guard its three siblings already have. Until then
+   `pf_build_reference()` gaining an `addr_freq` element would have nowhere to
+   send it.
+
+   The same gap closes off tuning: `share_min` and `unit_coverage_min` take
+   `np_addr_freq()`'s defaults (10L and 0.5) and are not reachable through the
+   cascade either, which is exactly the §2 caution about thresholds calibrated
+   on filings rather than grant rows. That caution is now a blocked item, not a
+   choice pfmatch is making.
 6. **Restrict the silver labels by class.** `cluster` yields labels;
    `building` only where the suite agrees; `shared` and `federated` are
    reported, not labelled. *Check:* re-measure what fraction of
@@ -407,21 +463,50 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   `np_addr_freq()`. Still internal: `.np_addr_class()` and `.np_extract_unit()`.
   So step 4 can call `npnormalize::np_addr_key()` rather than a port or a
   `:::`; step 5 still cannot reach the class rule.
-* **Ask for `.np_extract_unit()`, or for a documented unit entry point.** The
-  exported `np_unit_id()` takes an *already extracted* unit and only strips the
-  designator — given a raw `ADDR_L2` it happily returns `1367` for
-  `PO BOX 1367`. The gate that makes the field usable is `.np_unit_pat` inside
-  `.np_extract_unit()`, which is internal. `pf_street_unit()` therefore goes
-  the long way round, handing a one-column frame to `np_normalize()` just to
-  read `street_unit` back out. That works and is deliberately the public path,
-  but a consumer wanting to parse one free-text line should not have to
-  normalize a data frame to do it.
-* **Report the spelled-out `BUILDING` gap.** `.np_unit_pat` carries `BLDG` but
-  not `BUILDING`, while it does carry `APARTMENT`, `SUITE`, `FLOOR`, `SPACE`,
-  `ROOM` and `NUMBER` beside their abbreviations. One corpus value
-  (`100 CAMPUS CENTER BUILDING 86E`) is lost to it. Looks like an oversight in
-  an otherwise symmetric table rather than a measured exclusion, which is worth
-  asking before assuming either way.
+  **Qualified 2026-10-31:** only once pfmatch is on an npmatch that imports
+  npnormalize. On the installed 0.1.1 the exported route means depending on a
+  second copy of the normalizer, and `npmatch:::.np_addr_key()` is the better
+  of the two — see step 4 and `dev/NPNORMALIZE.md`. Also worth noting that
+  `.np_addr_class()` and `.np_extract_unit()` are internal in **both**
+  packages, so "still internal" is not a consequence of the move.
+* ~~**Ask for `.np_extract_unit()`, or for a documented unit entry point.**~~
+  ~~**Report the spelled-out `BUILDING` gap.**~~ **Both filed 2026-10-31 as
+  [npnormalize#7](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/issues/7)**,
+  with the `street_unit_id` comparison point below and two further items. Kept
+  here in summary because the asks are pfmatch's and the issue may be closed
+  with only some of them taken:
+
+  * The exported `np_unit_id()` takes an *already extracted* unit and only
+    strips the designator, so on a raw `ADDR_L2` it returns nonsense with no
+    signal: `BOX1367` for `PO BOX 1367`, `114HIGHST` for `114 HIGH ST`,
+    `VEGAS` for `LAS VEGAS`, `OJOHNSMITH` for `C/O JOHN SMITH`. (This note
+    previously said `1367` for the first; that was wrong, and the real answer
+    is worse.) The gate that makes the field usable is `.np_unit_pat` inside
+    `.np_extract_unit()`, which is internal. `pf_street_unit()` therefore goes
+    the long way round, handing a one-column frame to `np_normalize()` just to
+    read `street_unit` back out. That works, is deliberately the public path,
+    and has the real advantage that pfmatch reads the suite exactly as the
+    matcher does — so we intend to keep it either way.
+  * `.np_unit_pat` carries `BLDG` but not `BUILDING`, while carrying
+    `APARTMENT`, `SUITE`, `FLOOR`, `SPACE`, `ROOM` and `NUMBER` beside their
+    abbreviations. **The mechanism, found on re-reading `np_normalize()`:**
+    `.np_extract_unit()` runs at body line 25 and `.np_street_key()` only at
+    line 27, so extraction reads the *raw* street while the
+    `BUILDING -> BLDG` contraction in `.np_street_types` happens afterwards —
+    the unit pattern never sees the spelling it knows. The cost is not one
+    lost value but a split: `100 CAMPUS CENTER BUILDING 86E` keys to
+    `100 CAMPUS CENTER BLDG 86E` with **no** unit, while
+    `100 CAMPUS CENTER BLDG 86E` keys to `100 CAMPUS CENTER` with unit
+    `BLDG 86E`. Two renderings of one address disagree on both outputs and
+    will not block together.
+* **Ask for `addr_freq =` on `np_cascade()`.** `np_compare()` takes it;
+  `np_cascade()` does not, and computes it internally with no `is.null()`
+  guard — unlike `name_freq`, `token_idf` and `ref_index`, which all have a
+  parameter *and* a guard. A batched caller therefore recomputes a
+  whole-reference statistic once per batch (≈40 times over a 1M-identity run)
+  for a value that cannot change, and cannot reach `share_min` /
+  `unit_coverage_min` at all. The asymmetry with its three siblings looks like
+  an oversight rather than a decision. See step 5a.
 * **Report the grant-side use case.** npmatch's `addr_class` is documented over
   a reference frame. pfmatch wants it over a query corpus, where "records" are
   grant rows written by third parties rather than filings by occupants —

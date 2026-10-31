@@ -40,6 +40,7 @@
 <li><a class="dropdown-item" href="articles/cascade-workflow.html">The matching cascade, step by step</a></li>
     <li><a class="dropdown-item" href="articles/name-and-address-variants.html">Name and address variants</a></li>
     <li><a class="dropdown-item" href="articles/adjudicating-maybe.html">Adjudicating the MAYBE tier</a></li>
+    <li><a class="dropdown-item" href="articles/outside-the-bmf.html">What lives outside the BMF</a></li>
     <li><a class="dropdown-item" href="articles/matching-dictionaries.html">Choosing a matching dictionary</a></li>
   </ul>
 </li>
@@ -413,6 +414,7 @@ geo   = max( 1.00·zip9,  0.95·street,  0.90·zip5,  0.90·pobox,
 </tbody>
 </table>
 <p><strong>The clear rate is YES over identities.</strong> YES+MAYBE is 77.94% and 84.73%, and is not a clear rate — there is no safe automatic acceptance of the MAYBE tier.</p>
+<p>Those are the two local BMF bundles. matchdb’s published tiers and the YES-tier grant dictionary are measured against them — on sources, clear rate and wall-clock time — in the <a href="https://nonprofit-open-data-collective.github.io/pfmatch/articles/matching-dictionaries.html">Choosing a matching dictionary</a> article. Short version: <code>active-observed</code> is both faster and about a point better than the augmented BMF, and the dictionary adds roughly a point more on the residue. <code>active-observed</code> is therefore the tier <code><a href="reference/pf_reference.html">pf_reference()</a></code> and <code><a href="reference/pf_run.html">pf_run()</a></code> take when none is named; <code>options(pfmatch.matchdb_tier = ...)</code> changes it for a session.</p>
 <p>Read <code>dev/BASELINE-2026-10C/MANIFEST.md</code> before quoting either: it records what the figures do and do not establish, and the baseline is gated on <code>np_normalize_signature()</code>, so it goes stale when npmatch’s normalizer changes.</p>
 <p>The normalizer did change — npmatch PR #18 — and both references were rebuilt under it, which is why 10C supersedes 10B. It moved the benchmark by <strong>+0.04 and −0.07 points</strong>: four identities changed tier, in opposite directions, across 4,748. The street-key fix behind the rebuild is real (5,134 reference rows were keyed to a truncation) but is 0.13% of the reference and does not show at this sample size.</p>
 <p><strong>This is a clear rate, not an accuracy.</strong> Precision on the YES mass has never been measured, because every ground-truth label this project holds came from a cell the pipeline itself produced. To score a configuration rather than argue about its clear rate, use <code><a href="reference/pf_evaluate.html">pf_evaluate()</a></code> and <code><a href="reference/pf_consistency.html">pf_consistency()</a></code>.</p>

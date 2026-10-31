@@ -24,6 +24,7 @@ preprocessing and is excluded from match timings."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cascade-workflow.html">The matching cascade, step by step</a></li>
     <li><a class="dropdown-item" href="../articles/name-and-address-variants.html">Name and address variants</a></li>
     <li><a class="dropdown-item" href="../articles/adjudicating-maybe.html">Adjudicating the MAYBE tier</a></li>
+    <li><a class="dropdown-item" href="../articles/outside-the-bmf.html">What lives outside the BMF</a></li>
     <li><a class="dropdown-item" href="../articles/matching-dictionaries.html">Choosing a matching dictionary</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -64,7 +65,7 @@ preprocessing and is excluded from match timings.</p>
 <span>  recovery <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"matchdb"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
-<span>  tier <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"pfmatch.matchdb_tier"</span>, <span class="st">"unified-observed"</span><span class="op">)</span></span>
+<span>  tier <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"pfmatch.matchdb_tier"</span>, <span class="st">"active-observed"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,7 +100,7 @@ bundle, and only when <code>cache</code> does not exist.</p></dd>
 
 <dt id="arg-tier">tier<a class="anchor" aria-label="anchor" href="#arg-tier"></a></dt>
 <dd><p>The matchdb tier. Defaults to
-<code>getOption("pfmatch.matchdb_tier", "unified-observed")</code>.</p></dd>
+<code>getOption("pfmatch.matchdb_tier", "active-observed")</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -133,10 +134,17 @@ matchdb bundle built by a different npmatch normalizer is refused by
 is republished.</p></dd>
 
 
-</dl><p><code>tier = "unified-observed"</code> is the matchdb equivalent of the augmented BMF
-pfmatch has built so far: every BMF release, legal names and DBAs, plus
-Schedule I and R aliases written by two or more filers. <code>"active-observed"</code>
-drops the inactive tranche (<code>matchdb::md_reference()</code> lists the tiers).</p>
+</dl><p><code>tier = "active-observed"</code> is the default because it wins on both axes at
+once: the <code>bmf_active</code> layer with legal, DBA and observed name variants,
+2.89M rows, it matched the 1k benchmark in 11.5 min against 23.2 for the
+augmented BMF pfmatch built for itself, and cleared 63.8% against 62.8%
+(<code>dev/BENCH-MD-REFERENCE.log</code>). <code>"unified-observed"</code> is the closer
+correspondence to the augmented bundle — it adds the inactive tranche, so
+every BMF release rather than the current one — but that is 1.76M more rows
+for two and a half times the match time and +0.1 point. Ask for it when the
+question is grantees that no longer exist, not for the clear rate. The
+"Choosing a matching dictionary" vignette has the comparison;
+<code>matchdb::md_reference()</code> lists the tiers.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

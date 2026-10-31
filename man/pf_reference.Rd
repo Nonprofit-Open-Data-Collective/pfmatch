@@ -11,7 +11,7 @@ pf_reference(
   recovery = TRUE,
   verbose = TRUE,
   source = c("auto", "matchdb", "local"),
-  tier = getOption("pfmatch.matchdb_tier", "unified-observed")
+  tier = getOption("pfmatch.matchdb_tier", "active-observed")
 )
 }
 \arguments{
@@ -29,7 +29,7 @@ bundle, and only when \code{cache} does not exist.}
 \item{source}{\code{"auto"}, \code{"matchdb"} or \code{"local"}; see above.}
 
 \item{tier}{The matchdb tier. Defaults to
-\code{getOption("pfmatch.matchdb_tier", "unified-observed")}.}
+\code{getOption("pfmatch.matchdb_tier", "active-observed")}.}
 }
 \value{
 A reference bundle: \code{reference}, \code{name_freq}, \code{token_idf},
@@ -60,9 +60,16 @@ matchdb bundle built by a different npmatch normalizer is refused by
 is republished.}
 }
 
-\code{tier = "unified-observed"} is the matchdb equivalent of the augmented BMF
-pfmatch has built so far: every BMF release, legal names and DBAs, plus
-Schedule I and R aliases written by two or more filers. \code{"active-observed"}
-drops the inactive tranche (\code{matchdb::md_reference()} lists the tiers).
+\code{tier = "active-observed"} is the default because it wins on both axes at
+once: the \code{bmf_active} layer with legal, DBA and observed name variants,
+2.89M rows, it matched the 1k benchmark in 11.5 min against 23.2 for the
+augmented BMF pfmatch built for itself, and cleared 63.8\% against 62.8\%
+(\code{dev/BENCH-MD-REFERENCE.log}). \code{"unified-observed"} is the closer
+correspondence to the augmented bundle — it adds the inactive tranche, so
+every BMF release rather than the current one — but that is 1.76M more rows
+for two and a half times the match time and +0.1 point. Ask for it when the
+question is grantees that no longer exist, not for the clear rate. The
+"Choosing a matching dictionary" vignette has the comparison;
+\code{matchdb::md_reference()} lists the tiers.
 }
 

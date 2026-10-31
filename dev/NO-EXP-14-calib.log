@@ -1,0 +1,156 @@
+============================================================================== 
+NO-TIER EXPERIMENT  stage 14: model vs human on the same cases 
+============================================================================== 
+cases with both a model verdict and a human verdict: 63 
+join verified: filed name identical on all 63 rows 
+============================================================================== 
+1. DO THEY AGREE ON WHAT THE CASE IS 
+============================================================================== 
+human vocabulary -> four comparable classes: 
+  REAL-ORG, UNCLEAR-GEO     -> RECOVERABLE   a real body with its own EIN 
+  INDIVIDUAL, NOT-A-CHARITY -> NOT_AN_ORG    nothing the BMF could hold 
+  NO-OWN-EIN                -> NO_EXEMPTION  real, but no exemption of its own 
+  UNFINDABLE                -> UNTRACEABLE   could not be identified 
+  UNCLEAR                   -> excluded, it carries no answer
+ 
+comparable: 59 of 63 (4 excluded: 4 human UNCLEAR, 0 unmapped model) 
+              model
+human          NO_EXEMPTION NOT_AN_ORG RECOVERABLE UNTRACEABLE
+  NO_EXEMPTION            5          0           1           0
+  NOT_AN_ORG              0         11           0           0
+  RECOVERABLE             4          0          30           0
+  UNTRACEABLE             2          1           2           3
+
+agreement: 49 of 59  83.1%  [71.5%, 90.5%] 
+Cohen's kappa: 0.724 (observed 0.831, chance 0.386) 
+
+per-class recall against the human: 
+  NO_EXEMPTION  5 of 6  83.3% 
+  NOT_AN_ORG    11 of 11  100.0% 
+  RECOVERABLE   30 of 34  88.2% 
+  UNTRACEABLE   3 of 8  37.5% 
+------------------------------------------------------------------------------ 
+WHERE THEY DISAGREE, case by case. The human audit was a single 
+adjudicator with no blind second pass, so these are disputes, not errors. 
+
+  G001790  UNIVERSITY BAPTIST CHURCH
+    human RECOVERABLE  (UNCLEAR-GEO)
+    model NO_EXEMPTION (CHURCH / NOT_LISTED / CHURCH_EXEMPT)
+    model org: University Baptist Church (Hattiesburg, MS)
+    model says: The payee is a Baptist congregation at 3200 Arlington Loop, Hattiesburg MS 39401, which matches the filed address exactly. Churches are exempt without 
+
+  G001796  RAINBOW PUSH AUTOMOTIVE PROJECT
+    human NO_EXEMPTION (NO-OWN-EIN)
+    model RECOVERABLE  (NONPROFIT / LISTED / NOT_APPLICABLE)
+    model org: Citizenship Education Fund (Rainbow PUSH/CEF Automot
+    model says: The Rainbow PUSH Automotive Project at 4335 W Fort St, Detroit, is a program of the Rainbow PUSH/Citizenship Education Fund. CEF, a 501(c)(3) in Chica 
+
+  G002522  ST BARTHOLOMEWS CHURCH
+    human RECOVERABLE  (UNCLEAR-GEO)
+    model NO_EXEMPTION (CHURCH / NOT_LISTED / CHURCH_EXEMPT)
+    model org: St. Bartholomew Roman Catholic Church (Diocese of Po
+    model says: The payee at 8 Two Lights Rd, Cape Elizabeth ME is a Roman Catholic parish church in the Diocese of Portland. Churches are exempt without applying, an 
+
+  G003026  UCI - OC VETFAM COLLABORATIVE
+    human RECOVERABLE  (REAL-ORG)
+    model NO_EXEMPTION (PROGRAM_OR_EVENT / NOT_LISTED / NO_SEPARATE_EXEMPTION)
+    model org: Orange County Veterans & Military Families Collabora
+    model says: OCVMFC is a coalition of 100+ entities. UC Irvine has been its convener since 2019, and it sits in UCI's Student Affairs office. The filed address, Al 
+
+  G003238  DOCKS TO DOORWAYS
+    human UNTRACEABLE  (UNFINDABLE)
+    model RECOVERABLE  (NONPROFIT / LISTED / NOT_APPLICABLE)
+    model org: Belgrade Lakes Association
+    model says: The filed street reads "PO Box 551 Belgrade Lakes Associati[on]". Docks to Doorways was a fundraising campaign the Belgrade Lakes Association launched 
+
+  G003334  505 Main Street Canton
+    human UNTRACEABLE  (UNFINDABLE)
+    model NO_EXEMPTION (PROGRAM_OR_EVENT / NOT_LISTED / NO_SEPARATE_EXEMPTION)
+    model org: 505 Main Street Canton, a Haywood Pantries Outreach 
+    model says: The filed name is a street address. It belongs to a "free market" depot in Canton that gives out food and supplies. Feeding the Multitudes opened it i 
+
+  G003670  AMERICAN SHRINE ASSOCIATES
+    human UNTRACEABLE  (UNFINDABLE)
+    model RECOVERABLE  (CHURCH / LISTED / NOT_APPLICABLE)
+    model org: Basilica National Shrine of the Immaculate Conceptio
+    model says: The filed address, 400 Michigan Ave NE, Washington DC 20017, is the Basilica of the National Shrine. The $10 'cash given' gift looks like a donor or a 
+
+  G003946  CHRIST CHURCH CATHEDRAL
+    human RECOVERABLE  (UNCLEAR-GEO)
+    model NO_EXEMPTION (CHURCH / NOT_LISTED / CHURCH_EXEMPT)
+    model org: Christ Church Cathedral (Episcopal), Louisville KY
+    model says: Payee is the Episcopal cathedral at 421 S 2nd St, Louisville KY 40202, which matches the filed address exactly. The filed status says "CHURCH". Church 
+
+  G004286  GERALD R MACCARTHY MEMORIAL FUND
+    human UNTRACEABLE  (UNFINDABLE)
+    model NO_EXEMPTION (PROGRAM_OR_EVENT / NOT_LISTED / NO_SEPARATE_EXEMPTION)
+    model org: Gerald R. MacCarthy Memorial Fund (named fund held a
+    model says: The filed address, 523 E Franklin St, Chapel Hill 27514, is the UNC Arts and Sciences Foundation's office. Gerald R. MacCarthy was a UNC geology profe 
+
+  G004682  GIFTS TO THE NEEDYINDIGENT
+    human UNTRACEABLE  (UNFINDABLE)
+    model NOT_AN_ORG   (AGGREGATE / NOT_LISTED / NOT_AN_ORG)
+    model org: 
+    model says: The filed name, "Gifts to the needy/indigent", describes a kind of giving, not an organization. The c/o address is a private 5-bedroom house, and the  
+============================================================================== 
+2. DO THEY AGREE ON THE EIN 
+============================================================================== 
+This needs no vocabulary mapping. Where both name an EIN they either name 
+the same nine digits or they do not.
+ 
+  both name an EIN            : 24 
+    identical                : 23 of 24  95.8%  [79.8%, 99.3%] 
+    DIFFER G000076  The Salvation Army            
+      model 362167910  The Salvation Army, an Illinois Corporat
+      human 580660607  The Salvation Army  (basis web) 
+  human only                 : 1 
+    G004723  Hamilton Co Gen Hlt Dist         human 316000063 (basis web); model said GOVERNMENT/NOT_LISTED 
+  model only                 : 11 
+    G001796  RAINBOW PUSH AUTOMOTIVE PROJECT  model 341447977 [in ref] (human verdict NO-OWN-EIN) 
+    G002112  Cong Mesilas Hachessed           model 831272141 [in ref] (human verdict REAL-ORG) 
+    G002234  CHRISTIAN FILM & TELEVISION CO   model 132965038 [in ref] (human verdict UNCLEAR) 
+    G002245  UCSF FOUNDATION - CTRP           model 942829914 [in ref] (human verdict REAL-ORG) 
+    G002555  WE ARE DOWN HERE                 model 831247155 [in ref] (human verdict UNCLEAR) 
+    G002777  CHILDREN'S NATIONAL HOSPITAL FOU model 521640402 [in ref] (human verdict REAL-ORG) 
+    G002894  FHDA FOOTHILL                    model 943258220 [in ref] (human verdict REAL-ORG) 
+    G002958  NATIONAL MS SOCIETY - SANTA ROSA model 135661935 [in ref] (human verdict REAL-ORG) 
+    G003238  DOCKS TO DOORWAYS                model 010377308 [in ref] (human verdict UNFINDABLE) 
+    G003661  SAAWTU USA                       model 844194693 [in ref] (human verdict REAL-ORG) 
+    G003670  AMERICAN SHRINE ASSOCIATES       model 530196626 [in ref] (human verdict UNFINDABLE) 
+  neither                    : 27 
+------------------------------------------------------------------------------ 
+RECOVERY RATE, both sides, on the same 63 cases 
+  human calls recoverable : 34  54.0% 
+  model calls recoverable : 35  55.6% 
+  model names an EIN that is in the reference: 35  55.6% 
+  human named an EIN independently (basis=web): 25 
+============================================================================== 
+3. IS THE CORRECT EIN IN THE REFERENCE -- both sides' answer 
+============================================================================== 
+The prior audit's robust result was 21 of 21 independently established 
+EINs present in the reference. Re-tested on these cases, from both sides.
+ 
+  human EINs, independently established: 24 of 25 in the reference  96.0% 
+  model EINs, WEB-sourced              : 33 of 33 in the reference  100.0% 
+============================================================================== 
+4. RETRIEVAL OR SCORING, on the cases both sides call recoverable 
+============================================================================== 
+  35 recoverable cases: 25 were offered to the scorer and rejected, 
+  10 were never offered at all. 
+
+  dev/replay-no-residual-blocking.R answered this for 25 cases by 
+  replaying the whole blocker and got 18 retrieved of 25. This is the 
+  same question answered by lookup against the cached pairs. 
+                    offered
+miss_hypothesis      never offered
+  ACRONYM                1       3
+  DBA_OR_TRADE_NAME      0       7
+  GEOGRAPHY_WRONG        2       1
+  LEGAL_NAME_DIFFERS     0       4
+  PARENT_OR_CHAPTER      1       3
+  PROGRAM_NAMED          5       1
+  TRUNCATED              0       3
+  TYPO                   1       3
+============================================================================== 
+wrote data-dev/ADJ-NOCAL-SCORED.{rds,csv} 
+============================================================================== 
