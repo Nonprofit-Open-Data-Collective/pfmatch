@@ -358,28 +358,41 @@ defect this project found).
 
 ## Results
 
-The current frozen measurement is `dev/BASELINE-2026-10B/`, taken on the
-deduplicated v2 population (`inputs/efv2_1k_grants_0*.csv`, 4,903 grants):
+The current frozen measurement is `dev/BASELINE-2026-10C/`, taken on the
+deduplicated v2 population (`inputs/efv2_1k_grants_0*.csv`, 4,903 grants)
+under normalizer `v1-3e7b9f9d59bbb19e`:
 
 | reference | identities | YES | MAYBE | NO | clear rate |
 |---|---:|---:|---:|---:|---:|
-| active, 1,924,822 rows | 4,687 | 2,665 | 987 | 1,035 | **56.86%** |
-| augmented, 3,880,431 rows | 4,748 | 2,982 | 1,041 | 725 | **62.81%** |
+| active, 1,924,822 rows | 4,687 | 2,667 | 986 | 1,034 | **56.90%** |
+| augmented, 3,880,431 rows | 4,748 | 2,979 | 1,044 | 725 | **62.74%** |
 
-Read `dev/BASELINE-2026-10B/MANIFEST.md` before quoting either: it records what
+**The clear rate is YES over identities.** YES+MAYBE is 77.94% and 84.73%, and
+is not a clear rate — there is no safe automatic acceptance of the MAYBE tier.
+
+Read `dev/BASELINE-2026-10C/MANIFEST.md` before quoting either: it records what
 the figures do and do not establish, and the baseline is gated on
 `np_normalize_signature()`, so it goes stale when npmatch's normalizer changes.
+
+The normalizer did change — npmatch PR #18 — and both references were rebuilt
+under it, which is why 10C supersedes 10B. It moved the benchmark by **+0.04
+and −0.07 points**: four identities changed tier, in opposite directions,
+across 4,748. The street-key fix behind the rebuild is real (5,134 reference
+rows were keyed to a truncation) but is 0.13% of the reference and does not
+show at this sample size.
 
 **This is a clear rate, not an accuracy.** Precision on the YES mass has never
 been measured, because every ground-truth label this project holds came from a
 cell the pipeline itself produced. To score a configuration rather than argue
 about its clear rate, use `pf_evaluate()` and `pf_consistency()`.
 
-Two older read-outs are kept as history and should not be quoted as current:
-`dev/BASELINE-2026-10/` (the same measurement on the undeduplicated v1
-population, 63.01% augmented) and `dev/BENCHMARK-NOTES.md` (54.9%, from before
-state blocking, the apostrophe fix, the augmented reference and the e-file
-rebuild — it remains useful for its cost and recipient-type breakdowns).
+Three older read-outs are kept as history and should not be quoted as current:
+`dev/BASELINE-2026-10B/` (the same population and arms under the previous
+normalizer, 62.81% augmented), `dev/BASELINE-2026-10/` (the same measurement on
+the undeduplicated v1 population, 63.01% augmented) and
+`dev/BENCHMARK-NOTES.md` (54.9%, from before state blocking, the apostrophe
+fix, the augmented reference and the e-file rebuild — it remains useful for its
+cost and recipient-type breakdowns).
 
 ## Audits
 

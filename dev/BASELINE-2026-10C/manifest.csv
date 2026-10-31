@@ -1,0 +1,7 @@
+"artifact","role","md5","rows","bytes"
+"REF-active.rds","Phase 1 target: md_compile(active-legal) must reproduce this","5d8f0186abaa08dc129f0e8592cb5fd1",1924822,1523511327
+"REF-unified.rds","Phase 0c arm A; the unified layer without aliases","9d486da3e5e29dcb6f8ad6324f1aa19b",3687435,2702403736
+"REF-augmented.rds","Phase 2 target: md_compile(*-observed) must reproduce this","35270ab0df6457bf7cc25d34d367b5d3",3880431,3042644545
+"BMF-AUGMENTED-unified-fixed.csv","source of REF-augmented.rds, resolved by row count (see MANIFEST.md)","dac8ff11b176beb31a7bc4da5d548caf",3880431,3994188908
+"benchmark-1k-active.rds","1k benchmark verdicts (both phase gates)","26e3320a56b4f7c02e960f54e3f18f6f",4687,164320
+"benchmark-1k-augmented.rds","1k benchmark verdicts (both phase gates)","a1bb07bc366eb343a6c53151642e7bfa",4748,168048
