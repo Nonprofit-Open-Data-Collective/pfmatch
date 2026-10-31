@@ -182,7 +182,7 @@ if (nrow(bad_q)) say("\nQUOTE claimed with no quotable string: %d (instructions 
 
 tin <- sum(out$in_tokens); tout <- sum(out$out_tokens)
 cr  <- sum(out$cache_read); cw <- sum(out$cache_write)
-cost <- adj_cost(MODEL, tin, tout)
+cost <- adj_cost(MODEL, tin, tout, cr, cw)
 say("\ntokens: %s in, %s out   cache: %s read, %s written",
     format(tin, big.mark = ","), format(tout, big.mark = ","),
     format(cr, big.mark = ","), format(cw, big.mark = ","))

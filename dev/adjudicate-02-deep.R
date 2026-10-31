@@ -277,7 +277,7 @@ say("ground-truth name established on %d of %d cases",
     sum(nzchar(ok$ground_truth_name) & !is.na(ok$ground_truth_name)), nrow(ok))
 
 tin <- sum(out$in_tokens); tout <- sum(out$out_tokens)
-cost <- adj_cost(MODEL, tin, tout)
+cost <- adj_cost(MODEL, tin, tout, sum(out$cache_read), sum(out$cache_write))
 say("\ntokens: %s in, %s out   cache: %s read",
     format(tin, big.mark = ","), format(tout, big.mark = ","),
     format(sum(out$cache_read), big.mark = ","))

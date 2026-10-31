@@ -316,8 +316,12 @@ projection to all 1,044.
 Full output in `dev/ADJ-EXP-RESULTS.log`. Light `claude-haiku-5-5` at effort
 medium; deep `claude-opus-5-5` at effort high with `web_search_20260209`,
 `max_uses` 12. 100/100 verdicts on both arms, no API failures, no unparsed
-responses, no paused turns. Light 52 s and **$0.0625**; deep 353 s, 220
-searches (2.2/case), **$3.28** in tokens plus per-search billing.
+responses, no paused turns. Light 52 s and **$0.067**; deep 353 s, 220
+searches (2.2/case), **$4.09** in tokens plus per-search billing. Both figures
+include cache traffic: `usage.input_tokens` excludes cached tokens, so an
+earlier version of `adj_cost()` that charged only input+output understated the
+light arm by 8% and the deep arm by 25% (4.08M cache-read tokens against 298K
+billed input).
 
 ### The gate: absolute accuracy on the 27 hand-adjudicated cases
 
@@ -377,11 +381,11 @@ chance than one, and it converts directly into a cascade:
 
 | policy | escalated | cost for 1,044 | accuracy on the 27 |
 |---|---:|---:|---|
-| light only | 0% | $0.65 | 81.5% |
-| **escalate `low`** | **18%** | **$6.81** | **96.3%** (26/27) |
-| escalate low + INFER | 47% | $16.72 | 96.3% |
-| escalate low + medium | 65% | $22.88 | 92.6% |
-| deep only | 100% | $34.84 | 92.6% |
+| light only | 0% | $0.70 | 81.5% |
+| **escalate `low`** | **18%** | **$8.39** | **96.3%** (26/27) |
+| escalate low + INFER | 47% | $20.77 | 96.3% |
+| escalate low + medium | 65% | $28.46 | 92.6% |
+| deep only | 100% | $43.41 | 92.6% |
 
 **Escalating only the light arm's low-confidence 18% reaches deep-arm accuracy
 for a fifth of the cost.** It scores one case higher than deep-only, which is
@@ -389,6 +393,76 @@ not a real difference at n=27 — the honest claim is parity, not superiority.
 That the cheap arm has **zero** confident-and-wrong verdicts is what makes the
 policy safe: its failures announce themselves as low confidence, which is
 exactly what the ZIP5+margin rule could not do.
+
+### Scaling to the full corpus
+
+The 100-case figures are only interesting if they survive multiplication. Three
+numbers decide it, and two of them are already measured elsewhere in this repo.
+
+**Rows.** `dev/EFILEPF-DEDUP.log`: 17,560,767 grant rows become **17,253,199**
+after `pf_efilepf_dedup()` removes amended-return duplicates.
+
+**Unique identities.** This is the number that makes the job tractable, and it
+is *measured*, not guessed. `dev/FULL-01-PREPARE.log`, settled 2026-08-22:
+12,559,051 grants → 12,404,667 in scope (98.8%) → **3,337,585 in-scope
+identities, 3.72x collapse**. Carried to the v2 corpus:
+
+| | |
+|---|---:|
+| rows | 17,253,199 |
+| in scope at 98.8% | 17,041,111 |
+| identities at the measured 3.72x | **~4,585,000** |
+
+An earlier estimate of 1.8x — extrapolated from a 100k sample in
+`dev/measure-dedup.R` — would give 9.47M and is superseded;
+`CODE-AUDIT.md` §6 notes the full run came in "far above" it. The direction of
+that error matters: collapse *rises* with corpus size, because more rows mean
+more repeated names (the Salvation Army appears 28,096 times). So 3.72x
+measured on 12.56M is a **floor** for a 17.25M corpus, and ~4.59M identities is
+an over-estimate. Good: the cost projection errs high.
+
+**MAYBE share.** 1,044 of 4,748 identities in 10C's augmented arm = **22.0%**;
+`ADJUDICATION-PLAN.md` quotes 20.1% of grants. At 22% of 4.59M that is
+**~1.01M MAYBE identities** — three orders of magnitude above this experiment's
+100, and a thousand times the 1,044 in the benchmark.
+
+**What it costs.** At the corrected $0.000674/case for Haiku:
+
+| scope | n | Haiku |
+|---|---:|---:|
+| naive, every grant row | 17,253,199 | $11,635 |
+| every unique identity | 4,585,061 | $3,092 |
+| **the MAYBE tier only** | **1,008,713** | **$680** |
+| same, Batch API at 50% | 1,008,713 | **$340** |
+
+The dedup collapse is worth more than any model choice here: it takes the bill
+from $11,635 to $3,092 before a single prompt changes, and adjudicating only
+the MAYBE tier takes it to $680. Running the cheap arm over the whole tier is a
+rounding error against the cost of the match itself (`SHARD-AND-COLLAPSE-FINDINGS.md`
+§3 budgets 401 h of compute for one shard of 3.34M identities).
+
+The cascade is where the real money is, and it is still affordable:
+
+| policy | n escalated | cost |
+|---|---:|---:|
+| Haiku on all 1.01M MAYBEs | — | $680 |
+| + Opus on the 18% it flags low-confidence | 181,568 | $7,427 |
+| **cascade total** | | **$8,107** (**$4,054** batched) |
+| Opus on every MAYBE, for contrast | 1,008,713 | $41,261 |
+
+**~$8K against ~$41K**, for parity on the 27 known answers. Batched, ~$4K.
+
+Three things that figure does **not** include, all pushing up:
+
+* **Web search is billed per use**, at 2.2/case measured. The 18% escalation is
+  ~399,000 searches, and that is a separate line nobody should discover later.
+* **Rate limits, not price, are the binding constraint at 1M calls.** This run
+  did 100 light calls in 52 s at 6 workers. 1.01M at that rate is ~150 h of
+  wall clock on one stream, which is why the Batch API is the right surface
+  here — the 50% discount is almost incidental next to not managing 429s.
+* **The 22% MAYBE share is measured on a 4,748-identity sample** of one
+  population. It is the least certain of the three inputs, and the whole
+  projection is linear in it.
 
 ### What the disagreements were actually about
 

@@ -458,8 +458,14 @@ h2("(d) ROUTING -- what a cascade would cost and what it would get")
 # Costs are the measured per-case token costs from stages 01 and 02 scaled to
 # the full 1,044-case tier. Web search is billed per use on top of the deep
 # arm's token cost and is NOT included, so every deep-heavy row is understated.
-C_LIGHT <- as.numeric(Sys.getenv("PF_ADJ_COST_LIGHT", "0.000625"))
-C_DEEP  <- as.numeric(Sys.getenv("PF_ADJ_COST_DEEP",  "0.03275"))
+# Measured per-case token cost INCLUDING cache traffic. The first version of
+# this used 0.000625 / 0.03275, which came from an adj_cost() that charged only
+# input+output -- and usage.input_tokens is reported exclusive of cached
+# tokens, so 495K light and 4.08M deep cache-read tokens were costing nothing
+# in the arithmetic. Correcting it moves the light arm +8% and the deep arm
+# +25%, which changes every row of the table below.
+C_LIGHT <- as.numeric(Sys.getenv("PF_ADJ_COST_LIGHT", "0.000674"))
+C_DEEP  <- as.numeric(Sys.getenv("PF_ADJ_COST_DEEP",  "0.040905"))
 
 # One row per policy: which cases the light arm's verdict is kept for, and
 # which are escalated. The grade taken is the light arm's where kept and the

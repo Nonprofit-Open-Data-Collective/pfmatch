@@ -31,13 +31,23 @@ ADJ_VERSION  <- "2026-10-21"
 ADJ_MODEL_LIGHT <- Sys.getenv("PF_ADJ_MODEL_LIGHT", "claude-haiku-5-5")
 ADJ_MODEL_DEEP  <- Sys.getenv("PF_ADJ_MODEL_DEEP",  "claude-opus-5-5")
 
-# $ per million tokens, (input, output).
+# $ per million tokens. FOUR rates, not two: usage.input_tokens is reported
+# EXCLUSIVE of cached tokens, so charging only input+output silently drops the
+# cache traffic entirely. On the deep arm that was 4.08M cache-read tokens
+# against 298K billed input -- the cache reads were 93% of the input volume and
+# were costing nothing in the arithmetic. Any projection built on that figure
+# understates by ~25%.
+#
+# `cr` for Opus 5.5, Sonnet 5.5 and Fable 5.1 is the published cache-read rate.
+# For the others it is the standard 0.1x of input, and `cw` is the standard
+# 1.25x; both are marked `approx` so a projection knows which numbers are
+# published and which are conventional.
 ADJ_PRICES <- list(
-  "claude-haiku-5-5"  = c(in_ = 0.10, out = 0.50),
-  "claude-sonnet-5-5" = c(in_ = 2.00, out = 10.00),
-  "claude-opus-5-5"   = c(in_ = 4.00, out = 20.00),
-  "claude-opus-5"     = c(in_ = 5.00, out = 25.00),
-  "claude-fable-5-1"  = c(in_ = 10.00, out = 50.00))
+  "claude-haiku-5-5"  = c(in_ =  0.10, out =  0.50, cr = 0.010, cw =  0.125, approx = 1),
+  "claude-sonnet-5-5" = c(in_ =  2.00, out = 10.00, cr = 0.200, cw =  2.500, approx = 0),
+  "claude-opus-5-5"   = c(in_ =  4.00, out = 20.00, cr = 0.200, cw =  5.000, approx = 0),
+  "claude-opus-5"     = c(in_ =  5.00, out = 25.00, cr = 0.500, cw =  6.250, approx = 1),
+  "claude-fable-5-1"  = c(in_ = 10.00, out = 50.00, cr = 0.250, cw = 12.500, approx = 0))
 
 #' Resolve the API key, surviving a launcher that mislocates HOME
 #'
@@ -271,10 +281,18 @@ adj_usage <- function(body) {
     web_search  = as.numeric(ws))
 }
 
-adj_cost <- function(model, input, output) {
+#' Token cost of a run, cache traffic included
+#'
+#' `cache_read` and `cache_write` default to 0 so an old two-argument call
+#' still returns its old answer rather than erroring -- but a caller that has
+#' the cache figures and omits them gets an understatement, which is exactly
+#' the bug this signature exists to stop. Web search is billed per use and is
+#' not a token cost; it is reported as a count by the stages that use it.
+adj_cost <- function(model, input, output, cache_read = 0, cache_write = 0) {
   p <- ADJ_PRICES[[model]]
   if (is.null(p)) return(NA_real_)
-  input / 1e6 * p[["in_"]] + output / 1e6 * p[["out"]]
+  (input / 1e6) * p[["in_"]] + (output / 1e6) * p[["out"]] +
+  (cache_read / 1e6) * p[["cr"]] + (cache_write / 1e6) * p[["cw"]]
 }
 
 `%||%` <- function(a, b) if (is.null(a) || length(a) == 0L) b else a
