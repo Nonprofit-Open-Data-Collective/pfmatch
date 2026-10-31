@@ -1,18 +1,22 @@
 # Secondary-unit handling: retire the local copy when npmatch lands its own
 
-> **TRIGGER FIRED, 2026-10-26.** npmatch PR #18 is merged: the suite is parsed
-> into `street_unit_id`, carried to review, and scored. matchdb has shipped its
-> side too (PR #17). Read `dev/PLACES-SYNC.md` first; note in particular that
-> the normalizer signature must be **read** from the commit being built, never
-> quoted — npmatch PR #20 struck a literal from its own NEWS for that reason.
-> This note's §3–§5 still
-> apply and are what to diff against — but **§1 is now a description of the
-> pre-PR npmatch**, and two of its three facts are false upstream (the
-> hierarchical scorer gained `unit = 0.97`; a unit-bearing profile is no longer
-> auto-selected at all). Two of pfmatch's designator decisions are also known
-> wrong: npmatch excludes `NO` and `OFC`, measured, and `R/unit.R` includes
-> both. Read `dev/PLACES-SYNC.md` first — it covers the whole merge, including
-> the address classes that came with it, and carries the ordered plan.
+> **DONE, 2026-10-31 — the local parser is retired.** `pf_parse_unit()` is
+> gone. `pf_street_unit()` hands line 2 to `npmatch::np_normalize()` and reads
+> `street_unit` back; `pf_unit_evidence()` keeps pfmatch's comparison and its
+> four-value vocabulary. The measured effect is in §4 below: 22 of the 5,410
+> recorded pairs change verdict, the conflict rate is unchanged at 0.17%, and
+> every change traces to a §3 decision. What is **not** done is the fixture and
+> queue rebuild (§4.3–§4.4), because both need a triangulation run under the
+> current normalizer rather than a rebuild from the old run's output, and the
+> matcher question (§4.5), which is still open.
+>
+> **§1 is a description of the pre-PR npmatch** and two of its three facts are
+> false upstream (the hierarchical scorer gained `unit = 0.97`; a unit-bearing
+> profile is no longer auto-selected at all). It is kept as the record of why
+> the local code existed. Read `dev/PLACES-SYNC.md` alongside this — it covers
+> the whole merge, including the address classes that came with it, and carries
+> the ordered plan. Note in particular that the normalizer signature must be
+> **read** from the commit being built, never quoted.
 
 **Original trigger: npmatch and matchdb are integrating unit parsing/
 normalization and promotion of the unit to the adjudication stage. When those
@@ -62,6 +66,12 @@ queue**, which a human reads. Nothing in the matcher was touched.
 ---
 
 ## 2. What is here now
+
+**As of 2026-10-31**, `R/unit.R` holds `pf_street_unit()` (the two local
+rejections on top of npmatch's parse) and `pf_unit_evidence()` (the
+comparison), and `tests/testthat/test-unit.R` holds 12 blocks. The table below
+describes the state **before** the retirement and is what §4's diff was taken
+against.
 
 | file | what |
 |---|---|
@@ -126,26 +136,103 @@ align to it and translate here, rather than carrying two sets of names.
 
 ## 4. Retirement order when upstream lands
 
-Do not batch these.
+Do not batch these. **Steps 1 and 2 are done (2026-10-31); 3, 4 and 5 are
+not**, and 3 and 4 are blocked on a measurement pass rather than on effort —
+see below.
 
-1. **Compare, do not replace.** Run the upstream parser over the same inputs
-   and diff against `pf_variants$unit_evidence` (5,410 pairs) and the queue's
-   121 conflicts. Any pair that changes verdict is a decision in §3 that was
-   settled differently — resolve it explicitly, do not average it away.
-2. **Delete `R/unit.R`** and re-export or alias the upstream functions. Keep
-   `tests/testthat/test-unit.R` pointed at the new entry points: the
-   assertions are corpus-derived and are worth more than the implementation.
-3. **Rebuild the fixture** with `data-raw/make-pf-variants.R`, which will
-   refresh both `unit_evidence` and the `normalizer` attribute.
-4. **Regenerate the queue** with `PF_TRI_REUSE_MATCH=1` — seconds, no rematch —
-   and confirm the pre-existing columns stay byte-identical, as they did in
-   `8facb11`.
-5. **Revisit the matcher question**, which the local change deliberately did
-   not touch. If npmatch starts parsing the unit reliably, the 3.84% coverage
-   figure is the thing to re-measure: a `street_unit_full` profile gated at 50%
-   stays unreachable, and `.np_hier_score()` still needs a unit term before any
-   of it reaches the score. Decide whether the unit should score at all — with
-   coverage this low the honest answer may remain no.
+### 4.1 Compare, do not replace — DONE
+
+Measured against `pf_variants$unit_evidence`, all 5,410 pairs, with
+`npnormalize`/`npmatch` 0.1.1 installed (signature `v1-3e7b9f9d59bbb19e`). The
+old implementation reproduces the recorded column exactly, so the diff below is
+attributable to the replacement alone.
+
+| old → new | pairs | why |
+|---|---:|---|
+| `absent` → `one_sided` | 14 | one side's line 2 holds a whole street with the suite after it (`35 RESEARCH DR SUITE 100`), which the local parser rejected on its street-type rule; plus `PMB 136`, `PMB 612` and `NUMBER 180`, designators upstream has and pfmatch lacked. Carries nothing either way. |
+| `absent` → `agree` | 2 | `SUITE B` — the local parser required a digit *globally*, so it threw away a real suite; and `68 JAY STREET SUITE 425` / `68 JAY ST SUITE 425`, the street-on-line-2 case above with a suite on both sides. Both are genuine recoveries. |
+| `agree` → `absent` | 3 | bare digits at a street ending in `CAMPUS BOX` or `STE 130 BOX`. The local box test only knew `PO BOX`; `.PF_BOX_RE` now matches any `BOX`. These were box numbers read as doors — false `agree`s, the kind §5 cares about most. |
+| `conflict` → `absent` | 1 | same rule, `184` / `150` at `4347 W NORTHWEST HWY STE 130 BOX`. |
+| `one_sided` → `conflict` | 1 | `A-304` / `610-A`. The local bare-identifier patterns read the first and not the second; upstream reads both. §5-compliant. |
+| `one_sided` → `absent` | 1 | `100 CAMPUS CENTER BUILDING 86E`. **An upstream gap:** `.np_unit_pat` has `BLDG` but not the spelled-out `BUILDING`, though it has `APARTMENT`, `SUITE` and `FLOOR`. Not patched locally — reported instead, see `dev/PLACES-SYNC.md` §6. |
+| **total changed** | **22** | 0.41% of pairs |
+
+`conflict` is 9 pairs before and 9 after — 0.17%, unchanged, well inside the 2%
+cap the test asserts. `agree` falls 27 → 26 and `one_sided` rises 108 → 120.
+
+Every §3 decision was re-settled explicitly rather than averaged away:
+
+* **Room-level designators collapse** — kept, as a *comparison* rule rather
+  than a parse rule. npmatch's canon keeps `STE`, `APT`, `UNIT`, `RM`, `SPC`,
+  `TRLR`, `LOT` and `#` distinct and then compares `street_unit_id` alone,
+  which collapses *everything* including `FL`. pfmatch folds the room-level set
+  into one class and keeps the rest apart, so `UNIT 1200` is still `STE 1200`
+  and `FL 2` is still not `STE 2`. Upstream's choice is right for a 0.97 rung
+  in a `max()` ladder and wrong for a flag a human reads.
+* **`NO` and `OFC` are gone.** This was the defect; it is fixed by deletion.
+  `NO 5`, `OFC 200`, `OFFICE 200` and `OFC PIERCE ST` all parse to nothing now,
+  and there is a test saying so.
+* **Separators stripped, compared exactly** — unchanged, `T-700` → `T700`,
+  and `STE 1150-291` still reads as a different door from `STE 1150`.
+* **The postfix floor form** — unchanged, `2 FLOOR` → `FL 2`.
+* **Rejections** — the PO-box, care-of, street-line and digitless cases are all
+  still rejected, but by three different mechanisms now: `.np_unit_pat` handles
+  most of them for free, and only two needed keeping locally (digitless bare
+  values, and a bare identifier at a box street). Both are on the bare path
+  only, which is what fixed `SUITE B`.
+* **Output vocabulary** — pfmatch's four values are kept, because npmatch's
+  `geo_unit` cannot express two of them: `one_sided` and `absent` are both
+  `NA`. `pf_unit_evidence()`'s docs now state the mapping, and the crowding
+  half of npmatch's annotation (`addr_shared`, `addr_units`,
+  `addr_unit_shared`, `addr_note`) is deliberately *not* reimplemented here.
+
+The queue's 121 conflicts were not re-diffed, because regenerating the queue
+needs step 4 below.
+
+### 4.2 Delete the local parser — DONE
+
+`pf_parse_unit()` and its three designator tables are gone. `pf_street_unit()`
+replaces it and returns npmatch's canonical `street_unit` string (`"STE 400"`,
+`"FL 2"`, `"# 206"`) or `""`, not the old `type`/`id` data frame — the
+designator is no longer dropped at parse time, since the comparison needs it.
+De-duplicates before normalizing, since line 2 repeats heavily. It stops with a
+named error if `np_normalize()` returns no `street_unit`, because a silent
+`NULL` there would read as "no line holds a unit" and make every verdict
+`absent` with nothing failing.
+
+`test-unit.R` is pointed at the new entry points and grew from 9 blocks to 12:
+the digitless-vs-bare split, the street-on-line-2 recovery, and the two
+excluded designators each got one, and the box test gained the campus-box,
+suite-box, `BOXWOOD LANE` and `BOXER ST` cases. The fixture-reproduction
+assertion is now **signature-gated**, the same way `test-variants.R`'s pinned
+block is, and currently skips.
+
+### 4.3 Rebuild the fixture — NOT DONE, and not a rebuild
+
+`data-raw/make-pf-variants.R` reads `data-dev/TRI-V2-MATCH.rds`, which was
+produced 2026-10-25 under the **old** normalizer. Running it now would stamp
+the fixture `v1-3e7b9f9d59bbb19e` while its keys came from a
+`v1-6dcb298522cc5118` match run — a fixture claiming a normalizer it was not
+built under, which is precisely the drift `dev/PLACES-SYNC.md` was written to
+prevent. So this waits on a triangulation re-run under the current normalizer,
+which `dev/PLACES-SYNC.md` §4.2 already records as a separate measurement pass.
+Until then the gated test skips with the rebuild instruction, and the 22 changes
+in §4.1 are what the rebuild should reproduce.
+
+### 4.4 Regenerate the queue — NOT DONE
+
+Same blocker: `PF_TRI_REUSE_MATCH=1` reuses the old-normalizer match.
+
+### 4.5 Revisit the matcher question — OPEN
+
+Upstream has moved under this. `geo_weights` now carries `unit = 0.97`,
+`np_compare()` emits `geo_unit` and the three crowding counts, and a
+unit-bearing profile is no longer auto-selected at all, so the 50%-coverage
+gate is no longer the obstacle — an explicit `profile =` is the mechanism. The
+reference rebuild put `street_unit_id` on 413,417 BMF rows (10.65%). The
+figure to re-measure is query-side coverage, last seen at 3.84%. Decide whether
+the unit should score at all; with coverage that low the honest answer may
+remain no.
 
 ---
 
@@ -183,9 +270,15 @@ them without re-measuring:
 Things that will tell you the two have drifted, without anyone checking:
 
 * `tests/testthat/test-unit.R` asserts `pf_unit_evidence()` reproduces
-  `pf_variants$unit_evidence` exactly. It fails the moment either side moves.
-  It also caps `conflict` at 2% of pairs — if a parser change starts reading
-  junk as units, that is the alarm.
+  `pf_variants$unit_evidence` exactly, **under the fixture's own normalizer**;
+  since the parse is npmatch's now, that assertion is signature-gated and
+  skips when the normalizer has moved, the same way `test-variants.R`'s pinned
+  block does. A skip there means the fixture is stale, not that nothing is
+  checked: the conflict cap (2% of pairs) and every behavioural assertion run
+  ungated, so a parser change that starts reading junk as units still fails.
+* `pf_street_unit()` stops with a named error if `np_normalize()` returns no
+  `street_unit` column — the npmatch-too-old case, which would otherwise read
+  as "no line 2 holds a unit".
 * `tests/testthat/test-variants.R` pins every recorded key to
   `np_normalize_signature()`, currently `v1-6dcb298522cc5118`. It **skips**
   with a rebuild instruction when the normalizer moves, so a skip in that file

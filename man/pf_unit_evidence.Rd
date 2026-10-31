@@ -10,7 +10,7 @@ pf_unit_evidence(a, b, street_a = NULL, street_b = NULL)
 \item{a, b}{Raw address line 2 values, the anchor's and the candidate's.}
 
 \item{street_a, street_b}{Optional street lines, passed through to
-\code{\link[=pf_parse_unit]{pf_parse_unit()}} so a box number is not read as a suite.}
+\code{\link[=pf_street_unit]{pf_street_unit()}} so a box number is not read as a suite.}
 }
 \value{
 A character vector, one per pair:
@@ -32,6 +32,23 @@ for completeness, not as evidence.}
 filers omit the line constantly, so silence is not disagreement.}
 \item{\code{absent}}{Neither parses.}
 }
+
+Two units agree when their identifiers match \strong{and} their designators fall
+in the same class: the room-level designators are interchangeable
+(\code{.PF_UNIT_ROOM}), everything else is not, so \verb{UNIT 1200} is \verb{STE 1200} but
+\verb{FL 2} is not \verb{STE 2}. This is where pfmatch departs from npmatch, which
+compares \code{street_unit_id} alone and so reads a floor as a suite. Upstream
+the cost is a missing 0.97 rung in a \code{max()} ladder; here it would be a
+false \code{agree}, which no reviewer ever looks at.
+
+Against npmatch's own pair annotations: \code{conflict} and \code{agree} are
+\code{geo_unit == 0} and \code{geo_unit == 1} under the stricter designator rule above,
+and \code{one_sided} and \code{absent} are the two halves of \code{geo_unit == NA} that
+\code{geo_unit} cannot tell apart. The crowding half of the annotation —
+\code{addr_shared}, \code{addr_units}, \code{addr_unit_shared}, \code{addr_note} — has no
+counterpart here and should be taken from \code{np_compare()} rather than
+reinvented; see \code{dev/PLACES-SYNC.md} §4.5.
+
 \code{conflict} fires on 0.47\% of candidate pairs in the triangulation run — 69
 of 14,790, of which 19 sit on a \code{MAYBE} candidate and so reach the
 adjudication queue. It is a rare, sharp signal, not a routine one, and it
@@ -44,5 +61,5 @@ conflict is a prompt for a reviewer, never an automatic verdict. See the
 Compare two unit lines as adjudication evidence
 }
 \seealso{
-\code{\link[=pf_parse_unit]{pf_parse_unit()}}
+\code{\link[=pf_street_unit]{pf_street_unit()}}
 }

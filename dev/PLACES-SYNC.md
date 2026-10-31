@@ -62,7 +62,8 @@ longer hypothetical:
 |---|---|---|
 | normalizer signature | `v1-6dcb298522cc5118` | `v1-3e7b9f9d59bbb19e` |
 | `np_addr_freq()` | absent | present, **exported** |
-| `np_addr_key()`, `np_unit_id()`, `np_addr_class()` | absent | present, **not exported** |
+| `np_addr_key()`, `np_unit_id()` | absent | present, **exported** — from `npnormalize` 0.1.1, after the normalizer's move (`dev/NPNORMALIZE.md`); npmatch does not re-export these two |
+| `np_addr_class()` | absent | present, **not exported** (`npnormalize:::.np_addr_class`) |
 | `street_unit_id` | absent | present |
 | `geo_weights` has a `unit` term | no | yes, `0.97` |
 | `np_compare(addr_freq = )` | absent | present |
@@ -199,6 +200,9 @@ the same way — stamp the bundle, refuse a mismatch — before reinstalling.
 
 ### 3b. `pf_parse_unit()` is superseded, and is wrong on two designators
 
+> **Resolved 2026-10-31** — the function is deleted; see §4 step 3 below and
+> `dev/UNIT-UPSTREAM-SYNC.md` §4. Kept here as the record of the defect.
+
 npmatch's `.np_unit_designators` was built from BMF volume and it **excludes
 two designators pfmatch includes**, for measured reasons:
 
@@ -284,14 +288,30 @@ regression hard to attribute if several things move at once.
    bundle rather than the kept one. `REF-active.rds`, `REF-unified.rds` and
    `REF-augmented-collapsed.rds` are all still on the old normalizer and
    unstamped.
-3. **Retire `pf_parse_unit()`.** Follow `dev/UNIT-UPSTREAM-SYNC.md` §4: diff the
-   upstream parser against `pf_variants`' 5,410 recorded verdicts and the
-   queue's 121 conflicts first, then delete `R/unit.R`, keeping
-   `test-unit.R` pointed at the new entry points. Align the evidence vocabulary
-   to npmatch's (`geo_unit`, `addr_shared`, `addr_units`, `addr_unit_shared`,
-   `addr_note`) rather than keeping pfmatch's four values beside them.
-   *Check:* every verdict that changes is traced to one of the designator
-   decisions, `NO` and `OFC` among them.
+3. ~~**Retire `pf_parse_unit()`.**~~ **Done**, 2026-10-31. `pf_street_unit()`
+   hands line 2 to `npmatch::np_normalize()` and reads `street_unit` back;
+   `pf_parse_unit()` and its three designator tables are deleted, `NO` and
+   `OFC` with them. The diff against `pf_variants`' 5,410 recorded verdicts
+   moved **22 pairs (0.41%)** with the conflict rate unchanged at 0.17%, and
+   every one is traced in `dev/UNIT-UPSTREAM-SYNC.md` §4.1 — including three
+   false `agree`s that were box numbers at a `CAMPUS BOX` street, and two real
+   suites the local parser's global digit requirement had been throwing away.
+
+   Two departures from the instruction as written. **The vocabulary is kept,
+   not replaced:** `geo_unit` is `0`/`1`/`NA` and cannot express `one_sided`
+   against `absent`, which is the distinction a reviewer needs, so
+   `pf_unit_evidence()`'s four values stay and its docs state the mapping. The
+   crowding half — `addr_shared`, `addr_units`, `addr_unit_shared`,
+   `addr_note` — is *not* reimplemented here and should come from
+   `np_compare()`; that is step 5a. **The comparison stays local:** npmatch
+   compares `street_unit_id` alone, which collapses `FL 2` into `STE 2`.
+   That is right for a 0.97 rung in a `max()` ladder and wrong for a flag a
+   human reads, so pfmatch folds only the room-level designators.
+
+   The fixture and queue rebuilds that §4.3–§4.4 call for are **not** done, and
+   are blocked rather than skipped: `TRI-V2-MATCH.rds` predates the normalizer
+   move, so rebuilding from it would stamp the fixture with a signature it was
+   not matched under. The affected test is signature-gated and skips.
 4. **Adopt `place_key` as the triangulation group key.** The change worth the
    most. pfmatch's key differs from npmatch's in three ways — the same three
    matchdb's note lists for its own `ein_key`: a raw
@@ -380,14 +400,28 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
 
 ## 6. What to feed back upstream
 
-* **Second matchdb's ask** (`PLACES.md` §8.2) that npmatch export
+* ~~**Second matchdb's ask**~~ (`PLACES.md` §8.2) that npmatch export
   `np_addr_key()`, `np_unit_id()` and `np_addr_class()` with its thresholds.
-  Confirmed still outstanding: `np_addr_freq` is the only one of the four in
-  npmatch's `NAMESPACE` on main. pfmatch needs them for exactly the reason
-  matchdb does — its triangulation key *should be* `np_addr_key()` output, and
-  its group classes should come from npmatch's rule rather than a third copy of
-  it. matchdb has already paid for a port and a parity harness; a second
-  consumer asking for the same export is the argument for making it.
+  **Partly granted.** With the normalizer's move into npnormalize (0.1.1), that
+  package exports `np_addr_key()` and `np_unit_id()` alongside
+  `np_addr_freq()`. Still internal: `.np_addr_class()` and `.np_extract_unit()`.
+  So step 4 can call `npnormalize::np_addr_key()` rather than a port or a
+  `:::`; step 5 still cannot reach the class rule.
+* **Ask for `.np_extract_unit()`, or for a documented unit entry point.** The
+  exported `np_unit_id()` takes an *already extracted* unit and only strips the
+  designator — given a raw `ADDR_L2` it happily returns `1367` for
+  `PO BOX 1367`. The gate that makes the field usable is `.np_unit_pat` inside
+  `.np_extract_unit()`, which is internal. `pf_street_unit()` therefore goes
+  the long way round, handing a one-column frame to `np_normalize()` just to
+  read `street_unit` back out. That works and is deliberately the public path,
+  but a consumer wanting to parse one free-text line should not have to
+  normalize a data frame to do it.
+* **Report the spelled-out `BUILDING` gap.** `.np_unit_pat` carries `BLDG` but
+  not `BUILDING`, while it does carry `APARTMENT`, `SUITE`, `FLOOR`, `SPACE`,
+  `ROOM` and `NUMBER` beside their abbreviations. One corpus value
+  (`100 CAMPUS CENTER BUILDING 86E`) is lost to it. Looks like an oversight in
+  an otherwise symmetric table rather than a measured exclusion, which is worth
+  asking before assuming either way.
 * **Report the grant-side use case.** npmatch's `addr_class` is documented over
   a reference frame. pfmatch wants it over a query corpus, where "records" are
   grant rows written by third parties rather than filings by occupants —
@@ -398,10 +432,18 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   304,274 labelled pairs. Two independent routes to one answer is worth
   recording in npmatch's note.
 * **Report the two bad designators as a found defect, not a preference.**
-  `R/unit.R` lists `NO` and `OFC`, which npmatch's BMF scan excludes for
+  `R/unit.R` listed `NO` and `OFC`, which npmatch's BMF scan excludes for
   measured reasons. pfmatch found them independently by shipping them and is
   evidence the exclusions are right, which is worth saying while the designator
-  table is still new.
+  table is still new. (The local table is now deleted; the finding stands.)
+* **Report that `street_unit_id` is the wrong thing to compare for a reviewer
+  flag.** `np_compare()` compares `street_unit_id`, which drops the designator,
+  so `FL 2` and `STE 2` score as the same door. At 0.97 in a `max()` ladder
+  that is cheap — the credit is simply given. Surfaced to a human as
+  "the suites agree" it is a false reassurance nobody re-checks, which is why
+  `pf_unit_evidence()` compares the canonical `street_unit` with only the
+  room-level designators folded. Worth upstream knowing that the annotation and
+  the score may want different comparisons.
 
 ---
 
@@ -410,8 +452,10 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
 * `tests/testthat/test-variants.R` pins every recorded key to
   `np_normalize_signature()` and **skips** with a rebuild instruction when it
   moves. A skip there means npmatch changed under us.
-* `tests/testthat/test-unit.R` asserts `pf_unit_evidence()` reproduces
-  `pf_variants$unit_evidence` and caps `conflict` at 2% of pairs.
+* `tests/testthat/test-unit.R` caps `conflict` at 2% of pairs ungated, and
+  asserts `pf_unit_evidence()` reproduces `pf_variants$unit_evidence` under the
+  fixture's own normalizer — signature-gated since the parse became npmatch's,
+  so it skips while the fixture is stale.
 * `.pf_check_stamp()` refuses a checkpoint whose stamped normalizer differs.
 * `pf_check_reference()` stops on a reference bundle from a different
   normalizer and warns on an unstamped one (§4.1). `REF-augmented.rds` is

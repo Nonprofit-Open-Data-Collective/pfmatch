@@ -38,11 +38,26 @@ function name and body moves unedited, so the normalizer signature stays
 * **Checked:** pfmatch's 112 tests pass, with no edits, against npmatch#22
   installed in a scratch library.
 
+**2026-10-31, one function added to the list.** `pf_street_unit()` (which
+replaced `pf_parse_unit()`) calls `np_normalize()` to parse the secondary-unit
+line, so that is a fifth normalizer call — through `npmatch::`, which
+re-exports it, so nothing above changes. Noted because the unit parse is now
+normalizer-dependent where the old local parser was not: `test-unit.R`'s
+fixture assertion is signature-gated for that reason.
+
 ## Optional, later
 
 pfmatch could call `npnormalize::` directly for normalization and import
 npnormalize. It wouldn't drop its npmatch dependency, since it still matches
 with npmatch, so there is little gain. I'd leave it.
+
+One thing would change the calculation: npnormalize exports `np_unit_id()` and
+`np_addr_key()`, which npmatch does **not** re-export. `np_unit_id()` is not
+useful on a raw `ADDR_L2` (it strips a designator, it does not gate the field —
+it returns `1367` for `PO BOX 1367`), but `np_addr_key()` is exactly what
+`dev/PLACES-SYNC.md` §4 step 4 needs for the triangulation group key. If that
+step goes ahead, importing npnormalize is the clean way to reach it, and the
+alternative is `npmatch:::.np_addr_key()` with a parity test.
 
 ## To reproduce results from before the move
 
