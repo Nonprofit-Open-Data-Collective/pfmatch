@@ -268,7 +268,7 @@ disables the rare-name floor on alias rows
 <div class="section level3">
 <h3 id="matchdb-active-observed-and-unified-observed">matchdb, <code>active-observed</code> and <code>unified-observed</code><a class="anchor" aria-label="anchor" href="#matchdb-active-observed-and-unified-observed"></a>
 </h3>
-<p><code>pf_reference(source = "matchdb", tier = "active-observed")</code>. A published, pre-compiled reference downloaded once, md5-checked, and cached — no local build at all. The spec axes are explicit: a <strong>layer</strong> says which organisations are in (<code>bmf_active</code>, <code>bmf_inactive</code>, <code>filer_only</code>, <code>approved_only</code>, <code>irs527</code>), a <strong>variant class</strong> says how many ways each may be spelled (<code>legal</code>, <code>dba</code>, <code>observed</code>, <code>former</code>, <code>division</code>).</p>
+<p><code>pf_reference(source = "matchdb")</code>, whose <code>tier</code> now defaults to <code>"active-observed"</code> on the strength of §4 below. A published, pre-compiled reference downloaded once, md5-checked, and cached — no local build at all. The spec axes are explicit: a <strong>layer</strong> says which organisations are in (<code>bmf_active</code>, <code>bmf_inactive</code>, <code>filer_only</code>, <code>approved_only</code>, <code>irs527</code>), a <strong>variant class</strong> says how many ways each may be spelled (<code>legal</code>, <code>dba</code>, <code>observed</code>, <code>former</code>, <code>division</code>).</p>
 <table class="table">
 <colgroup>
 <col width="25%">
@@ -678,8 +678,8 @@ measurement only — precision unknown
 </tr>
 </tbody>
 </table>
-<p><strong><code>active-observed</code> is the free win.</strong> It is faster than what pfmatch has been running and better at the same time, and there is no trade to weigh.</p>
-<p><strong><code>unified-observed</code> costs 275 hours for 0.1 point over <code>active-observed</code>.</strong> Its real use is a different question — resolving grantees that no longer exist — and on that question it is the right tier. It should not be a default anyone gets without asking.</p>
+<p><strong><code>active-observed</code> is the free win.</strong> It is faster than what pfmatch has been running and better at the same time, and there is no trade to weigh. On that basis it is now what <code><a href="../reference/pf_reference.html">pf_reference()</a></code> and <code><a href="../reference/pf_run.html">pf_run()</a></code> use when no <code>tier</code> is given.</p>
+<p><strong><code>unified-observed</code> costs 275 hours for 0.1 point over <code>active-observed</code>.</strong> Its real use is a different question — resolving grantees that no longer exist — and on that question it is the right tier. It is no longer a default anyone gets without asking: <code>pf_reference(tier = "unified-observed")</code>, or <code>options(pfmatch.matchdb_tier = "unified-observed")</code> for a whole session.</p>
 <p><strong>The dictionary’s 12 hours are not its real cost.</strong> Its real cost is the queue. At 64 queued per 4,683 identities, full scale is roughly 62,700 cases that the dictionary claims and the BMF declines to corroborate — and they are not random. They are the known affiliate failure: an organisation against its own foundation or alumni fund, a chapter network picking the wrong chapter.</p>
 <pre><code>YALE UNIVERSITY           -&gt; YALE UNIVERSITY ALUMNI FUND   066078326  vs  060646973
 FLORIDA STATE UNIV FOUNDA -&gt; FLORIDA STATE UNIVERSITY      815312398  vs  591961248
@@ -868,8 +868,9 @@ per 100k new rows
 <h2 id="what-to-run">6. What to run<a class="anchor" aria-label="anchor" href="#what-to-run"></a>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># 1. the reference: matchdb's active-observed tier, downloaded and cached</span></span>
-<span><span class="va">ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pf_reference.html">pf_reference</a></span><span class="op">(</span>source <span class="op">=</span> <span class="st">"matchdb"</span>, tier <span class="op">=</span> <span class="st">"active-observed"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># 1. the reference: matchdb's active-observed tier -- now the default tier --</span></span>
+<span><span class="co">#    downloaded once, md5-checked and cached</span></span>
+<span><span class="va">ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pf_reference.html">pf_reference</a></span><span class="op">(</span>source <span class="op">=</span> <span class="st">"matchdb"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 2. the cascade, as usual</span></span>
 <span><span class="va">prepared</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pf_prepare.html">pf_prepare</a></span><span class="op">(</span><span class="va">grants</span><span class="op">)</span></span>

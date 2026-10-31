@@ -100,10 +100,17 @@ pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
 #'     is republished.}
 #' }
 #'
-#' `tier = "unified-observed"` is the matchdb equivalent of the augmented BMF
-#' pfmatch has built so far: every BMF release, legal names and DBAs, plus
-#' Schedule I and R aliases written by two or more filers. `"active-observed"`
-#' drops the inactive tranche (`matchdb::md_reference()` lists the tiers).
+#' `tier = "active-observed"` is the default because it wins on both axes at
+#' once: the `bmf_active` layer with legal, DBA and observed name variants,
+#' 2.89M rows, it matched the 1k benchmark in 11.5 min against 23.2 for the
+#' augmented BMF pfmatch built for itself, and cleared 63.8% against 62.8%
+#' (`dev/BENCH-MD-REFERENCE.log`). `"unified-observed"` is the closer
+#' correspondence to the augmented bundle — it adds the inactive tranche, so
+#' every BMF release rather than the current one — but that is 1.76M more rows
+#' for two and a half times the match time and +0.1 point. Ask for it when the
+#' question is grantees that no longer exist, not for the clear rate. The
+#' "Choosing a matching dictionary" vignette has the comparison;
+#' `matchdb::md_reference()` lists the tiers.
 #'
 #' @param bmf Processed BMF: a path or a data frame. Needed only for the local
 #'   bundle, and only when `cache` does not exist.
@@ -113,7 +120,7 @@ pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
 #' @param verbose Print progress.
 #' @param source `"auto"`, `"matchdb"` or `"local"`; see above.
 #' @param tier The matchdb tier. Defaults to
-#'   `getOption("pfmatch.matchdb_tier", "unified-observed")`.
+#'   `getOption("pfmatch.matchdb_tier", "active-observed")`.
 #' @return A reference bundle: `reference`, `name_freq`, `token_idf`,
 #'   `ref_index`, and `source` (`"matchdb"` or `"local"`). A matchdb bundle also
 #'   carries `clusters` and its publication `stamp`.
@@ -121,7 +128,7 @@ pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
 pf_reference <- function(bmf = NULL, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds",
                          active_col = NULL, recovery = TRUE, verbose = TRUE,
                          source = c("auto", "matchdb", "local"),
-                         tier = getOption("pfmatch.matchdb_tier", "unified-observed")) {
+                         tier = getOption("pfmatch.matchdb_tier", "active-observed")) {
   source <- match.arg(source)
   if (source == "auto" && !is.null(bmf)) source <- "local"
   if (source != "local") {
@@ -296,7 +303,7 @@ pf_run <- function(grants, bmf = NULL, pattern = "grants.*[.]csv$",
                    dir = "data-dev/batches", batch_size = 25000L,
                    dyads = NULL, report = TRUE, verbose = TRUE,
                    ref_source = c("auto", "matchdb", "local"),
-                   tier = getOption("pfmatch.matchdb_tier", "unified-observed"), ...) {
+                   tier = getOption("pfmatch.matchdb_tier", "active-observed"), ...) {
   t0 <- .pf_tick()
   prep <- pf_prepare(grants, pattern = pattern, dedup = match.arg(dedup),
                      verbose = verbose)

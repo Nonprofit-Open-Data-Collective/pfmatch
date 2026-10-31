@@ -16,7 +16,7 @@ pf_run(
   report = TRUE,
   verbose = TRUE,
   ref_source = c("auto", "matchdb", "local"),
-  tier = getOption("pfmatch.matchdb_tier", "unified-observed"),
+  tier = getOption("pfmatch.matchdb_tier", "active-observed"),
   ...
 )
 }

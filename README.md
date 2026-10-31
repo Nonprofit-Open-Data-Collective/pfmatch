@@ -379,7 +379,9 @@ wall-clock time — in the
 [Choosing a matching dictionary](https://nonprofit-open-data-collective.github.io/pfmatch/articles/matching-dictionaries.html)
 article. Short version: `active-observed` is both faster and about a point
 better than the augmented BMF, and the dictionary adds roughly a point more on
-the residue.
+the residue. `active-observed` is therefore the tier `pf_reference()` and
+`pf_run()` take when none is named; `options(pfmatch.matchdb_tier = ...)`
+changes it for a session.
 
 Read `dev/BASELINE-2026-10C/MANIFEST.md` before quoting either: it records what
 the figures do and do not establish, and the baseline is gated on
