@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/404.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/articles/adjudicating-maybe.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/articles/cascade-workflow.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/articles/index.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/articles/name-and-address-variants.html</loc></url>
@@ -59,6 +60,7 @@
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_evaluate.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_geo_agreement.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_grant_content_cols.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_grant_dictionary.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_group_siblings.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_initials.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_is_arm.html</loc></url>
@@ -89,6 +91,7 @@
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_recipient_type.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_recover.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_recovery_passes.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_recover_from_dictionary.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_recover_name_from_street.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_reference.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_report.html</loc></url>
@@ -107,6 +110,7 @@
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_standardize_status.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_status.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_status_audit.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_street_unit.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_text.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_tiebreak_config.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_truth_schema.html</loc></url>

@@ -19,6 +19,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cascade-workflow.html">The matching cascade, step by step</a></li>
     <li><a class="dropdown-item" href="../articles/name-and-address-variants.html">Name and address variants</a></li>
+    <li><a class="dropdown-item" href="../articles/adjudicating-maybe.html">Adjudicating the MAYBE tier</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -433,16 +434,39 @@
         <dd>Tokenize purpose or organization text</dd>
       </dl><dl><dt>
 
-          <code><a href="pf_parse_unit.html">pf_parse_unit()</a></code>
+          <code><a href="pf_street_unit.html">pf_street_unit()</a></code>
 
         </dt>
-        <dd>Parse the secondary-unit line into a comparable identifier</dd>
+        <dd>Parse the secondary-unit line into a comparable unit</dd>
       </dl><dl><dt>
 
           <code><a href="pf_unit_evidence.html">pf_unit_evidence()</a></code>
 
         </dt>
         <dd>Compare two unit lines as adjudication evidence</dd>
+      </dl></div><div class="section level2">
+      <h2 id="recovery-against-resolved-grants">Recovery against resolved grants<a class="anchor" aria-label="anchor" href="#recovery-against-resolved-grants"></a></h2>
+
+      <div class="section-desc"><p>A supplement to the cascade, not a reference. Foundations write recipient names consistently with each other and differently from the BMF, so a grant the BMF cannot clear may match one that already cleared. Runs after the cascade, on what it left unresolved, and promotes only what the BMF’s own top candidate corroborates. See <code>dev/EXP-HEAD-REFERENCE.log</code>.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="pf_grant_dictionary.html">pf_grant_dictionary()</a></code>
+
+        </dt>
+        <dd>Build a dictionary of resolved grant renderings</dd>
+      </dl><dl><dt>
+
+          <code><a href="pf_recover_from_dictionary.html">pf_recover_from_dictionary()</a></code>
+
+        </dt>
+        <dd>Recover unresolved grants against a grant-side dictionary</dd>
       </dl></div><div class="section level2">
       <h2 id="evaluation-against-ground-truth">Evaluation against ground truth<a class="anchor" aria-label="anchor" href="#evaluation-against-ground-truth"></a></h2>
 
