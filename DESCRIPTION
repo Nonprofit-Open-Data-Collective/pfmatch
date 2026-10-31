@@ -23,7 +23,7 @@ Imports:
     duckdb,
     data.table,
     stringi,
-    npmatch,
+    npmatch (>= 0.1.1),
     stats,
     utils
 Suggests:
@@ -42,5 +42,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Remotes:
+    Nonprofit-Open-Data-Collective/npmatch,
     Nonprofit-Open-Data-Collective/matchdb
 Config/Needs/website: Nonprofit-Open-Data-Collective/pkgstyle

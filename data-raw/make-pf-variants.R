@@ -221,8 +221,19 @@ p[, addr_class := fifelse(unit_differs, "unit differs",
 # (weight 0.95, second only to ZIP+4) -- so the address normalizer is in use.
 # But the ladder is a max() and zip5 agrees by construction inside a group,
 # putting geo at >= 0.90 before the street is read, so a street hit is worth
-# 0.02 of the final score here. Saturated, not unused. The unit is absent from
-# .np_hier_score() entirely.
+# 0.02 of the final score here. Saturated, not unused.
+#
+# 2026-10-31: the unit rung is no longer absent. npmatch PR #18 gave
+# .np_hier_score() a unit term at geo weight 0.97, gated on
+# street_hit == 1 & geo_unit == 1 & addr_units >= 2 -- so it fires exactly in a
+# multi-tenant group, which is what this corpus is made of. Measured on
+# identical names at one street/zip differing only in suite: 0.988 when the
+# suite agrees against 0.980 when it conflicts, i.e. 0.4 * (0.97 - 0.95) =
+# 0.008 on top of a street hit. Small, and a tie-breaker rather than a
+# tier-mover, but live. The sentence this replaces ("the unit is absent from
+# .np_hier_score() entirely") was true under the normalizer this script last
+# ran against and is now wrong; it is corrected here rather than deleted
+# because the 0.02 saturation result above still stands.
 p[, name_key_equal   := sq(a_name_key) == sq(b_name_key) & nzchar(sq(a_name_key))]
 p[, street_key_equal := sq(a_street_key) == sq(b_street_key)]
 p[, zip5_equal       := sq(a_zip5) == sq(b_zip5)]
