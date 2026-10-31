@@ -1,0 +1,210 @@
+============================================================================== 
+NO-TIER EXPERIMENT  stage 12: score 
+============================================================================== 
+verdicts 100, cases 100, scored pairs 6,264, reference EINs 3,687,435, prior verdicts 9 
+usable verdicts: 100 
+============================================================================== 
+1. RECOVERABLE -- how much of the NO tier has an EIN after all 
+============================================================================== 
+Stratum A (91 cases, simple random from the 845-case NO tier) is the only 
+stratum that estimates a rate. It is a simple random draw from 836 of the 
+845 NO identities; the 9 held back were held back by an id join later found 
+invalid, for reasons unrelated to their content, so the draw stays 
+unbiased for the tier. The other 9 cases are labelled B-calibration but 
+calibrate nothing -- see section 4 -- and are excluded from every rate.
+ 
+  EIN reported at all        :  34 of 91  37.4% 
+    of which WEB-sourced     :  34 
+    of which off a candidate :   0 
+------------------------------------------------------------------------------ 
+  RECOVERABLE, non-circular  :  33 of 91  36.3%  [27.1%, 46.5%] 
+    -> projected over 845 NO : 306 identities [229, 393] 
+  RECOVERABLE, incl. candidate-sourced EINs:  33 of 91  36.3%  [27.1%, 46.5%] 
+    -> projected over 845 NO : 306 identities 
+
+  The first figure is the headline. The second counts cases whose EIN was 
+  read off a rejected near-miss row, which is in the reference BY 
+  CONSTRUCTION -- a real recovery route, but not evidence that the 
+  reference covers the tier. Both are reported so neither is mistaken for 
+  the other. 
+------------------------------------------------------------------------------ 
+THE NON-CIRCULAR COVERAGE TEST 
+Of the WEB-sourced EINs -- established from a source outside the packet -- 
+how many are already in the reference? dev/NO-RESIDUAL-AUDIT.md found 21 of 
+21 and called it the robust result, because it is a set-membership test.
+ 
+  A-estimation   33 of 34 in the reference  97.1%  [85.1%, 99.5%] 
+  B-calibration  4 of 4 in the reference  100.0%  [51.0%, 100.0%] 
+  both strata    37 of 38 in the reference  97.4%  [86.5%, 99.5%] 
+
+  WEB-established EINs that are NOT in the reference -- the only cases 
+  that are a reference COVERAGE gap rather than a name-resolution gap: 
+    G003195  COMMONWEALTH UNIV OF PENN          ein 232738930  GOVERNMENT 
+============================================================================== 
+2. WHY -- retrieval or scoring 
+============================================================================== 
+For the 37 recoverable cases across both strata, was the correct EIN ever 
+offered to the scorer? The scored pairs are cached, so this is a lookup.
+ 
+  offered and REJECTED (a scoring/threshold failure) :  26  70.3% 
+  never offered        (a blocking/retrieval failure):  11  29.7% 
+
+  Where it was offered, the score it got (floor for review is 0.65): 
+    median 0.360, range 0.080 to 0.622; 2 of 26 scored at or above 0.60 
+    passes that found it: B1-token-state, B2-token-concat, C1-name-any, D1-acronym 
+
+  The model's own hypothesis for why it was missed: 
+miss_hypothesis
+           ACRONYM  DBA_OR_TRADE_NAME    GEOGRAPHY_WRONG LEGAL_NAME_DIFFERS 
+                 2                  7                  2                  9 
+ PARENT_OR_CHAPTER         PLAIN_MISS      PROGRAM_NAMED          TRUNCATED 
+                 5                  1                  2                  7 
+              TYPO 
+                 2 
+
+  Cross-tabulated against what actually happened: 
+                    offered
+miss_hypothesis      never offered offered
+  ACRONYM                        1       1
+  DBA_OR_TRADE_NAME              3       4
+  GEOGRAPHY_WRONG                1       1
+  LEGAL_NAME_DIFFERS             2       7
+  PARENT_OR_CHAPTER              0       5
+  PLAIN_MISS                     0       1
+  PROGRAM_NAMED                  1       1
+  TRUNCATED                      1       6
+  TYPO                           2       0
+============================================================================== 
+3. OUTSIDE -- what the unrecoverable part of the tier is 
+============================================================================== 
+Stratum A only (91 cases), so these shares estimate the 845-case tier. 
+These are the model's judgements, calibrated in section 4.
+ 
+entity_class -- WHAT THE PAYEE IS 
+  INDIVIDUAL                39   42.9%   -> ~ 362 of 845 
+  NONPROFIT                 27   29.7%   -> ~ 251 of 845 
+  FOREIGN                    5    5.5%   -> ~  46 of 845 
+  GOVERNMENT                 5    5.5%   -> ~  46 of 845 
+  GROUP_SUBORDINATE          5    5.5%   -> ~  46 of 845 
+  AGGREGATE                  3    3.3%   -> ~  28 of 845 
+  CHURCH                     3    3.3%   -> ~  28 of 845 
+  PROGRAM_OR_EVENT           2    2.2%   -> ~  19 of 845 
+  FISCALLY_SPONSORED         1    1.1%   -> ~   9 of 845 
+  FOR_PROFIT                 1    1.1%   -> ~   9 of 845 
+
+bmf_expectation -- SHOULD AN EXEMPT-ORGANISATION RECORD EXIST 
+  NOT_LISTED                57   62.6%   -> ~ 529 of 845 
+  LISTED                    33   36.3%   -> ~ 306 of 845 
+  UNCERTAIN                  1    1.1%   -> ~   9 of 845 
+
+outside_reason -- WHY NOT, where it should not 
+  NOT_AN_ORG                52   57.1%   -> ~ 483 of 845 
+  NOT_APPLICABLE            33   36.3%   -> ~ 306 of 845 
+  NO_SEPARATE_EXEMPTION      3    3.3%   -> ~  28 of 845 
+  CHURCH_EXEMPT              2    2.2%   -> ~  19 of 845 
+  GROUP_RULING               1    1.1%   -> ~   9 of 845 
+------------------------------------------------------------------------------ 
+NOT AN ORGANISATION THE BMF COULD EVER HOLD 
+  53 of 91  58.2%  [48.0%, 67.8%] -- individuals, businesses, government bodies, 
+  foreign organisations and aggregate placeholders. 
+  -> ~492 of the 845 NO identities, i.e. ~10.4% of the whole 4,748-identity file. 
+
+ AGGREGATE FOR_PROFIT    FOREIGN GOVERNMENT INDIVIDUAL 
+         3          1          5          5         39 
+
+  What the pipeline's own flags said about these 53 cases: 
+flagged_personal
+FALSE  TRUE 
+   42    11 
+recipient_type
+  foundation_pf      individual nonprofit_other   other_unknown  public_charity 
+              1              20               1              24               7 
+  These reached the matching path, where they can only fail or match 
+  something wrong. They are a denominator problem, not a matching problem. 
+------------------------------------------------------------------------------ 
+THE STRUCTURAL FLOOR -- real bodies with no exemption of their own 
+  6 of 91  6.6%  [3.1%, 13.6%] 
+  A subordinate under a group ruling, a church, or a programme inside 
+  another organisation. There is no EIN to find, so no amount of matching 
+  recovers these. This is the honest floor. 
+
+            CHURCH FISCALLY_SPONSORED  GROUP_SUBORDINATE   PROGRAM_OR_EVENT 
+                 2                  1                  1                  2 
+
+UNTRACEABLE -- no organisation of this description found at all: 0 of 91  0.0% 
+============================================================================== 
+4. CALIBRATION -- deliberately NOT done here 
+============================================================================== 
+The 100-case sample overlaps the prior audit on only a handful of cases, 
+and the grant_id join that appeared to give more is invalid -- it pairs 
+unrelated grants. See the note in this script and in stage 10 section 3. 
+ 
+The human head-to-head is run separately, on a packet built from the 63 
+prior-audit cases that are still NO in this arm: 
+  PF_NO_SET=cal Rscript dev/adjudicate-10-no-packet.R 
+  PF_NO_SET=cal Rscript dev/adjudicate-11-no-search.R 
+  Rscript dev/adjudicate-14-no-calib.R 
+
+(9 truth rows are present in this packet and are IGNORED here.) 
+============================================================================== 
+5. THE MATCH RATE 
+============================================================================== 
+The denominators are not interchangeable, so all three are named.
+ 
+  result frame  4,748  identities with >=1 scored candidate. This is the 
+                       baseline's denominator and the source of 62.74%. 
+  in scope      4,868  every identity the cascade should have resolved, 
+                       i.e. all 4,903 less 35 flagged OOS. 120 identities sit 
+                       here but not in the result frame: nothing was ever 
+                       retrieved for them. 
+  all           4,903  every identity in the file. 
+------------------------------------------------------------------------------ 
+BASELINE-2026-10C augmented, on its own denominator: 
+  4,748 identities, 2,979 YES = 62.74%; 1,044 MAYBE; 725 NO (tier==NO in the result). 
+ 
+The same run on the in-scope denominator, which is the honest one for a 
+match rate because it keeps the retrieval failures in: 
+  4,868 identities, 2,979 YES = 61.20%  (1.55 points lower) 
+  NO tier is 845, not 725: 725 scored-and-rejected plus 120 never scored. 
+------------------------------------------------------------------------------ 
+ADDING THE MEASURED RECOVERY (36.3% of the 845-case NO tier, stratum A) 
+  recovers ~306 identities.
+ 
+  on the in-scope denominator of 4,868: 
+    YES alone                          : 61.20% 
+    YES + recovered NO                 : 67.49%  (+6.29 points) 
+    YES + cleared MAYBE                : 77.11% 
+    YES + cleared MAYBE + recovered NO : 83.40% 
+------------------------------------------------------------------------------ 
+AND ON A CLEANED DENOMINATOR 
+Dropping the NO-tier payees that are not organisations the BMF could ever 
+hold (58.2% of stratum A), because there is nothing for them to match: 
+  removes ~492 identities: 4,868 -> 4376 
+    YES alone                          : 68.08%  (+6.88 points, from scope 
+                                                   alone, matching nothing) 
+    YES + cleared MAYBE + recovered NO : 92.78% 
+ 
+Compare the two levers on the NO tier: recovery is worth 6.29 points and 
+the scope correction 6.88. Only one of them is a matching improvement; the 
+other is a statement about which grants were ever answerable. 
+============================================================================== 
+6. COST 
+============================================================================== 
+searches: 319 over 100 cases, 3.2/case 
+tokens: 188,054 in, 126,521 out, 4,485,924 cache read, 502,058 cache written 
+confidence x search outcome: 
+          search_confirmed
+confidence CONFIRMED CONTRADICTED INCONCLUSIVE
+    high          82            6            0
+    low            0            0            2
+    medium         9            1            0
+
+org_found x bmf_expectation: 
+           bmf_expectation
+org_found   LISTED NOT_LISTED UNCERTAIN
+  NO             0         37         0
+  UNCERTAIN      0          1         1
+  YES           37         24         0
+============================================================================== 
+wrote data-dev/ADJ-NO-SCORED.{rds,csv} 
+============================================================================== 

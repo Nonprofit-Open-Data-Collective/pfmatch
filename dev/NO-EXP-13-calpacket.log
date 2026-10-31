@@ -1,0 +1,88 @@
+============================================================================== 
+NO-TIER EXPERIMENT  stage 10: packet 
+============================================================================== 
+N=100  (calibration=25, estimation=75)  seed=20261101  k=5 
+
+loading REF-augmented.rds ... 
+  3,880,431 reference rows 
+  3,687,435 unique EINs in the reference 
+  trimmed reference saved (3,880,431 rows, 7 cols) 
+  4,903 grants 
+matching (11 passes, pairs retained) ... 
+  matched in 1636.0 s 
+
+gate: 4,748 identities, tier identical to BASELINE-2026-10C 
+
+MAYBE    NO   YES 
+ 1044   725  2979 
+
+full status table over all 4,903 identities: 
+
+  YES MAYBE    NO   OOS 
+ 2979  1044   845    35 
+  in the result frame (>=1 scored candidate): 4,748 
+  never scored at all                       : 155 
+  in scope (status != OOS)                  : 4,868 
+
+NO tier: 845 identities (17.23% of 4,903) 
+  of which tier==NO in the result frame: 725 
+  of which never scored at all         : 120 
+  BASELINE-2026-10C's published NO is the first of those two. 
+  with a scored near-miss : 725 
+  no candidate at all     : 120 
+
+filed-record signals across the NO tier: 
+recipient_type
+ public_charity nonprofit_other   foundation_pf      individual   other_unknown 
+            380              32              10             148             275 
+  looks_personal: 107 of 845 
+
+prior verdicts: 67 rows in no-residual-verdicts.csv 
+
+   INDIVIDUAL    NO-OWN-EIN NOT-A-CHARITY      REAL-ORG       UNCLEAR 
+            9             6             2            32             6 
+  UNCLEAR-GEO    UNFINDABLE 
+            3             9 
+  matching a NO identity in this arm BY FILED NAME: 63 of 67 
+  (joining on grant_id instead gives a different and WRONG answer -- 
+   the ids are positional and not stable across runs. See the note above.) 
+
+calibration set: 63 identities over 63 verdict keys (5 name collisions 
+  resolved to the lowest grant_id) 
+
+   INDIVIDUAL    NO-OWN-EIN NOT-A-CHARITY      REAL-ORG       UNCLEAR 
+            9             6             2            31             4 
+  UNCLEAR-GEO    UNFINDABLE 
+            3             8 
+
+BMF context from BMF-AUGMENTED-unified-fixed.csv ... 
+  3,687,435 context rows in 20.1 s 
+  foundation name resolved for 63 of 63 cases 
+
+near-miss rows: 293 over 63 of 63 cases 
+  990 text: mission 23.5%  programs 19.5%  ntee 23.5% of near-miss rows 
+  all scored pairs for these ids: 3,968 rows (median 22 per scored case) 
+Warning message:
+In `[.data.table`(cases, , `:=`(n_cand = { :
+  A shallow copy of this data.table was taken so that := can add or remove 7 columns by reference. At an earlier point, this data.table was copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. It's also not unusual for data.table-agnostic packages to produce tables affected by this issue. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
+
+truth rows carried: 63 
+
+   INDIVIDUAL    NO-OWN-EIN NOT-A-CHARITY      REAL-ORG       UNCLEAR 
+            9             6             2            31             4 
+  UNCLEAR-GEO    UNFINDABLE 
+            3             8 
+  naming an EIN: 25; of those in the reference: 24 
+  of which established independently of the reference (basis=web): 46 
+============================================================================== 
+set=cal, file prefix ADJ-NOCAL 
+wrote data-dev/ADJ-NOCAL-CASES.rds   63 cases 
+wrote data-dev/ADJ-NOCAL-PACKET.rds  293 near-miss rows 
+wrote data-dev/ADJ-NOCAL-PAIRS.rds   3,968 scored pairs 
+wrote data-dev/ADJ-NO-REFEIN.rds  3,687,435 unique reference EINs 
+wrote data-dev/ADJ-NOCAL-TRUTH.rds   63 with a prior human verdict 
+
+sample mix: 63 with a near-miss, 0 without; 4 looks_personal; 4 distinct types 
+
+next: Rscript dev/adjudicate-11-no-search.R 
+============================================================================== 

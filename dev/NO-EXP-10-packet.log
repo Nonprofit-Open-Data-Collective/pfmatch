@@ -1,0 +1,81 @@
+============================================================================== 
+NO-TIER EXPERIMENT  stage 10: packet 
+============================================================================== 
+N=100  (calibration=25, estimation=75)  seed=20261101  k=5 
+
+loading REF-augmented.rds ... 
+  3,880,431 reference rows 
+  3,687,435 unique EINs in the reference 
+  trimmed reference saved (3,880,431 rows, 7 cols) 
+  4,903 grants 
+matching (11 passes, pairs retained) ... 
+  matched in 1720.0 s 
+
+gate: 4,748 identities, tier identical to BASELINE-2026-10C 
+
+MAYBE    NO   YES 
+ 1044   725  2979 
+
+full status table over all 4,903 identities: 
+
+  YES MAYBE    NO   OOS 
+ 2979  1044   845    35 
+  in the result frame (>=1 scored candidate): 4,748 
+  never scored at all                       : 155 
+  in scope (status != OOS)                  : 4,868 
+
+NO tier: 845 identities (17.23% of 4,903) 
+  of which tier==NO in the result frame: 725 
+  of which never scored at all         : 120 
+  BASELINE-2026-10C's published NO is the first of those two. 
+  with a scored near-miss : 725 
+  no candidate at all     : 120 
+
+filed-record signals across the NO tier: 
+recipient_type
+ public_charity nonprofit_other   foundation_pf      individual   other_unknown 
+            380              32              10             148             275 
+  looks_personal: 107 of 845 
+
+prior verdicts: 67 rows in no-residual-verdicts.csv 
+
+   INDIVIDUAL    NO-OWN-EIN NOT-A-CHARITY      REAL-ORG       UNCLEAR 
+            9             6             2            32             6 
+  UNCLEAR-GEO    UNFINDABLE 
+            3             9 
+  of those, still NO in this arm: 9 
+  (58 have since moved tier and are therefore not eligible for stratum B) 
+  NOTE: only 9 adjudicated NO cases available; calibration shrinks to that 
+
+stratum A estimation : 91 drawn simple-random from 836 eligible 
+stratum B calibration: 9 drawn from 9 adjudicated-and-still-NO 
+
+determinism: sample reproduces the existing packet exactly (100 ids) 
+
+BMF context from BMF-AUGMENTED-unified-fixed.csv ... 
+  3,687,435 context rows in 20.3 s 
+  foundation name resolved for 100 of 100 cases 
+
+near-miss rows: 401 over 88 of 100 cases 
+  990 text: mission 20.2%  programs 17.0%  ntee 20.2% of near-miss rows 
+  all scored pairs for these ids: 6,264 rows (median 17 per scored case) 
+Warning message:
+In `[.data.table`(cases, , `:=`(n_cand = { :
+  A shallow copy of this data.table was taken so that := can add or remove 7 columns by reference. At an earlier point, this data.table was copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. It's also not unusual for data.table-agnostic packages to produce tables affected by this issue. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
+
+calibration stratum: 9 cases 
+
+ INDIVIDUAL  NO-OWN-EIN    REAL-ORG     UNCLEAR UNCLEAR-GEO  UNFINDABLE 
+          1           2           3           1           1           1 
+  naming an EIN: 3; of those in the reference: 3 
+============================================================================== 
+wrote data-dev/ADJ-NO-CASES.rds   100 cases 
+wrote data-dev/ADJ-NO-PACKET.rds  401 near-miss rows 
+wrote data-dev/ADJ-NO-PAIRS.rds   6,264 scored pairs 
+wrote data-dev/ADJ-NO-REFEIN.rds  3,687,435 unique reference EINs 
+wrote data-dev/ADJ-NO-TRUTH.rds   9 with a prior human verdict 
+
+sample mix: 88 with a near-miss, 12 without; 12 looks_personal; 5 distinct types 
+
+next: Rscript dev/adjudicate-11-no-search.R 
+============================================================================== 

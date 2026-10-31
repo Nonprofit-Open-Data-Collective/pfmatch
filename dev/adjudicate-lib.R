@@ -139,7 +139,17 @@ adj_credential <- function() {
     if (nzchar(tok) && !grepl("^[{\\[]", tok))
       return(list(scheme = "oauth", value = tok))
   }
-  adj_key()        # raises the combined, actionable error
+  # adj_key() does two things: it RAISES the combined, actionable error when
+  # there is no credential anywhere, and it RETURNS a key when startup missed a
+  # .Renviron that does define one. Both outcomes have to be handled, and the
+  # second one is easy to forget because it only happens on the Git Bash path
+  # that adj_key() exists to rescue -- launched from PowerShell, HOME resolves
+  # to Documents, the key is in the environment already, and this line is never
+  # reached. Returned bare, it hands every caller a character vector where the
+  # contract is list(scheme=, value=), and `cred$scheme` then fails with
+  # "$ operator is invalid for atomic vectors" -- an error that reads like a
+  # broken response rather than a credential-shape mistake.
+  list(scheme = "api_key", value = adj_key())
 }
 
 ## ---- one request -----------------------------------------------------------

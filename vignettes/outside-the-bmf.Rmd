@@ -1,0 +1,474 @@
+---
+title: "What lives outside the BMF"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{What lives outside the BMF}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", echo = FALSE)
+tab <- function(d, ...) knitr::kable(d, format = "html", ...)
+```
+
+```{r data}
+# Every figure below is measured, not illustrative. Sources:
+#   dev/NO-EXP-10-packet.log   the tier counts and the sample
+#   dev/NO-EXP-11-search.log   the 100-case search run
+#   dev/NO-EXP-12-score.log    recoverability, the taxonomy, the match rate
+#   dev/NO-EXP-13-calpacket.log + dev/NO-EXP-14-calib.log   the human head-to-head
+#   dev/NO-TIER-EXPERIMENT.md  the design and the full read-out
+# Embedded as literals so this vignette builds without the reference, a
+# cascade run, or an API key. Regenerate with dev/adjudicate-1*.R.
+
+status_tbl <- data.frame(
+  status = c("YES", "MAYBE", "NO", "OOS"),
+  identities = c(2979L, 1044L, 845L, 35L),
+  share = c("60.76%", "21.29%", "17.23%", "0.71%"),
+  meaning = c("accepted automatically",
+              "candidates surfaced, none decisive",
+              "nothing surfaced, or all of it vetoed",
+              "flagged out of sample before matching"),
+  stringsAsFactors = FALSE)
+
+no_shape <- data.frame(
+  shape = c("retrieved something, scored below the floor",
+            "no blocking pass produced any pair at all"),
+  identities = c(725L, 120L),
+  `in the baseline's denominator` = c("yes", "**no**"),
+  check.names = FALSE, stringsAsFactors = FALSE)
+
+recover_tbl <- data.frame(
+  step = c("an EIN was established at all",
+           "and that EIN is in the reference"),
+  n = c("34 of 91", "**33 of 91**"),
+  share = c("37.4%", "**36.3%**"),
+  ci = c("", "[27.1%, 46.5%]"),
+  stringsAsFactors = FALSE)
+
+why_tbl <- data.frame(
+  cause = c("offered to the scorer and rejected", "never offered at all"),
+  diagnosis = c("a scoring / threshold failure", "a blocking / retrieval failure"),
+  n = c("26", "11"),
+  share = c("70.3%", "29.7%"),
+  stringsAsFactors = FALSE)
+
+miss_tbl <- data.frame(
+  hypothesis = c("LEGAL_NAME_DIFFERS", "TRUNCATED", "DBA_OR_TRADE_NAME",
+                 "PARENT_OR_CHAPTER", "ACRONYM", "GEOGRAPHY_WRONG",
+                 "PROGRAM_NAMED", "PLAIN_MISS", "TYPO"),
+  `never offered` = c(2L, 1L, 3L, 0L, 1L, 1L, 1L, 0L, 2L),
+  offered = c(7L, 6L, 4L, 5L, 1L, 1L, 1L, 1L, 0L),
+  check.names = FALSE, stringsAsFactors = FALSE)
+
+class_tbl <- data.frame(
+  `entity_class` = c("INDIVIDUAL", "NONPROFIT", "FOREIGN", "GOVERNMENT",
+                     "GROUP_SUBORDINATE", "AGGREGATE", "CHURCH",
+                     "PROGRAM_OR_EVENT", "FISCALLY_SPONSORED", "FOR_PROFIT"),
+  n = c(39L, 27L, 5L, 5L, 5L, 3L, 3L, 2L, 1L, 1L),
+  share = c("42.9%", "29.7%", "5.5%", "5.5%", "5.5%", "3.3%", "3.3%",
+            "2.2%", "1.1%", "1.1%"),
+  `~of 845` = c(362L, 251L, 46L, 46L, 46L, 28L, 28L, 19L, 9L, 9L),
+  check.names = FALSE, stringsAsFactors = FALSE)
+
+group_tbl <- data.frame(
+  group = c("not an organisation the BMF could ever hold",
+            "a real body the BMF should list",
+            "a real body with no exemption of its own",
+            "could not be identified at all"),
+  n = c("53 of 91", "33 of 91", "6 of 91", "0 of 91"),
+  share = c("**58.2%**", "**36.3%**", "6.6%", "0.0%"),
+  ci = c("[48.0%, 67.8%]", "[27.1%, 46.5%]", "[3.1%, 13.6%]", ""),
+  stringsAsFactors = FALSE)
+
+flag_tbl <- data.frame(
+  signal = c("`looks_personal` is TRUE",
+             "filed status code reads `individual`"),
+  `catches` = c("11 of 39", "19 of 39"),
+  recall = c("28.2%", "48.7%"),
+  `false positives` = c("**0 of 11**", "not measured here"),
+  check.names = FALSE, stringsAsFactors = FALSE)
+
+den_tbl <- data.frame(
+  denominator = c("result frame", "in scope", "whole file"),
+  n = c(4748L, 4868L, 4903L),
+  what = c("identities with at least one scored candidate",
+           "every identity the cascade should have resolved",
+           "every identity in the population file"),
+  `YES alone` = c("62.74%", "**61.20%**", "60.76%"),
+  check.names = FALSE, stringsAsFactors = FALSE)
+
+rate_tbl <- data.frame(
+  numerator = c("YES alone",
+                "YES + recovered NO",
+                "YES + cleared MAYBE",
+                "YES + cleared MAYBE + recovered NO"),
+  `on 4,868 in scope` = c("61.20%", "67.49%", "77.11%", "**83.40%**"),
+  check.names = FALSE, stringsAsFactors = FALSE)
+```
+
+An automated cascade either finds a grant recipient in the IRS Business Master
+File or it does not. [Adjudicating the MAYBE
+tier](adjudicating-maybe.html) is about the cases where it found several
+candidates and could not choose. This one is about the cases where it found
+nothing worth offering — and the first thing to say is that most of them are
+not matching failures at all.
+
+**Of 91 randomly drawn NO identities, 53 are payees the Business Master File
+could never contain.** Individuals collecting scholarships, businesses,
+government bodies, foreign organisations, and placeholders like `SEE SCHEDULE
+ATTACHED`. Only 33 are organisations the file should list and the cascade
+missed. The honest floor — real bodies with no exemption of their own — is 6.
+
+## The tier this is about
+
+```{r}
+tab(status_tbl, col.names = c("status", "identities", "share of 4,903", "meaning"))
+```
+
+### 845, not 725
+
+The published baseline reports **725** NO. `pf_status()` reports **845**, and
+the gap is the interesting part.
+
+```{r}
+tab(no_shape)
+```
+
+`pf_status()` runs over every identity in the file. The tiered result runs only
+over identities that got at least one scored candidate. 120 in-scope
+identities never reached the result frame because no blocking pass produced any
+pair at all — and so the baseline's denominator of 4,748 **excludes the cases
+retrieval failed on hardest**.
+
+```{r}
+tab(den_tbl)
+```
+
+On the in-scope denominator the same run is 61.20%, not 62.74%. That is not a
+defect in the arm; it is a statement about which figure answers which
+question. A match rate cannot drop the grants its retrieval step never reached.
+Everything below is reported against 4,868.
+
+## Why there is one arm and no cost frontier
+
+The MAYBE experiment compared a cheap model, an expensive one, and the
+expensive one with web search, because all three could answer its question: the
+correct EIN was already in the candidate set 71% of the time, so a reviewer
+confined to the packet had something real to decide.
+
+Here it is not. A NO case has no candidate worth offering, so **when there is
+an answer it is outside the packet 100% of the time.** A model without search
+can only report that the filed name does not resemble the records already
+rejected, which is what the cascade said. So there is one arm, it has search,
+and no cheaper strategy is benchmarked because none applies.
+
+That asymmetry is itself a finding: the MAYBE tier supports a cost/quality
+frontier and the NO tier does not.
+
+## What a reviewer is given
+
+The filed record — name, street, city, state, ZIP, stated purpose, amount, tax
+year, and the foundation's own recipient-status text, all uncontrolled filer
+free text. The filing foundation, as context. And then one of two things:
+
+- **no candidate retrieved** (12 of the 100 cases): nothing to show, the
+  reviewer works from the filed record alone
+- **the rejected near-misses, with their scores** (88 cases): the records the
+  cascade found and declined
+
+The near-misses are shown deliberately. In the prior hand audit the correct
+record had *already been offered* in most recoverable cases, so hiding them
+would hide the dominant mechanism.
+
+They are also a trap, and the schema is built around it. An EIN read off a
+near-miss row is in the reference **by construction** — it got there because
+the blocker pulled it out of the reference — so counting it as evidence that
+the reference covers this tier is circular. Every verdict therefore records
+whether its EIN came from the web or from a candidate row, and the headline
+uses web-sourced EINs only.
+
+As it happened, **all 34 EINs in the estimation stratum were web-sourced and
+none was read off a candidate row**, so the guard had nothing to exclude. That
+was not guaranteed; it is why it was built.
+
+## How much of the tier is recoverable
+
+```{r}
+tab(recover_tbl, col.names = c("", "n", "share", "95% Wilson"))
+```
+
+That projects to **~306 of the 845** NO identities, [229, 393].
+
+"Recoverable" here means: the investigation established an EIN from an outside
+source, and that EIN is in the reference. It is a mechanical set-membership
+test — the model never saw the reference and was told so. It is **not** a
+verified match: an EIN can be in the reference and still belong to the wrong
+organisation. The head-to-head below is the only check on that.
+
+### Is the right EIN already in the reference?
+
+This is the question that decides whether the NO tier is a coverage problem or
+a name problem.
+
+| | in the reference |
+|---|---|
+| estimation stratum | 33 of 34 — 97.1% |
+| both strata | **37 of 38 — 97.4%** [86.5%, 99.5%] |
+
+The single exception is `COMMONWEALTH UNIV OF PENN`, EIN 23-2738930, which the
+model classed `GOVERNMENT` — a Pennsylvania state university. A governmental
+unit is not an exempt organisation, so the file is **correct** to omit it.
+
+**Zero genuine coverage gaps in 38 independently established EINs.** The
+earlier audit found 21 of 21 on a narrower population; this confirms it on the
+production tier at nearly double the n. Widening the reference will not shrink
+this residual, because the reference already contains it.
+
+## Why the cascade missed them
+
+For the 37 recoverable cases, was the correct EIN ever put in front of the
+scorer? Every scored pair is cached, so this is a lookup rather than a replay
+of the blocker.
+
+```{r}
+tab(why_tbl)
+```
+
+Where it *was* offered, the score the comparator gave the correct row was a
+median of **0.360**, ranging 0.080 to 0.622, against a review floor of 0.65.
+Only 2 of 26 reached even 0.60.
+
+So the dominant failure is not retrieval. In 70% of recoverable cases the right
+record was in hand and ranked far below the floor.
+
+```{r}
+tab(miss_tbl)
+```
+
+Two patterns are worth naming.
+
+**`TYPO` is never retrieved.** `THE WESMINSTER SCHOOL` and `COCORDIA
+UNIVERSITY` each scored *no* candidates at all. A misspelling inside the one
+distinctive token destroys the only key an inverted name-token index could have
+used. No comparator can rescue a case that never reaches it.
+
+**`PARENT_OR_CHAPTER` is always retrieved and always underscored.** Four of the
+five are `SALVATION ARMY` and `YOUNG LIFE` at 0.08 — a name that cannot
+discriminate between hundreds of real records, where the geography term
+correctly refuses to break the tie. These should *not* be forced through:
+loosening there buys wrong EINs.
+
+The two call for opposite fixes, which is why reporting them as one "name
+resolution" number would be useless.
+
+## What lives outside the BMF, and why
+
+```{r}
+tab(class_tbl)
+```
+
+Rolled up by whether a record should exist at all:
+
+```{r}
+tab(group_tbl, col.names = c("", "n", "share", "95% Wilson"))
+```
+
+### Not an organisation (58.2%)
+
+The largest group in the tier by a wide margin. 39 individuals — almost all
+scholarship payments to named students — plus 5 government bodies (a high
+school, a public elementary school, a county fire and rescue department, a
+state university, a university research institute), 5 foreign organisations (a
+Polish foundation, UNIDROIT, a UK charity, a BC society, the ICRC), 3 aggregate
+placeholders, and 1 for-profit.
+
+These reached the matching path, where they can only fail or match something
+wrong. **They are a denominator problem, not a matching problem.**
+
+And the pipeline's own signals largely did not catch them:
+
+```{r}
+tab(flag_tbl)
+```
+
+Every case `looks_personal` flagged really is an individual — 11 of 11, no
+false positives — and it misses 28 of 39. A precise, low-recall flag is the
+easy kind to fix: nothing needs to become more conservative, the 202-name
+given-name list simply has to get longer. Seven payees that are not
+organisations at all are affirmatively coded `public_charity` by the filed
+status field, which is why that field cannot be trusted on its own.
+
+### A real body with no exemption of its own (6.6%)
+
+The honest floor. Two churches (`SEVIER HEIGHTS BAPTIST CHURCH`, `ST AGNES
+CHURCH`), which are exempt without applying and need not file; a diocesan high
+school under a group ruling; one fiscally sponsored project; and two named
+events. There is no EIN to find, so no amount of matching recovers these.
+
+At 6.6% this is **much smaller** than the prior audit's 12-in-100 estimate for
+the same category. The floor is a few percent, not a tenth.
+
+### Could not be identified at all (0%)
+
+Search identified something in every one of the 91 cases. The prior audit,
+which searched 46 of its 67 adjudicated cases, had 10 "no such organisation
+traceable". With search applied to every case that category disappears.
+
+### Why `entity_class` and `bmf_expectation` are separate fields
+
+The `INTERNATIONAL COMMITTE OF THE RED CROSS` case earns the distinction. The
+model classed it `FOREIGN`, which is right — it is Swiss — and
+`bmf_expectation` `LISTED`, which is also right, because it holds a US
+exemption record. The EIN it reported is in the reference.
+
+Collapsing "what the entity is" into "should a record exist" would have scored
+that case wrong whichever way it collapsed. A Scout troop is a subordinate and
+is not listed; a Salvation Army area command is a subordinate and is. They are
+different questions.
+
+## Does a human agree?
+
+Almost everything above is the model's judgement, so it needs a check against
+something other than the model's own confidence.
+
+An earlier hand audit adjudicated 67 NO cases. Re-keyed on the filed recipient
+name, 63 of them are still NO identities in this arm, so the same arm was run
+over exactly those 63 and the two sides compared. Both judged the same
+organisations from the same filed record; the only difference is who judged.
+
+```{r}
+agree_tbl <- data.frame(
+  class = c("not an organisation", "a real body the BMF should list",
+            "no exemption of its own", "could not be identified"),
+  recall = c("11 of 11", "30 of 34", "5 of 6", "3 of 8"),
+  pct = c("100.0%", "88.2%", "83.3%", "37.5%"),
+  stringsAsFactors = FALSE)
+tab(agree_tbl, col.names = c("human's class", "model agreed", ""))
+```
+
+Overall **49 of 59 — 83.1%** [71.5%, 90.5%], Cohen's kappa **0.724**. Four
+cases the human marked unclear are excluded; a non-answer cannot agree or
+disagree with anything.
+
+Three of the ten disagreements exist only because this comparison maps the
+human's "geography unclear" verdict to *recoverable*. All three are churches.
+Dropping that hedge gives 87.5% and kappa 0.795 — the figure above keeps the
+conservative reading.
+
+### The one class they diverge on is the reassuring part
+
+37.5% on "could not be identified" looks alarming until the cases are read. Of
+the 8 the human could not trace, the model agreed on exactly 3 — and those 3
+are precisely the ones where it reported **low confidence and named no
+organisation**.
+
+On the other 5 it found something at medium or high confidence. `DOCKS TO
+DOORWAYS` is a Belgrade Lakes Association campaign, and the filed street field
+literally reads `PO Box 551 Belgrade Lakes Associati[on]`. `AMERICAN SHRINE
+ASSOCIATES` sits at the Basilica of the National Shrine's address. `505 Main
+Street Canton` is not a name at all, it is a street address, and the depot
+there is run by a food pantry.
+
+**The model's confidence tracks the disagreement exactly**: where it says low it
+agrees the case is untraceable, and where it says medium or high it found what
+the human could not. That is the opposite of the pattern the [MAYBE search
+arm](adjudicating-maybe.html) showed, where confidence rose while accuracy
+fell. Here confidence is worth routing on.
+
+### On the EIN itself, which needs no vocabulary mapping
+
+Both sides name an EIN on 24 cases and give **the same nine digits on 23 —
+95.8%**. The exception is `The Salvation Army`: the model gives the Illinois
+corporation, the human the Southern territory. Both EINs are real; which is
+correct depends on which corporation received the money.
+
+The model named an EIN on 11 cases where the human could not, and **all 11 are
+in the reference** — 5 of them cases the human had already called a real
+organisation without being able to produce its number.
+
+The human named one where the model declined: `Hamilton Co Gen Hlt Dist`. It is
+a county health district, the model called it government, and that EIN is the
+one human EIN *not* in the reference. The model was right to refuse it.
+
+### Both sides land in the same place
+
+| | recoverable, of the same 63 |
+|---|---:|
+| human | 34 — 54.0% |
+| model | 35 — 55.6% |
+
+| | independently established EINs in the reference |
+|---|---|
+| model | **33 of 33 — 100%** |
+| human | 24 of 25 — 96.0% |
+
+Neither side found a single genuine coverage gap.
+
+
+
+## Where that leaves the match rate
+
+```{r}
+tab(rate_tbl)
+```
+
+Recovering the NO tier is worth **+6.29 points**. But dropping the payees that
+are not organisations the file could ever hold — ~492 identities, taking the
+denominator from 4,868 to 4,376 — moves YES alone from 61.20% to **68.08%**, a
+gain of **+6.88 points**, while matching precisely nothing.
+
+The scope correction is worth more than the recovery. Only one of the two is a
+matching improvement; the other is a statement about which grants were ever
+answerable. Both should be reported, and neither should be quietly folded into
+a headline.
+
+## What this does not establish
+
+- **Recoverability is not accuracy.** 36.3% of the tier has an EIN that exists
+  in the reference. Whether it is the *correct* EIN rests on the head-to-head
+  above and on the model's own confidence, not on the set-membership test.
+- **The taxonomy is a model's judgement.** The mechanical parts — is the EIN in
+  the reference, was it ever offered, what did it score — are not. The split
+  between them is deliberate and the two should not be quoted with equal
+  confidence.
+- **One adjudicator on each side.** The human labels come from a single pass
+  with no blind second review, and the model ran once at one effort level.
+  Neither is a consensus.
+- **`UNCERTAIN` was barely used.** One case of 100. A reviewer that almost
+  never declines is either very well calibrated or is resolving ambiguity it
+  should be surfacing; 100 cases cannot separate those.
+- **The 120 never-scored identities are 12 cases in this sample.** Their
+  composition is reported with everything else, but a 12-case subset supports
+  no claim of its own.
+- **Search cost is not in the token figure.** $0.0669 per case in tokens, plus
+  3.2 web searches per case billed separately. No ratio to the MAYBE arms is
+  quoted: those were computed on that experiment's own runs, some logged before
+  the cache-write accounting was corrected.
+
+## Reproducing
+
+```
+PFMATCH_DIR=. Rscript dev/adjudicate-10-no-packet.R    # re-runs the match, ~30 min
+Rscript dev/adjudicate-11-no-search.R
+Rscript dev/adjudicate-12-no-score.R
+
+PF_NO_SET=cal Rscript dev/adjudicate-10-no-packet.R    # the human head-to-head
+PF_NO_SET=cal Rscript dev/adjudicate-11-no-search.R
+Rscript dev/adjudicate-14-no-calib.R
+```
+
+The packet stage gates every identity's tier against `BASELINE-2026-10C` and
+stops on any drift, because a sample drawn from a drifted run does not describe
+the baseline's NO tier and its recovery could not be added to the baseline's
+match rate. It also re-checks that it drew the same 100 ids as the cached
+packet, so a rebuild cannot silently leave collected verdicts keyed to
+different case text.
+
+Design, full read-out and the taxonomy definitions are in
+`dev/NO-TIER-EXPERIMENT.md`; the reviewer's instructions are
+`dev/LLM-NO-INSTRUCTIONS.md`.
