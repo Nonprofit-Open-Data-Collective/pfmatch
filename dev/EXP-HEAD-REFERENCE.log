@@ -1,0 +1,302 @@
+==============================================================================
+experiment-head-reference -- match against only what the benchmark resolved
+2026-10-31   normalizer v1-3e7b9f9d59bbb19e   script dev/experiment-head-reference.R
+==============================================================================
+QUESTION as posed: take the cases the recent test cleared YES, treat those as
+the database, run a large batch against that group only, and see whether new
+YES cases surface.
+
+MINI REFERENCE: the BMF rows for every EIN that BASELINE-2026-10C's augmented
+arm cleared YES. 2,979 YES identities over 2,813 distinct EINs, 9,253 reference
+rows -- 0.2385% of the 3,880,431-row production reference. Carved out of the
+production bundle rather than rebuilt, so the keys are byte-identical and the
+comparison measures competition rather than normalization.
+
+WHAT A SUBSET REFERENCE CAN DO, which decides how to read everything below.
+Every row of the mini reference is also in the production one, so it cannot
+reach an EIN the full reference could not, and cannot answer a query whose true
+EIN is outside the 2,813. It produces a YES the full reference did not for
+exactly one reason: the competitors are gone and the margin gate sees an
+uncontested top candidate. That is either the full reference's MAYBE tier being
+competition-blocked, or a false positive. Both arms report the full-reference
+answer beside the mini one, because nothing else separates them.
+
+==============================================================================
+ARM R -- the benchmark's own 4,748 in-scope grant rows
+==============================================================================
+Replicates dev/build-baseline.R exactly: pf_read_grants ->
+pf_recover_name_from_street -> pf_match_grants. Its unit is the in-scope grant
+row, 4,903 grants less 155 out of scope. (An earlier attempt used pf_prepare(),
+whose 4,683 recipient identities are a different unit with ids that do not
+join; the cross-tab came back empty and that is why.)
+
+  full tier \ mini tier   no candidate    YES   MAYBE     NO
+  YES     2,979                     5  2,963       3      8
+  MAYBE   1,044                   642     35      83    284
+  NO        725                   565      2       3    155
+
+THE RESULT WORTH HAVING: 35 MAYBE -> YES, and in 17 of them (48.6%) the mini
+reference clears to THE SAME EIN the full reference already had as its own top
+candidate. On those the production reference held the right answer and the
+margin gate would not clear it, because competitors kept the margin tight.
+That is 1.6% of the MAYBE tier, measured rather than argued, and it is direct
+support for the reference-side duplicate finding -- 15.9% of the MAYBE tie band
+is two BMF rows carrying one name for one body (dev/CLUSTER-FINDINGS.md 8).
+
+The other 18 clear to a different EIN, or the full reference had no candidate.
+A subset reference cannot know better than the full one, so those are for hand
+review, not adoption.
+
+NO -> YES: 2, both to an EIN the full reference did not pick. Suspect.
+
+COST OF REMOVING THE REFERENCE, which was not expected: 16 of the 2,979 full-YES
+rows (0.5%) stop clearing -- 11 drop to MAYBE or NO, 5 find no candidate at all
+-- and 1 clears to a different EIN. Shrinking a reference is not monotone.
+
+STATISTICS CONTROL (PF_EXP_STATS=mini recomputes name_freq and token_idf over
+the 9,253 rows instead of carrying the production tables):
+
+  MAYBE -> YES        35  ->  41
+  ... same EIN        17  ->  19
+  NO tier             155 ->  138   (17 move NO -> MAYBE)
+
+So the inflated IDF of a tiny reference is mildly more permissive and changes
+no conclusion. Production statistics is the right default; the knob exists so
+the two effects are never confounded again.
+
+==============================================================================
+ARM C -- 50,000 fresh grants, the benchmark's own rows excluded
+==============================================================================
+50,000 grant rows -> 40,977 identities, matched in 6.2 min (0.009 s/identity,
+20x faster than production: candidate generation against 9,253 rows is cheap).
+
+  NO     38,697   94.44%
+  YES     1,546    3.77%
+  MAYBE     734    1.79%
+
+So 3.77% of fresh grant identities go to one of these 2,813 organisations.
+Against 2,813 of roughly 2.19M distinct recipient names in the corpus -- 0.13%
+of names -- that is about 29x enrichment over uniform, which is real but far
+less concentrated than the headline recipients suggest. SALVATION ARMY appears
+28,096 times, but the recipient distribution as a whole is flat.
+
+PRECISION CONTROL: 400 of the 1,546 mini-YES identities re-matched against the
+full reference.
+
+  full reference verdict:  YES 368   MAYBE 30   NO 2
+  survives contest (full also YES, same EIN):  352   88.0%
+  full clears a DIFFERENT EIN:                  16
+  full does not clear at all:                   32
+  -> 48 of 400, 12.0%, are the mini reference clearing what contest would not
+
+So arm C's 3.77% carries about 88% precision against the full reference as the
+standard: roughly 3.3% contest-surviving. Do not quote 3.77% as accuracy.
+
+(The 2.045 s/identity in that control is a fixed-cost artifact -- 400 queries
+is far too few to amortise the full reference's setup. The comparable
+production figure is 0.183 s/identity.)
+
+==============================================================================
+SCALING TO THE 1,000,000-GRANT RUN
+==============================================================================
+  identities per grant   0.82   (40,977 / 50,000)
+  1M grants           -> ~820,000 identities
+  at 0.009 s/identity -> ~2.05 h matching
+  plus the chunked corpus scan (~6 min) and pf_prepare
+  TOTAL                  ~2.5 h
+  expected YES           ~31,000 at ~88% precision
+
+  PFMATCH_DIR=. PF_EXP_ARM=C PF_EXP_N=1000000 Rscript dev/experiment-head-reference.R
+
+==============================================================================
+THE ANSWER
+==============================================================================
+Yes, new YES cases surface -- about 3.8% of fresh grant identities -- but they
+are new GRANTS to organisations already resolved, not new organisations. A
+subset reference cannot discover an EIN it does not contain.
+
+The finding worth keeping is not in the large batch at all. It is arm R's 17
+cases where the full reference already had the right top candidate and
+competition stopped it clearing. Scaling the batch tests coverage; scaling the
+rerun against a bigger slice of MAYBE tests the hypothesis.
+==============================================================================
+
+==============================================================================
+ADDENDUM 2026-10-31 -- the hypothesis the experiment above does NOT test
+==============================================================================
+The question behind the request was whether grants that fail against the BMF
+might still match against grants that already cleared, because foundations
+write recipient names by their own consistent convention while the BMF carries
+the registered legal name.
+
+THE ARMS ABOVE DO NOT TEST THAT. The mini reference was carved from the BMF
+rows of the resolved EINs, so arm C is still grants-to-BMF, with a smaller BMF.
+A grant-side reference -- the filer-written name and address of each cleared
+record, carrying the EIN it resolved to -- was never built.
+
+Measured instead, on the 369,260 cleared grant rows of the triangulation run,
+which carry both the filer-written recip_name and the matched bmf_name over
+31,722 EINs. Restricted to the 16,417 EINs holding two or more distinct
+renderings: 312,306 rows.
+
+EXACT HITS, per grant row -- the operational unit, since that is what arrives:
+
+  hits another cleared GRANT rendering exactly   293,742   94.06%
+  hits its own BMF name exactly                  147,290   47.16%
+  grant-exact but NOT bmf-exact                  150,286   48.12%
+  bmf-exact but NOT grant-exact                    3,834    1.23%
+  neither                                         14,730    4.72%
+
+That is the hypothesis's strongest evidence. 94% of cleared rows are
+byte-identical to another cleared rendering of the same organisation, against
+47% identical to the BMF name, and nearly half could be resolved by an exact
+grant-side key where an exact BMF key fails.
+
+FUZZY SIMILARITY, per DISTINCT rendering (Jaro-Winkler, 49,918 renderings):
+
+  to the nearest OTHER cleared rendering    median 0.960   mean 0.936
+  to its own BMF name                       median 0.967   mean 0.948
+  closer to a grant than to the BMF                31.74%
+  at or above the 0.95 bar: grant 60.33%, BMF 61.24%
+
+ON FUZZY DISTANCE THE GRANT SIDE IS NOT BETTER -- it is marginally worse.
+
+The two results are not in conflict; they are different units. The exact-hit
+figure is per row and so weighted by frequency: a common rendering repeats, so
+a row very likely shares its string with another row. The fuzzy figure is per
+distinct rendering and unweighted, so the long tail of one-off renderings, which
+has no close sibling, dominates it.
+
+SO THE GRANT-SIDE ADVANTAGE IS IN FREQUENCY, NOT IN SIMILARITY. It will help
+where a recipient is granted often, and where the filer convention is an
+acronym or colloquial name the BMF legal name does not resemble -- the cases
+with b_sim near zero and g_near high:
+
+  THE YARD                 g_near 0.933   b_sim 0.000
+  USO                      g_near 0.789   b_sim 0.000
+  THE CFA                  g_near 0.607   b_sim 0.000
+  THE ARC                  g_near 0.927   b_sim 0.423
+  SOCAL KOCE TV FOUNDATION g_near 0.928   b_sim 0.500
+
+It will not help a rare recipient with an unusual rendering, and it is not a
+general claim that fuzzy matching is easier grant-side.
+
+WHAT WOULD SETTLE IT, and it is ~15 minutes rather than hours: build the
+grant-side dictionary -- (normalized recip_name, street_key, zip5) -> EIN over
+the cleared rows -- and match the benchmark's 1,044 MAYBE and 725 NO rows
+against it. That is the user's question stated exactly: do the cases that fail
+against the BMF hit a cleared grant rendering?
+
+THE DESIGN CONSTRAINT to carry into that test: the dictionary's EINs came from
+the pipeline itself, so resolving new grants against it propagates the
+pipeline's own decisions, errors included. It is a recall device whose precision
+is inherited, not established, and it needs the same contest control arm C used
+-- verify a sample against the BMF -- plus pf_consistency(), which exists for
+this.
+
+==============================================================================
+ADDENDUM 2 -- the grant-side dictionary, run 2026-10-31
+dev/experiment-grant-dictionary.R    log: scratch DICT.log
+==============================================================================
+Dictionary: the filer-written name and address of every cleared grant row from
+the triangulation run, carrying the EIN it resolved to. 88,744 distinct
+(rendering, address, EIN) rows over 31,721 EINs. 100 rows that are the
+benchmark's own were excluded, so the test is not circular on the queries.
+
+AMBIGUITY -- the "THE ARC" worry, measured and settled:
+
+  distinct bare name keys                 63,310
+  bare name keys carrying >1 EIN             727   1.15%   worst: 39 EINs
+  distinct (name, zip5) keys              66,425
+  (name, zip5) keys carrying >1 EIN            0   0.00%
+
+HABITAT FOR HUMANITY alone is 39 EINs, RONALD MCDONALD HOUSE 31, BIG BROTHERS
+BIG SISTERS 29. Keying on name alone is unusable; name + ZIP5 is unambiguous
+across all 66,425 keys. The address is what makes the dictionary work.
+
+BMF-reference tier x grant-dictionary tier, over the benchmark's 4,748 rows:
+
+  BMF \ dict     no cand    YES   MAYBE     NO
+  YES   2,979        975    794     152  1,058
+  MAYBE 1,044        297    115     190    442
+  NO      725        386     10      29    300
+
+WHAT IT RECOVERS
+  MAYBE -> YES   115 of 1,044   (11.0% of the MAYBE tier)
+    agreeing with the BMF's own top candidate:  47   40.9%
+    a new claim needing adjudication:           68
+  NO -> YES       10 of 725     (1.4%)
+    agreeing:  3    new claim:  7
+
+  Combined 125 of 4,748 = 2.63 points of clear rate, of which the 50 agreeing
+  cases are 1.05 points. Both clear the stop rule's "every remaining lever
+  moves <1% of grants" bar; the trustworthy half only just.
+
+WHAT IT CANNOT DO -- and this is decisive about how to use it. The dictionary
+reproduces only 794 of the 2,979 BMF-YES rows, 26.7%. It holds 31,721 EINs
+against the BMF's ~1.9M organisations, so as a REPLACEMENT reference it is far
+worse. 37 BMF-YES rows clear to a DIFFERENT EIN against it.
+
+THE DISAGREEMENTS ARE THE KNOWN AFFILIATE FAILURE, not a new one:
+
+  YALE UNIVERSITY            -> YALE UNIVERSITY ALUMNI FUND  066078326 vs 060646973
+  FLORIDA STATE UNIV FOUNDA  -> FLORIDA STATE UNIVERSITY     815312398 vs 591961248
+  ANY BABY CAN               -> ANY BABY CAN                 742684333 vs 010809682
+  MEMORIAL SLOAN KETTERING   -> MEMORIAL SLOAN KETTERING     131924236 vs 020597827
+
+An organisation against its own foundation or alumni fund, and chapter networks
+picking the wrong chapter. dev/AFFILIATION-FINDINGS.md and the dyad work are
+about exactly this, so adjudicating these connects to existing work.
+
+The clean recoveries are spelling and spacing the BMF name does not share:
+
+  CITIMEALS ON WHEELS       -> CITY MEALS ON WHEELS       133634381 == 133634381
+  LOCK HAVEN YMCA           -> LOCK HAVEN AREA YMCA       240798644 == 240798644
+  HEALTH MEDICINE POLICY    -> HEALTH AND MEDICINE POLICY 363143826 == 363143826
+
+VERDICT: the hypothesis holds, as a SUPPLEMENT. A grant-side dictionary is a
+recovery pass to run after the BMF cascade, never instead of it, and the
+agreement test is the acceptance rule -- take the cases where the dictionary
+and the BMF's own top candidate concur, queue the rest.
+
+LIMITATION to carry forward: this dictionary was built from the triangulation
+run, whose population is drawn from multi-rendering addresses, so it
+over-represents shared addresses and probably chapters. A dictionary built from
+a corpus-representative run should be measured before the precision figures
+above are trusted as general.
+
+==============================================================================
+ADDENDUM 3 -- the pass, validated end to end through the package API
+2026-10-31   pf_grant_dictionary() + pf_recover_from_dictionary()
+==============================================================================
+Run on the benchmark population by the pipeline's normal path -- pf_prepare(),
+then pf_run_batches() against REF-augmented.rds, then the recovery pass. The
+unit here is the recipient IDENTITY (4,683), not the in-scope grant row
+(4,748) the baseline uses, so these counts are not the 115/47 of addendum 2.
+
+  BMF run      YES 2,865   MAYBE 973   NO 845      clear rate 61.18%
+  dictionary   88,744 renderings, 31,721 EINs, 0 dropped ambiguous
+  retried      1,818 unresolved identities
+  cleared      106 of them
+  agreeing     42 with the BMF's own top candidate   (39.6%)
+
+  accept = "agree"   +42    61.18% -> 62.08%   +0.90 points   64 queued
+  accept = "all"     +106   61.18% -> 63.44%   +2.26 points    0 queued
+
+THE DEFAULT IS "agree" and that is the number to plan with: +0.90 points, with
+64 cases going to an adjudication queue rather than into the status frame. On
+the grant-row unit of addendum 2 the same rule was worth 1.05 points, so the
+corroborated lever is around one point either way -- which straddles the stop
+rule's "every remaining lever moves <1% of grants" bar rather than clearing it
+comfortably. "all" is for measurement only: it adopts 64 claims that the BMF
+reference declines to corroborate, from a dictionary this pipeline labelled.
+
+AMBIGUITY CONFIRMED CLEAN ON REAL DATA. 0 renderings dropped across 88,744 --
+no (name, zip5) key in the dictionary carries two EINs. The guard is kept
+because a silent collision there is the one failure the pass must not have, and
+the unit tests cover it with synthetic collisions.
+
+ONE EDGE CASE FOUND BY THE TESTS and fixed: when every rendering is ambiguous
+the dictionary empties, and np_reference() cannot canonicalize a zero-row
+frame. It now stops naming the guard that emptied it instead of failing inside
+npmatch.

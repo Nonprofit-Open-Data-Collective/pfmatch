@@ -377,6 +377,59 @@ positive ones.
 4. **Build the dollar-sorted review queue** — ~740 reviews cover 70% of the
    recoverable unresolved dollars at 50k scale; re-derive the number at full
    scale.
+5. **Run the production adjudication through the Batch API, on the MAYBE tier
+   only.** Both halves of that sentence are load-bearing.
+
+   *MAYBE tier only*, because the dedup collapse and the tier filter are worth
+   more than any model or pricing decision. Measured end to end
+   (`dev/ADJUDICATION-EXPERIMENT.md`), at $0.000674/case for Haiku:
+
+   | scope | n | cost |
+   |---|---:|---:|
+   | every grant row | 17,253,199 | $11,635 |
+   | every unique identity | 4,585,061 | $3,092 |
+   | **MAYBE identities only** | **~1,008,000** | **$680** |
+
+   17.25M rows collapse to ~4.59M identities at the 3.72x measured in
+   `dev/FULL-01-PREPARE.log`, and 22.0% of those route to MAYBE. Adjudicating
+   the tier rather than the corpus is a 17x saving before a single prompt
+   changes. Never submit the YES mass to a reviewer: it is not what MAYBE
+   adjudication is for, and precision over YES needs its own stratified sample
+   (`BASELINE-2026-10C/MANIFEST.md`).
+
+   *Batch API*, because **rate limits bind long before price does.** The
+   100-case run did 52 s at 6 concurrent workers; 1.01M calls at that observed
+   throughput is ~150 h on one synchronous stream, spent mostly on 429
+   back-off. The 50% discount ($680 → $340, and $8,107 → $4,054 for the
+   cascade) is almost incidental next to not managing that. Batch supports
+   structured outputs and prompt caching, which is what stage 01 depends on;
+   results return in any order, so key by `custom_id` and never by position.
+
+   Three things the batch path must carry over from the experiment.
+
+   *Escalate on the cheap arm's own stated confidence* — high 12/12 and medium
+   10/11 correct against known answers, low 0/4 — which puts ~18% into a second
+   pass and reaches 96.3% against 92.6% for running the expensive arm over
+   everything, at a tenth of the cost.
+
+   *Escalate to Opus **without** web search.* The ablation
+   (`PF_ADJ_NOSEARCH=1`, `dev/ADJ-EXP-ABLATION.log`) decomposes the two-arm gap
+   into **+7.4 points of model and +3.7 points of search**, and the search step
+   is one case in 27 (McNemar exact p = 1.000). Search costs +124% in tokens —
+   it re-caches a growing prefix, writing 537,198 tokens against the no-search
+   arm's 28,785 — plus per-use billing. Over the tier: **$6,175 without search
+   against $12,984 with it and ~399,000 searches, for identical measured
+   accuracy.** Search's real effect was on confidence (high 51% → 73%), not
+   correctness, and the no-search arm actually cleared *more* (49/68 vs 47/68).
+
+   *Keep a search tier for the residue, not the bulk.* It is the only
+   configuration that can establish an answer is **absent**: 13 of the search
+   arm's 18 NONEs are `CONTRADICTED` — the organisation was found and its EIN
+   shown not to be among the candidates. A no-search NONE means "cannot tell
+   from the packet" and still needs a human; a search NONE can be closed. Route
+   what the cheap-plus-Opus pass cannot close to search, and budget per use.
+
+   Blocked on nothing but Phase 1 producing the identities.
 
 **Exit criterion:** a calibrated review process and the largest ground-truth set
 the project has had.

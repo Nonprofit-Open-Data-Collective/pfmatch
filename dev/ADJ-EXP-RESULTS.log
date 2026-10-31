@@ -1,0 +1,257 @@
+============================================================================== 
+MAYBE ADJUDICATION EXPERIMENT -- RESULTS 
+============================================================================== 
+run 2026-10-31 04:48  light=claude-haiku-5-5  deep=claude-opus-5-5 
+
+cases scored: 100  (stratum A 68, stratum B 32) 
+
+------------------------------------------------------------------------------ 
+(a) ABSOLUTE ACCURACY on the hand-adjudicated cases -- the gate 
+------------------------------------------------------------------------------ 
+27 of the 32 calibration cases carry a usable target. 
+Of those, the correct answer is MATCH on 18 and NONE on 9. 
+
+9 case(s) where a human found the org but its EIN is NOT in the packet: 
+  on those, NONE is correct and any MATCH is an error, however plausible. 
+
+                        light            deep 
+  CORRECT                22              25 
+  AMBIGUOUS_RIGHT         2               0 
+  MISS                    1               1 
+  AMBIGUOUS_WRONG         1               0 
+  WRONG                   1               1 
+
+strict accuracy (CORRECT only) 
+  light : 22/27 = 81.5% (95% CI 63.3-91.8) 
+  deep  : 25/27 = 92.6% (95% CI 76.6-97.9) 
+lenient accuracy (right EIN even if hedged) 
+  light : 24/27 = 88.9% (95% CI 71.9-96.1) 
+  deep  : 25/27 = 92.6% (95% CI 76.6-97.9) 
+
+confident-and-wrong -- the error that is never reviewed again: 
+  light : 0/27 = 0.0% (95% CI 0.0-12.5) 
+  deep  : 1/27 = 3.7% (95% CI 0.7-18.3) 
+
+-- 
+GATE MET. The deep arm is 92.6% (95% CI 76.6-97.9) accurate on the known-answer cases, 
+so its verdicts on the other 68 are usable as a reference standard, 
+with that error rate carried into every figure drawn from them. 
+Deep over light by +11.1 points on the same 27 cases. 
+
+------------------------------------------------------------------------------ 
+Q1  HOW MANY MAYBEs CLEAR TO YES 
+------------------------------------------------------------------------------ 
+Stratum A only: 68 cases drawn simple-random from the MAYBEs with no 
+prior adjudication. The calibration cases are excluded -- they were 
+selected by earlier audits, so including them would bias this rate. 
+
+Deep-arm verdict distribution on those 68: 
+
+AMBIGUOUS     MATCH      NONE 
+        3        47        18 
+
+clearance to YES, at three thresholds 
+  any MATCH                        : 47/68 = 69.1% (95% CI 57.4-78.8) 
+  MATCH at medium+ confidence      : 47/68 = 69.1% (95% CI 57.4-78.8) 
+  + externally CONFIRMED by search : 46/68 = 67.6% (95% CI 55.8-77.6) 
+
+tie-adjusted clearance (post-stratified on the tier's 59.1% / 40.9% tie split; 
+this draw of stratum A is 75.0% ties, so the raw rates above run low) 
+  any MATCH      : 70.7% (95% CI 59.4-81.9)   raw 69.1%, shift +1.6 pt 
+  medium+ conf   : 70.7% (95% CI 59.4-81.9)   raw 69.1%, shift +1.6 pt 
+  + confirmed    : 69.5% (95% CI 58.2-80.8)   raw 67.6%, shift +1.9 pt 
+  by tie class, any MATCH: 
+    tie=TRUE  n=51  34/51 = 66.7% (95% CI 53.0-78.0) 
+    tie=FALSE n=17  13/17 = 76.5% (95% CI 52.7-90.4) 
+
+projected onto the 1,044-case augmented MAYBE tier 
+  any MATCH      :  738 cases  (95% CI 620-855)  [tie-adj] 
+  medium+ conf   :  738 cases  (95% CI 620-855)  [tie-adj] 
+  + confirmed    :  726 cases  (95% CI 608-844)  [tie-adj] 
+
+what that does to the benchmark's clear rate (4,748 identities, 2,979 YES) 
+  any MATCH      : 62.74% -> 78.28%  (+15.54 points, CI +13.07 to +18.01)  [tie-adj] 
+  medium+ conf   : 62.74% -> 78.28%  (+15.54 points, CI +13.07 to +18.01)  [tie-adj] 
+  + confirmed    : 62.74% -> 78.03%  (+15.29 points, CI +12.80 to +17.77)  [tie-adj] 
+
+NOT a precision claim. These are a model's verdicts, carrying the error 
+rate measured in section (a) above. The ceiling is 69.1% -- a MAYBE whose 
+recipient is simply not in the BMF cannot be cleared by any reviewer. 
+
+why the rest do not clear: 
+           searched
+verdict     CONFIRMED CONTRADICTED INCONCLUSIVE
+  AMBIGUOUS         0            0            3
+  NONE              2           13            3
+
+------------------------------------------------------------------------------ 
+Q2  HOW RELIABLE IS THE LIGHT ADJUDICATOR 
+------------------------------------------------------------------------------ 
+(b) AGREEMENT with the deep arm, all 100 complete cases 
+
+verdict cross-tab (rows light, columns deep): 
+           deep
+light       AMBIGUOUS MATCH NONE
+  AMBIGUOUS         3    10    4
+  MATCH             0    53    2
+  NONE              0     7   21
+
+verdict agreement : 77/100 = 77.0% (95% CI 67.8-84.2) 
+  chance agreement: 46.6% -- two reviewers favouring the same verdict 
+  Cohen's kappa   : 0.570 (SE 0.079)  [moderate] 
+
+where both named an EIN (66 cases), same EIN: 59/66 = 89.4% (95% CI 79.7-94.8) 
+  Agreeing on MATCH while naming different EINs is the dangerous cell: 
+  7 case(s). Verdict concordance alone would have scored those as agreement. 
+
+the asymmetry -- which arm is more willing to answer 
+  light MATCH 55.0%  NONE 28.0%  AMBIGUOUS 17.0% 
+  deep  MATCH 70.0%  NONE 27.0%  AMBIGUOUS 3.0% 
+  light MATCH where deep said NONE : 2  (would be false positives) 
+  light NONE where deep said MATCH : 7  (recoverable, left on the table) 
+
+ 
+(c) WHERE THE LIGHT ARM FAILS -- the only actionable part 
+
+Agreement with the deep arm, sliced by the light arm's OWN stated 
+confidence. If this is flat, the confidence signal is worthless for 
+routing and a cheap pass cannot be trusted anywhere; if it rises, the 
+high-confidence subset is a candidate for acceptance without escalation. 
+  light confidence high   n=35  agree 34/35 = 97.1% (95% CI 85.5-99.5) 
+  light confidence medium n=47  agree 39/47 = 83.0% (95% CI 69.9-91.1) 
+  light confidence low    n=18  agree 4/18 = 22.2% (95% CI 9.0-45.2) 
+
+by the light arm's evidence class (QUOTE is meant to be the strongest): 
+  QUOTE  n=30  agree 28/30 = 93.3% (95% CI 78.7-98.2) 
+  NTEE   n=10  agree 7/10 = 70.0% (95% CI 39.7-89.2) 
+  INFER  n=42  agree 30/42 = 71.4% (95% CI 56.4-82.8) 
+  NONE   n=18  agree 12/18 = 66.7% (95% CI 43.7-83.7) 
+
+by the structural features the auto-accept rule failed on: 
+  tie      n=70  agree 53/70 = 75.7% (95% CI 64.5-84.2) 
+  no tie   n=30  agree 24/30 = 80.0% (95% CI 62.7-90.5) 
+  margin <=0        n=52  agree 40/52 = 76.9% (95% CI 63.9-86.3) 
+  margin 0-0.05     n=18  agree 13/18 = 72.2% (95% CI 49.1-87.5) 
+  margin 0.05-0.15  n=10  agree 6/10 = 60.0% (95% CI 31.3-83.2) 
+  margin >0.15      n=20  agree 18/20 = 90.0% (95% CI 69.9-97.2) 
+
+by pass (the TOKEN_OVERLAP B-passes are the population npmatch caps 
+below YES on purpose, and are where the auto-accept rule broke): 
+  B1-token-state     n=39  agree 32/39 = 82.1% (95% CI 67.3-91.0) 
+  A1-name-zip5       n=22  agree 16/22 = 72.7% (95% CI 51.8-86.8) 
+  A2-name-state      n=15  agree 9/15 = 60.0% (95% CI 35.7-80.2) 
+  C1-name-any        n=11  agree 9/11 = 81.8% (95% CI 52.3-94.9) 
+  B2-token-concat    n=7   agree 6/7 = 85.7% (95% CI 48.7-97.4) 
+  A3-name-dba        n=5   agree 5/5 = 100.0% (95% CI 56.6-100.0) 
+
+Accuracy by light confidence, on the known-answer cases only. This is 
+the version of the slice above that is accuracy rather than agreement; 
+n is small, so read the intervals and not the point estimates. 
+  light high   n=12  correct 12/12 = 100.0% (95% CI 75.8-100.0) 
+  light medium n=11  correct 10/11 = 90.9% (95% CI 62.3-98.4) 
+  light low    n=4   correct 0/4 = 0.0% (95% CI 0.0-49.0) 
+
+what search actually bought, where the two arms disagree: 
+  23 disagreements of 100 (23.0%) 
+              deep_verdict
+deep_search    MATCH NONE
+  CONFIRMED       14    0
+  CONTRADICTED     0    5
+  INCONCLUSIVE     3    1
+
+  A disagreement where the deep arm CONFIRMED its answer externally is 
+  evidence the light arm was wrong. One marked INCONCLUSIVE is just two 
+  models differing on the same packet, and is not evidence either way. 
+  externally confirmed disagreements: 14 of 23 
+
+------------------------------------------------------------------------------ 
+(d) ROUTING -- what a cascade would cost and what it would get 
+------------------------------------------------------------------------------ 
+policy                        escalated   cost/1044   accuracy on the 27 
+---------------------------------------------------------------------------- 
+  light only                     0.0%    $   0.70    22/27 = 81.5% (95% CI 63.3-91.8) 
+  escalate low                  18.0%    $  13.44    26/27 = 96.3% (95% CI 81.7-99.3) 
+  escalate low + INFER          47.0%    $  33.95    26/27 = 96.3% (95% CI 81.7-99.3) 
+  escalate low + medium         65.0%    $  46.69    25/27 = 92.6% (95% CI 76.6-97.9) 
+  escalate all but QUOTE+high   78.0%    $  55.89    25/27 = 92.6% (95% CI 76.6-97.9) 
+  deep only                    100.0%    $  71.45    25/27 = 92.6% (95% CI 76.6-97.9) 
+
+Search is billed per use on top of the deep arm's tokens, so every row 
+with escalation is understated. The deep arm used 2.2 searches/case here. 
+
+What the light arm leaves on the table, by its own confidence -- cases it 
+declined (NONE/AMBIGUOUS) where the deep arm found a MATCH it confirmed: 
+  high   declined 3   of which deep confirmed a MATCH: 1 
+  medium declined 25  of which deep confirmed a MATCH: 5 
+  low    declined 17  of which deep confirmed a MATCH: 8 
+
+------------------------------------------------------------------------------ 
+WORKED DISAGREEMENTS -- for reading by eye 
+------------------------------------------------------------------------------ 
+
+G002448  SOIL (CA) 
+  light NONE  (high/NONE): Filed name SOIL is a bare acronym-like token; no candidate's name or Sebastopol CA address corroborates; Candi 
+  deep  MATCH 208195963 (high/CONFIRMED): Candidate 2 DBA "Soil" = Sustainable Organic Integrated Livelihoods; web sources place SOIL at Sebastopol CA 9 
+  found: PitchBook, UNCCD and MapQuest list SOIL at 3950 Green Valley School Rd, Sebastopol CA 95472. GuideStar, Charity Navigator, ProPublica and SOIL's own 2 
+
+G001382  DISABLED AMERICAN VETERANS (KY) 
+  light AMBIGUOUS 310947913 (low/INFER): Two identical Cold Spring KY ZIP 41076 DAV records (W30) with no mission text or purpose to separate them; gra 
+  deep  MATCH 310263158 (medium/CONFIRMED): The filed address, Cold Spring KY 41076, was DAV's national HQ (3725 Alexandria Pike) until it moved to Erlang 
+  found: Several directories and DAV's own PDFs list the national HQ at 3725 Alexandria Pike, Cold Spring KY 41076. DAV's donate page gives EIN 31-0263158, and 
+
+G000450  MARINE TOYS FOR TOTS FOUNDATION (LA) 
+  light AMBIGUOUS 203021444 (low/INFER): Exact name in two VA entities (Triangle, Quantico); filed LA address matches neither; candidate 1 mission desc 
+  deep  MATCH 203021444 (medium/CONFIRMED): Exact name. Candidate 1's 990 says: "SUPPORTING THE U.S. MARINE CORPS RESERVE TOYS FOR TOTS PROGRAM BY RAISING 
+  found: GuideStar, Charity Navigator and philanthropy.org all list Marine Toys for Tots Foundation, Triangle VA, under EIN 20-3021444, with FY2025 revenue of  
+
+G001787  Jewish Family Services (CA)   [known answer] 
+  light NONE  (low/NONE): Filed name is generic; no candidate ZIP 90010 match; candidates are JFS in LA 90036, San Diego, Palm Springs,  
+  deep  MATCH 951691013 (high/CONFIRMED): LA County directory places JFSLA at 3580 Wilshire Blvd, LA 90010 (filed ZIP). Mission: "JFSLA'S GOALS ARE TO S 
+  found: Candid profile gives Jewish Family Service of Los Angeles, EIN 95-1691013 (330 N Fairfax, LA 90036). LA County locator and 211LA list JFSLA at 3580 Wi 
+  TRUTH: ORG_FOUND -> correct answer MATCH (ein 951691013, in packet: TRUE) 
+
+G003703  THE SALVATION ARMY (CA) 
+  light NONE  (low/NONE): No candidate in San Francisco or ZIP 94103. Only exact-name CA candidate is in Rancho Palos Verdes 90275, a di 
+  deep  MATCH 941156347 (high/CONFIRMED): Golden State Division (SF) gift page lists Salvation Army Tax ID 941156347, the Western Territory HQ in Rancho 
+  found: Golden State Division (Northern California, SF) website states Salvation Army Tax ID 941156347. ProPublica lists 941156347 as Salvation Army Western T 
+
+G004839  CONNECTICUT FOODSHARE INC (CT)   [known answer] 
+  light AMBIGUOUS 061063025 (low/INFER): Two EINs share the exact name and ZIP 06492; candidate 1 has mission text, but nothing in the packet separates 
+  deep  MATCH 061063025 (high/CONFIRMED): Cand 1 990: "DURING THE TWELVE MONTHS ENDED JUNE 30, 2023, CONNECTICUT FOODSHARE DISTRIBUTED OVER 40 MILLION M 
+  found: ctfoodshare.org, Charity Navigator and GuideStar list EIN 06-1063025 at 2 Research Pkwy, Wallingford CT 06492. 22-2474771 is the old Foodshare Inc. (B 
+  TRUTH: ORG_FOUND -> correct answer MATCH (ein 061063025, in packet: TRUE) 
+
+G002251  KANSAS PRESERVATION ALLIANCE (KS) 
+  light AMBIGUOUS 480905225 (low/INFER): Two exact-name KPA entities in Topeka KS; filed Leawood ZIP matches neither. Candidate 1 is subsection 3 with  
+  deep  MATCH 480905225 (medium/CONFIRMED): Exact name match. Cand 1 is an active 501(c)(3) (ruled 1982, A82, has assets/revenue) at ZIP 66601, which matc 
+  found: KPA's website calls it a statewide not-for-profit founded in 1979. The Kansas Historical Society lists its address as P.O. Box 2506, Topeka KS 66601,  
+
+G002917  CISE (OH) 
+  light AMBIGUOUS 820977523 (low/INFER): Exact name CISE and ZIP 45202 match the operating school entity; CISE Foundation shares ZIP and its purpose te 
+  deep  MATCH 310538501 (medium/CONFIRMED): The 2016 grant predates CISE's own exemption (Sept 2017, EIN 82-). In 2016 CISE was an Archdiocese of Cincinna 
+  found: ProPublica, GuideStar and Cause IQ list the standalone CISE as EIN 82-0977523, tax-exempt since Sept 2017 and formed in 2017. Before that, CISE was an 
+
+G002882  SPECIAL OLYMPICS (FL)   [known answer] 
+  light AMBIGUOUS 237181560 (low/INFER): Filed name generic; Clermont ZIP 34711 operating SOFL vs its supporting foundation (quote: 'Supporting organiz 
+  deep  MATCH 237181560 (high/CONFIRMED): Filed Clermont FL = Special Olympics Florida HQ (Clermont 34711). Foundation arm ruled 2012, after 2011 grant; 
+  found: GuideStar profile shows Special Olympics Florida Inc, 1915 Don Wickham Dr, Clermont FL 34711, EIN 23-7181560, formerly Florida Special Olympics. That  
+  TRUTH: ORG_FOUND -> correct answer MATCH (ein 237181560, in packet: TRUE) 
+
+G002695  DIOCESE OF FALL RIVER (MA) 
+  light NONE  (medium/NONE): No candidate is the Diocese of Fall River. Candidate 5 is a Catholic Education Center under the Roman Catholic 
+  deep  MATCH 042131417 (medium/CONFIRMED): Diocese's civil corporation is "Roman Catholic Bishop of Fall River"; cand 5 bears that name, church activity, 
+  found: Diocese website and State of Diocese report say the Diocese is the corporation sole "Roman Catholic Bishop of Fall River," chancery at 450 Highland Av 
+
+G001886  BOY SCOUTS OF AMERICA (TX) 
+  light AMBIGUOUS 221576300 (medium/NTEE): Exact name and ZIP 75038 on national BSA with NTEE O41 Boy Scouts; support arms carry UNDEFINED NTEE; generic  
+  deep  MATCH 221576300 (high/CONFIRMED): Cand 2 is the National Council, O41: "Support for 250 local councils". Others are narrow funds ("Support of Bo 
+  found: GuideStar, ProPublica and Zeffy all list Boy Scouts of America / Scouting America National Council, Irving TX, under EIN 22-1576300. The other Irving  
+
+G004123  VERA COURT NEIGHBORHOOD CENTER INC (WI) 
+  light AMBIGUOUS 391945609 (medium/INFER): Two BMF records with identical name, city, ZIP and P28 NTEE; candidate 1 has full 990 data (assets, mission) w 
+  deep  MATCH 391945609 (high/CONFIRMED): Exact name, ZIP 53704. Cand1 990: "OTHER PROGRAM SERVICES PROVIDED TO RESIDENTS OF VERA COURT NEIGHBORHOOD." C 
+  found: Charity Navigator, CauseIQ and Impala all list Vera Court Neighborhood Center Inc, 614 Vera Ct, Madison WI 53704, as EIN 39-1945609, an active 990 fil 
+============================================================================== 
+wrote data-dev/ADJ-EXP-SCORED.rds (100 cases, 37 columns) 
+wrote ./dev/ADJ-EXP-RESULTS.log 
+============================================================================== 

@@ -19,6 +19,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cascade-workflow.html">The matching cascade, step by step</a></li>
     <li><a class="dropdown-item" href="../articles/name-and-address-variants.html">Name and address variants</a></li>
+    <li><a class="dropdown-item" href="../articles/adjudicating-maybe.html">Adjudicating the MAYBE tier</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -62,7 +63,7 @@
 
 <dt id="arg-street-a-street-b">street_a, street_b<a class="anchor" aria-label="anchor" href="#arg-street-a-street-b"></a></dt>
 <dd><p>Optional street lines, passed through to
-<code><a href="pf_parse_unit.html">pf_parse_unit()</a></code> so a box number is not read as a suite.</p></dd>
+<code><a href="pf_street_unit.html">pf_street_unit()</a></code> so a box number is not read as a suite.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -92,7 +93,21 @@ filers omit the line constantly, so silence is not disagreement.</p></dd>
 <dd><p>Neither parses.</p></dd>
 
 
-</dl><p><code>conflict</code> fires on 0.47% of candidate pairs in the triangulation run — 69
+</dl><p>Two units agree when their identifiers match <strong>and</strong> their designators fall
+in the same class: the room-level designators are interchangeable
+(<code>.PF_UNIT_ROOM</code>), everything else is not, so <code>UNIT 1200</code> is <code>STE 1200</code> but
+<code>FL 2</code> is not <code>STE 2</code>. This is where pfmatch departs from npmatch, which
+compares <code>street_unit_id</code> alone and so reads a floor as a suite. Upstream
+the cost is a missing 0.97 rung in a <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max()</a></code> ladder; here it would be a
+false <code>agree</code>, which no reviewer ever looks at.</p>
+<p>Against npmatch's own pair annotations: <code>conflict</code> and <code>agree</code> are
+<code>geo_unit == 0</code> and <code>geo_unit == 1</code> under the stricter designator rule above,
+and <code>one_sided</code> and <code>absent</code> are the two halves of <code>geo_unit == NA</code> that
+<code>geo_unit</code> cannot tell apart. The crowding half of the annotation —
+<code>addr_shared</code>, <code>addr_units</code>, <code>addr_unit_shared</code>, <code>addr_note</code> — has no
+counterpart here and should be taken from <code>np_compare()</code> rather than
+reinvented; see <code>dev/PLACES-SYNC.md</code> §4.5.</p>
+<p><code>conflict</code> fires on 0.47% of candidate pairs in the triangulation run — 69
 of 14,790, of which 19 sit on a <code>MAYBE</code> candidate and so reach the
 adjudication queue. It is a rare, sharp signal, not a routine one, and it
 concentrates: one address (a fellowship program writing a sequential
@@ -102,7 +117,7 @@ conflict is a prompt for a reviewer, never an automatic verdict. See the
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="pf_parse_unit.html">pf_parse_unit()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="pf_street_unit.html">pf_street_unit()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

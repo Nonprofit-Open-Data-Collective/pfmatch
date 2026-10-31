@@ -1,0 +1,43 @@
+﻿============================================================================== 
+ADJUDICATION EXPERIMENT  stage 0: packet 
+============================================================================== 
+N=100  (calibration=32, estimation=68)  seed=20261031  k=5  bmf=augmented 
+
+loading REF-augmented.rds ... 
+  3,880,431 reference rows 
+  4,903 grants 
+matching (11 passes, pairs retained) ... 
+  matched in 2045.0 s 
+
+gate: 4,748 identities, tier identical to BASELINE-2026-10C 
+
+MAYBE    NO   YES 
+ 1044   725  2979 
+
+MAYBE tier: 1,044 identities 
+truth file: 172 rows, population 0b5126ef02f2a8b0 
+truth rows that are MAYBE here: 32 (27 naming an EIN) 
+
+stratum A estimation : 68 drawn simple-random from 1,012 eligible 
+stratum B calibration: 32 drawn from 32 adjudicated 
+
+BMF context from BMF-AUGMENTED-unified-fixed.csv ... 
+  479 candidate rows over 100 grants in 22.7 s 
+
+990 text from ORG-TEXT-BUNDLE.rds ... 
+  mission 36.5%  programs 30.9%  ntee_text 36.5% of candidate rows 
+
+calibration stratum: 32 cases 
+
+ ORG_FOUND UNRESOLVED 
+        27          5 
+  correct EIN present among the 5 candidates: 18 of 32 naming one 
+============================================================================== 
+wrote data-dev/ADJ-EXP-PACKET.rds   479 candidate rows 
+wrote data-dev/ADJ-EXP-CASES.rds    100 cases 
+wrote data-dev/ADJ-EXP-TRUTH.rds    32 with adjudicated truth 
+
+case mix: ties 70/100, median margin 0.000, 7 distinct passes 
+
+next: Rscript dev/adjudicate-01-light.R 
+============================================================================== 
