@@ -377,6 +377,42 @@ positive ones.
 4. **Build the dollar-sorted review queue** — ~740 reviews cover 70% of the
    recoverable unresolved dollars at 50k scale; re-derive the number at full
    scale.
+5. **Run the production adjudication through the Batch API, on the MAYBE tier
+   only.** Both halves of that sentence are load-bearing.
+
+   *MAYBE tier only*, because the dedup collapse and the tier filter are worth
+   more than any model or pricing decision. Measured end to end
+   (`dev/ADJUDICATION-EXPERIMENT.md`), at $0.000674/case for Haiku:
+
+   | scope | n | cost |
+   |---|---:|---:|
+   | every grant row | 17,253,199 | $11,635 |
+   | every unique identity | 4,585,061 | $3,092 |
+   | **MAYBE identities only** | **~1,008,000** | **$680** |
+
+   17.25M rows collapse to ~4.59M identities at the 3.72x measured in
+   `dev/FULL-01-PREPARE.log`, and 22.0% of those route to MAYBE. Adjudicating
+   the tier rather than the corpus is a 17x saving before a single prompt
+   changes. Never submit the YES mass to a reviewer: it is not what MAYBE
+   adjudication is for, and precision over YES needs its own stratified sample
+   (`BASELINE-2026-10C/MANIFEST.md`).
+
+   *Batch API*, because **rate limits bind long before price does.** The
+   100-case run did 52 s at 6 concurrent workers; 1.01M calls at that observed
+   throughput is ~150 h on one synchronous stream, spent mostly on 429
+   back-off. The 50% discount ($680 → $340, and $8,107 → $4,054 for the
+   cascade) is almost incidental next to not managing that. Batch supports
+   structured outputs and prompt caching, which is what stage 01 depends on;
+   results return in any order, so key by `custom_id` and never by position.
+
+   Two things the batch path must carry over from the experiment. Escalate on
+   the cheap arm's **own stated confidence** — high 12/12 and medium 10/11
+   correct against known answers, low 0/4 — which puts ~18% into a second
+   pass and reaches deep-arm accuracy for a fifth of the cost. And **web
+   search is billed per use**, 2.2/case measured, so the escalated 18% is
+   ~399,000 searches as a separate line item, not a token cost.
+
+   Blocked on nothing but Phase 1 producing the identities.
 
 **Exit criterion:** a calibrated review process and the largest ground-truth set
 the project has had.
