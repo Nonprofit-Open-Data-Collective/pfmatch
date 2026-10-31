@@ -264,3 +264,39 @@ run, whose population is drawn from multi-rendering addresses, so it
 over-represents shared addresses and probably chapters. A dictionary built from
 a corpus-representative run should be measured before the precision figures
 above are trusted as general.
+
+==============================================================================
+ADDENDUM 3 -- the pass, validated end to end through the package API
+2026-10-31   pf_grant_dictionary() + pf_recover_from_dictionary()
+==============================================================================
+Run on the benchmark population by the pipeline's normal path -- pf_prepare(),
+then pf_run_batches() against REF-augmented.rds, then the recovery pass. The
+unit here is the recipient IDENTITY (4,683), not the in-scope grant row
+(4,748) the baseline uses, so these counts are not the 115/47 of addendum 2.
+
+  BMF run      YES 2,865   MAYBE 973   NO 845      clear rate 61.18%
+  dictionary   88,744 renderings, 31,721 EINs, 0 dropped ambiguous
+  retried      1,818 unresolved identities
+  cleared      106 of them
+  agreeing     42 with the BMF's own top candidate   (39.6%)
+
+  accept = "agree"   +42    61.18% -> 62.08%   +0.90 points   64 queued
+  accept = "all"     +106   61.18% -> 63.44%   +2.26 points    0 queued
+
+THE DEFAULT IS "agree" and that is the number to plan with: +0.90 points, with
+64 cases going to an adjudication queue rather than into the status frame. On
+the grant-row unit of addendum 2 the same rule was worth 1.05 points, so the
+corroborated lever is around one point either way -- which straddles the stop
+rule's "every remaining lever moves <1% of grants" bar rather than clearing it
+comfortably. "all" is for measurement only: it adopts 64 claims that the BMF
+reference declines to corroborate, from a dictionary this pipeline labelled.
+
+AMBIGUITY CONFIRMED CLEAN ON REAL DATA. 0 renderings dropped across 88,744 --
+no (name, zip5) key in the dictionary carries two EINs. The guard is kept
+because a silent collision there is the one failure the pass must not have, and
+the unit tests cover it with synthetic collisions.
+
+ONE EDGE CASE FOUND BY THE TESTS and fixed: when every rendering is ambiguous
+the dictionary empties, and np_reference() cannot canonicalize a zero-row
+frame. It now stops naming the guard that emptied it instead of failing inside
+npmatch.
