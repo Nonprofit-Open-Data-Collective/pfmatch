@@ -6,9 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>The matching cascade, step by step • pfmatch</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/Source_Code_Pro-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/Zilla_Slab-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="The matching cascade, step by step">
 </head>
@@ -16,7 +19,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">pfmatch</a>
 
@@ -29,18 +32,27 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/cascade-workflow.html">The matching cascade, step by step</a></li>
+    <li><a class="dropdown-item" href="../articles/name-and-address-variants.html">Name and address variants</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/Nonprofit-Open-Data-Collective/pfmatch/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
@@ -64,65 +76,24 @@
 
     
     
-<p>A 990-PF filer types a grantee’s name into Part XIV Table 3a by hand.
-There is no EIN, the name is often abbreviated or misspelled, and the
-address may be the grantee’s headquarters, a program site, a lockbox, or
-the foundation’s own office. <code>pfmatch</code> recovers the
-recipient’s EIN by running that text against the IRS Business Master
-File through a <strong>staged cascade</strong>: a sequence of blocking
-passes that start tight and loosen, each one only looking at what the
-previous passes could not settle.</p>
+<p>A 990-PF filer types a grantee’s name into Part XIV Table 3a by hand. There is no EIN, the name is often abbreviated or misspelled, and the address may be the grantee’s headquarters, a program site, a lockbox, or the foundation’s own office. <code>pfmatch</code> recovers the recipient’s EIN by running that text against the IRS Business Master File through a <strong>staged cascade</strong>: a sequence of blocking passes that start tight and loosen, each one only looking at what the previous passes could not settle.</p>
 <div class="section level3">
 <h3 id="where-the-grants-come-from">Where the grants come from<a class="anchor" aria-label="anchor" href="#where-the-grants-come-from"></a>
 </h3>
-<p>Grants are the <code>PF-P15-T01-SUPPLEMENTARY-INFO-GRANT-PAID</code>
-table of the NCCS e-file (ef2) release, retrieved with
-<code><a href="../reference/pf_efilepf_fetch.html">pf_efilepf_fetch()</a></code>, which delegates release resolution to
-<a href="https://github.com/Nonprofit-Open-Data-Collective/panel990" class="external-link"><code>panel990</code></a>.
-Columns carry the <a href="https://nonprofit-open-data-collective.github.io/concordance990/articles/data-dictionary-990pf.html" class="external-link">concordance990
-v2</a> research variable names, so the recipient name arrives as
-<code>PF_15_G_PAID_RECIP_NAME_ORG_L1</code> rather than a positional or
-legacy label.</p>
-<p><code><a href="../reference/pf_efilepf_build.html">pf_efilepf_build()</a></code> deduplicates superseded filings as it
-builds — identical filings collapse, an amended filing supersedes its
-original, and filings that disagree with no amendment to settle them are
-all kept and flagged. It removes 1.75% of grant rows corpus-wide and
-never drops a short-period return for sharing a tax year with a
-full-year one. Rows are addressed by <code>OBJECTID | TABLE_ID</code>,
-the published row key.</p>
-<p>This article walks the passes in order and shows, for each, real
-cases that clear and real cases that are carried forward. Every number
-and name below comes from one run — 5,000 grant rows against the
-augmented unified reference (3,880,431 rows) — not from
-illustration.</p>
+<p>Grants are the <code>PF-P15-T01-SUPPLEMENTARY-INFO-GRANT-PAID</code> table of the NCCS e-file (ef2) release, retrieved with <code><a href="../reference/pf_efilepf_fetch.html">pf_efilepf_fetch()</a></code>, which delegates release resolution to <a href="https://github.com/Nonprofit-Open-Data-Collective/panel990" class="external-link"><code>panel990</code></a>. Columns carry the <a href="https://nonprofit-open-data-collective.github.io/concordance990/articles/data-dictionary-990pf.html" class="external-link">concordance990 v2</a> research variable names, so the recipient name arrives as <code>PF_15_G_PAID_RECIP_NAME_ORG_L1</code> rather than a positional or legacy label.</p>
+<p><code><a href="../reference/pf_efilepf_build.html">pf_efilepf_build()</a></code> deduplicates superseded filings as it builds — identical filings collapse, an amended filing supersedes its original, and filings that disagree with no amendment to settle them are all kept and flagged. It removes 1.75% of grant rows corpus-wide and never drops a short-period return for sharing a tax year with a full-year one. Rows are addressed by <code>OBJECTID | TABLE_ID</code>, the published row key.</p>
+<p>This article walks the passes in order and shows, for each, real cases that clear and real cases that are carried forward. Every number and name below comes from one run — 5,000 grant rows against the augmented unified reference (3,880,431 rows) — not from illustration.</p>
 </div>
 <div class="section level2">
 <h2 id="the-shape-of-it">The shape of it<a class="anchor" aria-label="anchor" href="#the-shape-of-it"></a>
 </h2>
-<div class="float">
-<img src="cascade-diagram.svg" alt="The pfmatch cascade. Tight passes run first; only a YES removes a query from the pending queue, so MAYBE and NO are carried onward; and the final decision is made over the union of the candidates every pass contributed."><div class="figcaption">The pfmatch cascade. Tight passes run first;
-only a YES removes a query from the pending queue, so MAYBE and NO are
-carried onward; and the final decision is made over the union of the
-candidates every pass contributed.</div>
+<div class="figure">
+<img src="cascade-diagram.svg" alt=""><p class="caption">The pfmatch cascade. Tight passes run first; only a YES removes a query from the pending queue, so MAYBE and NO are carried onward; and the final decision is made over the union of the candidates every pass contributed.</p>
 </div>
-<p>Two mechanics matter more than the pass list, and both are easy to
-get wrong.</p>
-<p><strong>Only YES leaves the queue.</strong> After each pass,
-<code>np_cascade()</code> removes a query from <code>pending</code>
-<em>only</em> if it reached the YES tier. MAYBE and NO stay in, so later
-and looser passes keep adding candidates for them. The queue goes 4,964
-→ 2,496 over the ten passes that fire.</p>
-<p><strong>The final decision is made over the union, not pass by
-pass.</strong> Every pass’s scored pairs are accumulated; at the end
-they are de-duplicated by <code>(query, EIN)</code>, keeping the
-tightest pass that produced each, and <code>np_select()</code> /
-<code>np_tier()</code> run once over that union. So a pass can
-<em>generate</em> the winning candidate without being the pass that
-resolved the case.</p>
-<p>That distinction explains an apparent contradiction between the two
-tables below. Pass C1 resolves <strong>zero</strong> queries at the
-moment it runs, yet one case is finally attributed to it — the candidate
-C1 generated won after later passes had contributed theirs.</p>
+<p>Two mechanics matter more than the pass list, and both are easy to get wrong.</p>
+<p><strong>Only YES leaves the queue.</strong> After each pass, <code>np_cascade()</code> removes a query from <code>pending</code> <em>only</em> if it reached the YES tier. MAYBE and NO stay in, so later and looser passes keep adding candidates for them. The queue goes 4,964 → 2,496 over the ten passes that fire.</p>
+<p><strong>The final decision is made over the union, not pass by pass.</strong> Every pass’s scored pairs are accumulated; at the end they are de-duplicated by <code>(query, EIN)</code>, keeping the tightest pass that produced each, and <code>np_select()</code> / <code>np_tier()</code> run once over that union. So a pass can <em>generate</em> the winning candidate without being the pass that resolved the case.</p>
+<p>That distinction explains an apparent contradiction between the two tables below. Pass C1 resolves <strong>zero</strong> queries at the moment it runs, yet one case is finally attributed to it — the candidate C1 generated won after later passes had contributed theirs.</p>
 <div class="section level3">
 <h3 id="what-each-pass-cost-and-resolved">What each pass cost and resolved<a class="anchor" aria-label="anchor" href="#what-each-pass-cost-and-resolved"></a>
 </h3>
@@ -512,18 +483,13 @@ D2-prefix
 </tr>
 </tbody>
 </table>
-<p>Read the two together and the cascade’s economics are stark. Stage A
-buys 2,113 resolutions for 96,843 candidates. Stage B buys 328 for 1.1
-million. Stage C buys <strong>nothing at all</strong> for 105,389 — and
-that is not bad luck, it is structural; see <em>Why cross-state passes
-cannot clear</em> below.</p>
+<p>Read the two together and the cascade’s economics are stark. Stage A buys 2,113 resolutions for 96,843 candidates. Stage B buys 328 for 1.1 million. Stage C buys <strong>nothing at all</strong> for 105,389 — and that is not bad luck, it is structural; see <em>Why cross-state passes cannot clear</em> below.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="how-a-case-is-scored">How a case is scored<a class="anchor" aria-label="anchor" href="#how-a-case-is-scored"></a>
 </h2>
-<p>Blocking only decides which pairs get <em>looked at</em>. The
-decision is:</p>
+<p>Blocking only decides which pairs get <em>looked at</em>. The decision is:</p>
 <pre><code>score = 0.6 x name + 0.4 x geo
 geo   = max(zip9 1.00, street 0.95, zip5 0.90, pobox 0.90,
             zip3 0.55, city 0.50, state 0.20)
@@ -531,24 +497,17 @@ geo   = max(zip9 1.00, street 0.95, zip5 0.90, pobox 0.90,
 YES    score &gt;= 0.78  AND  margin &gt;= 0.05
 MAYBE  score &gt;= 0.65
 NO     below that</code></pre>
-<p><code>margin</code> is the gap to the runner-up. It is the second
-half of the YES rule and it does most of the work of carrying cases
-forward, as the examples show.</p>
-<p>Name similarity is floored: below <code>jw_threshold</code> (0.85) it
-contributes <strong>zero</strong> rather than a small amount, so a name
-that is merely not-very-similar is treated as no evidence at all.</p>
+<p><code>margin</code> is the gap to the runner-up. It is the second half of the YES rule and it does most of the work of carrying cases forward, as the examples show.</p>
+<p>Name similarity is floored: below <code>jw_threshold</code> (0.85) it contributes <strong>zero</strong> rather than a small amount, so a name that is merely not-very-similar is treated as no evidence at all.</p>
 </div>
 <div class="section level2">
 <h2 id="stage-a-exact">Stage A — exact<a class="anchor" aria-label="anchor" href="#stage-a-exact"></a>
 </h2>
-<p>Four passes, each an exact join on a composite key, differing in
-which key and which name version. They are cheap, they are the most
-precise thing available, and they do most of the work.</p>
+<p>Four passes, each an exact join on a composite key, differing in which key and which name version. They are cheap, they are the most precise thing available, and they do most of the work.</p>
 <div class="section level3">
 <h3 id="a1-name-zip5">A1 · name + ZIP5<a class="anchor" aria-label="anchor" href="#a1-name-zip5"></a>
 </h3>
-<p>The tightest pass in the cascade: the normalized name and the 5-digit
-ZIP must both match exactly.</p>
+<p>The tightest pass in the cascade: the normalized name and the 5-digit ZIP must both match exactly.</p>
 <table class="table">
 <thead><tr>
 <th style="text-align:left;">
@@ -668,28 +627,14 @@ SAN FRANCISCO SYMPHONY
 </tr>
 </tbody>
 </table>
-<p><code>SAN FRANCISCO SYMPHONY</code> is the regular case — exact name,
-exact ZIP, nothing else close, margin 0.98.</p>
-<p><code>METROPOLITAN OPERA GUILD INC</code> is the hard version of the
-<em>same</em> shape. The name matches exactly after the corporate suffix
-is stripped, but the Metropolitan Opera family has several similarly
-named entities in one ZIP, so the margin falls to exactly 0.05 — the
-threshold. One notch lower and it would not have cleared.</p>
-<p>The two carried-forward cases are the pattern worth internalising:
-<strong>both score 0.98 with a perfect name similarity, and are MAYBE
-anyway.</strong> <code>ST SAHAG ARMENIAN CHURCH</code> matched
-<code>SAINT SAHAG ARMENIAN CHURCH</code> with
-<code>name_sim = 1.000</code>, and its margin is <strong>0.000</strong>
-— a second reference row scored identically. Nothing is wrong with the
-name; there are simply two candidates the evidence cannot separate. That
-is a tie, not a failure, and it is the single most common reason a tight
-pass hands a case onward.</p>
+<p><code>SAN FRANCISCO SYMPHONY</code> is the regular case — exact name, exact ZIP, nothing else close, margin 0.98.</p>
+<p><code>METROPOLITAN OPERA GUILD INC</code> is the hard version of the <em>same</em> shape. The name matches exactly after the corporate suffix is stripped, but the Metropolitan Opera family has several similarly named entities in one ZIP, so the margin falls to exactly 0.05 — the threshold. One notch lower and it would not have cleared.</p>
+<p>The two carried-forward cases are the pattern worth internalising: <strong>both score 0.98 with a perfect name similarity, and are MAYBE anyway.</strong> <code>ST SAHAG ARMENIAN CHURCH</code> matched <code>SAINT SAHAG ARMENIAN CHURCH</code> with <code>name_sim = 1.000</code>, and its margin is <strong>0.000</strong> — a second reference row scored identically. Nothing is wrong with the name; there are simply two candidates the evidence cannot separate. That is a tie, not a failure, and it is the single most common reason a tight pass hands a case onward.</p>
 </div>
 <div class="section level3">
 <h3 id="a2-name-state">A2 · name + state<a class="anchor" aria-label="anchor" href="#a2-name-state"></a>
 </h3>
-<p>Loosens the geography from ZIP5 to state, which widens the candidate
-pool roughly fivefold (79,930 candidates against 16,093).</p>
+<p>Loosens the geography from ZIP5 to state, which widens the candidate pool roughly fivefold (79,930 candidates against 16,093).</p>
 <table class="table">
 <thead><tr>
 <th style="text-align:left;">
@@ -809,22 +754,13 @@ ZOOLOGICAL SOCIETY OF MILW
 </tr>
 </tbody>
 </table>
-<p><code>CARNEGIE MELLON UNIVERSITY</code> is the instructive clear.
-Score 0.900, not 0.98 — the name is exact but only the <em>state</em>
-corroborates, so geo contributes <code>0.4 x 0.50</code> rather than
-<code>0.4 x 0.90</code>. It still clears because the margin is 0.08.</p>
-<p><code>NASHVILLE BALLET</code> and <code>Wake Forest University</code>
-are carried forward on margin 0.000 again, and both have exact names. A
-state-level match cannot separate a university from its own foundation
-or medical centre.</p>
+<p><code>CARNEGIE MELLON UNIVERSITY</code> is the instructive clear. Score 0.900, not 0.98 — the name is exact but only the <em>state</em> corroborates, so geo contributes <code>0.4 x 0.50</code> rather than <code>0.4 x 0.90</code>. It still clears because the margin is 0.08.</p>
+<p><code>NASHVILLE BALLET</code> and <code>Wake Forest University</code> are carried forward on margin 0.000 again, and both have exact names. A state-level match cannot separate a university from its own foundation or medical centre.</p>
 </div>
 <div class="section level3">
 <h3 id="a3-a4-the-dba-cross-products">A3 / A4 · the DBA cross-products<a class="anchor" aria-label="anchor" href="#a3-a4-the-dba-cross-products"></a>
 </h3>
-<p>A3 matches the filed name against the reference’s
-<strong>DBA</strong>; A4 matches a filed DBA against the reference’s
-legal name. These recover organisations that transact under a name that
-is not their legal one.</p>
+<p>A3 matches the filed name against the reference’s <strong>DBA</strong>; A4 matches a filed DBA against the reference’s legal name. These recover organisations that transact under a name that is not their legal one.</p>
 <table class="table">
 <thead><tr>
 <th style="text-align:left;">
@@ -1017,26 +953,14 @@ SANTA BARBARA TRUST FOR HISTORIC PRESERVATION
 </tr>
 </tbody>
 </table>
-<p><code>ST JUDE'S CHILDREN'S RESEARCH</code> →
-<code>SAINT JUDES CHILDRENS RESEARCH HOSPITAL</code> is the
-characteristic A4 case: the filed string is the familiar public name,
-the reference row carries the legal one, and only the DBA path connects
-them.</p>
-<p>A5 (<code>dba == dba</code>) produced <strong>no candidates at
-all</strong> on this run. It is retained because it costs nothing when
-it does not fire.</p>
+<p><code>ST JUDE'S CHILDREN'S RESEARCH</code> → <code>SAINT JUDES CHILDRENS RESEARCH HOSPITAL</code> is the characteristic A4 case: the filed string is the familiar public name, the reference row carries the legal one, and only the DBA path connects them.</p>
+<p>A5 (<code>dba == dba</code>) produced <strong>no candidates at all</strong> on this run. It is retained because it costs nothing when it does not fire.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="stage-b-shared-token-same-state">Stage B — shared token, same state<a class="anchor" aria-label="anchor" href="#stage-b-shared-token-same-state"></a>
 </h2>
-<p>Where exactness fails, B blocks on a shared <em>name token</em>
-within state, using an inverted index with IDF-weighted pruning: a pair
-is kept only if its shared tokens carry enough information
-(<code>min_pair_idf = 8</code>), and tokens appearing in more than
-25,000 reference records are dropped entirely. This is what makes the
-cascade scale — without it, every query would be compared against every
-same-state organisation.</p>
+<p>Where exactness fails, B blocks on a shared <em>name token</em> within state, using an inverted index with IDF-weighted pruning: a pair is kept only if its shared tokens carry enough information (<code>min_pair_idf = 8</code>), and tokens appearing in more than 25,000 reference records are dropped entirely. This is what makes the cascade scale — without it, every query would be compared against every same-state organisation.</p>
 <table class="table">
 <thead><tr>
 <th style="text-align:left;">
@@ -1275,35 +1199,19 @@ CARBON 180
 </tr>
 </tbody>
 </table>
-<p>B is where the first genuinely <em>wrong</em> answers appear, and
-where NO becomes a real outcome (547 and 60 cases). Two carried-forward
-cases show different mechanisms:</p>
+<p>B is where the first genuinely <em>wrong</em> answers appear, and where NO becomes a real outcome (547 and 60 cases). Two carried-forward cases show different mechanisms:</p>
 <ul>
 <li>
-<code>BOYS AND GIRLS CLUB OF TAMPA BAY INC</code> →
-<code>BOYS AND GIRLS CLUBS OF TAMPA BAY</code> at 0.974 with margin
-<strong>0.000</strong>. Almost certainly correct, held back by a tie — a
-chapter federation has many near-identical rows.</li>
+<code>BOYS AND GIRLS CLUB OF TAMPA BAY INC</code> → <code>BOYS AND GIRLS CLUBS OF TAMPA BAY</code> at 0.974 with margin <strong>0.000</strong>. Almost certainly correct, held back by a tie — a chapter federation has many near-identical rows.</li>
 <li>
-<code>DENTAL LIFELINE NETWORK</code> →
-<code>Dental Lifeline Network-Nc</code> with margin
-<strong>−0.014</strong>. A <em>negative</em> margin: the runner-up
-outscored the chosen candidate after the tie-break. The filer named the
-national body; the state affiliate scored higher. No amount of name
-similarity resolves that — it needs the grant’s purpose or the funder’s
-geography.</li>
+<code>DENTAL LIFELINE NETWORK</code> → <code>Dental Lifeline Network-Nc</code> with margin <strong>−0.014</strong>. A <em>negative</em> margin: the runner-up outscored the chosen candidate after the tie-break. The filer named the national body; the state affiliate scored higher. No amount of name similarity resolves that — it needs the grant’s purpose or the funder’s geography.</li>
 </ul>
-<p>B2 adds de-spaced compounds as extra tokens, which is how
-<code>CARBON180</code> reaches <code>CARBON 180</code> and
-<code>CAPITAL AREA FOODBANK</code> reaches
-<code>CAPITAL AREA FOOD BANK</code>.</p>
+<p>B2 adds de-spaced compounds as extra tokens, which is how <code>CARBON180</code> reaches <code>CARBON 180</code> and <code>CAPITAL AREA FOODBANK</code> reaches <code>CAPITAL AREA FOOD BANK</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="stage-c-exact-name-any-state">Stage C — exact name, any state<a class="anchor" aria-label="anchor" href="#stage-c-exact-name-any-state"></a>
 </h2>
-<p>C drops the state requirement entirely, for the case where the filed
-address is a lockbox or the funder’s own office rather than the
-grantee’s.</p>
+<p>C drops the state requirement entirely, for the case where the filed address is a lockbox or the funder’s own office rather than the grantee’s.</p>
 <table class="table">
 <thead><tr>
 <th style="text-align:left;">
@@ -1476,45 +1384,19 @@ Rosary Academy
 <div class="section level3">
 <h3 id="why-cross-state-passes-cannot-clear">Why cross-state passes cannot clear<a class="anchor" aria-label="anchor" href="#why-cross-state-passes-cannot-clear"></a>
 </h3>
-<p>C1 and C2 generate 105,389 candidates and resolve
-<strong>zero</strong>. The reason is arithmetic, not data:</p>
-<p>A cross-state pair has no geographic corroboration. The state
-conflict gate zeroes the city and ZIP3 terms deliberately — a shared
-city name across two states is a coincidence of naming, not evidence —
-so <code>geo = 0</code> and</p>
+<p>C1 and C2 generate 105,389 candidates and resolve <strong>zero</strong>. The reason is arithmetic, not data:</p>
+<p>A cross-state pair has no geographic corroboration. The state conflict gate zeroes the city and ZIP3 terms deliberately — a shared city name across two states is a coincidence of naming, not evidence — so <code>geo = 0</code> and</p>
 <pre><code>score = 0.6 x name + 0.4 x 0  &lt;=  0.600</code></pre>
-<p><strong>0.600 is below the 0.65 MAYBE floor</strong>, let alone the
-0.78 YES threshold. A <em>perfect</em> cross-state name match cannot
-reach MAYBE on its own. <code>HIGHER GROUND</code> and
-<code>ROSARY ACADEMY</code> both sit at exactly 0.600 with
-<code>name_sim = 1.000</code> and are NO.
-<code>HARRY S TRUMAN LIBRARY INSTITUTE</code> reaches 0.720 only because
-its state term fires.</p>
-<p>So stage C does not function as an acceptance pass. It functions as a
-<em>candidate supplier</em> for adjudication: 152 cases finally
-attributed to C1 are MAYBE, meaning the cross-state candidate it
-surfaced became the best available answer once a reviewer looks. Whether
-105,389 candidates is a fair price for 152 review candidates is a live
-question — a related unblocked token pass (<code>C3</code>) was measured
-and rejected for yielding zero YES.</p>
+<p><strong>0.600 is below the 0.65 MAYBE floor</strong>, let alone the 0.78 YES threshold. A <em>perfect</em> cross-state name match cannot reach MAYBE on its own. <code>HIGHER GROUND</code> and <code>ROSARY ACADEMY</code> both sit at exactly 0.600 with <code>name_sim = 1.000</code> and are NO. <code>HARRY S TRUMAN LIBRARY INSTITUTE</code> reaches 0.720 only because its state term fires.</p>
+<p>So stage C does not function as an acceptance pass. It functions as a <em>candidate supplier</em> for adjudication: 152 cases finally attributed to C1 are MAYBE, meaning the cross-state candidate it surfaced became the best available answer once a reviewer looks. Whether 105,389 candidates is a fair price for 152 review candidates is a live question — a related unblocked token pass (<code>C3</code>) was measured and rejected for yielding zero YES.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="stage-d-recovery">Stage D — recovery<a class="anchor" aria-label="anchor" href="#stage-d-recovery"></a>
 </h2>
-<p>D runs last, on whatever remains, and addresses two specific filing
-habits.</p>
-<p><strong>D1 · acronym.</strong> Blocks on <code>name_acro</code>,
-which is the name key <em>plus</em> the record’s initials, so
-<code>ICT</code> can meet <code>INTERNATIONAL CITY THEATRE</code> and
-<code>UCAP</code> can meet
-<code>URBAN COLLABORATIVE ACCELERATED PROGRAM</code>.</p>
-<p><strong>D2 · truncated prefix.</strong> Blocks on the first 18
-characters of the name plus an exact ZIP5. The prefix alone is far too
-blunt — <code>AMERICAN ASSOCIATION OF PRO-LIFE OBSTETRICIANS</code> and
-<code>AMERICAN ASSOCIATION OF ZOO KEEPERS</code> share one — so it is
-paired with the ZIP, and on the query side it fires only for names the
-parser flagged as actually cut off.</p>
+<p>D runs last, on whatever remains, and addresses two specific filing habits.</p>
+<p><strong>D1 · acronym.</strong> Blocks on <code>name_acro</code>, which is the name key <em>plus</em> the record’s initials, so <code>ICT</code> can meet <code>INTERNATIONAL CITY THEATRE</code> and <code>UCAP</code> can meet <code>URBAN COLLABORATIVE ACCELERATED PROGRAM</code>.</p>
+<p><strong>D2 · truncated prefix.</strong> Blocks on the first 18 characters of the name plus an exact ZIP5. The prefix alone is far too blunt — <code>AMERICAN ASSOCIATION OF PRO-LIFE OBSTETRICIANS</code> and <code>AMERICAN ASSOCIATION OF ZOO KEEPERS</code> share one — so it is paired with the ZIP, and on the query side it fires only for names the parser flagged as actually cut off.</p>
 <table class="table">
 <thead><tr>
 <th style="text-align:left;">
@@ -1682,72 +1564,35 @@ UKRAINIAN CATHOLIC EDUCATION FOUNDATION
 </td>
 </tr></tbody>
 </table>
-<p><code>ACCESS SPORTS AMERICA</code> →
-<code>ACCESS SPORT AMERICA</code> (singular/plural) and
-<code>ST JOHN'S LUTHERAN CHILDCARE</code> →
-<code>SAINT JOHN LUTHERAN CHURCH</code> are the regular and hard
-versions: the first is a one-character difference with a 0.75 margin;
-the second clears at 0.896 on a name similarity of only 0.894, carried
-by a strong address match, and is the kind of case where the
-<em>childcare</em> programme and the <em>church</em> may or may not be
-the same filer-intended payee.</p>
-<p><code>CONGREGATION SHAARE TEFILAH</code> →
-<code>CONGREGATION SHAARA TEFILLE</code> is a transliteration difference
-— two vowels — carried forward on a 0.000 margin because several
-transliterations of the same congregation name exist.</p>
+<p><code>ACCESS SPORTS AMERICA</code> → <code>ACCESS SPORT AMERICA</code> (singular/plural) and <code>ST JOHN'S LUTHERAN CHILDCARE</code> → <code>SAINT JOHN LUTHERAN CHURCH</code> are the regular and hard versions: the first is a one-character difference with a 0.75 margin; the second clears at 0.896 on a name similarity of only 0.894, carried by a strong address match, and is the kind of case where the <em>childcare</em> programme and the <em>church</em> may or may not be the same filer-intended payee.</p>
+<p><code>CONGREGATION SHAARE TEFILAH</code> → <code>CONGREGATION SHAARA TEFILLE</code> is a transliteration difference — two vowels — carried forward on a 0.000 margin because several transliterations of the same congregation name exist.</p>
 </div>
 <div class="section level2">
 <h2 id="why-cases-do-not-clear">Why cases do not clear<a class="anchor" aria-label="anchor" href="#why-cases-do-not-clear"></a>
 </h2>
-<p>Across all the carried-forward examples, three mechanisms account for
-nearly everything, and only the third is what most people picture:</p>
+<p>Across all the carried-forward examples, three mechanisms account for nearly everything, and only the third is what most people picture:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Ties.</strong> Score is high, <code>name_sim</code> is often
-exactly 1.000, and <code>margin</code> is 0.000. The right answer may
-well be in the list; the evidence cannot single it out. Dominant at
-stages A and B.</li>
+<strong>Ties.</strong> Score is high, <code>name_sim</code> is often exactly 1.000, and <code>margin</code> is 0.000. The right answer may well be in the list; the evidence cannot single it out. Dominant at stages A and B.</li>
 <li>
-<strong>The structural cap.</strong> No geographic corroboration
-means the score cannot exceed 0.600, so the case cannot reach MAYBE
-however good the name. Dominant at stage C.</li>
+<strong>The structural cap.</strong> No geographic corroboration means the score cannot exceed 0.600, so the case cannot reach MAYBE however good the name. Dominant at stage C.</li>
 <li>
-<strong>Genuine ambiguity.</strong> Parent against chapter,
-institution against its own foundation, operating entity against its
-endowment. These have two defensible answers and no amount of string
-comparison settles them.</li>
+<strong>Genuine ambiguity.</strong> Parent against chapter, institution against its own foundation, operating entity against its endowment. These have two defensible answers and no amount of string comparison settles them.</li>
 </ol>
-<p>This is why there is no automatic acceptance of the MAYBE tier. A
-rule of “ZIP5 agrees and margin ≥ 0.05” was measured at 100% precision
-on 18 cases, then at <strong>72%</strong> on 200 fresh ones — because
-79% of the cases it fired on were token-overlap matches, which the
-scorer deliberately caps below YES precisely because containment cannot
-separate a parent from a chapter.</p>
+<p>This is why there is no automatic acceptance of the MAYBE tier. A rule of “ZIP5 agrees and margin ≥ 0.05” was measured at 100% precision on 18 cases, then at <strong>72%</strong> on 200 fresh ones — because 79% of the cases it fired on were token-overlap matches, which the scorer deliberately caps below YES precisely because containment cannot separate a parent from a chapter.</p>
 </div>
 <div class="section level2">
 <h2 id="what-happens-next">What happens next<a class="anchor" aria-label="anchor" href="#what-happens-next"></a>
 </h2>
-<p><code><a href="../reference/pf_adjudicate.html">pf_adjudicate()</a></code> builds the review sheet: per candidate,
-the BMF name and address, NTEE code and definition, activity text,
-subsection and assets, plus the grant purpose and the filing
-foundation’s own NTEE and state — and, for every candidate rather than
-only the top pick, the NTEEv2 description and the Form 990 Part III
-mission and programme text. Adding that text was measured to resolve 45
-of 56 hard cases.</p>
+<p><code><a href="../reference/pf_adjudicate.html">pf_adjudicate()</a></code> builds the review sheet: per candidate, the BMF name and address, NTEE code and definition, activity text, subsection and assets, plus the grant purpose and the filing foundation’s own NTEE and state — and, for every candidate rather than only the top pick, the NTEEv2 description and the Form 990 Part III mission and programme text. Adding that text was measured to resolve 45 of 56 hard cases.</p>
 <p>Two things to know before using it:</p>
 <ul>
 <li>
-<strong><code>NONE</code> is a correct and common answer.</strong>
-In a labelled sample, 24 of 82 hard cases had no correct candidate in
-the list at all. A reviewer who assumes one of the five is right
-manufactures false positives.</li>
+<strong><code>NONE</code> is a correct and common answer.</strong> In a labelled sample, 24 of 82 hard cases had no correct candidate in the list at all. A reviewer who assumes one of the five is right manufactures false positives.</li>
 <li>
-<strong>Prioritise by dollars.</strong> Grant amounts are heavily
-skewed; roughly 740 reviews covers 70% of the recoverable unresolved
-dollars.</li>
+<strong>Prioritise by dollars.</strong> Grant amounts are heavily skewed; roughly 740 reviews covers 70% of the recoverable unresolved dollars.</li>
 </ul>
-<p>To score a configuration rather than argue about its clear rate, see
-<code><a href="../reference/pf_evaluate.html">pf_evaluate()</a></code> and <code><a href="../reference/pf_consistency.html">pf_consistency()</a></code>.</p>
+<p>To score a configuration rather than argue about its clear rate, see <code><a href="../reference/pf_evaluate.html">pf_evaluate()</a></code> and <code><a href="../reference/pf_consistency.html">pf_consistency()</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -1760,7 +1605,7 @@ dollars.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>
