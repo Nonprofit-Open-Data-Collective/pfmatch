@@ -7,3 +7,6 @@
 ^\.gitignore$
 ^\.gitattributes$
 ^\.git$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

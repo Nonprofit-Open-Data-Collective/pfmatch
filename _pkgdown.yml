@@ -1,20 +1,35 @@
 url: https://nonprofit-open-data-collective.github.io/pfmatch/
+destination: docs
 
+# The shared NODC style: navy navbar with a burnt-orange rule, Zilla Slab
+# headings, Source Sans 3 body, light/dark switch. Everything visual comes from
+# the template -- a local bootstrap/bslib block here would silently override it
+# and put this site back out of step with concordance990 and matchdb.
 template:
-  bootstrap: 5
-  bslib:
-    primary: "#1c4e63"
+  package: pkgstyle
 
 navbar:
+  # `right` is the template's (search, light switch, GitHub); setting it here
+  # would drop the light switch.
   structure:
-    left:  [intro, reference, articles]
-    right: [search, github]
+    left:  [intro, articles, reference]
   components:
     articles:
       text: Articles
       menu:
         - text: The matching cascade, step by step
           href: articles/cascade-workflow.html
+        - text: Name and address variants
+          href: articles/name-and-address-variants.html
+
+articles:
+- title: Articles
+  desc: >
+    How the cascade resolves a grant, and what the variation it has to absorb
+    actually looks like.
+  contents:
+  - cascade-workflow
+  - name-and-address-variants
 
 
 
@@ -69,6 +84,7 @@ reference:
   contents:
   - pf_reference
   - pf_build_reference
+  - pf_check_reference
   - pf_bmf_augment
   - pf_collapse_reference
   - pf_partition
@@ -77,6 +93,7 @@ reference:
   - pf_build_org_text
   - pf_attach_missions
   - nteev2
+  - pf_variants
 
 - title: Stage 4 — the matching cascade
   desc: >
@@ -107,6 +124,8 @@ reference:
   - pf_purpose_is_contentful
   - pf_purpose_coverage
   - pf_purpose_tokens
+  - pf_parse_unit
+  - pf_unit_evidence
 
 - title: Evaluation against ground truth
   desc: >

@@ -174,23 +174,32 @@ score = 0.6 * name_key_similarity + 0.4 * geo_score
 and `geo_score` is the **maximum** over a tier ladder:
 
 ```{r geo}
+# The weights come from np_config() so the table cannot drift from the code.
+# The descriptions are keyed BY TERM NAME rather than given positionally: this
+# chunk was written when the ladder had seven rungs, npmatch then added `unit`
+# at 0.97, and a positional vector turned that into a build failure
+# ("differing number of rows: 8, 7"). An unknown rung now shows up with its
+# weight and an empty description instead of breaking the site.
 g <- npmatch::np_config()$geo_weights
+fires <- c(
+  zip9   = "ZIP+4 agrees",
+  unit   = "the suite agrees, where it discriminates (a multi-tenant building, not a crowded mail drop)",
+  street = "street number agrees AND normalized street key similarity >= 0.9, not a PO box",
+  zip5   = "ZIP5 agrees",
+  pobox  = "PO box number agrees",
+  zip3   = "ZIP3 agrees (zeroed on a state conflict)",
+  city   = "city Jaro-Winkler, floored at jw_threshold (zeroed on a state conflict)",
+  state  = "state agrees")
 tab(data.frame(
   `geo term` = names(g),
   weight = as.numeric(g),
-  `fires when` = c(
-    "ZIP+4 agrees",
-    "street number agrees AND normalized street key similarity >= 0.9, not a PO box",
-    "ZIP5 agrees",
-    "PO box number agrees",
-    "ZIP3 agrees (zeroed on a state conflict)",
-    "city Jaro-Winkler, floored at jw_threshold (zeroed on a state conflict)",
-    "state agrees"),
+  `fires when` = unname(ifelse(names(g) %in% names(fires), fires[names(g)], "")),
   check.names = FALSE, stringsAsFactors = FALSE))
 ```
 
 `street_key` — npmatch's normalized street — is compared directly and is worth
-0.95, second only to ZIP+4. The address normalizer is very much in use.
+0.95, behind only ZIP+4 and the suite. The address normalizer is very much in
+use.
 
 The catch is the `max()`. Inside a triangulation group ZIP5 agrees by
 construction, so `geo_score` is already at least 0.90 before the street is
@@ -210,12 +219,14 @@ Consequences that do hold here:
   cannot change the outcome while ZIP5 agrees, because the 0.50 city term is
   dominated by the 0.90 ZIP5 term. There are `r fmt(sum(v$city_differs))` such
   pairs, and blocking stays intact in all of them.
-- A suite line cannot separate two organizations in one building. `.np_hier_score()`
-  has no unit term at all, so under `method = "hier"` the unit is never
-  compared. `method = "weighted"` does have a `street_unit_full` profile that
-  weights it 0.06 — but `np_detect_geo()` only selects a profile whose every
-  field clears 50% coverage, and filers populate the unit on 3.84% of the
-  identities in this run. Both routes are closed.
+- A suite line could not separate two organizations in one building **when
+  these pairs were cut**: `.np_hier_score()` had no unit term, and the
+  `street_unit_full` weight profile that does carry one needs 50% unit
+  coverage against an actual 3.84%. npmatch has since added the `unit` rung
+  above — so the mechanism now exists, gated on the suite discriminating at
+  that address rather than merely being present. The pairs in this table
+  predate it, which is why `pf_unit_evidence()` exists here at all and why
+  `dev/UNIT-UPSTREAM-SYNC.md` plans its retirement.
 - The **state** costs twice when wrong: it blocks stages A2–A5 and all of
   stage B, *and* a state conflict zeroes the city and ZIP3 geo terms. It
   disagrees in `r sum(v$state_differs)` pairs, all adjacent-letter filing

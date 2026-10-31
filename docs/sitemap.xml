@@ -2,6 +2,7 @@
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/404.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/articles/cascade-workflow.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/articles/index.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/articles/name-and-address-variants.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/authors.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/index.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/LICENSE-text.html</loc></url>
@@ -29,6 +30,7 @@
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_build_org_text.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_build_reference.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_candidate_frame.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_check_reference.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_cluster_arms.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_collapse_reference.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_concordance_vars.html</loc></url>
@@ -67,6 +69,7 @@
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_match_grants.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_ntee_text.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_oos_details.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_parse_unit.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_partition.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_pass_stage.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_pipeline.html</loc></url>
@@ -109,6 +112,8 @@
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_truth_schema.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_type_labels.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_type_levels.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_unit_evidence.html</loc></url>
 <url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_validate_grants.html</loc></url>
+<url><loc>https://nonprofit-open-data-collective.github.io/pfmatch/reference/pf_variants.html</loc></url>
 </urlset>
 
