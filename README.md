@@ -354,7 +354,10 @@ can reach internal and unexported functions. They are not part of the package.
 
 Planning documents: `dev/PACKAGE-PLAN.md` (what packaging still owes),
 `dev/NPMATCH-PROMOTION-PLAN.md` (three modules to move upstream, and one npmatch
-defect this project found).
+defect this project found), `dev/DICTIONARY-PASS.md` (matching grants against
+cleared grants rather than the BMF — built, measured, and the ordered step
+list), `dev/PLACES-SYNC.md` and `dev/UNIT-UPSTREAM-SYNC.md` (keeping in step
+with npmatch's address classes and matchdb's place tables).
 
 ## Results
 

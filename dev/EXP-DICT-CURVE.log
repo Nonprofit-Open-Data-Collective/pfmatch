@@ -1,0 +1,68 @@
+====================================================================================
+experiment-dictionary-curve   2026-10-31 05:00:30
+====================================================================================
+queries: 1,769 unresolved benchmark rows (1,044 MAYBE, 725 NO)
+pool: 369,160 cleared rows over 31,721 EINs
+====================================================================================
+share 2%  -- 7,383 cleared rows
+  renderings 6,240  EINs 4,933  ->  dict YES 66, agreeing 23  (6.7 s)
+====================================================================================
+share 5%  -- 18,458 cleared rows
+  renderings 13,500  EINs 9,267  ->  dict YES 77, agreeing 31  (10.4 s)
+====================================================================================
+share 10%  -- 36,916 cleared rows
+  renderings 22,985  EINs 13,845  ->  dict YES 85, agreeing 34  (15.5 s)
+====================================================================================
+share 25%  -- 92,290 cleared rows
+  renderings 42,613  EINs 21,155  ->  dict YES 109, agreeing 42  (25.4 s)
+====================================================================================
+share 50%  -- 184,580 cleared rows
+  renderings 63,254  EINs 26,725  ->  dict YES 126, agreeing 48  (34.1 s)
+====================================================================================
+share 100%  -- 369,160 cleared rows
+  renderings 88,744  EINs 31,721  ->  dict YES 126, agreeing 50  (44.3 s)
+====================================================================================
+THE CURVE  (clear-rate points are over the benchmark's 4,748 rows)
+ share   rows renderings  eins ambiguous_dropped dict_yes agreeing pts_agree
+ <num>  <int>      <int> <int>             <int>    <int>    <int>     <num>
+  0.02   7383       6240  4933                 0       66       23     0.484
+  0.05  18458      13500  9267                 0       77       31     0.653
+  0.10  36916      22985 13845                 0       85       34     0.716
+  0.25  92290      42613 21155                 0      109       42     0.885
+  0.50 184580      63254 26725                 0      126       48     1.011
+  1.00 369160      88744 31721                 0      126       50     1.053
+ pts_all  secs
+   <num> <num>
+   1.390   6.7
+   1.622  10.4
+   1.790  15.5
+   2.296  25.4
+   2.654  34.1
+   2.654  44.3
+====================================================================================
+MARGINAL RETURN
+ share   rows agreeing d_rows d_agree agreeing_per_100k_new_rows
+ <num>  <int>    <int>  <int>   <int>                      <num>
+  0.05  18458       31  11075       8                      72.23
+  0.10  36916       34  18458       3                      16.25
+  0.25  92290       42  55374       8                      14.45
+  0.50 184580       48  92290       6                       6.50
+  1.00 369160       50 184580       2                       1.08
+
+A flat `agreeing_per_100k_new_rows` means linear scaling; a falling one
+means saturation, and the shape is what decides whether a full-scale
+dictionary is worth building for recall rather than for coverage.
+
+renderings per EIN by size -- the quantity recovery depends on:
+ share   rows  eins renderings rend_per_ein
+ <num>  <int> <int>      <int>        <num>
+  0.02   7383  4933       6240        1.265
+  0.05  18458  9267      13500        1.457
+  0.10  36916 13845      22985        1.660
+  0.25  92290 21155      42613        2.014
+  0.50 184580 26725      63254        2.367
+  1.00 369160 31721      88744        2.798
+
+wrote ./data-dev/EXP-DICT-CURVE.rds
+====================================================================================
+done  2026-10-31 05:04:12
