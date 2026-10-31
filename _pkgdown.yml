@@ -127,6 +127,17 @@ reference:
   - pf_street_unit
   - pf_unit_evidence
 
+- title: Recovery against resolved grants
+  desc: >
+    A supplement to the cascade, not a reference. Foundations write recipient
+    names consistently with each other and differently from the BMF, so a grant
+    the BMF cannot clear may match one that already cleared. Runs after the
+    cascade, on what it left unresolved, and promotes only what the BMF's own
+    top candidate corroborates. See `dev/EXP-HEAD-REFERENCE.log`.
+  contents:
+  - pf_grant_dictionary
+  - pf_recover_from_dictionary
+
 - title: Evaluation against ground truth
   desc: >
     Score a configuration instead of arguing about its clear rate: a
