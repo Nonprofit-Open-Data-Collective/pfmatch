@@ -278,9 +278,16 @@ say("ground-truth name established on %d of %d cases",
 
 tin <- sum(out$in_tokens); tout <- sum(out$out_tokens)
 cost <- adj_cost(MODEL, tin, tout, sum(out$cache_read), sum(out$cache_write))
-say("\ntokens: %s in, %s out   cache: %s read",
+# Cache WRITE is printed, not just read. It was omitted once and that omission
+# cost two wrong cost projections: on the search arm it is 537,198 tokens at
+# 5.00/MTok = $2.69, which is 40% of the arm's total. A long search turn
+# re-caches a growing prefix repeatedly, so writes scale with tool use -- the
+# no-search arm wrote 28,785. Reading a log that shows only cache reads invites
+# exactly the mistake that was made.
+say("\ntokens: %s in, %s out   cache: %s read, %s WRITTEN",
     format(tin, big.mark = ","), format(tout, big.mark = ","),
-    format(sum(out$cache_read), big.mark = ","))
+    format(sum(out$cache_read), big.mark = ","),
+    format(sum(out$cache_write), big.mark = ","))
 say("token cost: $%.3f over %d cases ($%.4f/case, $%.2f projected for 1,044)",
     cost, nrow(out), cost / nrow(out), cost / nrow(out) * 1044)
 say("  PLUS %d web searches, billed per search and NOT in that figure.",

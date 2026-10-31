@@ -1,0 +1,136 @@
+============================================================================== 
+ABLATION -- is the deep arm's edge the model or the web? 
+============================================================================== 
+cases with all three arms: 100 
+no-search arm searches (must be 0): 0 
+search arm searches: 220 
+
+------------------------------------------------------------------------------ 
+1. ACCURACY on the hand-adjudicated cases -- the decomposition 
+------------------------------------------------------------------------------ 
+27 scorable cases (18 target MATCH, 9 target NONE)
+ 
+arm                          strict CORRECT 
+  light  Haiku, packet only  22/27 =  81.5% (95% CI 63.3-91.8) 
+  deep-  Opus, packet only   24/27 =  88.9% (95% CI 71.9-96.1) 
+  deep+  Opus + web search   25/27 =  92.6% (95% CI 76.6-97.9) 
+
+decomposition of the +11.1-point total gap 
+  model effect   light -> deep-    +7.4 pt  (22 -> 24 cases) 
+  search effect  deep- -> deep+    +3.7 pt  (24 -> 25 cases) 
+  total          light -> deep+   +11.1 pt  (22 -> 25 cases) 
+
+paired test on discordant cases only (McNemar, exact) 
+  light -> deep-  (model)      4 gained, 2 lost, exact p = 0.687 
+  deep- -> deep+  (search)     1 gained, 0 lost, exact p = 1.000 
+  light -> deep+  (total)      4 gained, 1 lost, exact p = 0.375 
+
+At n=27 a single case is 3.7 points, so read the direction and the 
+paired counts, not the point estimates. 
+
+confident-and-wrong, the error never reviewed again 
+  light  Haiku, packet only   0/27 =   0.0% (95% CI 0.0-12.5) 
+  deep-  Opus, packet only    1/27 =   3.7% (95% CI 0.7-18.3) 
+  deep+  Opus + web search    1/27 =   3.7% (95% CI 0.7-18.3) 
+
+------------------------------------------------------------------------------ 
+2. CLEARANCE -- would the no-search arm have cleared the same cases? 
+------------------------------------------------------------------------------ 
+Stratum A, 68 simple-random cases. This is the Q1 figure, recomputed 
+per arm. A no-search arm that clears as many is the cheaper reviewer.
+ 
+  light  Haiku, packet only  MATCH 38/68 =  55.9% (95% CI 44.1-67.1) 
+  deep-  Opus, packet only   MATCH 49/68 =  72.1% (95% CI 60.4-81.3) 
+  deep+  Opus + web search   MATCH 47/68 =  69.1% (95% CI 57.4-78.8) 
+
+verdict mix 
+  light  Haiku, packet only  MATCH 55.9%  NONE 26.5%  AMBIGUOUS 17.6% 
+  deep-  Opus, packet only   MATCH 72.1%  NONE 20.6%  AMBIGUOUS  7.4% 
+  deep+  Opus + web search   MATCH 69.1%  NONE 26.5%  AMBIGUOUS  4.4% 
+
+------------------------------------------------------------------------------ 
+3. WHERE SEARCH CHANGED THE ANSWER 
+------------------------------------------------------------------------------ 
+search changed the verdict or the EIN on 10 of 100 cases (10%) 
+
+by what search concluded: 
+                search_verdict
+search_confirmed AMBIGUOUS MATCH NONE
+    CONFIRMED            0     2    0
+    CONTRADICTED         0     0    4
+    INCONCLUSIVE         1     2    1
+
+on the 1 of those with a known answer: 
+  search fixed a no-search error : 1 
+  search broke a no-search right : 0 
+  both wrong, differently        : 0 
+
+confidence shift -- does search make the model surer, or just righter? 
+  light  Haiku, packet only  high 35.0%  medium 47.0%  low 18.0% 
+  deep-  Opus, packet only   high 51.0%  medium 41.0%  low  8.0% 
+  deep+  Opus + web search   high 73.0%  medium 21.0%  low  6.0% 
+
+------------------------------------------------------------------------------ 
+4. WHAT THIS MEANS FOR THE CASCADE 
+------------------------------------------------------------------------------ 
+measured token cost per case 
+  deep, no search : $0.030265 
+  deep, search    : $0.067765  (+124%), PLUS 2.2 searches/case billed per use 
+
+over the projected 1,008,713 MAYBE identities, escalating 18%: 
+  escalate to deep, no search : $6,175 
+  escalate to deep, search    : $12,984  + ~399,450 searches 
+
+Accuracy of the cascade on the 27 known answers, escalating the light 
+arm's low-confidence cases to each candidate escalation tier: 
+  escalate low -> deep, no search  26/27 =  96.3% (95% CI 81.7-99.3) 
+  escalate low -> deep, search     26/27 =  96.3% (95% CI 81.7-99.3) 
+  light only, no escalation  22/27 =  81.5% (95% CI 63.3-91.8) 
+
+------------------------------------------------------------------------------ 
+5. CASES WHERE SEARCH WAS DECISIVE, with the known answer where there is one 
+------------------------------------------------------------------------------ 
+
+G003937  CHILDREN'S HOSPITAL OF PHILADELPHIA (PA) 
+  deep- MATCH 231352166 (medium): Filed name is the hospital's exact legal name, ZIP 19104 matches; NTEE E24 Specialty Hospital. The F 
+  deep+ MATCH 232237932 (medium/CONFIRMED): CHOP giving page: "The CHOP Foundation is registered with the Internal Revenue Service ... with a fe 
+
+G002917  CISE (OH) 
+  deep- MATCH 820977523 (medium): Exact name CISE, ZIP 45202. Mission: "The mission of CISE is to transform the lives of urban childre 
+  deep+ MATCH 310538501 (medium/CONFIRMED): The 2016 grant predates CISE's own exemption (Sept 2017, EIN 82-). In 2016 CISE was an Archdiocese o 
+
+G003988  PTA CALIFORNIA CONGRESS OF PARENTS TEACHERS & STUDENTS INC (CA) 
+  deep- AMBIGUOUS 330413984 (low): Three separate PTA units share the identical legal name and Upland ZIP 91784. No street address or s 
+  deep+ AMBIGUOUS 956207607 (low/INCONCLUSIVE): Three candidates (956207607, 330413984, 956206643) share the identical PTA unit legal name and ZIP 9 
+
+G004816  HABITAT FOR HUMANITY (MD) 
+  deep- AMBIGUOUS 521516966 (low): Four Baltimore Habitat affiliates appear under the generic HFHI name with no mission text. None matc 
+  deep+ NONE  (medium/CONTRADICTED): Generic 'Habitat for Humanity' Baltimore; main Baltimore affiliate is Habitat Chesapeake (EIN 52-122 
+
+G000367  WESTERN IOWA TECH COMMUNITY COLLEGE (IA) 
+  deep- MATCH 421355682 (medium): Scholarship purpose points to the foundation arm: "THE FOUNDATION MAKES CONTRIBUTIONS AND GIFTS IN T 
+  deep+ NONE  (medium/INCONCLUSIVE): Filed recipient is the public college itself (campus ZIP 51106), not the Foundation (PO box ZIP 5110 
+
+G004219  Kiwanis Club of New Orleans (LA)   [known answer] 
+  deep- MATCH 720507007 (medium): "A PUBLIC NON-PROFIT FOUNDATION OF THE KIWANIS CLUB OF NEW ORLEANS, INC." Same ZIP 70181; filed stat 
+  deep+ NONE  (medium/CONTRADICTED): Cand 1 is the club's separate arm: "A PUBLIC NON-PROFIT FOUNDATION OF THE KIWANIS CLUB OF NEW ORLEAN 
+  TRUTH ORG_FOUND -> NONE  | deep- WRONG, deep+ CORRECT 
+
+G003993  MONTROSE COMMUNITY COLLEGE (CO) 
+  deep- NONE  (medium): No candidate is a college. They are a virtual community (S99), a band (A6C), a dinner program, a com 
+  deep+ MATCH 841128761 (low/INCONCLUSIVE): No 'Montrose Community College' exists. Montrose Community Foundation's mailing address is PO Box 30 
+
+G000111  Church of Jesus Christ of Latter-Da (UT) 
+  deep- AMBIGUOUS 870234341 (low): Filed name truncated at 35 chars; could be the Church or the '...Foundation' (grantmaking arm). Huma 
+  deep+ MATCH 870234341 (medium/INCONCLUSIVE): Truncated filed name is the Church itself, Salt Lake City; purpose is programmatic humanitarian work 
+
+G002525  OBLATE MISSIONS (TX) 
+  deep- MATCH 741256497 (low): Oblate Missions is the Oblate Fathers' fundraising ministry; cand 3 is their province entity at ZIP  
+  deep+ NONE  (high/CONTRADICTED): Oblate Missions is a DBA of Oblate Missionary Society Inc, EIN 26-0634043. That EIN is not a candida 
+
+G003377  UNIVERSITY OF NORTH FLORIDA (FL) 
+  deep- MATCH 237167701 (medium): ZIP 32224 exact. Candidates 2-5 are student chapters (SWE, Psi Chi, ZBT, ACM) using UNF as DBA. The  
+  deep+ NONE  (medium/CONTRADICTED): The grant names the university itself for its "GENERAL FUND". Candidate 1 is the separate B11 suppor 
+============================================================================== 
+wrote dev/ADJ-EXP-ABLATION.log 
+============================================================================== 

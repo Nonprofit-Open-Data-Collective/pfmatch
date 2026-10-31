@@ -405,12 +405,29 @@ positive ones.
    structured outputs and prompt caching, which is what stage 01 depends on;
    results return in any order, so key by `custom_id` and never by position.
 
-   Two things the batch path must carry over from the experiment. Escalate on
-   the cheap arm's **own stated confidence** — high 12/12 and medium 10/11
-   correct against known answers, low 0/4 — which puts ~18% into a second
-   pass and reaches deep-arm accuracy for a fifth of the cost. And **web
-   search is billed per use**, 2.2/case measured, so the escalated 18% is
-   ~399,000 searches as a separate line item, not a token cost.
+   Three things the batch path must carry over from the experiment.
+
+   *Escalate on the cheap arm's own stated confidence* — high 12/12 and medium
+   10/11 correct against known answers, low 0/4 — which puts ~18% into a second
+   pass and reaches 96.3% against 92.6% for running the expensive arm over
+   everything, at a tenth of the cost.
+
+   *Escalate to Opus **without** web search.* The ablation
+   (`PF_ADJ_NOSEARCH=1`, `dev/ADJ-EXP-ABLATION.log`) decomposes the two-arm gap
+   into **+7.4 points of model and +3.7 points of search**, and the search step
+   is one case in 27 (McNemar exact p = 1.000). Search costs +124% in tokens —
+   it re-caches a growing prefix, writing 537,198 tokens against the no-search
+   arm's 28,785 — plus per-use billing. Over the tier: **$6,175 without search
+   against $12,984 with it and ~399,000 searches, for identical measured
+   accuracy.** Search's real effect was on confidence (high 51% → 73%), not
+   correctness, and the no-search arm actually cleared *more* (49/68 vs 47/68).
+
+   *Keep a search tier for the residue, not the bulk.* It is the only
+   configuration that can establish an answer is **absent**: 13 of the search
+   arm's 18 NONEs are `CONTRADICTED` — the organisation was found and its EIN
+   shown not to be among the candidates. A no-search NONE means "cannot tell
+   from the packet" and still needs a human; a search NONE can be closed. Route
+   what the cheap-plus-Opus pass cannot close to search, and budget per use.
 
    Blocked on nothing but Phase 1 producing the identities.
 

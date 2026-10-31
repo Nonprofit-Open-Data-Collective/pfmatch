@@ -465,7 +465,13 @@ h2("(d) ROUTING -- what a cascade would cost and what it would get")
 # in the arithmetic. Correcting it moves the light arm +8% and the deep arm
 # +25%, which changes every row of the table below.
 C_LIGHT <- as.numeric(Sys.getenv("PF_ADJ_COST_LIGHT", "0.000674"))
-C_DEEP  <- as.numeric(Sys.getenv("PF_ADJ_COST_DEEP",  "0.040905"))
+C_DEEP  <- as.numeric(Sys.getenv("PF_ADJ_COST_DEEP",  "0.067765"))
+# 0.040905 was the second wrong value here. adj_cost() had been fixed to take
+# cache tokens, but this constant was hand-computed from a run log that printed
+# cache READS and not cache WRITES -- and the search arm writes 537,198 tokens
+# at $5.00/MTok, $2.69, 40% of its cost. Both figures are now read straight out
+# of the saved run by dev/adjudicate-04-ablation.R rather than retyped.
+C_DEEP_NOSEARCH <- as.numeric(Sys.getenv("PF_ADJ_COST_DEEP_NOSEARCH", "0.030265"))
 
 # One row per policy: which cases the light arm's verdict is kept for, and
 # which are escalated. The grade taken is the light arm's where kept and the

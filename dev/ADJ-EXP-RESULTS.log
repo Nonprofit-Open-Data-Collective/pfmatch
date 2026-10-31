@@ -1,7 +1,7 @@
 ============================================================================== 
 MAYBE ADJUDICATION EXPERIMENT -- RESULTS 
 ============================================================================== 
-run 2026-10-31 04:31  light=claude-haiku-5-5  deep=claude-opus-5-5 
+run 2026-10-31 04:48  light=claude-haiku-5-5  deep=claude-opus-5-5 
 
 cases scored: 100  (stratum A 68, stratum B 32) 
 
@@ -170,11 +170,11 @@ deep_search    MATCH NONE
 policy                        escalated   cost/1044   accuracy on the 27 
 ---------------------------------------------------------------------------- 
   light only                     0.0%    $   0.70    22/27 = 81.5% (95% CI 63.3-91.8) 
-  escalate low                  18.0%    $   8.39    26/27 = 96.3% (95% CI 81.7-99.3) 
-  escalate low + INFER          47.0%    $  20.77    26/27 = 96.3% (95% CI 81.7-99.3) 
-  escalate low + medium         65.0%    $  28.46    25/27 = 92.6% (95% CI 76.6-97.9) 
-  escalate all but QUOTE+high   78.0%    $  34.01    25/27 = 92.6% (95% CI 76.6-97.9) 
-  deep only                    100.0%    $  43.41    25/27 = 92.6% (95% CI 76.6-97.9) 
+  escalate low                  18.0%    $  13.44    26/27 = 96.3% (95% CI 81.7-99.3) 
+  escalate low + INFER          47.0%    $  33.95    26/27 = 96.3% (95% CI 81.7-99.3) 
+  escalate low + medium         65.0%    $  46.69    25/27 = 92.6% (95% CI 76.6-97.9) 
+  escalate all but QUOTE+high   78.0%    $  55.89    25/27 = 92.6% (95% CI 76.6-97.9) 
+  deep only                    100.0%    $  71.45    25/27 = 92.6% (95% CI 76.6-97.9) 
 
 Search is billed per use on top of the deep arm's tokens, so every row 
 with escalation is understated. The deep arm used 2.2 searches/case here. 

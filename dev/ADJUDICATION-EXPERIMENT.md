@@ -317,7 +317,7 @@ Full output in `dev/ADJ-EXP-RESULTS.log`. Light `claude-haiku-5-5` at effort
 medium; deep `claude-opus-5-5` at effort high with `web_search_20260209`,
 `max_uses` 12. 100/100 verdicts on both arms, no API failures, no unparsed
 responses, no paused turns. Light 52 s and **$0.067**; deep 353 s, 220
-searches (2.2/case), **$4.09** in tokens plus per-search billing. Both figures
+searches (2.2/case), **$6.78** in tokens plus per-search billing. Both figures
 include cache traffic: `usage.input_tokens` excludes cached tokens, so an
 earlier version of `adj_cost()` that charged only input+output understated the
 light arm by 8% and the deep arm by 25% (4.08M cache-read tokens against 298K
@@ -382,10 +382,10 @@ chance than one, and it converts directly into a cascade:
 | policy | escalated | cost for 1,044 | accuracy on the 27 |
 |---|---:|---:|---|
 | light only | 0% | $0.70 | 81.5% |
-| **escalate `low`** | **18%** | **$8.39** | **96.3%** (26/27) |
-| escalate low + INFER | 47% | $20.77 | 96.3% |
-| escalate low + medium | 65% | $28.46 | 92.6% |
-| deep only | 100% | $43.41 | 92.6% |
+| **escalate `low`** | **18%** | **$13.44** | **96.3%** (26/27) |
+| escalate low + INFER | 47% | $33.95 | 96.3% |
+| escalate low + medium | 65% | $46.69 | 92.6% |
+| deep only | 100% | $71.45 | 92.6% |
 
 **Escalating only the light arm's low-confidence 18% reaches deep-arm accuracy
 for a fifth of the cost.** It scores one case higher than deep-only, which is
@@ -393,6 +393,90 @@ not a real difference at n=27 — the honest claim is parity, not superiority.
 That the cheap arm has **zero** confident-and-wrong verdicts is what makes the
 policy safe: its failures announce themselves as low confidence, which is
 exactly what the ZIP5+margin rule could not do.
+
+### The ablation: the gap is two-thirds model, one-third web
+
+`PF_ADJ_NOSEARCH=1` runs Opus at the same effort on the identical frozen packet
+with `web_search` removed, so the two-arm gap decomposes. Full output in
+`dev/ADJ-EXP-ABLATION.log`.
+
+| arm | strict accuracy on the 27 | clearance on stratum A | high confidence |
+|---|---|---|---:|
+| light — Haiku, packet only | 81.5% (CI 63.3–91.8) | 55.9% | 35% |
+| **deep− — Opus, packet only** | **88.9%** (CI 71.9–96.1) | **72.1%** | 51% |
+| deep+ — Opus + web search | 92.6% (CI 76.6–97.9) | 69.1% | **73%** |
+
+| step | effect | paired (McNemar, exact) |
+|---|---:|---|
+| model: light → deep− | **+7.4 pt** | 4 gained, 2 lost, p = 0.687 |
+| search: deep− → deep+ | **+3.7 pt** | **1 gained, 0 lost, p = 1.000** |
+| total: light → deep+ | +11.1 pt | 4 gained, 1 lost, p = 0.375 |
+
+**Two-thirds of the advantage is the model, not the web.** And the search step
+is a single case out of 27 — not distinguishable from zero, though not ruled
+out either. Three further findings sharpen that:
+
+* **The no-search arm clears *more*, not less** — 49 of 68 against 47. Search
+  made the model more conservative, which is the fourth outcome this ablation
+  pre-registered. So Q1's 70.7% is not inflated by search; if anything search
+  trades clearance volume for precision, and both effects are one or two cases.
+* **Search's clearest measured effect is on confidence, not accuracy** — high
+  confidence goes 51% → 73%. It makes the model surer more than it makes it
+  righter. Confident-and-wrong stays at 1/27 for both deep arms, so there is no
+  evidence of harm, but "surer" is not the thing being bought.
+* **Search changed the verdict or the EIN on only 10 of 100 cases.** Of the one
+  that had a known answer, search fixed it and broke nothing.
+
+But it fixed cases nothing else could, and they are the characteristic ones:
+
+* `G002917 CISE` — deep− took the exact-name match; deep+ found the 2016 grant
+  **predates CISE's own exemption** (Sept 2017) so it was an Archdiocese of
+  Cincinnati program then, and picked the Archdiocese EIN.
+* `G003937 CHILDREN'S HOSPITAL OF PHILADELPHIA` — deep− took the hospital;
+  deep+ found CHOP's own giving page naming the *Foundation's* federal ID.
+
+And one thing the no-search arm **cannot do at all**: establish that the right
+answer is absent. 13 of the search arm's 18 NONEs are `CONTRADICTED` — it found
+the organisation and showed its EIN is not among the candidates. A no-search
+NONE means "I cannot tell from the packet"; a search NONE means "I checked, and
+it is not there". Those are different claims even when the verdict string
+matches, and they route differently: the second can be closed, the first has to
+go to a human.
+
+**Cost, which is where this lands.** Measured per case, cache traffic included:
+
+| arm | tokens/case | vs deep− | per-use search |
+|---|---:|---:|---|
+| light | $0.000674 | — | — |
+| deep− | $0.030265 | — | none |
+| deep+ | **$0.067765** | **+124%** | 2.2/case |
+
+Escalating the light arm's low-confidence 18% over the projected 1.01M MAYBEs:
+
+| escalation tier | cost | accuracy on the 27 |
+|---|---:|---|
+| **deep−, no search** | **$6,175** | **26/27 = 96.3%** |
+| deep+, with search | $12,984 **+ ~399,000 searches** | 26/27 = 96.3% |
+| none (light only) | $680 | 22/27 = 81.5% |
+
+**Identical measured accuracy at half the token cost and no search billing.**
+On this evidence the production cascade should escalate to Opus *without*
+search, and reserve the search tier for the residue the cheap-plus-Opus pass
+still cannot close — where its ability to prove an answer absent is worth
+paying for. That is a different recommendation from the one the two-arm result
+implied, and it is the reason the ablation was worth running.
+
+> **Two cost corrections, recorded because the same mistake was made twice.**
+> `adj_cost()` originally charged only input + output, missing cache reads
+> (deep arm understated 25%). After that was fixed, the `C_DEEP` constant in
+> stage 03 was still hand-copied from a run log that printed cache *reads* and
+> not cache *writes* — and the search arm writes 537,198 tokens at $5.00/MTok,
+> $2.69, **40% of its total cost**, because a long search turn re-caches a
+> growing prefix repeatedly (the no-search arm writes 28,785). Deep-arm
+> understatement: 66%. Stage 02 now prints cache writes, and
+> `adjudicate-04-ablation.R` reads both arms' costs out of the saved runs
+> instead of retyping them. Every dollar figure in this note is the corrected
+> one.
 
 ### Scaling to the full corpus
 
@@ -441,21 +525,26 @@ the MAYBE tier takes it to $680. Running the cheap arm over the whole tier is a
 rounding error against the cost of the match itself (`SHARD-AND-COLLAPSE-FINDINGS.md`
 §3 budgets 401 h of compute for one shard of 3.34M identities).
 
-The cascade is where the real money is, and it is still affordable:
+The cascade is where the real money is, and the ablation picks its tier:
 
 | policy | n escalated | cost |
 |---|---:|---:|
 | Haiku on all 1.01M MAYBEs | — | $680 |
-| + Opus on the 18% it flags low-confidence | 181,568 | $7,427 |
-| **cascade total** | | **$8,107** (**$4,054** batched) |
-| Opus on every MAYBE, for contrast | 1,008,713 | $41,261 |
+| **+ Opus, no search, on the 18% flagged low** | **181,568** | **$6,175** |
+| + Opus **with** search on the same 18% | 181,568 | $12,984 **+ ~399,000 searches** |
+| Opus with search on every MAYBE, for contrast | 1,008,713 | $68,355 |
 
-**~$8K against ~$41K**, for parity on the 27 known answers. Batched, ~$4K.
+**~$6K against ~$68K**, for 96.3% against 92.6% on the 27 known answers —
+the cascade is both cheaper *and* marginally better than running the expensive
+arm over everything. Batched, ~$3K. The search tier adds nothing measurable
+here (one case, p = 1.000) at twice the token cost plus per-use search billing,
+so it belongs on the residue rather than on the 18%.
 
-Three things that figure does **not** include, all pushing up:
+Two things these figures do **not** include, both pushing up:
 
-* **Web search is billed per use**, at 2.2/case measured. The 18% escalation is
-  ~399,000 searches, and that is a separate line nobody should discover later.
+* **Per-use web search**, for any policy that keeps it: 2.2/case measured, so
+  ~399,000 searches on an 18% escalation. A separate line nobody should
+  discover later — and the main reason to prefer the no-search tier.
 * **Rate limits, not price, are the binding constraint at 1M calls.** This run
   did 100 light calls in 52 s at 6 workers. 1.01M at that rate is ~150 h of
   wall clock on one stream, which is why the Batch API is the right surface
