@@ -142,6 +142,20 @@ emitted 17 pair(s) over 7 query row(s) at cutoff 0.70
 
 highest similarity any individual's name reaches: 0.854 (ALEXANDER SCHWEIG -> ALEXANDER GRAHAM BELL) 
 ============================================================================== 
+THE FLAG vs THE CUTOFF, on the 39 adjudicated individuals 
+============================================================================== 
+39 individuals; the looks_personal flag fires on 11 of them (28% recall, 
+  0 non-individuals flagged, so precision is 100% on this sample) 
+ 
+          flagged     n reached_0.85 reached_0.90 max_sim median_sim
+           <char> <int>        <int>        <int>  <char>     <char>
+      NOT flagged    28            0            0   0.809      0.702
+ flagged personal    11            1            0   0.854      0.727
+ 
+Read the `reached_0.85` column for the unflagged row. That is the number 
+of individuals the cutoff alone has to stop, and it is what decides 
+whether skip_personal is a mitigation or a courtesy. 
+============================================================================== 
 SUMMARY 
 ============================================================================== 
  cutoff recovered    of false_offers false_cases pairs margin
