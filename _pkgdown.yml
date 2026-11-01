@@ -21,25 +21,32 @@ navbar:
           href: articles/cascade-workflow.html
         - text: Name and address variants
           href: articles/name-and-address-variants.html
+        - text: Clustering recipients by address
+          href: articles/clustering-by-address.html
         - text: Adjudicating the MAYBE tier
           href: articles/adjudicating-maybe.html
         - text: What lives outside the BMF
           href: articles/outside-the-bmf.html
         - text: Choosing a matching dictionary
           href: articles/matching-dictionaries.html
+        - text: Matching against your own YES tier
+          href: articles/yes-tier-dictionary.html
 
 articles:
 - title: Articles
   desc: >
     How the cascade resolves a grant, what the variation it has to absorb
-    actually looks like, what the two tiers it cannot clear are worth reviewing,
-    and which database to match against in the first place.
+    actually looks like, how renderings of one recipient are grouped in the
+    first place, what the two tiers it cannot clear are worth reviewing, and
+    which database to match against — including the run's own YES tier.
   contents:
   - cascade-workflow
   - name-and-address-variants
+  - clustering-by-address
   - adjudicating-maybe
   - outside-the-bmf
   - matching-dictionaries
+  - yes-tier-dictionary
 
 
 
