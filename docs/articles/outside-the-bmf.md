@@ -139,8 +139,28 @@ cheap rate would have reported about $0.46 and understated by nearly
 three times. Second, the cheap arm ran **37% more searches**, and
 searches are billed per use and are in neither figure.
 
-That is the shape of the cost result on this tier: the cheap model is
-clearly worth using, and the reason is not the number on the price list.
+And once those per-use searches are counted, the 5.1x does not survive
+multiplication either. Projected over the whole tier
+(`dev/adjudicate-18-layer-costs.R`):
+
+| arm                | tokens  | searches  | search bill | total       |
+|:-------------------|:--------|:----------|:------------|:------------|
+| Haiku 5.5 + search | $10,420 | 3,499,795 | $34,998     | **$45,418** |
+| Opus 5.5 + search  | $53,213 | 2,545,306 | $25,453     | **$78,666** |
+
+Search is **77% of the cheap arm’s bill and 32% of the expensive
+one’s**, because the cheap arm ran more of them. On the full invoice the
+expensive model costs **1.73x**, not 5.1x, and over the tier the model
+choice is worth about $33,000 against a search budget worth about
+$35,000.
+
+So the cost lever on this tier is `max_uses`, not the model. The cheap
+model is still the one to use — 33.0% against 36.3% recovered, and the
+*same EIN* 31 times out of 31 where both named one — but it should be
+chosen on the evidence that it is nearly as good, not on a price ratio
+that shrinks by a factor of three when the bill is added up.
+`dev/DEVELOPMENT-PLAN.md` §“Phase 4b” works through the layer choice for
+both tiers.
 
 </div>
 
@@ -326,8 +346,8 @@ expensive answer to a question string distance answers for nothing.
 `pf_fuzzy_candidates()` scores the filed `name_key` against the
 reference rows sharing its ZIP5, falling back to city plus state where
 that block is empty, and emits the best few above a cutoff. Blocking
-first is what makes it free: the pools are small — median 477 reference
-rows on this sample, largest 2,940 — and one pool takes microseconds
+first is what makes it free: the pools are small — median 505 reference
+rows on this sample, largest 2,930 — and one pool takes microseconds
 against the 223,151 candidates pass B2 generates on 5,000 grants.
 
 It does not reimplement any decision. `npmatch::np_block()` returns
@@ -336,7 +356,22 @@ directly, so the pairs go through the same comparator, selector and
 tiering as every exact pass and a fuzzy pair clears the same bar.
 
 All three misspellings rank **first** in their own ZIP5 pool, at 0.941,
-0.924 and 0.857.
+0.924 and 0.857. At the 0.90 default **two of the three clear** —
+`THE WESMINSTER SCHOOL` to 58-0566206 at score 0.930,
+`COCORDIA UNIVERSITY` to 39-0833608 at 0.923.
+
+The third is the honest limit of the pass, and it is worth following
+because it fails twice for two different reasons. `THE PASSONISTS` sits
+at 0.857, below the cutoff. Lower the cutoff to 0.85 and it *is*
+offered, with the correct EIN — 22-2092362, the one search established —
+and then the scorer rejects it at **0.360**. `PASSONISTS` against
+`PASSIONIST MISSIONARIES INC` is a weak name match once the comparator
+reads the whole string rather than the prefix.
+
+So lowering the cutoff moves that case from “never retrieved” to
+“retrieved and rejected”. That is a better failure — it is visible to a
+reviewer and countable in the diagnostics — but it is not a recovery,
+and no cutoff makes it one.
 
 </div>
 
@@ -349,27 +384,53 @@ trade-off at once:
 
 | cutoff             | recovered of the 33 the BMF holds | false offers in the 57 it does not | margin to the nearest personal name |
 |:-------------------|:----------------------------------|:-----------------------------------|:------------------------------------|
-| 0.95               | 3                                 | 0                                  | 0.102                               |
-| **0.90** (default) | **7**                             | 1, a placeholder                   | **0.052**                           |
-| 0.85               | 11                                | 1, a placeholder                   | 0.002                               |
+| 0.95               | 3                                 | 0                                  | 0.096                               |
+| **0.90** (default) | **6**                             | **0**                              | **0.046**                           |
+| 0.85               | 11                                | 0                                  | **-0.004**                          |
 
 The default is **0.90**, and the reason is the right-hand column rather
-than the left. At 0.85 four more identities are recovered, but the
-highest-scoring personal name sits at **0.848** — `ALEXANDER SCHWEIG`
-against `ALEXANDER GRAHAM BELL ASSOCIATION`. A one-point margin on 38
-individuals is not a margin.
+than the left. The highest similarity any individual’s name reaches is
+**0.854** — `ALEXANDER SCHWEIG` against `ALEXANDER GRAHAM BELL`. A
+cutoff of 0.85 sits *underneath* that collision, which is why the margin
+column goes negative: at 0.85 the threshold is no longer separating
+organisations from individuals.
 
-That near-collision is structural, not bad luck: Jaro-Winkler’s prefix
-bonus is precisely what rewards a shared first name, so individuals —
-43% of this tier — are the population this comparator is worst at
-excluding. `skip_personal` keeps them out of the pool rather than
-leaving the cutoff to catch them.
+That near-collision is structural, not bad luck. Jaro-Winkler’s prefix
+bonus is precisely what rewards a shared first name, so individuals — 39
+of these 91 cases, 43% of the tier — are the population this comparator
+is worst at excluding.
 
-The single false offer across the 57 cases the BMF should not hold is
-`SEE SCHEDULE ATTACHED` against `SEE SCHEDULE O` at 0.91: two
-placeholders are near-identical strings describing nothing. The
-placeholder filter removes it on both sides, which is one more reason
-the pass does its own filtering rather than trusting a threshold.
+And the five recoveries between 0.90 and 0.85 are offers, not
+clearances. On the full-file regression the pass clears **24**
+identities to YES at 0.90 and **25** at 0.85 — one more identity for
+1,105 more pairs and a cutoff below the personal-name collision. There
+is essentially no recall left to buy.
+
+**What protects the individuals is the cutoff, not the `skip_personal`
+flag.** That is worth stating carefully, because the obvious reading is
+the other way round. Scanning all 39 with the flag disabled:
+
+|                  |   n | reach 0.85 | reach 0.90 | highest | median |
+|:-----------------|----:|:-----------|:-----------|:--------|:-------|
+| not flagged      |  28 | 0          | **0**      | 0.809   | 0.702  |
+| flagged personal |  11 | 1          | **0**      | 0.854   | 0.727  |
+
+At the 0.90 default **no individual reaches the cutoff at all**, flagged
+or not. The flag fires on only 11 of the 39 — 28% recall, though with no
+false positives on this sample — so 28 individuals go into the pool
+regardless, and they top out at 0.809. `skip_personal` is defence in
+depth rather than the primary control. It earns its place by catching
+the one case that does cross 0.85, but n=1 is not a basis for leaning on
+it, and a cutoff that needed it to work would be the wrong cutoff.
+
+**There are no false offers at any cutoff**, which is the column most
+likely to be misread. The nearest thing to one is
+`SEE SCHEDULE ATTACHED` against `SEE SCHEDULE O` at 0.91 — two
+placeholders are near-identical strings describing nothing — and the
+placeholder filter removes it on both sides before the comparator runs.
+The zero in that column is the filter working, not an absence of
+near-collisions, which is one more reason the pass does its own
+filtering rather than trusting a threshold.
 
 </div>
 
@@ -390,6 +451,79 @@ identity that has cleared is not in the residual, no pair is added to
 it, and its selection cannot move. `pf_fuzzy_recover()` asserts that
 instead of trusting it, and `dev/adjudicate-16-fuzzy-regress.R`
 re-checks it independently.
+
+</div>
+
+<div class="section level3">
+
+### What it does to a full run
+
+These 91 cases cannot say what the pass does to everything else, because
+it was designed on them. The regression runs the production
+configuration end to end over all 4,868 in-scope identities:
+
+| cutoff             | fuzzy pairs | identities to YES | of which had no candidate before | YES identities broken |
+|:-------------------|:------------|:------------------|:---------------------------------|:----------------------|
+| 0.95               | 2,150       | 7                 | 1                                | **0**                 |
+| **0.90** (default) | **2,650**   | **24**            | **3**                            | **0**                 |
+| 0.85               | 3,755       | 25                | 3                                | **0**                 |
+
+**+0.49 points** of clear rate at the default, for about 9% of the match
+time it supplements — and no identity that had cleared YES moved at any
+cutoff, which is the assertion rather than a hope. 0.85 buys **one**
+identity over 0.90 for 1,105 more pairs and a cutoff below the
+personal-name collision. The scan computes every similarity in the block
+and then filters, so the cutoff barely changes what it costs.
+
+The fourth column is the one worth pausing on. Three of the 24
+identities the pass clears at the default **had no candidate at all**
+beforehand — no blocking pass produced a single pair for them, so there
+was nothing on a review sheet to look at and nothing for any adjudicator
+to rank. Those are the cases this pass exists for, and they are
+invisible in a clear-rate delta.
+
+> That run uses the matchdb `active-observed` tier (6.67M rows), not the
+> augmented reference the rest of this article is measured on (3.88M).
+> Every cached bundle predates an npmatch reinstall and
+> `pf_check_reference()` correctly refuses them, so the reference was
+> rebuilt from the current default tier rather than silently matching
+> against stale keys. Its tier counts are therefore **not** comparable
+> to the 62.74% quoted elsewhere here; what they measure is what the
+> pass does to a full run on the reference the pipeline now uses by
+> default.
+
+</div>
+
+<div class="section level3">
+
+### The one case that argues against it
+
+Of the 33 EINs search established, the pass reaches 3 at the default and
+lands the same EIN on 2. The third is the finding, not a footnote: one
+identity cleared to **YES on 36-3641111** where search established
+**36-4703871**, at score 0.874 and similarity 0.914 — comfortably inside
+the range the pass treats as good. One of the two is wrong and the
+pipeline has no way to tell which.
+
+That is the cost of the seam that makes the pass cheap. Because a fuzzy
+pair goes through the same scorer and tiering as an exact pair, it can
+be *confidently* wrong in the same way, and the pass has no notion of
+having guessed. One contradiction out of three is not a rate, but it is
+the right shape of warning, and it wants checking by hand before the
+pass is leaned on at scale.
+
+</div>
+
+<div class="section level3">
+
+### What it does not replace
+
+It reaches 3 of the 33 — the typo class, and nothing else. The other 30
+are legal-name changes, DBAs, parent/chapter structure and acronyms,
+where the filed string and the reference string are not near-neighbours
+under any character metric and no cutoff helps. Those still need a
+reviewer or a model with search. What the pass removes is the subset
+that never needed either.
 
 </div>
 
@@ -672,6 +806,8 @@ be quietly folded into a headline.
     Rscript dev/adjudicate-15-no-arms.R                    # Haiku vs Opus
 
     Rscript dev/adjudicate-16-fuzzy-regress.R              # the fuzzy pass, full file
+    Rscript dev/adjudicate-17-fuzzy-cutoff.R               # the cutoff table
+    Rscript dev/adjudicate-18-layer-costs.R                # what each layer costs
 
 The packet stage gates every identity’s tier against `BASELINE-2026-10C`
 and stops on any drift, because a sample drawn from a drifted run does

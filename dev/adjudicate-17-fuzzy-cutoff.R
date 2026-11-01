@@ -151,6 +151,56 @@ if (!any(p91 %in% TRUE)) {
   }
 }
 
+## ---- 6. is skip_personal doing the work, or is the cutoff? ----------------
+# This was added after section 5 showed the flag is not what the vignette
+# claimed it was. `looks_personal` fires on 11 of the 91, but `entity_class`
+# adjudicates 39 of them as INDIVIDUAL -- the flag has 28% recall and, on this
+# sample, zero false positives. So 28 individuals go into the fuzzy pool
+# UNFLAGGED, and the sentence "skip_personal keeps them out of the pool rather
+# than leaving the cutoff to catch them" is true of 11 of them and false of 28.
+#
+# Which means the hazard has to be measured on both groups separately. If the
+# unflagged 28 reach high similarities too, the flag is cosmetic and the cutoff
+# is load-bearing for individuals. If they do not, the flag has low recall but
+# catches the cases that matter, which is a different and much better result --
+# and either way it is a measurement, not an argument.
+hr(); say("THE FLAG vs THE CUTOFF, on the 39 adjudicated individuals"); hr()
+ind <- a[entity_class %in% "INDIVIDUAL", .(grant_id, looks_personal)]
+say("%d individuals; the looks_personal flag fires on %d of them (%.0f%% recall,",
+    nrow(ind), sum(ind$looks_personal %in% TRUE),
+    100 * sum(ind$looks_personal %in% TRUE) / nrow(ind))
+say("  %d non-individuals flagged, so precision is %s on this sample)",
+    sum(!a$entity_class %in% "INDIVIDUAL" & a$looks_personal %in% TRUE),
+    if (sum(!a$entity_class %in% "INDIVIDUAL" & a$looks_personal %in% TRUE) == 0) "100%" else "below 100%")
+
+qi <- q91[as.character(q91$.id) %in% ind$grant_id, , drop = FALSE]
+flagged <- ind$looks_personal[match(as.character(qi$.id), ind$grant_id)] %in% TRUE
+# skip_personal = FALSE for both groups: the question is what each group REACHES,
+# which the mitigation would hide for the flagged half.
+ib <- pf_fuzzy_candidates(qi, r, cutoff = 0.60, top_k = 1L,
+                          skip_personal = FALSE, verbose = FALSE)
+top_by <- data.table(grant_id = as.character(qi$.id[ib$.x]),
+                     flagged = flagged[ib$.x], sim = attr(ib, "sim"))
+top_by <- top_by[, .(top = max(sim)), by = .(grant_id, flagged)]
+# an individual whose block produced nothing at all reaches nothing
+miss <- setdiff(as.character(qi$.id), top_by$grant_id)
+if (length(miss))
+  top_by <- rbind(top_by, data.table(
+    grant_id = miss, flagged = flagged[match(miss, as.character(qi$.id))],
+    top = NA_real_))
+say("")
+print(top_by[, .(n = .N,
+                 reached_0.85 = sum(top >= 0.85, na.rm = TRUE),
+                 reached_0.90 = sum(top >= 0.90, na.rm = TRUE),
+                 max_sim = sprintf("%.3f", max(top, na.rm = TRUE)),
+                 median_sim = sprintf("%.3f", stats::median(top, na.rm = TRUE))),
+             by = .(flagged = ifelse(flagged, "flagged personal", "NOT flagged"))],
+      row.names = FALSE)
+say("")
+say("Read the `reached_0.85` column for the unflagged row. That is the number")
+say("of individuals the cutoff alone has to stop, and it is what decides")
+say("whether skip_personal is a mitigation or a courtesy.")
+
 hr(); say("SUMMARY"); hr()
 sm <- rbindlist(rows)
 sm[, margin := round(cutoff - top, 3)]

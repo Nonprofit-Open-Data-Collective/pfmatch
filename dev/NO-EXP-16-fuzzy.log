@@ -20,3 +20,119 @@ fuzzy scan: 1,882 of 2,009 query rows (10 blank or placeholder, 117 personal)
 block pools: median 549 rows, largest 17,667
 SKIPPED 4 query row(s) whose block exceeded max_pool = 20,000
 emitted 2,150 pair(s) over 487 query row(s) at cutoff 0.95
+fuzzy pairs added: 2,150 over 487 identities
+tier movement: 7 identities changed (7 now YES that were not)
+  before: 2859 YES | 1121 MAYBE | 787 NO
+  after:  2866 YES | 1120 MAYBE | 782 NO
+  680.9 s  (11.68% of the 5830 s match it supplements) 
+
+  YES identities that changed tier: 0  (as the residual rule requires) 
+
+  tier movement: 
+        to
+from     ABSENT MAYBE   NO  YES
+  ABSENT    100     0    0    1
+  MAYBE       0  1120    0    1
+  NO          0     0  782    5
+  YES         0     0    0 2859
+
+  of the LLM-established EINs, the fuzzy pass moved 0 identities and 
+  landed the SAME EIN on 0 of them: 
+============================================================================== 
+CUTOFF 0.90 
+============================================================================== 
+residual: 2,009 of 4,868 in-scope identities have not cleared YES
+fuzzy scan: 1,882 of 2,009 query rows (10 blank or placeholder, 117 personal)
+block pools: median 549 rows, largest 17,667
+SKIPPED 4 query row(s) whose block exceeded max_pool = 20,000
+emitted 2,650 pair(s) over 619 query row(s) at cutoff 0.90
+fuzzy pairs added: 2,650 over 619 identities
+tier movement: 28 identities changed (24 now YES that were not)
+  before: 2859 YES | 1121 MAYBE | 787 NO
+  after:  2883 YES | 1117 MAYBE | 771 NO
+  546.0 s  (9.37% of the 5830 s match it supplements) 
+
+  YES identities that changed tier: 0  (as the residual rule requires) 
+
+  tier movement: 
+        to
+from     ABSENT MAYBE   NO  YES
+  ABSENT     97     0    1    3
+  MAYBE       0  1114    0    7
+  NO          0     3  770   14
+  YES         0     0    0 2859
+
+  of the LLM-established EINs, the fuzzy pass moved 3 identities and 
+  landed the SAME EIN on 2 of them: 
+Key: <grant_id>
+ grant_id       ein    arm    fz_ein   tier     score       sim
+   <char>    <char> <char>    <char> <char>     <num>     <num>
+  G000167 580566206   opus 580566206    YES 0.9295356 0.9411249
+  G002162 390833608   opus 390833608    YES 0.9226316 0.9235088
+  G002196 364703871   opus 363641111    YES 0.8742857 0.9142857
+
+  *** 1 cleared to YES on an EIN the LLM arm contradicts: 
+Key: <grant_id>
+ grant_id       ein    arm    fz_ein   tier     score       sim
+   <char>    <char> <char>    <char> <char>     <num>     <num>
+  G002196 364703871   opus 363641111    YES 0.8742857 0.9142857
+============================================================================== 
+CUTOFF 0.85 
+============================================================================== 
+residual: 2,009 of 4,868 in-scope identities have not cleared YES
+fuzzy scan: 1,882 of 2,009 query rows (10 blank or placeholder, 117 personal)
+block pools: median 549 rows, largest 17,667
+SKIPPED 4 query row(s) whose block exceeded max_pool = 20,000
+emitted 3,755 pair(s) over 904 query row(s) at cutoff 0.85
+fuzzy pairs added: 3,755 over 904 identities
+tier movement: 32 identities changed (25 now YES that were not)
+  before: 2859 YES | 1121 MAYBE | 787 NO
+  after:  2884 YES | 1116 MAYBE | 774 NO
+  534.5 s  (9.17% of the 5830 s match it supplements) 
+
+  YES identities that changed tier: 0  (as the residual rule requires) 
+
+  tier movement: 
+        to
+from     ABSENT MAYBE   NO  YES
+  ABSENT     94     0    4    3
+  MAYBE       0  1113    0    8
+  NO          0     3  770   14
+  YES         0     0    0 2859
+
+  of the LLM-established EINs, the fuzzy pass moved 4 identities and 
+  landed the SAME EIN on 3 of them: 
+ grant_id       ein    arm    fz_ein   tier     score       sim
+   <char>    <char> <char>    <char> <char>     <num>     <num>
+  G000167 580566206   opus 580566206    YES 0.9295356 0.9411249
+  G002162 390833608   opus 390833608    YES 0.9226316 0.9235088
+  G002196 364703871   opus 363641111    YES 0.8742857 0.9142857
+  G001812 222092362   opus 222092362     NO 0.3600000 0.8569565
+
+  *** 1 cleared to YES on an EIN the LLM arm contradicts: 
+Key: <grant_id>
+ grant_id       ein    arm    fz_ein   tier     score       sim
+   <char>    <char> <char>    <char> <char>     <num>     <num>
+  G002196 364703871   opus 363641111    YES 0.8742857 0.9142857
+============================================================================== 
+SUMMARY 
+============================================================================== 
+ cutoff seconds residual pairs moved to_yes to_maybe yes_broken llm_ein_matched
+  <num>   <num>    <int> <int> <int>  <int>    <int>      <int>           <int>
+   0.95  680.86     2009  2150     7      7        0          0               0
+   0.90  545.97     2009  2650    28     24        3          0               2
+   0.85  534.55     2009  3755    32     25        3          0               3
+ llm_overlap llm_contradicted yes_before yes_after
+       <int>            <int>      <int>     <int>
+           0                0       2859      2866
+           3                1       2859      2883
+           4                1       2859      2884
+ 
+clear rate on the 4,868 in-scope identities OF THIS RUN. Not comparable to 
+BASELINE-2026-10C: different reference (see the note at the top). 
+  cutoff 0.95 : 58.73% -> 58.87%  (+0.14 points) 
+  cutoff 0.90 : 58.73% -> 59.22%  (+0.49 points) 
+  cutoff 0.85 : 58.73% -> 59.24%  (+0.51 points) 
+
+wrote ./data-dev/ADJ-FUZZY-REGRESS.rds 
+============================================================================== 
