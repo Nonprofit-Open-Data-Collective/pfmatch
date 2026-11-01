@@ -1,0 +1,487 @@
+<div id="main" class="col-md-9" role="main">
+
+# Clustering recipients by address
+
+One recipient organisation is written many ways across the grant file,
+and nothing in the filing says which renderings belong together.
+Grouping them by **address** is the package’s answer, and it is the same
+idea in four different places: it collapses the work the cascade has to
+do, it generates labels no human wrote, it scores a configuration
+without ground truth, and it supplies the candidate pool for
+character-level recovery.
+
+This article states the key, what the corpus looks like under it, the
+four uses as they currently stand, and the ways an address group is not
+an organisation.
+
+| use                      | where                                                                    | what it buys                                                |
+|:-------------------------|:-------------------------------------------------------------------------|:------------------------------------------------------------|
+| Identity collapse        | `pf_dedup()`, `pf_recipients()`, `pf_propagate_matches()`                | one organisation, one match, propagated to every grant row  |
+| Silver labels            | `dev/build-group-index.R`, `dev/build-triangulation-v2.R`, `pf_variants` | the adjudication queue and the bundled variant corpus       |
+| A label-free score       | `pf_consistency()`                                                       | within-group EIN agreement, no hand labels required         |
+| Reference-side retrieval | `pf_fuzzy_candidates()`, `pf_fuzzy_recover()`                            | a ZIP5 block as the pool a near-miss name is scored against |
+
+<div class="section level2">
+
+## 1. The key, and why it excludes the name
+
+The group key is the recipient’s **normalized street line plus ZIP5** –
+uppercased alphanumerics of address line 1, then the first five digits
+of the ZIP:
+
+<div id="cb1" class="sourceCode">
+
+``` r
+key <- paste(gsub("[^A-Z0-9]", "", toupper(PF_15_G_PAID_RECIP_ADDR_L1)),
+             substr(gsub("[^0-9]", "", PF_15_G_PAID_RECIP_ADDR_ZIP), 1, 5),
+             sep = "|")
+```
+
+</div>
+
+Address only. The name is never in the key, and that exclusion is the
+whole point: the name is the thing under test. Because grouping reads
+only fields the name comparator does not use, a difference between two
+names inside one group is an **observation** rather than an assumption,
+and the groups can be built without matching anything at all.
+
+Two consequences follow from that independence, and both are
+load-bearing.
+
+**Grouping can run over the whole corpus first.** It is a chunked scan
+with no reference, no blocking and no scoring, so the structural
+question – which addresses carry more than one rendering – is answered
+for 17.25M rows in about four minutes. Only grants inside a known
+multi-rendering group need to be matched afterwards. That inverts the
+original design, which sampled filers, matched them and then looked for
+groups: 112,806 matched grants yielded 2,853 informative cases, about 40
+grants per case, and an organisation funded only by unsampled
+foundations was invisible however many renderings it had.
+
+**A group is evidence about the comparator.** If two renderings at one
+street and ZIP are one organisation, every rendering in the group should
+receive the same EIN – whatever that EIN turns out to be. That is a
+check the package can run with no hand labels at all; see section 6.
+
+</div>
+
+<div class="section level2">
+
+## 2. What the corpus looks like under it
+
+Over the deduplicated e-file corpus, `efilepf_v3_1`, 17,253,199 grant
+rows:
+
+|                                                     | n          |
+|:----------------------------------------------------|:-----------|
+| grant rows scanned                                  | 17,253,199 |
+| distinct address keys                               | 2,326,459  |
+| keys with more than one grant                       | 1,380,763  |
+| keys with more than one name rendering              | 596,151    |
+| keys with more than one name and more than one year | 577,538    |
+
+So about one address key in four carries more than one way of writing
+the recipient, and the renderings are stable over time rather than
+one-off typos: 577,538 of the 596,151 multi-rendering groups span more
+than one tax year.
+
+Those groups are where most of the grant file lives.
+
+|                           |                                  |
+|:--------------------------|:---------------------------------|
+| groups                    | 596,151                          |
+| grant rows inside them    | 10,586,075 (61.4% of the corpus) |
+| grants per group          | median 7, mean 17.8, max 19,274  |
+| name renderings per group | median 2, max 10,363             |
+| tax years per group       | median 5, max 17                 |
+
+| grants in group | groups  | grant rows |
+|:----------------|:--------|:-----------|
+| 2               | 75,861  | 151,722    |
+| 3-4             | 114,848 | 396,889    |
+| 5-9             | 176,448 | 1,165,969  |
+| 10-24           | 142,399 | 2,123,922  |
+| 25-99           | 72,288  | 3,251,608  |
+| 100+            | 14,307  | 3,495,965  |
+
+The distribution is the reason the package batches by identity rather
+than by row: a handful of enormous groups hold a quarter of the corpus.
+14,307 groups of 100 or more grants carry 3.50M grant rows, and the
+extremes are extreme – one address receives 19,274 grants, and one
+carries 10,363 distinct renderings. Neither of those is an organisation,
+which is the subject of the next section.
+
+*(`dev/GROUP-INDEX.log` predates a label fix in
+`dev/build-group-index.R`: the run that produced it passed seven labels
+for six intervals, so the bucket names it prints are shifted by one. The
+counts are right and are reproduced above against the corrected labels –
+the arithmetic confirms it, since the “2” bucket holds exactly twice as
+many grants as groups.)*
+
+</div>
+
+<div class="section level2">
+
+## 3. An address group is not an organisation
+
+It is a hypothesis about one, and four populations break it. Each is
+handled somewhere, and knowing where is the difference between using the
+clustering and trusting it.
+
+**Shared mailboxes.** A PO box is a mail convenience, not a shared body.
+Groups whose street line parses as a box are dropped from the
+triangulation universe outright (`^P?O?BOX|^POST`).
+
+**Fiscal sponsors and donor-advised-fund custodians.** One address
+legitimately receives grants for hundreds of unrelated projects. The
+triangulation universe caps a group at fewer than 25 distinct renderings
+for exactly this reason; the 10,363-rendering address in section 2 is
+the shape being excluded.
+
+**Individuals at an organisation’s address.** Scholarship and fellowship
+payments are filed with the institution’s address and a person’s name.
+The variant corpus drops a pair if either side has a blank
+organisation-name line or trips `.pf_looks_personal()`, which is also
+why the bundled table ships no individual’s name or home address.
+
+**Two organisations in one building.** This is the hard one, because
+nothing about it looks wrong. `FIRST PRESBYTERIAN CHURCH` and
+`FIRST PRESBYTERIAN FOUNDATION` sit at one Boca Raton ZIP and are two
+EINs. Address line 2 is the only field that bears on it, so
+`pf_street_unit()` parses the secondary unit and `pf_unit_evidence()`
+turns two parsed units into evidence for a reviewer – different suites
+at one street is a strong signal of two bodies. It is a prompt for a
+human, never an automatic verdict.
+
+The residual risk after all four is why the labels in section 5 are
+*silver* and why `pf_dedup()` carries the vetoes in section 4.
+
+</div>
+
+<div class="section level2">
+
+## 4. Use 1 – identity collapse
+
+`pf_dedup()` is the production use, called by `pf_prepare()` on every
+run unless `dedup = "none"`. It turns grant rows into recipient
+identities at two levels.
+
+**Exact.** Group by the normalized key
+`(identity_key, street_key, zip5)`. A hash group-by, linear and safe.
+This collapses annual repeat grants and the many foundations funding one
+large charity.
+
+**Fuzzy.** Cluster the *surviving distinct keys* – a far smaller set –
+inside a geographic block: ZIP5 where present, state otherwise, and a
+record with neither is never clustered. Two names join if their
+Jaro-Winkler similarity clears `threshold` (default 0.92), and the
+accepted joins become single-linkage components by union-find. This
+absorbs `ST JUDES` / `ST JUDE CHILDRENS RESEARCH HOSP`.
+
+<div id="cb2" class="sourceCode">
+
+``` r
+g <- pf_dedup(grants, method = "fuzzy", threshold = 0.92)
+r <- pf_recipients(g)          # one row per identity, most complete rendering
+s <- pf_match_grants(r, ref)   # the cascade runs once per identity
+g <- pf_propagate_matches(g, pf_status(s))   # back out to every grant row
+```
+
+</div>
+
+<div class="section level3">
+
+### What it is worth
+
+The cost saving is real and smaller than expected. Measured as an
+accumulation curve on the 100k sample, because a single-point
+measurement understates the full file badly – a 0.8% sample rarely
+catches two grants to the same recipient:
+
+| sample n | exact collapse | fuzzy collapse |
+|:---------|:---------------|:---------------|
+| 2,000    | 1.01x          | 1.02x          |
+| 10,000   | 1.03x          | 1.07x          |
+| 25,000   | 1.07x          | 1.14x          |
+| 50,000   | 1.11x          | 1.21x          |
+| 98,786   | 1.17x          | 1.32x          |
+
+Fitting `log K ~ log n` extrapolated to about **1.8x at 12.5M rows**.
+The full-file run came in well above that: 12,559,051 grant rows
+collapsed to 3,377,452 distinct keys, **3.72x**, on `method = "exact"`
+alone. No full-file fuzzy figure exists, because the production run used
+exact dedup. The 1k benchmark collapses 1.03x exact and 1.05x fuzzy,
+which is why cascade timings taken there understate what dedup is worth
+at scale.
+
+The **recall** gain is the better reason to run it. Because a cluster is
+one organisation by construction, a match found for any member
+propagates to every member: a truncated, misspelled or acronymic
+rendering inherits the EIN resolved for an easier rendering in the same
+cluster. That costs nothing once the clusters exist, and it is the
+cheapest recall the package has. `pf_recipients()` leans on the same
+property in the other direction, choosing the most complete
+representative of each cluster – longest name, then most address fields
+populated – so the cascade runs against the best available spelling
+rather than an arbitrary one.
+
+Batching inherits it too: `pf_run_batches()` forms batches over
+`recipient_uid`, so a cluster is never split across batches and every
+row of a cluster inherits the one match computed for it.
+
+</div>
+
+<div class="section level3">
+
+### The trap, and the veto that closes it
+
+The first implementation merged `UNIVERSITY OF MASSACHUSETTS AMHERST`
+with `UNIVERSITY OF MASSACHUSETTS AMHERST FOUNDATION`, and the fuzzy
+threshold was not the cause. `npmatch::np_normalize()` strips
+`FOUNDATION` as a legal suffix, so the two names are already identical
+before any comparison happens – exact dedup alone would have merged
+them. That is correct for *matching*, where both should be candidates,
+and wrong for *identity*, where merging locks one EIN across every row
+of the cluster. It is also the single most common wrong-but-plausible
+match in the package: the MAYBE audit found the
+foundation-versus-operating split in 7 of 100 cases.
+
+So `pf_dedup()` builds its own identity key from `name_full` rather than
+`name_key`, splitting the suffix list in two. **Corporate** suffixes –
+`INC`, `CORP`, `LLC`, `LTD` – are stripped, since they mark one body in
+a different wrapper. **Affiliate** suffixes – `FOUNDATION`, `FUND`,
+`TRUST`, `ASSOCIATION`, `ENDOWMENT`, `ALUMNI`, `FRIENDS` – are retained,
+and a difference in the affiliate-suffix set vetoes a fuzzy join
+outright:
+
+| pair at one address                                | outcome    | why                                    |
+|:---------------------------------------------------|:-----------|:---------------------------------------|
+| AMERICAN HEART ASSOCIATION / … INC                 | merged     | `INC` is a corporate wrapper, stripped |
+| DENVER ART MUSEUM / … FOUNDATION                   | held apart | affiliate suffix differs - veto        |
+| SIERRA CLUB / … FOUNDATION                         | held apart | affiliate suffix differs - veto        |
+| UNIVERSITY OF MASSACHUSETTS AMHERST / … FOUNDATION | held apart | affiliate suffix differs - veto        |
+
+Three further vetoes come from npmatch’s hard predicates: conflicting
+embedded numbers, ordinals or directions, so `LOCAL 32` never merges
+with `LOCAL 45`, nor `FIRST` with `SECOND`. Inspect what survives with
+`pf_dedup_report()`, which prints the cluster-size distribution and the
+largest clusters – the place over-merging shows up first.
+
+One scaling detail worth knowing, because it changes the result rather
+than only the runtime: blocks over `max_block` (2,000) used to be
+dropped from the fuzzy pass entirely. On the full file roughly 500k of
+3.38M keys sit in state-level blocks over that cap, and they are the
+densest neighbourhoods – exactly where fuzzy matching earns its keep.
+They are now sub-blocked on the leading characters of the name key, up
+to three levels deep. Jaro-Winkler weights the common prefix heavily, so
+splitting on it is close to lossless and bounds the quadratic comparison
+inside each block.
+
+</div>
+
+</div>
+
+<div class="section level2">
+
+## 5. Use 2 – silver labels for cases nobody labelled
+
+The same grouping, run for its evidence rather than its collapse, is
+where the package’s labels come from. Within one address group, take the
+best-scoring rendering the cascade cleared `YES` as the **anchor** and
+assign its EIN to the other renderings at that address. That is the
+triangulation set.
+
+| stage                                                          | n                               |
+|:---------------------------------------------------------------|:--------------------------------|
+| eligible universe, after the PO-box and fiscal-sponsor filters | 504,739 groups / 7,434,953 rows |
+| groups drawn (proportional across size buckets)                | 36,366                          |
+| grant rows extracted                                           | 540,683                         |
+| recipient identities matched                                   | 91,690                          |
+| groups still holding 2+ renderings after the match             | 36,114                          |
+| groups eligible to label (1+ YES, 1+ non-YES, one YES EIN)     | 12,474 (34.5%)                  |
+| informative cases written to the queue                         | 58,680                          |
+
+The 58,680 cases become the adjudication queue and the silver truth file
+(`confidence = "low"`). A subset also becomes `pf_variants`, the bundled
+corpus of 5,410 anchor/candidate pairs documented in
+`vignette("name-and-address-variants")`, restricted to organisation
+recipients and carrying a `name_class` taxonomy of what separates the
+two names.
+
+Two things are worth carrying away from how it was sized. First, the
+pilot measured yield by group size, and the result is the opposite of
+the intuition: cases per *identity* – identities being what the matcher
+charges for – rise monotonically with group size, so a group of 100+
+grants is about eleven times cheaper per case than a group of two.
+
+| grants in group | eligible | cases / group | cases / identity |
+|:----------------|:---------|:--------------|:-----------------|
+| 2               | 28.0%    | 0.24          | 0.118            |
+| 3-4             | 29.0%    | 0.36          | 0.159            |
+| 5-9             | 35.2%    | 0.74          | 0.274            |
+| 10-24           | 35.7%    | 1.54          | 0.398            |
+| 25-99           | 42.5%    | 4.66          | 0.669            |
+| 100+            | 46.0%    | 15.90         | 1.283            |
+
+Buying only the large groups would have delivered 50,000 cases in under
+two hours, and the set would then be conditioned on the most heavily
+funded recipients – unreadable as evidence about the comparator’s real
+failure rate. A proportional draw across the whole universe costs a few
+more hours and stays representative, so that is what was run.
+
+Second, the label is the assumption under test, not a fact. Assigning
+the anchor’s EIN to every other rendering at the address is exactly the
+assumption section 3 lists the exceptions to. So `pf_variants` sets
+`expected_same_org` to `TRUE` on only 20 rows, where the two names are
+the same string under a documented cosmetic transformation at an
+identical address, and `NA` – never `FALSE` – on the other 5,390. On 726
+rows the candidate’s own match beat the anchor’s, by score or by a
+stronger pass, which means the silver label is running against the
+system’s own evidence and should be read before it is trusted.
+
+</div>
+
+<div class="section level2">
+
+## 6. Use 3 – a score that needs no hand labels
+
+`pf_consistency()` is the address group used as a metric. Within a
+group, every resolved rendering should carry the same EIN; disagreement
+is a defect the package can see without anyone adjudicating anything.
+
+<div id="cb3" class="sourceCode">
+
+``` r
+pf_consistency(run, groups = "data-dev/TRIANGULATION-GROUPS.csv")
+#>   groups with >=2 resolved renderings, EIN agreement, tier-mixed groups, ...
+```
+
+</div>
+
+The caveat is section 3 again: a street address also covers fiscal
+sponsors, individual payees at an organisation’s address, and co-located
+bodies, so some groups are noisy in *every* configuration. That does not
+spoil the comparison it is built for – the groups are fixed, so
+comparing two configurations on the same groups still isolates the
+change – but the absolute agreement rate is not a precision figure and
+should not be quoted as one.
+
+</div>
+
+<div class="section level2">
+
+## 7. Use 4 – the ZIP5 block as a candidate pool
+
+The last use inverts the direction. Sections 4 to 6 group *grants* with
+each other; `pf_fuzzy_candidates()` uses the same geography to pool
+*reference* rows around a grant.
+
+Every pass in the cascade is an exact-equality block, so a single
+mistyped letter in the one distinctive token leaves nothing anywhere to
+block on, and the correct record is never retrieved – not scored and
+rejected, never offered:
+
+    THE WESMINSTER SCHOOL  (ATLANTA GA 30327) -> THE WESTMINSTER SCHOOLS, 30327
+    COCORDIA UNIVERSITY    (MEQUON WI 53097)  -> CONCORDIA UNIVERSITY,    53097
+
+Both correct rows sit in the reference at the filed ZIP5. So the
+recovery is Jaro-Winkler on `name_key` **inside an exact ZIP5 block**,
+with city plus state as a fallback where the ZIP5 block is empty.
+Blocking first is what makes it affordable: on the 100-case NO sample
+the pools have a median of 477 reference rows and a maximum of 2,940,
+against the 223,151 candidates the token pass generates on 5,000 grants.
+
+The cutoff of 0.90 is set from that measurement rather than from taste.
+It recovers 7 of the 33 identities the BMF does hold and offers exactly
+one row across the 57 it does not; 0.85 recovers four more, but the
+highest-scoring personal name sits at 0.848 – `ALEXANDER SCHWEIG`
+against `ALEXANDER GRAHAM BELL ASSOCIATION` – and a one-point margin on
+38 individuals is not a margin. Jaro-Winkler’s prefix bonus is what
+rewards a shared first name, so individuals are the population this
+comparator is worst at excluding, and `skip_personal` keeps them out of
+the pool instead of leaving the cutoff to catch them. The whole
+mechanism, and the three NO cases in 91 it accounts for, is in
+`vignette("outside-the-bmf")`.
+
+</div>
+
+<div class="section level2">
+
+## 8. What this is not: clustering EINs
+
+One clustering question in this project has a negative answer, and it is
+easy to confuse with the above. Grouping *grant renderings* by address
+is safe because the groups are small, local and structural. Grouping
+*EINs* by disclosed affiliation – Schedule A supported organisations,
+Schedule R related entities – by taking the transitive closure and
+handing every EIN a `cluster_id` is not.
+
+566,653 undirected pairs over 174,496 EINs produce a largest connected
+component of **66,973 EINs across 56 states**, 38% of every EIN in the
+graph, chaining unrelated bodies through intermediaries. A grant
+“correctly” matched to anything inside it would be unfalsifiable, and
+geography does not save it: the largest same-city component is still 407
+EINs in Phoenix. So the package ships direct edges only – `pf_dyads()`,
+a dyad table with no closure and no cluster id – and the union-find it
+does run is scoped to the candidates inside a single grant, where it
+cannot chain through an EIN that is not itself a candidate.
+`dev/CLUSTER-FINDINGS.md` has the measurement.
+
+The related finding is a reminder that address clustering does not reach
+everything: 15.9% of the MAYBE tie band is **two BMF reference rows
+carrying one name for one body** – `JOHNS HOPKINS UNIVERSITY` at two
+EINs, `MEMORIAL SLOAN KETTERING CANCER CENTER` at two EINs. That is a
+reference-side problem, and no amount of grant-side grouping touches it.
+
+</div>
+
+<div class="section level2">
+
+## 9. What none of this establishes
+
+**Precision.** Every number here is about structure and recall. The
+address group tells you two renderings are probably one organisation; it
+never tells you the EIN is right. The one measured precision figure in
+the neighbourhood comes from adjudication, not from clustering.
+
+**That the labels are true.** Section 5’s labels are silver and
+unadjudicated by construction, and `label_basis` in `pf_variants`
+records which rows are waiting for a human.
+
+**A full-file fuzzy collapse ratio.** The production run used exact
+dedup, so the 1.8x extrapolation and the 3.72x exact measurement are the
+only two points on record, and they are not comparable.
+
+**That the four uses are independent.** They are not. The triangulation
+groups are built from the same addresses `pf_dedup()` clusters on, so a
+dedup change moves the labels, which moves `pf_consistency()`. When
+comparing configurations, hold the group file fixed – that is why it is
+written to disk once and reused.
+
+</div>
+
+<div class="section level2">
+
+## Reproducing
+
+<div id="cb5" class="sourceCode">
+
+``` r
+# the corpus-wide index (chunked scan, no reference needed)
+#   Rscript dev/build-group-index.R
+#
+# the 50,000-case triangulation set, queue and silver truth
+#   Rscript dev/build-triangulation-v2.R
+#
+# the bundled pair corpus
+#   Rscript data-raw/make-pf-variants.R
+#
+# the dedup accumulation curve and the affiliate-suffix guard
+#   Rscript dev/measure-dedup.R
+```
+
+</div>
+
+</div>
+
+</div>

@@ -37,9 +37,11 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/cascade-workflow.html">The matching cascade, step by step</a></li>
     <li><a class="dropdown-item" href="../articles/name-and-address-variants.html">Name and address variants</a></li>
+    <li><a class="dropdown-item" href="../articles/clustering-by-address.html">Clustering recipients by address</a></li>
     <li><a class="dropdown-item" href="../articles/adjudicating-maybe.html">Adjudicating the MAYBE tier</a></li>
     <li><a class="dropdown-item" href="../articles/outside-the-bmf.html">What lives outside the BMF</a></li>
     <li><a class="dropdown-item" href="../articles/matching-dictionaries.html">Choosing a matching dictionary</a></li>
+    <li><a class="dropdown-item" href="../articles/yes-tier-dictionary.html">Matching against your own YES tier</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -85,7 +87,7 @@
 <h2 id="read-this-first-these-pairs-survived-normalization">Read this first: these pairs survived normalization<a class="anchor" aria-label="anchor" href="#read-this-first-these-pairs-survived-normalization"></a>
 </h2>
 <p>The pairs are not a random sample of variation. They are the residue.</p>
-<p>Before any pass runs, <code><a href="https://nonprofit-open-data-collective.github.io/npmatch/reference/np_normalize.html" class="external-link">npmatch::np_normalize()</a></code> has already uppercased, dropped a leading <code>THE</code>, rewritten <code>&amp;</code> as <code>AND</code>, expanded <code>FDN</code> to <code>FOUNDATION</code> and contracted USPS street suffixes; <code><a href="../reference/pf_dedup.html">pf_dedup()</a></code> has then collapsed renderings sharing an identity key into a single recipient. So a pair that differs <em>only</em> in a way the pipeline handles never reaches the comparator as two things and never appears here.</p>
+<p>Before any pass runs, <code><a href="https://nonprofit-open-data-collective.github.io/npnormalize/reference/np_normalize.html" class="external-link">npmatch::np_normalize()</a></code> has already uppercased, dropped a leading <code>THE</code>, rewritten <code>&amp;</code> as <code>AND</code>, expanded <code>FDN</code> to <code>FOUNDATION</code> and contracted USPS street suffixes; <code><a href="../reference/pf_dedup.html">pf_dedup()</a></code> has then collapsed renderings sharing an identity key into a single recipient. So a pair that differs <em>only</em> in a way the pipeline handles never reaches the comparator as two things and never appears here.</p>
 <p>What that buys: the table is a regression corpus. Every row is a live case that reached the comparator and split. Tighten the normalizer and specific rows should move; the rows recorded as already closed should stay closed.</p>
 <p>What it costs: <code>pf_variants</code> tells you nothing about variation the normalizer already fixes. For that, compare the <code>*_differs</code> columns (the filed text) against the <code>*_key_equal</code> columns (what the normalizer made of it).</p>
 <table class="table">
@@ -2609,7 +2611,7 @@ A1-name-zip5
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
