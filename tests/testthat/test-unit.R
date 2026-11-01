@@ -158,12 +158,7 @@ test_that("the fixture's recorded evidence reproduces under the pinned normalize
   # v1-6dcb298522cc5118 move of 22 pairs is traced in
   # dev/UNIT-UPSTREAM-SYNC.md §4.
   v <- pfmatch::pf_variants
-  built <- attr(v, "normalizer")
-  live  <- tryCatch(npmatch::np_normalize_signature(), error = function(e) NA_character_)
-  skip_if(is.na(built) || is.na(live))
-  skip_if_not(identical(built, live),
-              sprintf(paste("normalizer moved (fixture %s, installed %s);",
-                            "rebuild with data-raw/make-pf-variants.R"), built, live))
+  skip_if_normalizer_moved(v)
   expect_identical(
     pf_unit_evidence(v$a_unit, v$b_unit, v$a_street, v$b_street),
     v$unit_evidence)

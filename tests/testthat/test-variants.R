@@ -144,12 +144,7 @@ test_that("city spelling cannot change a blocked pass", {
 
 test_that("every recorded key reproduces under the pinned normalizer", {
   v <- pfmatch::pf_variants
-  built <- attr(v, "normalizer")
-  live  <- tryCatch(npmatch::np_normalize_signature(), error = function(e) NA_character_)
-  skip_if(is.na(built) || is.na(live))
-  skip_if_not(identical(built, live),
-              sprintf(paste("normalizer moved (fixture %s, installed %s);",
-                            "rebuild with data-raw/make-pf-variants.R"), built, live))
+  skip_if_normalizer_moved(v)
   ka <- side(v, "a"); kb <- side(v, "b")
   expect_identical(ka$name_key,   v$a_name_key)
   expect_identical(kb$name_key,   v$b_name_key)
