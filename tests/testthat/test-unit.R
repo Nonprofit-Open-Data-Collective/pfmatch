@@ -97,9 +97,30 @@ test_that("a bare number at a box street is a box number, not a door", {
   # a street whose name merely begins with BOX is not a box street
   expect_equal(pf_street_unit("206", "211 BOXWOOD LANE"), "# 206")
   expect_equal(pf_street_unit("206", "100 BOXER ST"), "# 206")
+  # nor is one NAMED for a box, which is what the local unanchored regex got
+  # wrong: it claimed 127 BMF rows of these, where the word boundary that
+  # handles BOXWOOD does not help. npnormalize::np_has_box() anchors.
+  expect_equal(pf_street_unit("206", "22009 BOX ELDER RD"), "# 206")
+  expect_equal(pf_street_unit("206", "21150 BOX SPRINGS RD"), "# 206")
+  expect_equal(pf_street_unit("206", "2027 BOX RD"), "# 206")
+  # a lettered box is a box street, as of npnormalize 0.1.5
+  expect_equal(pf_street_unit("206", "PO BOX A"), "")
   # and an explicit designator is read as a unit even at a box street
   expect_equal(pf_street_unit("STE 206", "211 EMMET STREET SOUTH PO BOX"),
                "STE 206")
+})
+
+test_that("the box question is upstream's, not a local regex", {
+  # The rule delegates to npnormalize so the four packages cannot drift on what
+  # a box is. If this fails, pfmatch and npnormalize disagree -- fix it there.
+  expect_false(exists(".PF_BOX_RE", envir = asNamespace("pfmatch"),
+                      inherits = FALSE))
+  carry <- c("211 EMMET STREET SOUTH PO BOX", "300 KENAN CENTER DRIVE - CAMPUS BOX",
+             "4347 W NORTHWEST HWY STE 130 BOX", "PO BOX 1367", "PO BOX A",
+             "ONE HARRISON PLAZA BOX 5079")
+  named <- c("22009 BOX ELDER RD", "2027 BOX RD", "211 BOXWOOD LANE", "114 HIGH ST")
+  expect_true(all(npnormalize::np_has_box(carry)))
+  expect_false(any(npnormalize::np_has_box(named)))
 })
 
 test_that("the two designators npmatch excludes are gone", {

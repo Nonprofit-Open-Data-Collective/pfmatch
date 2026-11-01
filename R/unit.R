@@ -45,13 +45,26 @@
   "(^|[^A-Z0-9])(APARTMENT|NUMBER|SUITE|FLOOR|SPACE|UNIT|ROOM|BLDG|TRLR|",
   "DEPT|STOP|BSMT|LBBY|HNGR|STE|APT|PMB|SPC|LOT|NUM|RM|FL)([^A-Z0-9]|$)")
 
-# Any BOX, not just PO BOX. The street lines that matter here are
-# `300 KENAN CENTER DRIVE - CAMPUS BOX` and `4347 W NORTHWEST HWY STE 130 BOX`
-# as well as `211 EMMET STREET SOUTH PO BOX`, and the digits on line 2 are a
-# box number at all three. The letter guards keep BOXWOOD LANE and BOXER ST
-# out, and the rule only ever suppresses a bare identifier, so its failure
-# direction is toward `absent` rather than toward a false `agree`.
-.PF_BOX_RE <- "(^|[^A-Z])(P[ .]?O[ .]?BOX|POBOX|POST[ ]?OFFICE[ ]?BOX|BOX)([^A-Z]|$)"
+# Does this street carry a box component? npnormalize owns that question as of
+# its 0.1.5 -- np_has_box() is the street_has_box column for one free-text line
+# -- so the local .PF_BOX_RE is gone. It asked the right question and answered
+# it slightly wrong: it was UNANCHORED, any BOX anywhere behind letter guards,
+# and over the 3,687,435-row unified BMF an unanchored BOX claims 127 rows
+# whose street is merely NAMED for a box (`BOX ELDER ST`, `BOX SPGS RD`,
+# `BOX RD`) on top of the rows that carry one. The letter guards never saw
+# those: BOXWOOD and BOXER are handled by the word boundary, BOX ELDER is not.
+# np_has_box() requires the box word to END the key, with at most an
+# identifier after it, which is the form that was measured (npnormalize #9 and
+# #12, and dev/UNIT-UPSTREAM-SYNC.md for why this is upstream's call).
+#
+# The street lines that matter here still answer TRUE -- `211 EMMET STREET
+# SOUTH PO BOX`, `300 KENAN CENTER DRIVE - CAMPUS BOX`,
+# `4347 W NORTHWEST HWY STE 130 BOX` -- and so do the box-first forms, since a
+# street that IS a box carries one by definition. What is given up is the
+# handful of rows where a box sits mid-line with a label after it
+# (`PSC 480 BOX GD`: 2 rows in the BMF). This rule only ever suppresses a bare
+# identifier, so that failure direction is toward `absent`, never toward a
+# false `agree`.
 
 #' Parse the secondary-unit line into a comparable unit
 #'
@@ -74,7 +87,7 @@
 #'   digit requirement is pfmatch's, and it is why it belongs on the bare path
 #'   only: `SUITE B` is a real suite with no digit in it.
 #' * **A box number at a box street.** At `211 EMMET STREET SOUTH PO BOX`, the
-#'   `400891` on line 2 is a box, not a door. See `.PF_BOX_RE`.
+#'   `400891` on line 2 is a box, not a door. See [npnormalize::np_has_box()].
 #'
 #' @param x Character vector of raw address line 2 values.
 #' @param street Optional street line, same length as `x`, used for the
@@ -97,7 +110,7 @@ pf_street_unit <- function(x, street = NULL) {
   u[bare & !grepl("[0-9]", vu)] <- ""
   if (!is.null(street)) {
     s <- toupper(as.character(street)); s[is.na(s)] <- ""
-    if (length(s) == n) u[bare & grepl(.PF_BOX_RE, s)] <- ""
+    if (length(s) == n) u[bare & npnormalize::np_has_box(s)] <- ""
   }
   u
 }

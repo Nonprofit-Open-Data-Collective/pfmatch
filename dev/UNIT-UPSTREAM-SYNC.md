@@ -285,3 +285,42 @@ Things that will tell you the two have drifted, without anyone checking:
   means npmatch changed under us.
 * `pf_variants`' `normalizer` attribute records the same signature. Stale
   attribute, stale keys.
+
+## The box question moved upstream too (npnormalize 0.1.5)
+
+`.PF_BOX_RE` is gone. `pf_street_unit()` calls
+`npnormalize::np_has_box(street)`, which is the `street_has_box` column for one
+free-text line, and pfmatch's Imports now name `npnormalize (>= 0.1.5)`
+directly rather than reaching it through npmatch.
+
+Why, and what changed in the answers:
+
+* The local regex asked the right question. It answered it unanchored — any
+  `BOX` anywhere, behind letter guards — and over the 3,687,435-row unified BMF
+  an unanchored `BOX` claims **127 rows whose street is merely NAMED for a
+  box**: `BOX ELDER ST`, `BOX SPGS RD`, `BOX RD`. The letter guards never
+  covered those; they only ever handled `BOXWOOD` and `BOXER`, which the word
+  boundary already did. `np_has_box()` requires the box word to END the key,
+  with at most an identifier after it, which is the form npnormalize measured
+  (its #9, and #12 for the lettered box).
+* Every line that mattered here still answers `TRUE`: `211 EMMET STREET SOUTH
+  PO BOX`, `300 KENAN CENTER DRIVE - CAMPUS BOX`,
+  `4347 W NORTHWEST HWY STE 130 BOX`, and the box-first forms, since a street
+  that *is* a box carries one by definition. `test-unit.R` asserts all of them
+  plus the `BOX ELDER` family, ungated.
+* What is given up: a box sitting mid-line with a label after it
+  (`PSC 480 BOX GD`, 2 BMF rows). The rule only ever suppresses a bare
+  identifier, so the failure direction is toward `absent`, never toward a false
+  `agree`.
+* `PO BOX A` through `PO BOX Z` are boxes as of npnormalize 0.1.5 (1,010 BMF
+  rows), so a bare identifier beside one is now suppressed where it was not.
+
+Things that will tell you pfmatch and npnormalize have drifted on this:
+
+* `test-unit.R`'s "the box question is upstream's, not a local regex" block
+  asserts `.PF_BOX_RE` has not come back and that `np_has_box()` still answers
+  the six carrying forms `TRUE` and the four named-for-a-box forms `FALSE`. A
+  failure there is a disagreement to fix **in npnormalize**, not here.
+* npnormalize's own `test-portability.R` holds its published patterns to both
+  regex engines, which is what lets matchdb's DuckDB macro read the same
+  string. pfmatch does not need that, because it can call the function.
