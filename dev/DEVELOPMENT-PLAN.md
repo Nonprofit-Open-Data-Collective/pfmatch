@@ -11,6 +11,16 @@ a measured fix, and the `pf_arm_order()` ordering policy has been promoted from
 a cheap measurement to a blocking one, because it now governs auto-accepts
 rather than only labels. See §"Phase 0c" and `dev/DYAD-FINDINGS.md`.
 
+**Revised 2026-11-01 to add Phase 4b, the adjudication layers.** Phase 4 below
+plans the MAYBE batch; Phase 4b is the wider question of which layer belongs on
+which tier, now that the NO tier has been measured on two models
+(`dev/NO-TIER-EXPERIMENT.md` §7) and a free deterministic layer exists beneath
+both (`pf_fuzzy_recover()`). Two results there revise figures recorded
+elsewhere in this file: the MAYBE cascade should escalate *without* web search,
+and on the NO tier the cheap model's advantage is **1.73x on the full bill**
+rather than the 5.1x token ratio, because search billing is the larger half of
+the invoice.
+
 ## Where things stand
 
 | tier | 5,000-grant benchmark | what is known about it |
@@ -433,6 +443,217 @@ positive ones.
 
 **Exit criterion:** a calibrated review process and the largest ground-truth set
 the project has had.
+
+## Phase 4b — the adjudication layers, and which one for which tier
+
+Added 2026-11-01. Phase 4 above settles the MAYBE batch. This section is the
+wider question it does not answer: **there are now four layers that can be put
+between the cascade and a human, they have different costs and different
+failure modes, and MAYBE and NO want different ones.** Every figure is printed
+by `dev/adjudicate-18-layer-costs.R`; none is typed into this prose. Read
+"What these numbers are not" at the end before quoting any of them.
+
+### The four layers
+
+| | layer | what it is | needs an API key |
+|---|---|---|---|
+| 0 | **character recovery** | `pf_fuzzy_recover()` — Jaro-Winkler inside a ZIP5 block, on the residual | no |
+| 1 | **cheap packet review** | a small model reading the candidate packet only | yes |
+| 2 | **deep packet review** | a large model reading the same packet, no web | yes |
+| 3 | **deep search review** | a large or small model with `web_search` | yes, plus per-search billing |
+
+They compose rather than compete: 0 changes what the packet *contains*, 1–3
+change what is *concluded* from it. Layer 0 must run first, because a pair it
+recovers is a pair layers 1–3 then get to see.
+
+### The recommendation, in one table
+
+| tier | recommended | why this one |
+|---|---|---|
+| **MAYBE** | layer 1 everywhere, escalate the cheap arm's own `low`-confidence 18% to **layer 2** | 96.3% (26/27) for **$6,016** over ~983,000 identities. Layer 3 reaches the same 26/27 for $16,541. Layer 2 everywhere is 92.6% for $29,742. |
+| **NO** | **layer 3 with the cheap model**, `max_uses` capped | The answer is outside the packet in 100% of this tier, so layers 1–2 can only restate the cascade. Cheap-with-search recovers 33.0% against the large model's 36.3% and named the *same EIN* 31 times out of 31. |
+| **both** | layer 0 first, always | Free, and it is the only layer whose bill does not scale with the corpus. |
+
+**The MAYBE recommendation is to escalate *without* search, and that is the
+non-obvious part.** The ablation (`PF_ADJ_NOSEARCH=1`) decomposes the two-arm
+gap into **+7.4 points of model and +3.7 points of search**, and the search
+step is one case out of 27 — McNemar exact p = 1.000. Search's one measurable
+effect was on *confidence* (high 51% → 73%), not correctness, and the no-search
+arm actually cleared **more** (49/68 against 47/68). So on this tier search
+makes the model surer rather than righter, and that is not the thing being
+bought.
+
+### What each layer costs over the whole corpus
+
+17,253,199 grant rows → 17,046,161 in scope → **4,582,301 identities** at the
+3.72x collapse measured in `dev/FULL-01-PREPARE.log`. Tier shares are taken on
+the **in-scope** denominator of 4,868, which puts MAYBE at ~983,000 and NO at
+~795,000.
+
+> A NO-tier budget built on `BASELINE-2026-10C`'s 725 NO under-counts the tier
+> by 14%. Those 4,748 "identities" are the *result frame*; the 120 in-scope
+> identities no blocking pass produced a pair for are simply absent from it, and
+> they are the hardest retrieval failures in the file. The tier is 845.
+
+| tier | arm | tokens | searches | search bill | total |
+|---|---|---:|---:|---:|---:|
+| MAYBE | layer 1 — cheap, packet only | $662 | 0 | $0 | **$662** |
+| MAYBE | layer 2 — deep, packet only | $29,742 | 0 | $0 | **$29,742** |
+| MAYBE | layer 3 — deep + search | $66,595 | 2,162,002 | $21,620 | **$88,215** |
+| NO | layer 3 — cheap + search | $10,420 | 3,499,795 | $34,998 | **$45,418** |
+| NO | layer 3 — deep + search | $53,213 | 2,545,306 | $25,453 | **$78,666** |
+
+And the MAYBE cascade, which is the recommendation:
+
+| policy | tokens | searches | total | accuracy on the 27 |
+|---|---:|---:|---:|---|
+| layer 1 only | $662 | 0 | $662 | 81.5% (22/27) |
+| **escalate `low` → layer 2** | **$6,016** | **0** | **$6,016** | **96.3% (26/27)** |
+| escalate `low` → layer 3 | $12,649 | 389,160 | $16,541 | 96.3% (26/27) |
+| layer 3 everywhere | $66,595 | 2,162,002 | $88,215 | 92.6% (25/27) |
+
+Escalation is keyed on **the cheap arm's own stated confidence**, which orders
+its accuracy almost perfectly: high 12/12, medium 10/11, low **0/4**. That it
+has *zero* confident-and-wrong verdicts is what makes the policy safe — its
+failures announce themselves, which is exactly what the ZIP5+margin
+auto-accept rule could not do (72% precise, §1 of `dev/ADJUDICATION-PLAN.md`).
+
+### On the NO tier the model choice is not the cost driver
+
+`dev/NO-TIER-EXPERIMENT.md` §7 reports the cheap arm as **5.1x cheaper, not
+the 40x the sticker prices suggest**. That is the correct *token* ratio and it
+was the honest number for what it measured. At tier scale it is not the bill:
+
+| | tokens only | full bill |
+|---|---|---|
+| cheap vs deep | deep costs **5.1x** | deep costs **1.73x** |
+
+Search is **77% of the cheap arm's bill and 32% of the deep arm's**, because
+the cheap arm ran *37% more searches* (4.4/case against 3.2) and searches are
+billed per use at $10/1,000. Over the tier the model choice is worth **$33,248**
+and the search budget is worth **$34,998**.
+
+**So `max_uses` is the lever, and picking the cheap model is not.** The cheap
+model is still the right default — 33.0% against 36.3%, 31/31 agreement on the
+EIN, and taxonomy kappas of 0.65–0.91 — but it should be chosen on the
+*evidence that it is as good*, not on a price ratio that does not survive
+multiplication.
+
+### Keep a search tier for the residue, not the bulk
+
+Layer 3 is the only configuration that can establish an answer is **absent**:
+13 of the search arm's 18 NONEs are `CONTRADICTED` — it found the organisation
+and showed its EIN is not among the candidates. A no-search NONE means "I
+cannot tell from the packet" and still needs a human; a search NONE can be
+closed. Those are different claims even when the verdict string is identical,
+and they route differently.
+
+### Layer 0 is free and should not be optional
+
+`dev/NO-EXP-16-fuzzy.log`, cutoff 0.90, on the 4,868-identity in-scope run:
+
+* **521 s, 8.9% of the 5,830 s match it supplements.** ~136 core-hours at
+  corpus scale — compute, not billing.
+* **+24 identities to YES** on a 2,009 residual, **+0.49 points** of clear
+  rate, and **0 YES identities broken** (asserted by the function and
+  re-checked independently by the regression script).
+* It reaches **3 of the 33** EINs web search established, agrees on 2 and
+  **contradicts 1** — see the caveats.
+
+At 0.85 it clears **25** rather than 24 — one more identity for 1,105 more
+pairs and a personal-name margin that falls to 0.002. The cutoff is set from
+the collision, not the recall, and the 0.85 arm is what justifies that: there
+is essentially no recall left to buy.
+
+### The user options this implies
+
+None of layers 1–3 is in the package today. `pf_adjudicate()` builds the packet
+and stops; every model call lives in `dev/adjudicate-*.R` behind environment
+variables (`PF_ADJ_*`, `PF_NO_MODEL`). That is right for an experiment and
+wrong for a shipped feature: the measured result above is a *policy*, and a
+policy belongs in a config object the caller can read, print and override.
+
+Proposed, for Phase 4b implementation:
+
+```r
+pf_llm_config(
+  model          = "claude-haiku-5-5",   # the cheap arm
+  escalate_to    = "claude-opus-5-5",    # NULL disables escalation
+  escalate_when  = "low",                # the cheap arm's own confidence
+  search         = FALSE,                # layer 2 escalation, the measured default
+  max_uses       = 6L,                   # the cost lever when search is on
+  effort         = "medium",
+  batch          = TRUE,                 # rate limits bind before price does
+  seed_known     = 0.15                  # known-answer cases mixed into the batch
+)
+
+pf_adjudicate_llm(packet, config = pf_llm_config(), tier = c("MAYBE", "NO"))
+```
+
+Four things about that signature are load-bearing, each for a measured reason:
+
+1. **`search` defaults to `FALSE`, and `tier = "NO"` must override it to
+   `TRUE`.** Those are the two measured defaults and they are opposite. A
+   single global default is wrong for one of the two tiers whichever way it is
+   set, so the tier has to carry it.
+2. **`max_uses` is a first-class argument, not a tuning detail.** It governs
+   the larger half of the NO-tier invoice.
+3. **`batch` defaults to `TRUE`.** The 100-case run did 52 s at 6 concurrent
+   workers; 983,000 calls at that throughput is ~150 h on one synchronous
+   stream, spent mostly on 429 back-off. The 50% discount is almost incidental
+   next to not managing that.
+4. **`seed_known` is not optional instrumentation.** Measured accuracy on
+   known-answer cases is the only check on whether a production run is
+   trustworthy, and mixing them in costs nothing.
+
+`escalate_when = "low"` should accept an evidence class too (`INFER`), because
+evidence class orders accuracy independently of confidence (QUOTE 93.3%
+agreement, INFER 71.4%) — but escalating on low **and** INFER reached the same
+26/27 for 2.5x the cost, so it is an option and not the default.
+
+### What these numbers are not
+
+Every figure above is honest about what it measured and none of it is a
+guarantee. Before any of it goes into user-facing documentation:
+
+* **The accuracy denominators are 27 and 91 cases.** "96.3% (26/27)" is one
+  case away from 92.6%. The *ordering* of the arms is the claim; the size of
+  each gap is not. Confidence intervals are in the source experiments and
+  should travel with the numbers.
+* **The deep arm is the reference standard for the MAYBE cases that have no
+  hand-adjudicated answer**, and it carries a ~7% error rate that every
+  derived figure inherits. It is not ground truth.
+* **Model behaviour is not a fixed property.** These were measured on
+  `claude-opus-5-5` and `claude-haiku-5-5` on 2026-10-31 with
+  `web_search_20260209`. Model versions, default effort, tokenizers and
+  pricing tiers all change, and two of them changed *during* this project —
+  Haiku 5.5's tokenizer counts ~30% higher than 4.5's, and its two-tier
+  pricing is what made the first cost estimate wrong by a factor of three.
+  Re-measure before trusting any dollar figure.
+* **Prices are list prices at the time of measurement**, and the Batch API's
+  50% discount is applied to *tokens only* above. Whether per-use server-tool
+  billing is discounted is not established in this repo and is not assumed.
+* **Package versions matter to the cascade, not just to the models.** Every
+  figure here sits on a specific `npmatch` normalizer; `v1-592912060053c4c3`
+  changed `street_key` on 34,280 BMF rows against its predecessor, and
+  `pf_check_reference()` exists because a stale key silently resolves fewer
+  rows. The regression above runs on the matchdb `active-observed` tier
+  (6.67M rows), **not** the augmented reference the baseline was measured on
+  (3.88M), so its tier counts are not comparable to the published 62.74%.
+* **The corpus projections multiply a 4,868-identity benchmark by ~940.** The
+  3.72x dedup collapse is measured on a 12.56M-grant run rather than
+  extrapolated — an earlier 1.8x estimate from a 100k sample was wrong by a
+  factor of two — but tier shares on the full corpus are still an assumption
+  that the full run will test.
+* **Layer 0 has a measured false-positive mode.** Of the 3 web-established
+  EINs it reaches, it cleared one (`G002196`) to YES on a *different* EIN than
+  the search arm found. One of the two is wrong and the pipeline has no way to
+  tell which. A 1-in-3 contradiction rate on n=3 is not a rate, but it is the
+  right shape of warning: a fuzzy pair clears the same bar as an exact pair,
+  so it can be confidently wrong in the same way.
+* **Nothing here measures precision on the YES mass**, which every layer can
+  only add to. That needs its own stratified sample
+  (`dev/BASELINE-2026-10C/MANIFEST.md`).
 
 ## Phase 5 — the pairwise ranker
 

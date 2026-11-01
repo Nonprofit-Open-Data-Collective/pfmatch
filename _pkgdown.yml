@@ -121,6 +121,18 @@ reference:
   - pf_crosstab
   - pf_geo_agreement
 
+- title: Character-level recovery
+  desc: >
+    The one failure the cascade cannot see. Every blocking pass is an exact
+    match on a name, a token, an acronym or a prefix, so a single mistyped
+    letter in the one distinctive token leaves no key to block on and the
+    correct record is never retrieved at all — not scored and rejected, never
+    offered. Jaro-Winkler inside a ZIP5 block, on the residual only. See the
+    article on what lives outside the BMF.
+  contents:
+  - pf_fuzzy_candidates
+  - pf_fuzzy_recover
+
 - title: Stage 5 — adjudication
   desc: >
     Build the sheet a human or an LLM reviews. There is no safe automatic

@@ -1,0 +1,67 @@
+============================================================================== 
+CORPUS 
+============================================================================== 
+17,253,199 grant rows -> 17,046,161 in scope -> 4,582,301 identities at the measured 3.72x collapse 
+   tier bench_n  share projected
+ <char>   <int> <char>    <char>
+    YES    2979 61.20% 2,804,165
+  MAYBE    1044 21.45%   982,728
+     NO     845 17.36%   795,408
+============================================================================== 
+WHOLE-TIER COST, token billing and search billing separated 
+============================================================================== 
+   tier                       arm       n  tokens  searches search_bill   TOTAL
+ <char>                    <char>  <char>  <char>    <char>      <char>  <char>
+  MAYBE light: Haiku, packet only 982,728    $662         0          $0    $662
+  MAYBE  deep-: Opus, packet only 982,728 $29,742         0          $0 $29,742
+  MAYBE  deep+: Opus + web search 982,728 $66,595 2,162,002     $21,620 $88,215
+     NO        Haiku + web search 795,408 $10,420 3,499,795     $34,998 $45,418
+     NO         Opus + web search 795,408 $53,213 2,545,306     $25,453 $78,666
+============================================================================== 
+THE RATIO THAT MATTERS IS NOT THE TOKEN RATIO 
+============================================================================== 
+NO tier, 795,408 identities 
+  tokens only : Haiku $10,420 vs Opus $53,213  -> Opus costs 5.1x 
+  full bill   : Haiku $45,418 vs Opus $78,666  -> Opus costs 1.73x 
+  search is 77% of Haiku's bill and 32% of Opus's 
+ 
+So on this tier the model choice is worth $33,248 and the search budget is 
+worth $34,998. Capping max_uses is the lever; picking the cheap model is not. 
+ 
+With the Batch API's 50% discount applied to TOKENS ONLY (search billing 
+at list -- the batch discount on per-use server tools is not established 
+in this repo and is not assumed here): 
+   tier                       arm synchronous batch_tokens
+ <char>                    <char>      <char>       <char>
+  MAYBE light: Haiku, packet only        $662         $331
+  MAYBE  deep-: Opus, packet only     $29,742      $14,871
+  MAYBE  deep+: Opus + web search     $88,215      $54,917
+     NO        Haiku + web search     $45,418      $40,208
+     NO         Opus + web search     $78,666      $52,059
+============================================================================== 
+MAYBE CASCADE: light everywhere, escalate the light arm's own `low` 
+============================================================================== 
+                            policy  tokens  searches   TOTAL           acc
+                            <char>  <char>    <char>  <char>        <char>
+                        light only    $662         0    $662 81.5% (22/27)
+ escalate low -> deep- (no search)  $6,016         0  $6,016 96.3% (26/27)
+    escalate low -> deep+ (search) $12,649   389,160 $16,541 96.3% (26/27)
+                  deep+ everywhere $66,595 2,162,002 $88,215 92.6% (25/27)
+ 
+Escalating to the NO-SEARCH deep arm reaches the same 26/27 as the search 
+arm for $6,016 instead of $16,541. The +3.7 points search adds on the 27 is one 
+case (McNemar exact p = 1.000) -- not distinguishable from zero, and not 
+ruled out either. What search measurably buys is CONFIDENCE (high 51% -> 
+73%), which is not the thing being paid for. 
+============================================================================== 
+LAYER 0 -- deterministic character recovery, no API at all 
+============================================================================== 
+pf_fuzzy_recover() at the 0.90 default: 521 s, 8.9% of the 5830 s match 
+  +24 identities to YES on 2,009 residual; 0 YES identities broken 
+  reaches 3 of the 33 web-established EINs, agrees on 2, contradicts 1 
+  marginal cost per corpus run: $0 
+ 
+Projected to 4,582,301 identities the scan is ~136 core-hours, which is 
+compute, not billing. Against $662 for the cheapest LLM layer on MAYBE 
+alone, it is the only layer whose cost does not scale with the corpus. 
+============================================================================== 

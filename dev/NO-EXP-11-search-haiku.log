@@ -1,0 +1,69 @@
+============================================================================== 
+NO-TIER EXPERIMENT  stage 11: investigate with search 
+============================================================================== 
+model=claude-haiku-5-5  effort=high  search=web_search_20260209 max 15 uses  workers=4 
+100 cases (88 with a rejected near-miss, 12 with none) 
+system prompt: 13440 characters 
+
+round 1: 100 requests ... 
+note: key read from C:\Users\jdlec/Documents/.Renviron (not picked up at startup)
+  100 finished, 0 paused mid-turn 
+
+471.4 s elapsed (4.7 s/case wall) 
+NOTE: 14 reported EINs did not normalise to nine digits and are held as NA. 
+============================================================================== 
+
+verdicts returned: 100 of 100  (tool call used on 100) 
+ 
+org_found
+       NO UNCERTAIN       YES 
+       45         3        52 
+ 
+entity_class
+         AGGREGATE             CHURCH FISCALLY_SPONSORED            FOREIGN 
+                 3                  5                  1                  4 
+        GOVERNMENT  GROUP_SUBORDINATE         INDIVIDUAL          NONPROFIT 
+                 6                  5                 43                 29 
+  PROGRAM_OR_EVENT            UNKNOWN 
+                 2                  2 
+ 
+bmf_expectation
+    LISTED NOT_LISTED  UNCERTAIN 
+        32         65          3 
+ 
+outside_reason
+        CHURCH_EXEMPT          GROUP_RULING NO_SEPARATE_EXEMPTION 
+                    5                     2                     3 
+           NOT_AN_ORG        NOT_APPLICABLE         NOT_TRACEABLE 
+                   54                    33                     3 
+ 
+miss_hypothesis
+           ACRONYM  DBA_OR_TRADE_NAME    GEOGRAPHY_WRONG LEGAL_NAME_DIFFERS 
+                 2                  6                  1                  9 
+    NOT_APPLICABLE  PARENT_OR_CHAPTER      PROGRAM_NAMED          TRUNCATED 
+                67                  4                  4                  4 
+              TYPO 
+                 3 
+ 
+ein_source
+NONE  WEB 
+  67   33 
+ 
+                confidence
+search_confirmed high low medium
+    CONFIRMED      66   0     18
+    CONTRADICTED    0   1      1
+    INCONCLUSIVE    2   3      9
+
+EINs reported: 33 (33 WEB-sourced, 0 read off a rejected candidate) 
+searches: 436 total, 4.4/case, 0 cases with none, 3 at the cap of 15 
+
+tokens: 183,611 in, 154,336 out   cache: 3,117,023 read, 1,237,821 WRITTEN 
+  of which ABOVE the 100,000-token prompt step, billed at the long rate: 432,089 in, 94,108 out, 2,486,126 cache-read, on 22 case(s) 
+token cost: $1.308 over 100 cases ($0.013083/case) 
+  projected for the 845-case NO tier: $11.06 
+  PLUS 436 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/ADJ-NO-SEARCH-haiku.rds 
+next: Rscript dev/adjudicate-12-no-score.R 
+============================================================================== 

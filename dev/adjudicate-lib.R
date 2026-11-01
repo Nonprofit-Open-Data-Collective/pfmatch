@@ -42,8 +42,15 @@ ADJ_MODEL_DEEP  <- Sys.getenv("PF_ADJ_MODEL_DEEP",  "claude-opus-5-5")
 # For the others it is the standard 0.1x of input, and `cw` is the standard
 # 1.25x; both are marked `approx` so a projection knows which numbers are
 # published and which are conventional.
+# Haiku 5.5 alone prices a request by the size of its WHOLE prompt: $0.10/$0.50
+# per MTok at 100K tokens or fewer, $0.50/$2.50 above. A web-search turn crosses
+# that step routinely -- search results are the bulk of the prompt -- so a flat
+# rate would price the long requests at a fifth of what they cost. The `@long`
+# entry is that upper tier; adj_cost_tiered() picks between them PER REQUEST.
+ADJ_LONG_PROMPT <- 100000L
 ADJ_PRICES <- list(
   "claude-haiku-5-5"  = c(in_ =  0.10, out =  0.50, cr = 0.010, cw =  0.125, approx = 1),
+  "claude-haiku-5-5@long" = c(in_ = 0.50, out = 2.50, cr = 0.050, cw = 0.625, approx = 1),
   "claude-sonnet-5-5" = c(in_ =  2.00, out = 10.00, cr = 0.200, cw =  2.500, approx = 0),
   "claude-opus-5-5"   = c(in_ =  4.00, out = 20.00, cr = 0.200, cw =  5.000, approx = 0),
   "claude-opus-5"     = c(in_ =  5.00, out = 25.00, cr = 0.500, cw =  6.250, approx = 1),
@@ -303,6 +310,26 @@ adj_cost <- function(model, input, output, cache_read = 0, cache_write = 0) {
   if (is.null(p)) return(NA_real_)
   (input / 1e6) * p[["in_"]] + (output / 1e6) * p[["out"]] +
   (cache_read / 1e6) * p[["cr"]] + (cache_write / 1e6) * p[["cw"]]
+}
+
+#' Token cost when the model has a long-prompt price step
+#'
+#' Two usage vectors -- what was billed at the short-prompt rate and what was
+#' billed above the step -- priced separately and summed. A model with no
+#' `@long` entry prices both buckets at its single rate, so a caller does not
+#' have to know which models step.
+#'
+#' The split has to be made per REQUEST, not per run: a run whose total input
+#' is 4M tokens is not a 4M-token prompt, and summing first then comparing to
+#' the threshold would bill every short request at the expensive rate.
+adj_cost_tiered <- function(model, short, long) {
+  key <- paste0(model, "@long")
+  if (is.null(ADJ_PRICES[[key]])) key <- model
+  g <- function(u, nm) { v <- u[[nm]]; if (is.null(v) || !length(v)) 0 else as.numeric(v) }
+  adj_cost(model, g(short, "input"), g(short, "output"),
+           g(short, "cache_read"), g(short, "cache_write")) +
+  adj_cost(key,   g(long,  "input"), g(long,  "output"),
+           g(long,  "cache_read"), g(long,  "cache_write"))
 }
 
 `%||%` <- function(a, b) if (is.null(a) || length(a) == 0L) b else a

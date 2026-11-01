@@ -64,7 +64,19 @@ EFFORT    <- Sys.getenv("PF_NO_EFFORT", "high")
 MAXSEARCH <- as.integer(Sys.getenv("PF_NO_MAXSEARCH", "15"))
 ROUNDS    <- as.integer(Sys.getenv("PF_NO_ROUNDS", "4"))
 TAG       <- Sys.getenv("PF_NO_TAG", "")
-MODEL     <- ADJ_MODEL_DEEP
+# The arm is parameterised rather than forked. Both arms have to be handed
+# byte-identical case text and run through the same pause_turn loop and the same
+# collection code, or a difference between them stops being attributable to the
+# model -- the same argument that kept adj_render_no_case() out of the MAYBE
+# renderer. A second script would duplicate both and drift.
+MODEL     <- Sys.getenv("PF_NO_MODEL", ADJ_MODEL_DEEP)
+# web_search_20260209 carries dynamic filtering: the server writes and runs code
+# to cut search results down before they reach the context. That is documented
+# for Opus 5.5/5, Fable 5, Opus 4.8/4.7/4.6 and Sonnet 5.5/5/4.6. Haiku 5.5 is
+# not on that list, so the cheap arm may have to fall back to the basic 20250305
+# tool and carry whole result pages in its prompt -- which is also where its
+# cost lives. Settable so the smoke test can establish which it accepts.
+SEARCHVER <- Sys.getenv("PF_NO_SEARCHVER", "web_search_20260209")
 # SET=exp  the 100-case random sample; SET=cal  the prior audit's own cases,
 # for the human head-to-head. Separate prefixes so the two verdict sets cannot
 # overwrite each other or be silently pooled -- the same guard PF_ADJ_SET gives
@@ -78,8 +90,8 @@ say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr  <- function() cat(strrep("=", 78), "\n")
 
 hr(); say("NO-TIER EXPERIMENT  stage 11: investigate with search"); hr()
-say("model=%s  effort=%s  search=max %d uses  workers=%d%s", MODEL, EFFORT,
-    MAXSEARCH, WORKERS,
+say("model=%s  effort=%s  search=%s max %d uses  workers=%d%s", MODEL, EFFORT,
+    SEARCHVER, MAXSEARCH, WORKERS,
     if (LIMIT > 0) sprintf("  LIMIT=%d (smoke test)", LIMIT) else "")
 
 cf <- file.path(DD, sprintf("%s-CASES.rds", PFX))
@@ -99,7 +111,7 @@ system_prompt <- paste(readLines(file.path(PF, "dev", "LLM-NO-INSTRUCTIONS.md"),
 say("system prompt: %d characters", nchar(system_prompt))
 
 tools <- list(
-  list(type = "web_search_20260209", name = "web_search", max_uses = MAXSEARCH),
+  list(type = SEARCHVER, name = "web_search", max_uses = MAXSEARCH),
   list(name = "submit_no_verdict",
        description = paste("Record the investigation's conclusion for this case.",
                            "Call this exactly once, after searching is finished."),
@@ -114,6 +126,7 @@ convos <- lapply(seq_len(nrow(cases)), function(i) {
        messages = list(list(role = "user", content = adj_render_no_case(cr, cd))),
        done = FALSE, body = NULL, rounds = 0L,
        usage = c(input = 0, output = 0, cache_read = 0, cache_write = 0, web_search = 0),
+       usage_long = c(input = 0, output = 0, cache_read = 0, cache_write = 0, web_search = 0),
        error = NA_character_)
 })
 
@@ -140,7 +153,15 @@ for (round in seq_len(ROUNDS)) {
       next
     }
     b <- r$body
-    convos[[i]]$usage <- convos[[i]]$usage + adj_usage(b)
+    u <- adj_usage(b)
+    # Which price tier a response was billed at is a property of the REQUEST, so
+    # it is decided here rather than from the run total. The prompt is input plus
+    # BOTH cache figures: usage.input_tokens is reported exclusive of cached
+    # tokens, so reading it alone would call a 400K-token prompt a short one.
+    if (sum(u[c("input", "cache_read", "cache_write")]) > ADJ_LONG_PROMPT)
+      convos[[i]]$usage_long <- convos[[i]]$usage_long + u
+    else
+      convos[[i]]$usage <- convos[[i]]$usage + u
     convos[[i]]$body  <- b
     if (identical(b$stop_reason, "pause_turn")) {
       convos[[i]]$messages <- c(convos[[i]]$messages,
@@ -175,9 +196,14 @@ rows <- lapply(convos, function(cv) {
 })
 out <- as.data.table(rbindlist(rows, fill = TRUE))
 um  <- do.call(rbind, lapply(convos, function(x) x$usage))
-out[, `:=`(model = MODEL, effort = EFFORT, searches = um[, "web_search"],
+uml <- do.call(rbind, lapply(convos, function(x) x$usage_long))
+out[, `:=`(model = MODEL, effort = EFFORT, search_tool = SEARCHVER,
+           searches = um[, "web_search"] + uml[, "web_search"],
            in_tokens = um[, "input"], out_tokens = um[, "output"],
-           cache_read = um[, "cache_read"], cache_write = um[, "cache_write"])]
+           cache_read = um[, "cache_read"], cache_write = um[, "cache_write"],
+           in_tokens_long = uml[, "input"], out_tokens_long = uml[, "output"],
+           cache_read_long = uml[, "cache_read"], cache_write_long = uml[, "cache_write"],
+           long_request = uml[, "input"] > 0 | uml[, "cache_read"] > 0)]
 # `ein` is normalised here, not in stage 12. The model returns whatever its
 # source printed -- "05-0448102", "050448102", sometimes with stray text -- and
 # an un-normalised value fails an exact set-membership test against the
@@ -225,11 +251,20 @@ say("searches: %d total, %.1f/case, %d cases with none, %d at the cap of %d",
     sum(out$searches >= MAXSEARCH), MAXSEARCH)
 
 tin <- sum(out$in_tokens); tout <- sum(out$out_tokens)
-cost <- adj_cost(MODEL, tin, tout, sum(out$cache_read), sum(out$cache_write))
+short <- list(input = tin, output = tout,
+              cache_read = sum(out$cache_read), cache_write = sum(out$cache_write))
+long  <- list(input = sum(out$in_tokens_long), output = sum(out$out_tokens_long),
+              cache_read = sum(out$cache_read_long), cache_write = sum(out$cache_write_long))
+cost <- adj_cost_tiered(MODEL, short, long)
 say("\ntokens: %s in, %s out   cache: %s read, %s WRITTEN",
     format(tin, big.mark = ","), format(tout, big.mark = ","),
     format(sum(out$cache_read), big.mark = ","),
     format(sum(out$cache_write), big.mark = ","))
+if (long$input > 0 || long$cache_read > 0)
+  say("  of which ABOVE the %s-token prompt step, billed at the long rate: %s in, %s out, %s cache-read, on %d case(s)",
+      format(ADJ_LONG_PROMPT, big.mark = ","), format(long$input, big.mark = ","),
+      format(long$output, big.mark = ","), format(long$cache_read, big.mark = ","),
+      sum(out$long_request))
 say("token cost: $%.3f over %d cases ($%.6f/case)", cost, nrow(out), cost / nrow(out))
 # 845, not the baseline's published 725: pf_status()'s NO tier also holds the
 # 120 in-scope identities that never reached the result frame, and those are in

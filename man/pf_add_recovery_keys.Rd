@@ -7,7 +7,7 @@
 pf_add_recovery_keys(d, prefix_len = 18L, only_truncated = NULL)
 }
 \arguments{
-\item{d}{A normalized frame from \code{\link[npmatch:np_normalize]{npmatch::np_normalize()}}.}
+\item{d}{A normalized frame from \code{\link[npmatch:reexports]{npmatch::np_normalize()}}.}
 
 \item{prefix_len}{Characters to keep for the truncation prefix key.}
 

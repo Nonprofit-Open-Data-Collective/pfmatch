@@ -477,3 +477,153 @@ Confidence against search outcome, all 100:
 | medium | 9 | 1 | 0 |
 | low | 0 | 0 | 2 |
 
+## 7. A cheap arm after all — Haiku 5.5 on the same 100 cases
+
+This experiment was published saying "no cheaper strategy is benchmarked
+because none applies." That was two claims pushed into one sentence, and only
+the first survives. A **no-search** arm really does measure nothing here: the
+answer is outside the packet 100% of the time, so a model confined to the
+packet can only restate the cascade. But a **cheaper model with search** is a
+different strategy, it applies perfectly well, and it had simply not been run.
+So it was.
+
+`dev/adjudicate-11-no-search.R` is parameterised by `PF_NO_MODEL` rather than
+forked, so both arms are handed byte-identical case text and go through the
+same `pause_turn` loop and the same collection code. `dev/adjudicate-15-no-arms.R`
+compares them. Run: `PF_NO_MODEL=claude-haiku-5-5 PF_NO_TAG=-haiku`.
+
+### The join is valid here, and that is not a reassurance
+
+Stage 14's `grant_id` join to the prior audit was invalid and produced a
+plausible-looking disagreement. Here both arms were handed the *same packet
+file*, so `grant_id` means the same identity on both sides by construction.
+That is a real structural difference — but it is cheap to prove instead of
+assert, so stage 15 compares the filed names row by row and stops if any pair
+disagrees. It reported 100 of 100 matching.
+
+### Recoveries
+
+Both arms are scored by the same stage 12 code against the same reference EIN
+set, so this compares the models and not the scorers.
+
+| | recoverable, stratum A (n=91) | 95% CI |
+|---|---:|---|
+| Opus 5.5 | 33 of 91 — 36.3% | [27.1%, 46.5%] |
+| Haiku 5.5 | 30 of 91 — 33.0% | [24.2%, 43.1%] |
+
+The overlap is near-total: **30 found by both, 3 by Opus only, 0 by Haiku
+only.** All three Opus-only cases are `SALVATION ARMY`. Haiku identified the
+organisation and then declined to name an EIN (`ein_source = NONE`), which for
+an ambiguous local corps against a national body is the defensible answer, not
+a failure to search.
+
+And where both named an EIN, **they named the same one 31 times out of 31.**
+Two models, searching independently, never disagreed on a nine-digit number.
+
+### The taxonomy
+
+These are the vignette's published breakdowns. If the cheap arm reproduces
+them, the shares do not rest on the expensive model.
+
+| field | agreement | Cohen's kappa |
+|---|---:|---:|
+| `bmf_expectation` | 95.6% | 0.909 |
+| `outside_reason` | 92.3% | 0.864 |
+| `entity_class` | 86.8% | 0.816 |
+| `miss_hypothesis` | 80.2% | 0.651 |
+
+`entity_class` agrees exactly on the two classes that carry the headline —
+`INDIVIDUAL` 39 and 39, `NONPROFIT` 27 and 27. The disagreements are all at the
+margin: one `FOREIGN` moved to `CHURCH`, one `PROGRAM_OR_EVENT` and one
+`FOR_PROFIT` became `UNKNOWN`. `miss_hypothesis` is the weakest, which is what
+should be expected of the most speculative field in the schema — it asks the
+model to guess *why* a match failed, which is the one question it cannot verify
+against a source.
+
+The coverage test is the same on both arms, including the single absence:
+Haiku's 30 of 31 web-sourced EINs were in the reference, and the one that was
+not is Commonwealth University of Pennsylvania — the identical case Opus
+flagged. Two independent runs agreeing on which one record the BMF is right to
+omit is stronger than either run alone.
+
+### Cost, which is not the price ratio
+
+| | token cost / 100 | per case | searches |
+|---|---:|---:|---:|
+| Opus 5.5 | $6.690 | $0.0669 | 319 (3.2/case) |
+| Haiku 5.5 | $1.308 | $0.0131 | 436 (4.4/case) |
+
+**5.1x cheaper, not the 40x the sticker prices suggest**, for two measured
+reasons. Haiku 5.5 prices a request by its whole prompt — $0.10/$0.50 per MTok
+at 100K tokens or fewer, $0.50/$2.50 above — and **22 of the 100 cases crossed
+that step**, which is what a web-search turn does. `adj_cost_tiered()` and
+`ADJ_LONG_PROMPT` were added for this; banking the run's totals against the
+cheap rate would have reported about $0.46 and understated by a factor of
+nearly three. Second, Haiku ran **37% more searches**, which are billed per use
+and are not in those figures at all, so the gap on the full bill is narrower
+still.
+
+### Confidence
+
+| confidence | Opus n | → EIN in reference | Haiku n | → EIN in reference |
+|---|---:|---:|---:|---:|
+| high | 80 | 36.2% | 62 | 37.1% |
+| medium | 9 | 44.4% | 25 | 28.0% |
+| low | 2 | 0% | 4 | 0% |
+
+Read this narrowly. The right answer on most of this tier is "no organisation
+exists", so a confident verdict with no EIN is usually *correct*, and the
+column is a recovery rate rather than an accuracy. What it does show is that
+neither arm returns `low` on a case it then resolves — the inverse of the MAYBE
+search arm, whose confidence rose as its accuracy fell.
+
+### What this settles
+
+The published taxonomy does not depend on Opus. For the breakdowns in the
+vignette, Haiku 5.5 at a fifth of the token cost is the right instrument, and
+the honest reason the first run used Opus is that the cheap arm had been
+dismissed on an argument that only covered the no-search case.
+
+## 8. The one failure no adjudication tier can reach
+
+Section 3 reported `TYPO` as never retrieved and left it there. Pursuing it
+turned out to answer a different and larger question.
+
+`THE WESMINSTER SCHOOL` and `COCORDIA UNIVERSITY` both have `n_cand = 0,
+n_pairs = 0`: the scorer never saw them. Neither did `THE PASSONISTS`, which
+the model labelled `DBA_OR_TRADE_NAME` but which fails the same way
+(`PASSONISTS` against `PASSIONIST`), so the real count is **3 of 91, not 2**.
+
+The mechanism is deterministic rather than statistical, which is what carries
+it — two cases is far too thin to support the word "never". Every pass in
+`pf_staged_passes()` and `pf_recovery_passes()` is exact equality: A1–A5 on
+`name_key` or `dba_key` plus ZIP5 or state, B1/B2 on a shared name token within
+state, C1/C2 on an exact name anywhere, D1 on initials, D2 on an 18-character
+prefix plus ZIP5. `ls(asNamespace("npmatch"))` matches nothing on
+fuzzy/phonetic/n-gram/Jaro/Levenshtein — there is no approximate comparator at
+the blocking stage at all. So a one-character edit in the one distinctive token
+leaves no key anywhere, and `SCHOOL` and `UNIVERSITY` are pruned out by
+`max_ref_freq_state = 25000` and `min_pair_idf = 8`.
+
+**And the correct row is in the reference at the filed ZIP5:**
+
+| filed | reference row | city / ZIP |
+|---|---|---|
+| `THE WESMINSTER SCHOOL` | `THE WESTMINSTER SCHOOLS` 58-0566206 | ATLANTA GA 30327 |
+| `COCORDIA UNIVERSITY` | `CONCORDIA UNIVERSITY` 39-0833608 | Mequon WI 53097 |
+| `THE PASSONISTS` | `PASSIONIST MISSIONARIES INC` 22-2092362 | JAMAICA NY 11432 |
+
+Pass A1 — name plus ZIP5, the cheapest pass in the cascade — misses each of
+them by one letter.
+
+### Why no adjudication pass can help, at any price
+
+Adjudication ranks a candidate sheet. For these cases the sheet is empty.
+Opus, Haiku or a human reading it sees nothing to choose between, so the
+question "would a cheaper adjudicator recover them" has no purchase: the
+failure is upstream of the stage. A model *with search* can recover them, and
+both arms did — but paying a model to search the web for a missing letter is
+the expensive answer to a question string distance answers for nothing.
+
+That is the point of `pf_fuzzy_candidates()`. See section 9.
+
