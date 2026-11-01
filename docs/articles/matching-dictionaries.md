@@ -1,0 +1,465 @@
+<div id="main" class="col-md-9" role="main">
+
+# Choosing a matching dictionary
+
+Four things can serve as the database a grant is matched against, and
+they are not variations on one choice — they draw on different sources,
+and they fail on different grants. This vignette states what each is
+made of, what each is worth on the same benchmark, what each costs in
+wall-clock time, and which combination the measurements support.
+
+The short answer, for a reader who wants it before the evidence: **run
+matchdb’s `active-observed` tier, then recover the residue against the
+YES tier of your own completed run.** The first is both faster and
+better than the augmented BMF pfmatch built for itself; the second adds
+about a point for about an hour of the budget.
+
+A note on the word *tier*, which this project overloads. A **match
+tier** is YES / MAYBE / NO, the cascade’s verdict on one grant. A
+**matchdb tier** is a published, pre-compiled reference. “The YES tier
+as a dictionary” means the first kind: the grants a run already
+resolved, turned into a reference for the grants it did not.
+
+<div class="section level2">
+
+## 1. What each one is made of
+
+| dictionary                | rows      | organisations             | name variants                    | address variants            |
+|:--------------------------|:----------|:--------------------------|:---------------------------------|:----------------------------|
+| BMF active                | 1,924,822 | 1.92M EINs                | legal                            | BMF mailing                 |
+| BMF augmented             | 3,880,431 | 3.69M EINs                | legal + Schedule I alias         | alias address, BMF fallback |
+| matchdb active-observed   | 2,890,597 | bmf_active layer          | legal, dba, observed (2+ filers) | mailing + observed          |
+| matchdb unified-observed  | 5,136,818 | bmf_active + bmf_inactive | legal, dba, observed (2+ filers) | mailing + observed          |
+| YES-tier grant dictionary | 88,750    | 31,722 EINs               | filer-written, as written        | filer-written, as written   |
+
+<div class="section level3">
+
+### The BMF, active only
+
+`pf_reference(bmf = "bmf_2026_01_processed.csv", source = "local")`. One
+row per EIN from the current monthly IRS Business Master File: the
+registered legal name, and the BMF mailing address. Nothing else.
+
+This is the baseline every other option is measured against, and its
+limitation is structural rather than incidental. The BMF records the
+name an organisation filed with the IRS. A 990-PF grant schedule records
+the name a foundation’s grants officer wrote on a cheque stub.
+`THE ARC`, `USO` and `THE YARD` are the same organisations as their
+registered legal names and resemble them not at all.
+
+</div>
+
+<div class="section level3">
+
+### The BMF, augmented
+
+`REF-augmented.rds`, which pfmatch builds for itself in two steps.
+
+**The unified BMF** — every release, not just the current one. 3,687,435
+rows, one per EIN: 2,208,124 current and 1,479,311 legacy (revoked,
+merged, terminated). A grantee that dissolved in 2014 is still a grantee
+in a 2013 filing.
+
+**Form 990 Schedule I aliases** — about 193,000 extra rows, appended by
+`pf_bmf_augment()`. Schedule I Part II is where a non-PF 990 filer lists
+the organisations it paid, by name, address and EIN: the same speech act
+as 990-PF Part XIV, so the names are drawn from the same distribution as
+the queries. Built by `dev/build-schedi-db.R` from the NCCS e-file v2_2
+extracts, 2009–2024: 8,986,064 grant rows, 93.2% carrying a well-formed
+EIN, collapsing to 2,454,949 distinct `(ein, name, city, state, zip5)`
+aliases over 794,209 EINs — roughly 41% of the BMF, and the 41% that
+receives grants. Only aliases corroborated by two or more independent
+filers, and mapping to exactly one EIN, reach the reference. The address
+kept is the one the filers wrote, because that is the premise of the
+source.
+
+**The two halves are not equally useful, and it is worth knowing which
+is which.** Four arms on the 1k benchmark (`dev/VARIANT-CLASS-AB.md`)
+decompose the published gain:
+
+| step                                   | what it adds                               | Δ YES | Δ MAYBE |
+|:---------------------------------------|:-------------------------------------------|:------|:--------|
+| monthly active → unified               | adds 1.76M inactive-EIN rows               | −5    | +102    |
+| unified → + Schedule I aliases         | adds 193k alias rows                       | +199  | −67     |
+| aliases, promotion gated to legal rows | disables the rare-name floor on alias rows | −2    | −6      |
+
+The inactive tranche is 1.76M of the 1.96M rows added and moves the YES
+tier *backwards*: a larger reference pushes more names past the
+`distinct_name_maxfreq <= 3` gate, switching off the distinctive-name
+promotion that had been carrying them. The aliases carry the entire gain
+— 467 of 3,015 accepted matches are won on an alias row. Reference
+growth is not fungible, and a row budget would have rated these two
+identically.
+
+</div>
+
+<div class="section level3">
+
+### matchdb, `active-observed` and `unified-observed`
+
+`pf_reference(source = "matchdb")`, whose `tier` now defaults to
+`"active-observed"` on the strength of §4 below. A published,
+pre-compiled reference downloaded once, md5-checked, and cached — no
+local build at all. The spec axes are explicit: a **layer** says which
+organisations are in (`bmf_active`, `bmf_inactive`, `filer_only`,
+`approved_only`, `irs527`), a **variant class** says how many ways each
+may be spelled (`legal`, `dba`, `observed`, `former`, `division`).
+
+| tier               | layers                        | names                                   | addresses         |
+|--------------------|-------------------------------|-----------------------------------------|-------------------|
+| `active-observed`  | `bmf_active`                  | legal, dba, observed (2+ corroborators) | mailing, observed |
+| `unified-observed` | `bmf_active` + `bmf_inactive` | the same                                | the same          |
+
+So `unified-observed` is matchdb’s equivalent of the augmented BMF, and
+`active-observed` is the same thing with the inactive tranche left out —
+the combination the A/B above says should exist.
+
+What matchdb adds beyond that correspondence is the breadth and the
+vintage of its ingest. It is built from the unified BMF (v2026-09-21),
+the resolved NTEE crosswalk, ten years of Form 1023-EZ approvals, the
+NCCS e-file **v3_1** extracts for tax years **2009–2025** (Schedule I,
+Schedule R, officers, program text and the affiliate listings), an
+address crosswalk and a geocoded address table, group-number metadata,
+the IRS 527 file with its Schedule R, the 990-N e-Postcard, and the
+automatic-revocation list. Every row carries its `source_vintage`.
+
+Two of those differences matter for this comparison specifically.
+pfmatch’s own alias table is e-file **v2_2, 2009–2024**; matchdb’s is
+**v3_1, 2009–2025** — one more year and a different extract. And matchdb
+admits name variants pfmatch never had: the BMF `dba` field as a
+first-class row, Schedule R related-entity names, and former names
+superseded by a later vintage. The clear-rate gap in §2 is partly the
+spec and partly simply a newer, wider source.
+
+</div>
+
+<div class="section level3">
+
+### The YES tier of your own run
+
+`pf_grant_dictionary()`. Not an external register at all: the grants a
+completed run already resolved, keyed by the name and address **as the
+filer wrote them**, pointing at the EIN the cascade settled on.
+
+Measured here on the 50,000-case triangulation run: 369,260 cleared
+grant rows collapse to 88,750 distinct `(rendering, address, EIN)`
+entries over 31,722 EINs. The measured pass below excluded the 100 rows
+that are the benchmark’s own, so the dictionary it ran against is 88,744
+renderings over 31,721 EINs — the same artifact, less the queries it
+would otherwise answer about itself.
+
+The asymmetry that makes this work is one of frequency, not of
+similarity. Over the 312,306 cleared rows holding both strings:
+
+|                                                  |      share |
+|--------------------------------------------------|-----------:|
+| hits another cleared **grant** rendering exactly | **94.06%** |
+| hits its own **BMF** name exactly                |     47.16% |
+| grant-exact but **not** BMF-exact                | **48.12%** |
+| neither                                          |      4.72% |
+
+On fuzzy distance the grant side is marginally *worse* — median 0.960 to
+the nearest other rendering against 0.967 to the BMF name. A common
+rendering repeats, so an arriving grant often hits an existing one
+exactly; it shows up as exact-key recall and not as better fuzzy
+matching.
+
+**The key must include the address.** 727 of 63,310 bare name keys carry
+more than one EIN — `HABITAT FOR HUMANITY` is 39 of them,
+`RONALD MCDONALD HOUSE` 31. Adding ZIP5 takes that to 0 of 66,425. The
+guard that drops an ambiguous `(name, zip5)` is kept even though real
+data never trips it, because a silent collision there attaches one
+organisation’s EIN to another’s grants.
+
+**And every EIN in it came from this pipeline**, so resolving against it
+propagates the pipeline’s own decisions, errors included. That is what
+the `accept` argument is for, and §4 is about nothing else.
+
+</div>
+
+</div>
+
+<div class="section level2">
+
+## 2. What each one is worth
+
+Three arms, one session, one population — 4,903 grants from the
+`efv2_1k` sample — one pass set, one normalizer
+(`dev/BENCH-MD-REFERENCE.log`, 2026-10-23). Load and match timings are
+from the same runs.
+
+| arm                      | rows      | load    | match    | identities | clear rate | YES+MAYBE |
+|:-------------------------|:----------|:--------|:---------|:-----------|:-----------|:----------|
+| BMF augmented (local)    | 3,891,187 | 1.3 min | 23.2 min | 4,749      | 62.8%      | 84.6%     |
+| matchdb unified-observed | 5,136,818 | 7.1 min | 28.7 min | 4,757      | 63.9%      | 86.4%     |
+| matchdb active-observed  | 2,890,597 | 3.2 min | 11.5 min | 4,727      | 63.8%      | 83.8%     |
+
+The clear rate is **YES over identities**. YES+MAYBE is not a clear
+rate: there is no safe automatic acceptance of the MAYBE tier.
+
+Two results, and the second is the one that changes a decision.
+
+**matchdb beats the augmented BMF by about a point** — 63.8% or 63.9%
+against 62.8%. Some of that is the wider variant set, some is the newer
+e-file vintage; the arms cannot separate them.
+
+**`active-observed` is half the cost of the augmented BMF and still
+better.** 11.5 minutes against 23.2, with 2.89M rows against 3.89M, for
++1.0 point. Dropping the inactive tranche removes most of the rows, most
+of the runtime and most of the candidate noise, and costs nothing at the
+YES tier. `unified-observed` buys 0.1 point more for two and a half
+times the match time.
+
+For the current normalizer, the two local arms are frozen as
+`BASELINE-2026-10C`: 56.90% clear on `REF-active.rds` (1,924,822 rows)
+and 62.74% on `REF-augmented.rds` (3,880,431 rows), over 4,687 and 4,748
+identities. So the **active-only BMF gives up 5.8 points** against the
+augmented one, which is the span the alias rows cover.
+
+<div class="section level3">
+
+### The dictionary pass, on top of whichever reference
+
+The dictionary is a supplement and never a replacement, and the
+measurement says so plainly: it reproduces only 794 of the augmented
+BMF’s 2,979 YES rows — 26.7% — because it holds 31,721 EINs against the
+BMF’s \~1.9M organisations.
+
+Run through the package API on the benchmark population, the
+recipient-identity unit (4,683 identities), after a full augmented-BMF
+run (`dev/EXP-HEAD-REFERENCE.log` addendum 3):
+
+|                    | accepted | clear rate                  | queued |
+|--------------------|---------:|-----------------------------|-------:|
+| BMF run alone      |        — | 61.18%                      |      — |
+| `accept = "agree"` |       42 | 61.18% → **62.08%** (+0.90) |     64 |
+| `accept = "all"`   |      106 | 61.18% → 63.44% (+2.26)     |      0 |
+
+1,818 unresolved identities were retried and 106 cleared; 42 of those
+agreed with the EIN the BMF reference had already surfaced as its own
+top candidate — recoverable all along, with the margin gate refusing to
+release them. The default, `"agree"`, adopts those and sends the rest to
+a queue.
+
+</div>
+
+</div>
+
+<div class="section level2">
+
+## 3. What each one costs
+
+Per 1,000 identities, from the §2 arms, and extrapolated to the full
+corpus — 17,253,199 grant rows collapsing to about 4,585,061 identities
+at the measured 3.72× dedup. The dictionary pass runs only on what the
+cascade left unresolved, roughly 37% of identities, so its denominator
+is \~1.70M rather than 4.59M.
+
+| dictionary                          | s / 1,000 identities | full corpus | on 12 shards |
+|:------------------------------------|:---------------------|:------------|:-------------|
+| matchdb active-observed             | 146                  | 186 h       | 15.5 h       |
+| BMF augmented                       | 293                  | 373 h       | 31 h         |
+| matchdb unified-observed            | 362                  | 461 h       | 38.5 h       |
+| YES-tier dictionary (residual only) | 25                   | 12 h        | 1 h          |
+
+Two cost lines do not appear in that table and should not be forgotten.
+
+**Getting the reference at all.** A local bundle is built once from the
+raw BMF: 408 s, of which `np_normalize()` is 66% — then cached, and
+`readRDS` is 50.7 s against 407.8 s to recompute. A matchdb tier is
+downloaded and needs no local build, but the published parquet is
+230–400 MB and the first fetch is a download. The dictionary is cheapest
+of all: **24.4 s to build from 369,260 cleared rows, 63.9 MB on disk,
+0.9 s to read back**.
+
+**The precomputed index is worth \~14×.** Handing `np_cascade()` the
+bundle’s `ref_index` / `name_freq` / `token_idf` takes the same queries
+from \~1,790 s per 1,000 to \~128 s, with identical results. Every
+option here ships them; it is worth knowing that a hand-rolled reference
+frame that does not would forfeit more than every difference in this
+vignette put together.
+
+<div class="section level3">
+
+### Every timing here carries one caveat
+
+Thread count and background load move these numbers by up to 7× — the
+same reference and passes measured 1,335 s per 1,000 at six threads and
+192 s at fourteen. The arms in §2 were run back to back in one session,
+so they are comparable with each other. They are not directly comparable
+to a number taken on another day, and `BASELINE-2026-10C`’s own timings
+are unusable for exactly this reason: both runs happened while 4.5 GB of
+freshly written reference bundles were syncing off the same disk. Call
+`setDTthreads(0L)` and check for competing processes before timing
+anything.
+
+</div>
+
+</div>
+
+<div class="section level2">
+
+## 4. The trade, stated in one table
+
+Gains as clear-rate points, scaled to 4,585,061 identities. Times are
+full-corpus single-stream, from §3.
+
+[TABLE]
+
+**`active-observed` is the free win.** It is faster than what pfmatch
+has been running and better at the same time, and there is no trade to
+weigh. On that basis it is now what `pf_reference()` and `pf_run()` use
+when no `tier` is given.
+
+**`unified-observed` costs 275 hours for 0.1 point over
+`active-observed`.** Its real use is a different question — resolving
+grantees that no longer exist — and on that question it is the right
+tier. It is no longer a default anyone gets without asking:
+`pf_reference(tier = "unified-observed")`, or
+`options(pfmatch.matchdb_tier = "unified-observed")` for a whole
+session.
+
+**The dictionary’s 12 hours are not its real cost.** Its real cost is
+the queue. At 64 queued per 4,683 identities, full scale is roughly
+62,700 cases that the dictionary claims and the BMF declines to
+corroborate — and they are not random. They are the known affiliate
+failure: an organisation against its own foundation or alumni fund, a
+chapter network picking the wrong chapter.
+
+    YALE UNIVERSITY           -> YALE UNIVERSITY ALUMNI FUND   066078326  vs  060646973
+    FLORIDA STATE UNIV FOUNDA -> FLORIDA STATE UNIVERSITY      815312398  vs  591961248
+    ANY BABY CAN              -> ANY BABY CAN                  742684333  vs  010809682
+
+The clean recoveries, by contrast, are spelling and spacing the BMF name
+does not share:
+
+    CITIMEALS ON WHEELS       -> CITY MEALS ON WHEELS          133634381  == 133634381
+    LOCK HAVEN YMCA           -> LOCK HAVEN AREA YMCA          240798644  == 240798644
+    HEALTH MEDICINE POLICY    -> HEALTH AND MEDICINE POLICY    363143826  == 363143826
+
+That queue lands in work already underway, which is why it is a cost
+rather than a blocker: MAYBE-tier adjudication runs at $0.000674 per
+case for Haiku, so 62,700 cases is about $42. **`accept = "all"` is for
+measurement only.** Its +2.26 points include 64 uncorroborated claims
+per 4,683 whose precision is unmeasured, from a dictionary this pipeline
+itself labelled, and that unmeasured precision is the entire difference
+between +0.90 and +2.26.
+
+</div>
+
+<div class="section level2">
+
+## 5. The dictionary does not get better with scale
+
+The expectation was that a dictionary built from millions of cleared
+grants would recover far more than one built from 369,260. Tested
+directly: one fixed query set — the benchmark’s 1,769 unresolved rows —
+against nested random dictionaries from 2% to 100% of the cleared pool.
+
+| share | rows    | renderings | EINs   | renderings / EIN | agreeing | per 100k new rows |
+|:------|:--------|:-----------|:-------|:-----------------|:---------|:------------------|
+| 2%    | 7,383   | 6,240      | 4,933  | 1.265            | 23       | —                 |
+| 5%    | 18,458  | 13,500     | 9,267  | 1.457            | 31       | 72.23             |
+| 10%   | 36,916  | 22,985     | 13,845 | 1.660            | 34       | 16.25             |
+| 25%   | 92,290  | 42,613     | 21,155 | 2.014            | 42       | 14.45             |
+| 50%   | 184,580 | 63,254     | 26,725 | 2.367            | 48       | 6.50              |
+| 100%  | 369,160 | 88,744     | 31,721 | 2.798            | 50       | 1.08              |
+
+A fifty-fold increase in dictionary rows roughly doubles the recoveries,
+23 to 50, and the last doubling of the dictionary bought **two**. Raw
+dictionary YES saturated outright: 126 at half the pool and 126 at all
+of it.
+
+The mechanism explains it. Recovery needs a cleared rendering *of the
+same organisation*, so the quantity that matters is renderings per
+organisation — and that grows logarithmically, 1.265 to 2.798 across the
+whole range. The tenth foundation to write `USO` adds nothing.
+
+**The rate saturates at about 1.05 points, reached by half of a single
+run.** But at full scale the query side grows too: roughly 37% of 17.25M
+grant rows go unresolved, so the pass faces \~6.4M candidates rather
+than 1,769, and one point of 17.25M is on the order of 170,000 grants
+recovered. A 3M-case dictionary **is** substantive and it will recover a
+lot of grants. What it will not do is recover a larger *share* than a
+dictionary a tenth its size.
+
+The useful corollary: the pass can be developed and tuned against a
+small dictionary without waiting for a full run.
+
+</div>
+
+<div class="section level2">
+
+## 6. What to run
+
+<div id="cb3" class="sourceCode">
+
+``` r
+# 1. the reference: matchdb's active-observed tier -- now the default tier --
+#    downloaded once, md5-checked and cached
+ref <- pf_reference(source = "matchdb")
+
+# 2. the cascade, as usual
+prepared <- pf_prepare(grants)
+status   <- pf_run_batches(prepared, ref)
+
+# 3. the dictionary, from a completed run's YES tier
+dict <- pf_grant_dictionary(cleared_rows)          # keep = "YES" by default
+
+# 4. recover the residue; the default adopts only corroborated claims
+status <- pf_recover_from_dictionary(status, dict, prepared$recipients,
+                                     accept = "agree")
+```
+
+</div>
+
+`pf_reference(source = "auto")` — the default — takes the matchdb tier
+when matchdb is installed and the tier loads, and the local bundle
+otherwise, saying why. One case of “otherwise” is worth anticipating: a
+matchdb tier is published against a specific `np_normalize()` signature,
+and `md_reference()` refuses a tier built by a different normalizer
+rather than serve keys that no longer mean what the query keys mean. So
+an npmatch normalizer update falls back to the local bundle until the
+tiers are republished. The arms in §2 were measured under
+`v1-6dcb298522cc5118`; `BASELINE-2026-10C` is `v1-3e7b9f9d59bbb19e`.
+Check with `pf_check_reference()`, which stops on a mismatch and warns
+on an unstamped bundle.
+
+</div>
+
+<div class="section level2">
+
+## 7. What none of this establishes
+
+**These are clear rates, not accuracies.** Nothing here is adjudicated.
+Every row of the truth file came from a cell the pipeline itself
+produced, so it measures recovery of known-hard cases rather than
+precision over the 62.74%. That needs a fresh stratified random sample
+and has never been drawn.
+
+**The two augmented bundles in this vignette are not the same file.**
+§2’s arm holds 3,891,187 rows and §2’s baseline figure 3,880,431; three
+near-identically named augmented CSVs exist, and the reference bundle
+recorded which one it came from nowhere. The three arms are internally
+comparable — one session, one population, one pass set — but the
+cross-reference to `BASELINE-2026-10C` is approximate, and that is a
+provenance failure rather than a rounding one.
+
+**The matchdb arms are one population at one vintage.** 4,903 grants,
+measured once. The direction is clear; the magnitude is specific to that
+sample.
+
+**The dictionary’s seed is not corpus-representative.** It came from the
+triangulation run, whose population is drawn from multi-rendering
+addresses, so it over-represents shared addresses and probably chapters
+— which is plausibly *why* the disagreements skew to affiliates. A
+dictionary seeded from a representative run should be measured before
+the precision figures here are trusted as general.
+
+**The denominator is contested.** Roughly 37% of the NO residual are
+individual payees that arguably do not belong in it, which would lift
+every clear rate here by about 3 points.
+
+</div>
+
+</div>

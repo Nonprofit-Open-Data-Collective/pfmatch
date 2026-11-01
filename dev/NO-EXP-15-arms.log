@@ -1,0 +1,84 @@
+============================================================================== 
+NO-TIER EXPERIMENT  stage 15: Haiku 5.5 vs Opus 5.5 
+============================================================================== 
+ 
+ 
+join verified: 100 rows, every pair the same filed name 
+stratum A (the only stratum that estimates a rate): 91 
+============================================================================== 
+1. RECOVERIES -- what each arm established, checked by lookup 
+============================================================================== 
+Both arms are scored by the same stage 12 code against the same reference 
+EIN set, so this compares the models and not the scorers. 
+ 
+  Opus  recoverable: 33 of 91  36.3%  [27.1%, 46.5%] 
+  Haiku recoverable: 30 of 91  33.0%  [24.2%, 43.1%] 
+ 
+  both arms       : 30 
+  Opus only       : 3 
+  Haiku only      : 0 
+  neither         : 58 
+
+  found by Opus, missed by Haiku: 
+    G002618   SALVATION ARMY                             haiku said org_found=YES, ein_source=NONE 
+    G003033   SALVATION ARMY                             haiku said org_found=YES, ein_source=NONE 
+    G004188   SALVATION ARMY                             haiku said org_found=UNCERTAIN, ein_source=NONE 
+============================================================================== 
+2. AGREEMENT ON THE EIN ITSELF 
+============================================================================== 
+  cases where both named an EIN: 31 
+  identical EIN               : 31 of 31  100.0% 
+============================================================================== 
+3. THE TAXONOMY -- do the two arms classify the tier the same way 
+============================================================================== 
+These are the vignette's breakdowns. If the cheap arm reproduces them the 
+published shares do not rest on the expensive model. 
+ 
+  entity_class       n= 91  agreement  86.8%  kappa 0.816 
+  bmf_expectation    n= 91  agreement  95.6%  kappa 0.909 
+  outside_reason     n= 91  agreement  92.3%  kappa 0.864 
+  miss_hypothesis    n= 91  agreement  80.2%  kappa 0.651 
+ 
+  entity_class side by side (the vignette's headline breakdown): 
+              class opus haiku
+         INDIVIDUAL   39    39
+          NONPROFIT   27    27
+            FOREIGN    5     4
+         GOVERNMENT    5     5
+  GROUP_SUBORDINATE    5     5
+          AGGREGATE    3     3
+             CHURCH    3     4
+   PROGRAM_OR_EVENT    2     1
+ FISCALLY_SPONSORED    1     1
+         FOR_PROFIT    1     0
+            UNKNOWN    0     2
+ 
+  'the BMF should not list it', structural floor included: 
+    Opus  58 of 91  63.7%  [53.5%, 72.9%] 
+    Haiku 61 of 91  67.0%  [56.9%, 75.8%] 
+============================================================================== 
+4. CONFIDENCE -- is the cheap arm's self-report usable 
+============================================================================== 
+The MAYBE search arm's confidence ROSE as accuracy fell, which made it 
+worse than useless. Opus on this tier was the inverse. The test is whether 
+a low-confidence verdict is in fact more often wrong. 
+
+  Opus: 
+    high    n= 80   established an EIN in the reference: 29 of 80  36.2% 
+    medium  n=  9   established an EIN in the reference: 4 of 9  44.4% 
+    low     n=  2   established an EIN in the reference: 0 of 2  0.0% 
+
+  Haiku: 
+    high    n= 62   established an EIN in the reference: 23 of 62  37.1% 
+    medium  n= 25   established an EIN in the reference: 7 of 25  28.0% 
+    low     n=  4   established an EIN in the reference: 0 of 4  0.0% 
+============================================================================== 
+5. COST -- what the cheap arm actually saves 
+============================================================================== 
+  Opus   $6.690 over 100 cases ($0.06690/case)   319 searches (3.2/case) 
+  Haiku  $1.308 over 100 cases ($0.01308/case)   436 searches (4.4/case) 
+         22 case(s) crossed the 100,000-token prompt step and were billed at the long rate 
+ 
+Web search is billed per use and is NOT in those figures. An arm that 
+searches more is not cheaper by the ratio of its token prices. 
+============================================================================== 

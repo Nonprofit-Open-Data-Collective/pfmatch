@@ -1,0 +1,158 @@
+============================================================================== 
+FUZZY CUTOFF table on npmatch's own name_key 
+============================================================================== 
+91 cases; 33 with an EIN the old reference held; 57 judged NOT_LISTED 
+  91 of the 91 are in scope and normalized (11 flagged personal) 
+loading REF-FZ-BUNDLE.rds ... 
+  6,671,061 rows, normalizer v1-592912060053c4c3 
+
+of the 33 EINs the OLD reference held, 33 are also in THIS one 
+============================================================================== 
+CUTOFF 0.95 
+============================================================================== 
+fuzzy scan: 79 of 91 query rows (1 blank or placeholder, 11 personal)
+block pools: median 505 rows, largest 2,930
+emitted 6 pair(s) over 4 query row(s) at cutoff 0.95
+
+  recovered: 3 of 33 
+ grant_id       ein       sim
+   <char>    <char>     <num>
+  G001302 750800692 1.0000000
+  G003609 271039799 1.0000000
+  G001302 750800692 0.9866667
+  G002061 061316993 0.9619645
+
+  false offers: 0 pair(s) over 0 of the 57 NOT_LISTED cases 
+============================================================================== 
+CUTOFF 0.90 
+============================================================================== 
+fuzzy scan: 79 of 91 query rows (1 blank or placeholder, 11 personal)
+block pools: median 505 rows, largest 2,930
+emitted 26 pair(s) over 9 query row(s) at cutoff 0.90
+
+  recovered: 6 of 33 
+ grant_id       ein       sim
+   <char>    <char>     <num>
+  G001302 750800692 1.0000000
+  G003609 271039799 1.0000000
+  G001302 750800692 0.9866667
+  G002061 061316993 0.9619645
+  G002717 386119964 0.9473180
+  G002717 386119964 0.9473180
+  G000167 580566206 0.9411249
+  G000167 580566206 0.9411249
+  G000167 580566206 0.9411249
+  G000167 580566206 0.9411249
+  G000167 580566206 0.9411249
+  G002162 390833608 0.9235088
+  G002162 390833608 0.9235088
+  G002162 390833608 0.9235088
+  G002162 390833608 0.9235088
+  G002162 390833608 0.9235088
+
+  false offers: 0 pair(s) over 0 of the 57 NOT_LISTED cases 
+============================================================================== 
+CUTOFF 0.85 
+============================================================================== 
+fuzzy scan: 79 of 91 query rows (1 blank or placeholder, 11 personal)
+block pools: median 505 rows, largest 2,930
+emitted 62 pair(s) over 17 query row(s) at cutoff 0.85
+
+  recovered: 11 of 33 
+ grant_id       ein       sim
+   <char>    <char>     <num>
+  G001302 750800692 1.0000000
+  G003609 271039799 1.0000000
+  G001302 750800692 0.9866667
+  G002061 061316993 0.9619645
+  G002717 386119964 0.9473180
+  G002717 386119964 0.9473180
+  G000167 580566206 0.9411249
+  G000167 580566206 0.9411249
+  G000167 580566206 0.9411249
+  G000167 580566206 0.9411249
+  G000167 580566206 0.9411249
+  G002162 390833608 0.9235088
+  G002162 390833608 0.9235088
+  G002162 390833608 0.9235088
+  G002162 390833608 0.9235088
+  G002162 390833608 0.9235088
+  G003609 271039799 0.8944444
+  G003609 271039799 0.8944444
+  G002061 061316993 0.8941937
+  G003609 271039799 0.8918919
+  G003609 271039799 0.8918919
+  G001200 311058476 0.8903571
+  G001200 311058476 0.8903571
+  G001200 311058476 0.8903571
+  G001200 311058476 0.8903571
+  G001563 463452785 0.8857143
+  G001563 463452785 0.8857143
+  G001563 463452785 0.8857143
+  G001563 463452785 0.8857143
+  G001563 463452785 0.8857143
+  G001302 750800692 0.8800000
+  G001302 750800692 0.8800000
+  G003254 341968434 0.8705882
+  G003254 341968434 0.8705882
+  G003254 341968434 0.8705882
+  G003254 341968434 0.8705882
+  G003487 010351077 0.8685714
+  G003487 010351077 0.8685714
+  G003487 010351077 0.8685714
+  G001812 222092362 0.8569565
+  G001812 222092362 0.8569565
+ grant_id       ein       sim
+
+  false offers: 0 pair(s) over 0 of the 57 NOT_LISTED cases 
+============================================================================== 
+PERSONAL NAMES, scanned with skip_personal = FALSE 
+============================================================================== 
+fuzzy scan: 11 of 11 query rows (0 blank or placeholder, 0 personal)
+block pools: median 454 rows, largest 1,606
+emitted 17 pair(s) over 7 query row(s) at cutoff 0.70
+                 filed                                                bmf
+                <char>                                             <char>
+     ALEXANDER SCHWEIG                              ALEXANDER GRAHAM BELL
+   ANGELA RENEE HOOVER                            ANGEL SEARCH AND RESCUE
+ FAMILETTI CHRISTOPHER                       FAMILY RESTORATION COALITION
+     ALEXANDER SCHWEIG ALEXANDER GRAHAM BELL ASSOCIATION FOR THE DEAF AND
+     ALEXANDER SCHWEIG                      ALEXANDRIA COMMUNITY SERVICES
+     SAMANTHA TIJERINA                                                SAM
+ FAMILETTI CHRISTOPHER                FALLS CHURCH CLIMATE ACTION NETWORK
+ FAMILETTI CHRISTOPHER                                     FAMILY AND ALL
+     SAMANTHA TIJERINA                                     SAM CONNECTION
+       JESSICA DEARING              JESUS DELIVERY INTERNATIONAL MINISTRY
+     SAMANTHA TIJERINA                                    SAM RAYBURN PTA
+        STEVEN HELLMAN                           STEPHENS GLOBAL OUTREACH
+       ein       sim
+    <char>     <num>
+ 530196644 0.8536738
+ 541721288 0.8283295
+ 364599743 0.8186275
+ 530196644 0.8147353
+ 472500960 0.8118271
+ 332673840 0.8078431
+ 394167055 0.7474353
+ 873371567 0.7428571
+ 332673840 0.7420479
+ 300755064 0.7367683
+ 742597843 0.7320479
+ 882911814 0.7272222
+
+highest similarity any individual's name reaches: 0.854 (ALEXANDER SCHWEIG -> ALEXANDER GRAHAM BELL) 
+============================================================================== 
+SUMMARY 
+============================================================================== 
+ cutoff recovered    of false_offers false_cases pairs margin
+  <num>     <int> <int>        <int>       <int> <int>  <num>
+   0.95         3    33            0           0     6  0.096
+   0.90         6    33            0           0    26  0.046
+   0.85        11    33            0           0    62 -0.004
+ 
+`margin` is the cutoff minus 0.854, the top personal-name similarity. 
+A cutoff whose margin approaches zero is not separating organizations 
+from individuals; it is separating them by luck. 
+
+wrote ./data-dev/ADJ-FUZZY-CUTOFF.rds 
+============================================================================== 

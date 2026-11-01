@@ -146,6 +146,15 @@ Two exclusions before the queue is built:
 
 ## 5. LLM review, and how to keep it honest
 
+> **Which layer, and with what options: see `dev/DEVELOPMENT-PLAN.md`
+> §"Phase 4b".** This section is about keeping *one* review honest. Phase 4b
+> is the choice between the four layers that can sit between the cascade and a
+> human, which tier each belongs on, what each costs over the whole corpus, and
+> the config object the package should expose for it. The short form: cheap
+> model everywhere on MAYBE with the low-confidence 18% escalated to the big
+> model **without** web search, and cheap-model-plus-search on NO, where the
+> answer is outside the packet every time.
+
 The review packet is `pf_candidate_frame()` output: per candidate, the BMF name,
 address, NTEE code and definition, activity text, subsection, assets, plus the
 grant purpose and the filing foundation's own NTEE and state.

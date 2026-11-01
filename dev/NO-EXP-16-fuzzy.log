@@ -1,0 +1,22 @@
+============================================================================== 
+FUZZY PASS regression: cutoffs 0.95, 0.9, 0.85 
+============================================================================== 
+loading cached bundle REF-FZ-BUNDLE.rds ... 
+  6,671,061 reference rows, normalizer v1-592912060053c4c3 
+  4,903 grants 
+reusing the cached match (5830 s when it was run) 
+ 
+
+  YES MAYBE    NO   OOS 
+ 2859  1121   888    35 
+
+baseline: 2,859 YES, 2,009 in-scope identities not YES (of which 101 have no pair at all) 
+LLM-established EINs to aim at: 33 over 33 identities 
+============================================================================== 
+CUTOFF 0.95 
+============================================================================== 
+residual: 2,009 of 4,868 in-scope identities have not cleared YES
+fuzzy scan: 1,882 of 2,009 query rows (10 blank or placeholder, 117 personal)
+block pools: median 549 rows, largest 17,667
+SKIPPED 4 query row(s) whose block exceeded max_pool = 20,000
+emitted 2,150 pair(s) over 487 query row(s) at cutoff 0.95

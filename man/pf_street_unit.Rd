@@ -23,7 +23,7 @@ it in npmatch's canonical \code{street_unit} spelling — \code{"STE 400"}, \cod
 \code{"# 206"} — or \code{""} where the line holds no unit.
 }
 \details{
-The parse itself is npmatch's: the value is passed to \code{\link[npmatch:np_normalize]{npmatch::np_normalize()}}
+The parse itself is npmatch's: the value is passed to \code{\link[npmatch:reexports]{npmatch::np_normalize()}}
 as a \code{unit} column and \code{street_unit} is read back, so pfmatch compares units
 the same way the matcher does and a normalizer change moves both together.
 Values are de-duplicated before normalizing, since line 2 repeats heavily.

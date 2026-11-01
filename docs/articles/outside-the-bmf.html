@@ -37,9 +37,11 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/cascade-workflow.html">The matching cascade, step by step</a></li>
     <li><a class="dropdown-item" href="../articles/name-and-address-variants.html">Name and address variants</a></li>
+    <li><a class="dropdown-item" href="../articles/clustering-by-address.html">Clustering recipients by address</a></li>
     <li><a class="dropdown-item" href="../articles/adjudicating-maybe.html">Adjudicating the MAYBE tier</a></li>
     <li><a class="dropdown-item" href="../articles/outside-the-bmf.html">What lives outside the BMF</a></li>
     <li><a class="dropdown-item" href="../articles/matching-dictionaries.html">Choosing a matching dictionary</a></li>
+    <li><a class="dropdown-item" href="../articles/yes-tier-dictionary.html">Matching against your own YES tier</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -264,11 +266,150 @@ every identity in the population file
 </div>
 </div>
 <div class="section level2">
-<h2 id="why-there-is-one-arm-and-no-cost-frontier">Why there is one arm and no cost frontier<a class="anchor" aria-label="anchor" href="#why-there-is-one-arm-and-no-cost-frontier"></a>
+<h2 id="why-there-is-no-no-search-arm">Why there is no <em>no-search</em> arm<a class="anchor" aria-label="anchor" href="#why-there-is-no-no-search-arm"></a>
 </h2>
 <p>The MAYBE experiment compared a cheap model, an expensive one, and the expensive one with web search, because all three could answer its question: the correct EIN was already in the candidate set 71% of the time, so a reviewer confined to the packet had something real to decide.</p>
-<p>Here it is not. A NO case has no candidate worth offering, so <strong>when there is an answer it is outside the packet 100% of the time.</strong> A model without search can only report that the filed name does not resemble the records already rejected, which is what the cascade said. So there is one arm, it has search, and no cheaper strategy is benchmarked because none applies.</p>
-<p>That asymmetry is itself a finding: the MAYBE tier supports a cost/quality frontier and the NO tier does not.</p>
+<p>Here it is not. A NO case has no candidate worth offering, so <strong>when there is an answer it is outside the packet 100% of the time.</strong> A model without search can only report that the filed name does not resemble the records already rejected, which is what the cascade said. So every arm on this tier has search.</p>
+<p>An earlier version of this page went further and said no cheaper strategy was benchmarked because none applied. That was two claims in one sentence and only the first holds. A cheaper <em>model</em> with search applies perfectly well; it had simply not been run.</p>
+<div class="section level3">
+<h3 id="it-was-run-and-it-reproduces-the-findings">It was run, and it reproduces the findings<a class="anchor" aria-label="anchor" href="#it-was-run-and-it-reproduces-the-findings"></a>
+</h3>
+<p>Haiku 5.5 on the same 100 cases, through the same case renderer and the same collection code — the arm is parameterised by model, not forked, so the two arms cannot drift apart in anything but the model.</p>
+<table class="table">
+<thead><tr>
+<th style="text-align:left;">
+arm
+</th>
+<th style="text-align:left;">
+recoverable
+</th>
+<th style="text-align:left;">
+share
+</th>
+<th style="text-align:left;">
+ci
+</th>
+<th style="text-align:left;">
+token cost / 100
+</th>
+<th style="text-align:left;">
+searches
+</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Opus 5.5
+</td>
+<td style="text-align:left;">
+33 of 91
+</td>
+<td style="text-align:left;">
+36.3%
+</td>
+<td style="text-align:left;">
+[27.1%, 46.5%]
+</td>
+<td style="text-align:left;">
+$6.69
+</td>
+<td style="text-align:left;">
+319
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Haiku 5.5
+</td>
+<td style="text-align:left;">
+30 of 91
+</td>
+<td style="text-align:left;">
+33.0%
+</td>
+<td style="text-align:left;">
+[24.2%, 43.1%]
+</td>
+<td style="text-align:left;">
+<strong>$1.31</strong>
+</td>
+<td style="text-align:left;">
+436
+</td>
+</tr>
+</tbody>
+</table>
+<p>The overlap is near-total: <strong>30 found by both arms, 3 by Opus only, none by Haiku only.</strong> All three Opus-only cases are <code>SALVATION ARMY</code>, where Haiku identified the organisation and then declined to name an EIN — for an ambiguous local corps against a national body that is the defensible answer rather than a failure to search. And where both arms named an EIN, <strong>they named the same one 31 times out of 31.</strong></p>
+<p>The taxonomy this page publishes survives the substitution:</p>
+<table class="table">
+<thead><tr>
+<th style="text-align:left;">
+field
+</th>
+<th style="text-align:left;">
+agreement
+</th>
+<th style="text-align:left;">
+kappa
+</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<code>bmf_expectation</code>
+</td>
+<td style="text-align:left;">
+95.6%
+</td>
+<td style="text-align:left;">
+0.909
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>outside_reason</code>
+</td>
+<td style="text-align:left;">
+92.3%
+</td>
+<td style="text-align:left;">
+0.864
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>entity_class</code>
+</td>
+<td style="text-align:left;">
+86.8%
+</td>
+<td style="text-align:left;">
+0.816
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>miss_hypothesis</code>
+</td>
+<td style="text-align:left;">
+80.2%
+</td>
+<td style="text-align:left;">
+0.651
+</td>
+</tr>
+</tbody>
+</table>
+<p><code>entity_class</code> agrees exactly on the two classes that carry the headline — <code>INDIVIDUAL</code> 39 and 39, <code>NONPROFIT</code> 27 and 27. <code>miss_hypothesis</code> is the weakest, which is what the most speculative field in the schema should do: it asks the model to guess <em>why</em> a match failed, the one question it cannot check against a source. Both arms also flag the same single reference absence, Commonwealth University of Pennsylvania. Two independent runs agreeing on which one record the BMF is right to omit is worth more than either run alone.</p>
+<p>So the breakdowns below do not rest on the expensive model.</p>
+</div>
+<div class="section level3">
+<h3 id="the-saving-is-5x-not-40x">The saving is 5x, not 40x<a class="anchor" aria-label="anchor" href="#the-saving-is-5x-not-40x"></a>
+</h3>
+<p>Haiku 5.5 lists at $0.10/$0.50 per MTok against Opus 5.5’s $4/$20, which invites an expectation of a 40-fold saving. The measured ratio is <strong>5.1x</strong>, for two reasons that only show up once the run is instrumented for them.</p>
+<p>Haiku prices a request by its <em>whole prompt</em>, stepping to $0.50/$2.50 above 100K tokens, and <strong>22 of the 100 cases crossed that step</strong> — which is what a web-search turn does. Banking the run’s totals against the cheap rate would have reported about $0.46 and understated by nearly three times. Second, the cheap arm ran <strong>37% more searches</strong>, and searches are billed per use and are in neither figure.</p>
+<p>That is the shape of the cost result on this tier: the cheap model is clearly worth using, and the reason is not the number on the price list.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="what-a-reviewer-is-given">What a reviewer is given<a class="anchor" aria-label="anchor" href="#what-a-reviewer-is-given"></a>
@@ -525,9 +666,152 @@ TYPO
 </tbody>
 </table>
 <p>Two patterns are worth naming.</p>
-<p><strong><code>TYPO</code> is never retrieved.</strong> <code>THE WESMINSTER SCHOOL</code> and <code>COCORDIA UNIVERSITY</code> each scored <em>no</em> candidates at all. A misspelling inside the one distinctive token destroys the only key an inverted name-token index could have used. No comparator can rescue a case that never reaches it.</p>
+<p><strong>A misspelling is never retrieved at all.</strong> <code>THE WESMINSTER SCHOOL</code> and <code>COCORDIA UNIVERSITY</code> scored <em>no</em> candidates — <code>n_cand = 0</code>, <code>n_pairs = 0</code>. So did <code>THE PASSONISTS</code>, which the model filed under <code>DBA_OR_TRADE_NAME</code> but which fails the same way (<code>PASSONISTS</code> against <code>PASSIONIST</code>), making the real count <strong>3 of 91 rather than 2</strong>.</p>
+<p>What carries this is the mechanism, not the sample: three cases could not support the word “never” on their own. Every pass in the cascade is exact equality — <code>name_key</code> or <code>dba_key</code> plus ZIP5 or state, a shared name token within state, an exact name anywhere, initials, an 18-character prefix plus ZIP5 — and npmatch has no approximate comparator at the blocking stage at all. A one-character edit in the one distinctive token therefore leaves no key anywhere, while <code>SCHOOL</code> and <code>UNIVERSITY</code> are pruned out as too frequent. No comparator can rescue a case that never reaches it. This is the subject of the next section.</p>
 <p><strong><code>PARENT_OR_CHAPTER</code> is always retrieved and always underscored.</strong> Four of the five are <code>SALVATION ARMY</code> and <code>YOUNG LIFE</code> at 0.08 — a name that cannot discriminate between hundreds of real records, where the geography term correctly refuses to break the tie. These should <em>not</em> be forced through: loosening there buys wrong EINs.</p>
 <p>The two call for opposite fixes, which is why reporting them as one “name resolution” number would be useless.</p>
+</div>
+<div class="section level2">
+<h2 id="the-one-failure-no-reviewer-can-fix-and-the-cheapest-fix-in-the-package">The one failure no reviewer can fix, and the cheapest fix in the package<a class="anchor" aria-label="anchor" href="#the-one-failure-no-reviewer-can-fix-and-the-cheapest-fix-in-the-package"></a>
+</h2>
+<p>Pursuing those three cases turned out to answer a larger question than the one it was asked.</p>
+<p><strong>The correct record is in the reference at the filed ZIP5.</strong> Not merely present — present in the block the cheapest pass in the whole cascade already looks at:</p>
+<table class="table">
+<thead><tr>
+<th style="text-align:left;">
+filed name
+</th>
+<th style="text-align:left;">
+the reference row, at the filed ZIP5
+</th>
+<th style="text-align:left;">
+similarity
+</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<code>THE WESMINSTER SCHOOL</code>
+</td>
+<td style="text-align:left;">
+<code>THE WESTMINSTER SCHOOLS</code> 58-0566206, ATLANTA GA 30327
+</td>
+<td style="text-align:left;">
+0.941
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>COCORDIA UNIVERSITY</code>
+</td>
+<td style="text-align:left;">
+<code>CONCORDIA UNIVERSITY</code> 39-0833608, Mequon WI 53097
+</td>
+<td style="text-align:left;">
+0.924
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>THE PASSONISTS</code>
+</td>
+<td style="text-align:left;">
+<code>PASSIONIST MISSIONARIES INC</code> 22-2092362, JAMAICA NY 11432
+</td>
+<td style="text-align:left;">
+0.857
+</td>
+</tr>
+</tbody>
+</table>
+<p>Pass A1 blocks on name plus ZIP5 and misses each of them by one letter.</p>
+<div class="section level3">
+<h3 id="why-no-adjudication-pass-can-help-at-any-price">Why no adjudication pass can help, at any price<a class="anchor" aria-label="anchor" href="#why-no-adjudication-pass-can-help-at-any-price"></a>
+</h3>
+<p>This is worth stating plainly because it is the natural next question. Adjudication <em>ranks a candidate sheet</em>. For these cases the sheet is empty, so Opus, Haiku or a human reading it sees nothing to choose between. A cheaper adjudicator, a more expensive one and a better-instructed one all return the same thing. The failure is upstream of the stage.</p>
+<p>Both search arms did recover them, because search goes outside the packet. But paying a model to search the web for a missing letter is an expensive answer to a question string distance answers for nothing.</p>
+</div>
+<div class="section level3">
+<h3 id="jaro-winkler-inside-a-zip5-block">Jaro-Winkler inside a ZIP5 block<a class="anchor" aria-label="anchor" href="#jaro-winkler-inside-a-zip5-block"></a>
+</h3>
+<p><code><a href="../reference/pf_fuzzy_candidates.html">pf_fuzzy_candidates()</a></code> scores the filed <code>name_key</code> against the reference rows sharing its ZIP5, falling back to city plus state where that block is empty, and emits the best few above a cutoff. Blocking first is what makes it free: the pools are small — median 477 reference rows on this sample, largest 2,940 — and one pool takes microseconds against the 223,151 candidates pass B2 generates on 5,000 grants.</p>
+<p>It does not reimplement any decision. <code><a href="https://nonprofit-open-data-collective.github.io/npmatch/reference/np_block.html" class="external-link">npmatch::np_block()</a></code> returns nothing but a frame of row indices, which <code>np_compare()</code> accepts directly, so the pairs go through the same comparator, selector and tiering as every exact pass and a fuzzy pair clears the same bar.</p>
+<p>All three misspellings rank <strong>first</strong> in their own ZIP5 pool, at 0.941, 0.924 and 0.857.</p>
+</div>
+<div class="section level3">
+<h3 id="the-cutoff-is-set-from-the-collision-not-from-the-recall">The cutoff is set from the collision, not from the recall<a class="anchor" aria-label="anchor" href="#the-cutoff-is-set-from-the-collision-not-from-the-recall"></a>
+</h3>
+<p>Scoring all 91 cases against their ZIP5 pools gives both halves of the trade-off at once:</p>
+<table class="table">
+<thead><tr>
+<th style="text-align:left;">
+cutoff
+</th>
+<th style="text-align:left;">
+recovered of the 33 the BMF holds
+</th>
+<th style="text-align:left;">
+false offers in the 57 it does not
+</th>
+<th style="text-align:left;">
+margin to the nearest personal name
+</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+0.95
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+0.102
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<strong>0.90</strong> (default)
+</td>
+<td style="text-align:left;">
+<strong>7</strong>
+</td>
+<td style="text-align:left;">
+1, a placeholder
+</td>
+<td style="text-align:left;">
+<strong>0.052</strong>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+0.85
+</td>
+<td style="text-align:left;">
+11
+</td>
+<td style="text-align:left;">
+1, a placeholder
+</td>
+<td style="text-align:left;">
+0.002
+</td>
+</tr>
+</tbody>
+</table>
+<p>The default is <strong>0.90</strong>, and the reason is the right-hand column rather than the left. At 0.85 four more identities are recovered, but the highest-scoring personal name sits at <strong>0.848</strong> — <code>ALEXANDER SCHWEIG</code> against <code>ALEXANDER GRAHAM BELL ASSOCIATION</code>. A one-point margin on 38 individuals is not a margin.</p>
+<p>That near-collision is structural, not bad luck: Jaro-Winkler’s prefix bonus is precisely what rewards a shared first name, so individuals — 43% of this tier — are the population this comparator is worst at excluding. <code>skip_personal</code> keeps them out of the pool rather than leaving the cutoff to catch them.</p>
+<p>The single false offer across the 57 cases the BMF should not hold is <code>SEE SCHEDULE ATTACHED</code> against <code>SEE SCHEDULE O</code> at 0.91: two placeholders are near-identical strings describing nothing. The placeholder filter removes it on both sides, which is one more reason the pass does its own filtering rather than trusting a threshold.</p>
+</div>
+<div class="section level3">
+<h3 id="what-it-is-not-limited-to">What it is not limited to<a class="anchor" aria-label="anchor" href="#what-it-is-not-limited-to"></a>
+</h3>
+<p>It runs on the <strong>residual</strong>, which is every identity that has not cleared YES — 845 NO <em>and</em> 1,044 MAYBE. “NO” is a tier assigned after scoring, so it cannot be blocked on, and <code>np_cascade()</code> drops an identity from its pending set only when a pass clears it to YES, which is the same rule. So the pass changes the MAYBE tier too: it adds rows to the adjudication queue and can change which row a MAYBE identity holds.</p>
+<p>The YES set is protected by construction rather than by a threshold — an identity that has cleared is not in the residual, no pair is added to it, and its selection cannot move. <code><a href="../reference/pf_fuzzy_recover.html">pf_fuzzy_recover()</a></code> asserts that instead of trusting it, and <code>dev/adjudicate-16-fuzzy-regress.R</code> re-checks it independently.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="what-lives-outside-the-bmf-and-why">What lives outside the BMF, and why<a class="anchor" aria-label="anchor" href="#what-lives-outside-the-bmf-and-why"></a>
@@ -1017,7 +1301,11 @@ YES + cleared MAYBE + recovered NO
 <li>
 <strong>The 120 never-scored identities are 12 cases in this sample.</strong> Their composition is reported with everything else, but a 12-case subset supports no claim of its own.</li>
 <li>
-<strong>Search cost is not in the token figure.</strong> $0.0669 per case in tokens, plus 3.2 web searches per case billed separately. No ratio to the MAYBE arms is quoted: those were computed on that experiment’s own runs, some logged before the cache-write accounting was corrected.</li>
+<strong>Search cost is not in the token figure.</strong> $0.0669 per case in tokens for Opus and $0.0131 for Haiku, plus 3.2 and 4.4 web searches per case billed separately. No ratio to the MAYBE arms is quoted: those were computed on that experiment’s own runs, some logged before the cache-write accounting was corrected.</li>
+<li>
+<strong>Two models agreeing is not two models being right.</strong> The arms match on 31 of 31 EINs and on the single reference absence, which is evidence against independent error, not against <em>shared</em> error. Both were given the same instructions and both read the same web.</li>
+<li>
+<strong>The misspelling class is three cases.</strong> The fix below is validated on 3 of 91, and what carries it is the mechanism — every blocking pass is exact equality — not the sample size. Its 0.90 cutoff is set from 91 cases and 38 personal names, which is enough to see the collision and not enough to price it precisely.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -1029,7 +1317,13 @@ Rscript dev/adjudicate-12-no-score.R
 
 PF_NO_SET=cal Rscript dev/adjudicate-10-no-packet.R    # the human head-to-head
 PF_NO_SET=cal Rscript dev/adjudicate-11-no-search.R
-Rscript dev/adjudicate-14-no-calib.R</code></pre>
+Rscript dev/adjudicate-14-no-calib.R
+
+PF_NO_MODEL=claude-haiku-5-5 PF_NO_TAG=-haiku Rscript dev/adjudicate-11-no-search.R
+PF_NO_TAG=-haiku Rscript dev/adjudicate-12-no-score.R  # the cheap arm
+Rscript dev/adjudicate-15-no-arms.R                    # Haiku vs Opus
+
+Rscript dev/adjudicate-16-fuzzy-regress.R              # the fuzzy pass, full file</code></pre>
 <p>The packet stage gates every identity’s tier against <code>BASELINE-2026-10C</code> and stops on any drift, because a sample drawn from a drifted run does not describe the baseline’s NO tier and its recovery could not be added to the baseline’s match rate. It also re-checks that it drew the same 100 ids as the cached packet, so a rebuild cannot silently leave collected verdicts keyed to different case text.</p>
 <p>Design, full read-out and the taxonomy definitions are in <code>dev/NO-TIER-EXPERIMENT.md</code>; the reviewer’s instructions are <code>dev/LLM-NO-INSTRUCTIONS.md</code>.</p>
 </div>
@@ -1044,7 +1338,7 @@ Rscript dev/adjudicate-14-no-calib.R</code></pre>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

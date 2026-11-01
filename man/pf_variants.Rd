@@ -78,7 +78,7 @@ Drawn from the 50,000-case triangulation run over population
 \section{Why these pairs are the interesting ones}{
 
 Every pair here is a difference that \strong{survived} normalization.
-\link[npmatch:np_normalize]{np_normalize()} already strips a leading \code{THE},
+\link[npmatch:reexports]{np_normalize()} already strips a leading \code{THE},
 rewrites \code{&} to \code{AND}, expands \code{FDN} to \code{FOUNDATION} and contracts USPS
 street suffixes, and \code{\link[=pf_dedup]{pf_dedup()}} then collapses renderings that share an
 identity key. So nothing in this table differs only in a way the pipeline

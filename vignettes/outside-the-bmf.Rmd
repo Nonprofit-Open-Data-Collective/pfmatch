@@ -42,6 +42,44 @@ no_shape <- data.frame(
   `in the baseline's denominator` = c("yes", "**no**"),
   check.names = FALSE, stringsAsFactors = FALSE)
 
+# dev/NO-EXP-15-arms.log -- Haiku 5.5 against Opus 5.5 on the same 100 cases,
+# scored by the same stage 12 code against the same reference EIN set.
+arms_tbl <- data.frame(
+  arm = c("Opus 5.5", "Haiku 5.5"),
+  recoverable = c("33 of 91", "30 of 91"),
+  share = c("36.3%", "33.0%"),
+  ci = c("[27.1%, 46.5%]", "[24.2%, 43.1%]"),
+  `token cost / 100` = c("$6.69", "**$1.31**"),
+  searches = c("319", "436"),
+  check.names = FALSE, stringsAsFactors = FALSE)
+
+arms_tax_tbl <- data.frame(
+  field = c("`bmf_expectation`", "`outside_reason`", "`entity_class`",
+            "`miss_hypothesis`"),
+  agreement = c("95.6%", "92.3%", "86.8%", "80.2%"),
+  kappa = c("0.909", "0.864", "0.816", "0.651"),
+  stringsAsFactors = FALSE)
+
+# The three misspelling cases and the reference row the cascade never offered.
+# EINs and ZIPs read from REF-MATCHDB.csv; similarities are Jaro-Winkler
+# (p = 0.1) on npmatch's own name_key, not an approximation of it.
+typo_tbl <- data.frame(
+  `filed name` = c("`THE WESMINSTER SCHOOL`", "`COCORDIA UNIVERSITY`",
+                   "`THE PASSONISTS`"),
+  `the reference row, at the filed ZIP5` =
+    c("`THE WESTMINSTER SCHOOLS` 58-0566206, ATLANTA GA 30327",
+      "`CONCORDIA UNIVERSITY` 39-0833608, Mequon WI 53097",
+      "`PASSIONIST MISSIONARIES INC` 22-2092362, JAMAICA NY 11432"),
+  similarity = c("0.941", "0.924", "0.857"),
+  check.names = FALSE, stringsAsFactors = FALSE)
+
+cutoff_tbl <- data.frame(
+  cutoff = c("0.95", "**0.90** (default)", "0.85"),
+  `recovered of the 33 the BMF holds` = c("3", "**7**", "11"),
+  `false offers in the 57 it does not` = c("0", "1, a placeholder", "1, a placeholder"),
+  `margin to the nearest personal name` = c("0.102", "**0.052**", "0.002"),
+  check.names = FALSE, stringsAsFactors = FALSE)
+
 recover_tbl <- data.frame(
   step = c("an EIN was established at all",
            "and that EIN is in the reference"),
@@ -154,7 +192,7 @@ defect in the arm; it is a statement about which figure answers which
 question. A match rate cannot drop the grants its retrieval step never reached.
 Everything below is reported against 4,868.
 
-## Why there is one arm and no cost frontier
+## Why there is no *no-search* arm
 
 The MAYBE experiment compared a cheap model, an expensive one, and the
 expensive one with web search, because all three could answer its question: the
@@ -164,11 +202,61 @@ confined to the packet had something real to decide.
 Here it is not. A NO case has no candidate worth offering, so **when there is
 an answer it is outside the packet 100% of the time.** A model without search
 can only report that the filed name does not resemble the records already
-rejected, which is what the cascade said. So there is one arm, it has search,
-and no cheaper strategy is benchmarked because none applies.
+rejected, which is what the cascade said. So every arm on this tier has search.
 
-That asymmetry is itself a finding: the MAYBE tier supports a cost/quality
-frontier and the NO tier does not.
+An earlier version of this page went further and said no cheaper strategy was
+benchmarked because none applied. That was two claims in one sentence and only
+the first holds. A cheaper *model* with search applies perfectly well; it had
+simply not been run.
+
+### It was run, and it reproduces the findings
+
+Haiku 5.5 on the same 100 cases, through the same case renderer and the
+same collection code — the arm is parameterised by model, not forked, so the
+two arms cannot drift apart in anything but the model.
+
+```{r}
+tab(arms_tbl)
+```
+
+The overlap is near-total: **30 found by both arms, 3 by Opus only, none by
+Haiku only.** All three Opus-only cases are `SALVATION ARMY`, where Haiku
+identified the organisation and then declined to name an EIN — for an ambiguous
+local corps against a national body that is the defensible answer rather than a
+failure to search. And where both arms named an EIN, **they named the same one
+31 times out of 31.**
+
+The taxonomy this page publishes survives the substitution:
+
+```{r}
+tab(arms_tax_tbl)
+```
+
+`entity_class` agrees exactly on the two classes that carry the headline —
+`INDIVIDUAL` 39 and 39, `NONPROFIT` 27 and 27. `miss_hypothesis` is the
+weakest, which is what the most speculative field in the schema should do: it
+asks the model to guess *why* a match failed, the one question it cannot check
+against a source. Both arms also flag the same single reference absence,
+Commonwealth University of Pennsylvania. Two independent runs agreeing on which
+one record the BMF is right to omit is worth more than either run alone.
+
+So the breakdowns below do not rest on the expensive model.
+
+### The saving is 5x, not 40x
+
+Haiku 5.5 lists at \$0.10/\$0.50 per MTok against Opus 5.5's \$4/\$20, which
+invites an expectation of a 40-fold saving. The measured ratio is **5.1x**, for
+two reasons that only show up once the run is instrumented for them.
+
+Haiku prices a request by its *whole prompt*, stepping to \$0.50/\$2.50 above
+100K tokens, and **22 of the 100 cases crossed that step** — which is what a
+web-search turn does. Banking the run's totals against the cheap rate would
+have reported about \$0.46 and understated by nearly three times. Second, the
+cheap arm ran **37% more searches**, and searches are billed per use and are in
+neither figure.
+
+That is the shape of the cost result on this tier: the cheap model is clearly
+worth using, and the reason is not the number on the price list.
 
 ## What a reviewer is given
 
@@ -252,10 +340,21 @@ tab(miss_tbl)
 
 Two patterns are worth naming.
 
-**`TYPO` is never retrieved.** `THE WESMINSTER SCHOOL` and `COCORDIA
-UNIVERSITY` each scored *no* candidates at all. A misspelling inside the one
-distinctive token destroys the only key an inverted name-token index could have
-used. No comparator can rescue a case that never reaches it.
+**A misspelling is never retrieved at all.** `THE WESMINSTER SCHOOL` and
+`COCORDIA UNIVERSITY` scored *no* candidates — `n_cand = 0`, `n_pairs = 0`. So
+did `THE PASSONISTS`, which the model filed under `DBA_OR_TRADE_NAME` but which
+fails the same way (`PASSONISTS` against `PASSIONIST`), making the real count
+**3 of 91 rather than 2**.
+
+What carries this is the mechanism, not the sample: three cases could not
+support the word "never" on their own. Every pass in the cascade is exact
+equality — `name_key` or `dba_key` plus ZIP5 or state, a shared name token
+within state, an exact name anywhere, initials, an 18-character prefix plus
+ZIP5 — and npmatch has no approximate comparator at the blocking stage at all.
+A one-character edit in the one distinctive token therefore leaves no key
+anywhere, while `SCHOOL` and `UNIVERSITY` are pruned out as too frequent. No
+comparator can rescue a case that never reaches it. This is the subject of the
+next section.
 
 **`PARENT_OR_CHAPTER` is always retrieved and always underscored.** Four of the
 five are `SALVATION ARMY` and `YOUNG LIFE` at 0.08 — a name that cannot
@@ -265,6 +364,91 @@ loosening there buys wrong EINs.
 
 The two call for opposite fixes, which is why reporting them as one "name
 resolution" number would be useless.
+
+## The one failure no reviewer can fix, and the cheapest fix in the package
+
+Pursuing those three cases turned out to answer a larger question than the one
+it was asked.
+
+**The correct record is in the reference at the filed ZIP5.** Not merely
+present — present in the block the cheapest pass in the whole cascade already
+looks at:
+
+```{r}
+tab(typo_tbl)
+```
+
+Pass A1 blocks on name plus ZIP5 and misses each of them by one letter.
+
+### Why no adjudication pass can help, at any price
+
+This is worth stating plainly because it is the natural next question.
+Adjudication *ranks a candidate sheet*. For these cases the sheet is empty, so
+Opus, Haiku or a human reading it sees nothing to choose between. A cheaper
+adjudicator, a more expensive one and a better-instructed one all return the
+same thing. The failure is upstream of the stage.
+
+Both search arms did recover them, because search goes outside the packet. But
+paying a model to search the web for a missing letter is an expensive answer to
+a question string distance answers for nothing.
+
+### Jaro-Winkler inside a ZIP5 block
+
+`pf_fuzzy_candidates()` scores the filed `name_key` against the reference rows
+sharing its ZIP5, falling back to city plus state where that block is empty,
+and emits the best few above a cutoff. Blocking first is what makes it free:
+the pools are small — median 477 reference rows on this sample, largest 2,940 —
+and one pool takes microseconds against the 223,151 candidates pass B2
+generates on 5,000 grants.
+
+It does not reimplement any decision. `npmatch::np_block()` returns nothing but
+a frame of row indices, which `np_compare()` accepts directly, so the pairs go
+through the same comparator, selector and tiering as every exact pass and a
+fuzzy pair clears the same bar.
+
+All three misspellings rank **first** in their own ZIP5 pool, at 0.941, 0.924
+and 0.857.
+
+### The cutoff is set from the collision, not from the recall
+
+Scoring all 91 cases against their ZIP5 pools gives both halves of the
+trade-off at once:
+
+```{r}
+tab(cutoff_tbl)
+```
+
+The default is **0.90**, and the reason is the right-hand column rather than
+the left. At 0.85 four more identities are recovered, but the
+highest-scoring personal name sits at **0.848** — `ALEXANDER SCHWEIG` against
+`ALEXANDER GRAHAM BELL ASSOCIATION`. A one-point margin on 38 individuals is
+not a margin.
+
+That near-collision is structural, not bad luck: Jaro-Winkler's prefix bonus is
+precisely what rewards a shared first name, so individuals — 43% of this tier —
+are the population this comparator is worst at excluding. `skip_personal` keeps
+them out of the pool rather than leaving the cutoff to catch them.
+
+The single false offer across the 57 cases the BMF should not hold is `SEE
+SCHEDULE ATTACHED` against `SEE SCHEDULE O` at 0.91: two placeholders are
+near-identical strings describing nothing. The placeholder filter removes it on
+both sides, which is one more reason the pass does its own filtering rather
+than trusting a threshold.
+
+### What it is not limited to
+
+It runs on the **residual**, which is every identity that has not cleared YES —
+845 NO *and* 1,044 MAYBE. "NO" is a tier assigned after scoring, so it cannot
+be blocked on, and `np_cascade()` drops an identity from its pending set only
+when a pass clears it to YES, which is the same rule. So the pass changes the
+MAYBE tier too: it adds rows to the adjudication queue and can change which row
+a MAYBE identity holds.
+
+The YES set is protected by construction rather than by a threshold — an
+identity that has cleared is not in the residual, no pair is added to it, and
+its selection cannot move. `pf_fuzzy_recover()` asserts that instead of
+trusting it, and `dev/adjudicate-16-fuzzy-regress.R` re-checks it
+independently.
 
 ## What lives outside the BMF, and why
 
@@ -445,10 +629,20 @@ a headline.
 - **The 120 never-scored identities are 12 cases in this sample.** Their
   composition is reported with everything else, but a 12-case subset supports
   no claim of its own.
-- **Search cost is not in the token figure.** $0.0669 per case in tokens, plus
-  3.2 web searches per case billed separately. No ratio to the MAYBE arms is
-  quoted: those were computed on that experiment's own runs, some logged before
-  the cache-write accounting was corrected.
+- **Search cost is not in the token figure.** $0.0669 per case in tokens for
+  Opus and $0.0131 for Haiku, plus 3.2 and 4.4 web searches per case billed
+  separately. No ratio to the MAYBE arms is quoted: those were computed on that
+  experiment's own runs, some logged before the cache-write accounting was
+  corrected.
+- **Two models agreeing is not two models being right.** The arms match on 31
+  of 31 EINs and on the single reference absence, which is evidence against
+  independent error, not against *shared* error. Both were given the same
+  instructions and both read the same web.
+- **The misspelling class is three cases.** The fix below is validated on 3 of
+  91, and what carries it is the mechanism — every blocking pass is exact
+  equality — not the sample size. Its 0.90 cutoff is set from 91 cases and 38
+  personal names, which is enough to see the collision and not enough to price
+  it precisely.
 
 ## Reproducing
 
@@ -460,6 +654,12 @@ Rscript dev/adjudicate-12-no-score.R
 PF_NO_SET=cal Rscript dev/adjudicate-10-no-packet.R    # the human head-to-head
 PF_NO_SET=cal Rscript dev/adjudicate-11-no-search.R
 Rscript dev/adjudicate-14-no-calib.R
+
+PF_NO_MODEL=claude-haiku-5-5 PF_NO_TAG=-haiku Rscript dev/adjudicate-11-no-search.R
+PF_NO_TAG=-haiku Rscript dev/adjudicate-12-no-score.R  # the cheap arm
+Rscript dev/adjudicate-15-no-arms.R                    # Haiku vs Opus
+
+Rscript dev/adjudicate-16-fuzzy-regress.R              # the fuzzy pass, full file
 ```
 
 The packet stage gates every identity's tier against `BASELINE-2026-10C` and
