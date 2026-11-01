@@ -613,6 +613,15 @@ agreement, INFER 71.4%) — but escalating on low **and** INFER reached the same
 
 ### What these numbers are not
 
+> **The failure mode these figures are most exposed to is catalogued in
+> `dev/PLAUSIBLE-WRONG-NUMBERS.md`.** Four of the seven wrong numbers caught
+> on this project made the pipeline look better than it was, none of them
+> crashed anything, and every one was found by reading output rather than by a
+> test failing. Two of the seven were cost figures in this very section. That
+> is why `dev/adjudicate-18-layer-costs.R` prints every dollar below instead of
+> letting it be typed here.
+
+
 Every figure above is honest about what it measured and none of it is a
 guarantee. Before any of it goes into user-facing documentation:
 
