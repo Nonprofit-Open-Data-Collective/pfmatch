@@ -214,6 +214,17 @@ This is not strictly a provenance defect, but it is the same failure the
 catalogue describes: a well-formed number supporting a recommendation, where
 nothing in the file's structure tells the reader it is dead.
 
+> **Still live on `origin/main`, and now contradicted three ways inside one
+> file.** Checked after PR #29: §5 line 181 still reads "Ship
+> `distinct_name_min_idf = 10`", while the note's own header (line 16) lists the
+> shipped defaults as `distinct_name_main_only = TRUE,
+> distinct_name_min_idf = 0` and the Disposition (line 297) says the default was
+> "changed to disabled". §1 on `main` now also explains *why* §5 said it — the
+> floor's benefit was published without its cost, and "the direction of the
+> error flattered the floor". So the cause is documented and the recommendation
+> it produced is not yet withdrawn. This is the oldest open finding here and the
+> cheapest to close.
+
 ## 4. The same note's headline cannot be reproduced from its own table
 
 **Class (c). Behind a recommendation. Flatters.**
@@ -239,18 +250,30 @@ defect 4 — 121 **pairs** against 116 **identities** — and the geo-evidence t
 below it sums to exactly 121, so the pair reading is probably right. But the
 note names neither side, which is precisely what practice 5 asks for.
 
-> **A correction to this audit's own reasoning.** The first version of this
-> finding argued that 116 *must* be the gross count too, because "disabling a
-> score floor can only lower scores, so YES can only lose". **Running
-> `dev/ab-idf-gate.R` disproves that.** Tightening the IDF gate from 0 to 10 —
-> which can only *lower* scores — moves YES from 2,821 to 2,822, and the script
-> prints its own decomposition: 1 demoted, and **"YES gained (should be 0): 2"**.
-> Tier movement in this pipeline is not monotone in the score, because
-> `np_select()` picks one pair per identity and demoting the selected pair can
-> promote a different one into the slot. So gross and net genuinely differ here
-> and 121-vs-116 has more than one possible explanation. The finding stands —
-> the note is unreconciled and unlabelled — but my inference about *why* did
-> not, and only running the script showed it.
+> **Resolved on `main`, and the resolution refutes my explanation as well as
+> the note's.** `PROMOTION-FLOOR-FINDINGS.md` §1 on `main` now names the piece
+> that was missing from both: **the floor also *costs* identities**, and that
+> side was never printed. Six identities are YES only with the floor *off*
+> (`OHIO FOUNDATION`, `RUTGERS…`, `GEORGIA STATE UNIVERSITY`, `UC San Diego
+> Foundation`, `Lakes Region Community Services`, `FAMILY AND CHILDREN'S
+> ASSOCIATION`), so the current net is **+103 = 109 − 6**. On the figures as
+> first published, "five identities had to be moving the other way for both
+> numbers to be true" — 121 won, 5 lost, net 116.
+>
+> So **my pairs-vs-identities hypothesis was wrong.** §1 now says explicitly
+> that these are "identities (`pf_status()` rows), not pairs" on both sides. The
+> discrepancy was never a convention collision; it was a gross win-count printed
+> beside a net it did not reconcile with, which `main` now calls out as the
+> catalogued shape — "and the direction of the error flattered the floor, which
+> is why §5 below recommended keeping it on a benefit with no cost beside it."
+>
+> That is finding 4 confirmed and finding 3's cause explained, with my reasoning
+> corrected on the way. Noting it because it is the **third** time in this audit
+> that checking something refuted my own account of a defect I had correctly
+> spotted — the first being the monotonicity argument I replaced this blockquote
+> with, which was also wrong: the real mechanism is the margin route in
+> `np_tier()`, not slot promotion in `np_select()` (finding 4a). Spotting that a
+> number does not reconcile is cheap; being right about *why* is not.
 
 **"All 121 fall to MAYBE, not NO" is contradicted.** When the floor is off,
 MAYBE does not rise by 121 — it *falls* by 152, and NO rises by **268**. Whatever
@@ -290,9 +313,18 @@ is stale, but the measurement that retracted it holds up exactly.
 line 89) and so was not run. That is the run that would settle 121-vs-116
 directly, by printing pairs and identities side by side with the population id.
 
-## 4a. `ab-idf-gate.R` prints a failed assertion that nobody has recorded
+## 4a. `ab-idf-gate.R` asserted something false, and printed the refutation
 
-**Class (a), re-derived. New — not in any note.**
+**Class (a), re-derived. Resolved on `main` in PR #29.**
+
+> **This finding's description was wrong twice before it was right, and both
+> wrong versions are mine.** It was first written up as "a failed assertion
+> nobody has recorded", then — on a peer session's framing, which I adopted
+> without checking — as an "unenforced invariant" where the script "measures a
+> violation". Both presume the invariant is *correct and merely unchecked*. It
+> is not correct, and there is no violation. The peer retracted its own framing
+> and pointed at evidence on `main`; I verified that evidence before changing
+> this, and it is conclusive. What follows is the corrected account.
 
 The same run above ends with:
 
@@ -304,18 +336,44 @@ The script states the invariant, measures it, gets 2, prints it — **and carrie
 on.** Nothing in `PROMOTION-FLOOR-FINDINGS.md` mentions it, and no `.log` for
 this script exists in `dev/`, so the only way to see it is to run the script.
 
-It is not necessarily a defect: `np_select()` picks one pair per identity, so
-demoting the selected pair can promote a different one into the slot and lift an
-identity's tier even though every score moved down. But that is a *hypothesis*,
-and the script's own parenthesis says the author expected zero. This is practice
-7 working exactly as the catalogue describes — a metric defined so it *can* come
-out wrong, which then did — followed by the gap practice 8 names: the output was
-produced and not read.
+**The gain of 2 is correct behaviour.** The invariant was false. `np_tier()`
+demotes on the **margin** to the runner-up, so a veto that *removes* a runner-up
+**raises** the winner's margin and can legitimately carry an identity
+MAYBE → YES. `dev/AB-IDF-GATE.log`, landed on `main` in PR #29, prints the two
+and settles it:
 
-*To settle:* print the 2 gained identities with their before/after selected pair
-and `name_ver_y`. `ab-idf-gate.R` already holds both scored frames in memory,
-so this is a few lines in that script. Not written here — this audit does not
-fix what it finds.
+```
+YES gained by the gate: 2
+                           name    was score_off score_on margin_off margin_on
+                OHIO FOUNDATION  MAYBE       0.9    0.888          0     0.068
+ FAMILY AND CHILDREN'S ASSOCIAT  MAYBE       0.9    0.820          0     0.140
+reconciliation: net YES +1 = gained 2 - demoted 1 = +1
+```
+
+`margin_off` is **exactly 0** in both — ties, which is why they were MAYBE — and
+the winning **score falls** (0.900 → 0.888, 0.900 → 0.820). A score that falls
+is the signature of a *different pair winning* once the floored one is vetoed,
+not of anything being raised. The mechanism is documented in `R/dyads.R`
+*"Collapse before selection"* and under *"What it hides"* in `R/match.R`.
+
+`dev/PROMOTION-FLOOR-FINDINGS.md:210` on `main` now states it as a false
+invariant, and `ab-idf-gate.R` on `main` asserts **the invariant that does
+hold** — that no gained identity's *score* rose, which a veto cannot cause —
+and `stopifnot()`s it, plus the reconciliation `net == gained − demoted`.
+
+**Why the distinction decides the fix, which is the whole value of this entry.**
+The two framings point at opposite repairs. "An invariant nobody enforced"
+invites *enforcing* it — which would halt the run on correct behaviour. The
+accurate entry is **"an assertion that was false, which a reader would have been
+trained to skip"**: a metric that cries wolf costs the same attention as one
+that cannot alarm at all, and that is a distinct failure from the catalogue's
+seven. So the classification stands — a class of its own, not an eighth number —
+and only the description changes.
+
+**One connection worth keeping.** Both gained identities, `OHIO FOUNDATION` and
+`FAMILY AND CHILDREN'S ASSOCIATION`, are two of the **six** identities §1 on
+`main` now finds the floor *costs*. One tie-driven selection mechanism, seen
+from either side of the floor.
 
 ## 5. Two notes publish two sets of dollars for the identical policy
 
@@ -541,10 +599,17 @@ nothing but this file**; everything below is other sessions' work.
   > "**−0.004**" — and is *correct as written*. It must not be "fixed". A
   > repo-wide replace acting on finding 1 would destroy the record of the
   > defect that finding 1 is about.
-* **Findings 3, 4, 4a, 5, 6, 7, 8 and 9 are open.** None is touched by that
-  pass, nor by PR #25 (`claude/vigilant-franklin-8b512d`, "Apply practice 7:
-  redefine the metrics that could not come out wrong"), which is proposal 4 and
-  was scoped away from the margin and `FZ_SEC` deliberately.
+* **Findings 4 and 4a are resolved on `origin/main` by PR #29** ("Run five of
+  the six redefined metrics, and commit the logs"), which landed
+  `dev/AB-IDF-GATE.log` and rewrote `PROMOTION-FLOOR-FINDINGS.md` §1. Both are
+  kept here with their resolutions recorded, because the resolution of each
+  corrected this audit's own account of it.
+* **Findings 3, 5, 6, 7, 8 and 9 are open.** Finding 3 is confirmed still live
+  on `main` after #29 — §5 line 181 against the defaults at line 16. None is
+  touched by `fix-retyped-figures`, nor by PR #25
+  (`claude/vigilant-franklin-8b512d`, "Apply practice 7: redefine the metrics
+  that could not come out wrong"), which is proposal 4 and was scoped away from
+  the margin and `FZ_SEC` deliberately.
 * **Finding 2 is an eighth catalogue instance.** Finding 4a is **not** a ninth —
   see below. `dev/PLAUSIBLE-WRONG-NUMBERS.md` is deliberately not edited here;
   a sibling pass appends to it.
@@ -567,13 +632,17 @@ compute-don't-retype habit caught**, not in the defect table. Counting a
 near-miss as a defect inflates the catalogue, which is the same failure as
 deflating it.
 
-**Reclassified, not withdrawn: finding 4a.** It is not a wrong number, so it is
-not an eighth-or-ninth instance of the catalogued class. It is an **unenforced
-invariant** — the script states the expectation, measures a violation, prints it
-and carries on. That is practice 6 from the other side (a guard that reports
-rather than stops) and practice 8's gap (output produced, not read). If it goes
-anywhere, it is a class of its own and should be named separately rather than
-numbered.
+**Reclassified twice, not withdrawn: finding 4a.** It is not a wrong number, so
+it is not an eighth-or-ninth instance of the catalogued class — that part held
+from the start. But the *description* was wrong in both earlier versions of this
+file: "a failed assertion", then "an unenforced invariant" where the script
+"measures a violation". Both presume a correct-but-unchecked invariant. The
+invariant was **false**, and the gain of 2 is correct behaviour; `main` proves it
+in `dev/AB-IDF-GATE.log`. The accurate entry is **"an assertion that was false,
+which a reader would have been trained to skip"** — a metric that cries wolf,
+costing the same attention as one that cannot alarm at all. It matters because
+the two descriptions point at opposite fixes, and the wrong one invites enforcing
+a false invariant and halting correct runs. Details in finding 4a.
 
 ---
 
@@ -822,8 +891,13 @@ Findings 3 and 4. Remaining figures:
   3** known-error column, which carries the disposition, is still a hand count.
 * **13** YES demoted, all DBA matches — class (a−); 2,834 − 2,821 = 13 ✓, and
   2,821 is now confirmed by execution
-* the "should be 0" invariant — finding 4a, printed by the script and recorded
-  in no note
+* the "should be 0" invariant — finding 4a. **A false assertion, not a defect**,
+  and now resolved on `main`: `dev/AB-IDF-GATE.log` exists (PR #29), §1 states
+  the invariant was false, and `ab-idf-gate.R` asserts the true one instead.
+* §1 on `main` adds the figure that was missing from every earlier version —
+  **the floor costs 6 identities**, net **+103 = 109 − 6** — and names the
+  omission as the catalogued shape, flattering the floor. That is finding 4
+  confirmed and finding 3's cause explained.
 
 ## `dev/TRUNCATION-FINDINGS.md`
 
