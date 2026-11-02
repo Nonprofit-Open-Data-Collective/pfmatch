@@ -66,7 +66,9 @@ once: the \code{bmf_active} layer with legal, DBA and observed name variants,
 augmented BMF pfmatch built for itself, and cleared 62.0\% against 61.2\%
 (\code{dev/BENCH-MD-REFERENCE.log}, YES over the 4,868 in-scope identities — the
 same denominator for every arm, since each arm finds pairs for a different
-number of them). \code{"unified-observed"} is the closer correspondence to the
+number of them; measured 2026-10-23 under normalizer \verb{v1-6dcb298522cc5118},
+so treat the comparison rather than the level as the claim and re-run if the
+installed normalizer has moved). \code{"unified-observed"} is the closer correspondence to the
 augmented bundle — it adds the inactive tranche, so every BMF release rather
 than the current one — but that is 1.76M more rows for two and a half times
 the match time and +0.49 point. Ask for it when the question is grantees that
