@@ -177,6 +177,70 @@ anywhere in `tests/`. In particular, Phase 4 step 1 requires enrichment on
 flags on top of an untested sheet builder is how a figure goes wrong quietly:
 the sheet is where every later number comes from.
 
+## 6a. What is built, 2026-11-02 — and what the normalizer work did not unblock
+
+**It did not unblock T1, and nothing in code can.** The day's work on the
+normalizer (npnormalize 0.1.6 → 0.1.8, the fixture rebuild, the address-key
+re-measurement) made the measurement *base* trustworthy: four fixture tests
+that had been silently abstaining now run, and the published address-key
+figures were re-pinned under the installed signature. None of that produces a
+labelled case. T1 is a data-collection round, T2 is a second one, and T3–T5 and
+T8 are cuts of T1 — so the four decisions that were blocked before are blocked
+now, on the same thing.
+
+It arguably made two of the Tier 2 tests *more* work, and the note should say
+so rather than let a reader assume otherwise. T9 and T11 both read off
+`BASELINE-2026-10C`, which was measured under an older normalizer than the one
+installed; matchdb's published tiers were rebuilt under `v1-5e901add4a04a5d6`
+on 2026-11-02. Neither figure is wrong, but both are now cross-signature, which
+is exactly the comparison `pf_check_reference()` exists to stop.
+
+**What was built instead is the arithmetic those tests will need**, so that when
+the labels arrive each one is a function call rather than a fresh analysis:
+
+* **T12 — done.** `tests/testthat/test-adjudicate-sheet.R` (PR #42), 36
+  assertions over `pf_adjudicate()`, `pf_candidate_frame()` and
+  `pf_bmf_context()`, including Phase 4 step 1's requirement that enrichment
+  reaches *every* candidate and not only the pick. It also caught a crash:
+  `pf_candidate_frame()` failed with "replacement has 0 rows" on any BMF
+  context lacking `org_addr_state`.
+* **The verdict seam — done.** `pf_verdict_cols()`, `pf_read_verdicts()`,
+  `pf_apply_verdicts()` (PR #42). `pf_apply_verdicts()` accepts nothing, which
+  is §7's settled finding rather than a limitation.
+* **The queue — done.** `pf_review_queue()` (PR #42), which refuses to price a
+  deduped match from its own rows, because `pf_recipients()` keeps one
+  representative row per identity and carries no dollar total.
+* **The grading harness — done.** `R/grade.R`: `pf_grade_verdicts()`,
+  `pf_grade_by()`, `pf_grade_layers()`, `pf_wilson()`, with 60 assertions.
+  It takes **one** labelled round and returns the cuts, which is §3's finding
+  expressed as an interface:
+  - `pf_grade_by(g, "confidence")` is **T3**, and reports monotonicity as
+    decreasing / increasing / neither rather than assuming it — an increasing
+    result is the finding that forbids using confidence as a gate.
+  - `pf_grade_by(g, "evidence_class")` is **T4**, with a `separated` attribute
+    that only claims discrimination when the intervals are disjoint.
+  - `pf_grade_layers()` is **T5/T6**, and **stops** unless every layer covers
+    the same cases, naming what is missing from which layer. That refusal is
+    §3 enforced: two packets give two denominators, and a function that
+    quietly intersected would make that failure look like a working comparison.
+  - `pf_grade_by(g, <flag>)` is **T8**, where `min_n` marks a cell unusable
+    below 20 and the Wilson interval does the rest: 60% on n=15 is
+    [36%, 80%], which is the width the note needs visible.
+  - `pf_wilson()` is exported because `dev/adjudicate-03-score.R`,
+    `-06-calib-score.R` and `-12-no-score.R` each defined their own.
+
+**What the harness deliberately does not compute.** Precision on the YES mass
+(T11) is not derivable from a truth table assembled out of cells the pipeline
+failed on, and `pf_grade_verdicts()` says so rather than reporting a number.
+T9's re-derivation and T10's pilot are measurements, not functions, and remain
+undone.
+
+**The one thing the harness changes about T1's design.** Every cut above reads
+a column, so the round has to *record* it: `confidence` and `evidence_class` on
+every verdict, the layer identity, the flag populations, and one case set shared
+by all layers. Running T1 without those is what makes T3–T8 unanswerable, and
+the function signatures are now the checklist.
+
 ## 7. What needs no further test
 
 * **Auto-accepting MAYBE.** Settled at 72% precision (95% CI 65–78%) on 200

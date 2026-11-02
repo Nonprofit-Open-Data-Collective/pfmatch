@@ -480,8 +480,10 @@ regression hard to attribute if several things move at once.
    code comment, which quotes this repo's 0.1.6 log for it. npnormalize#20
    refreshes that comment to 1,886 / 322 / 17.07%, cites
    `dev/ADDR-KEY-SPELLINGS-20261102.log`, and states in the same place that the
-   better trade does **not** carry the rejection on its own. Until #20 merges,
-   the released comment is the stale one.
+   better trade does **not** carry the rejection on its own. **#20 merged
+   2026-11-02T18:14, npnormalize `main` at `e29c17b`**, so the released comment
+   now carries 1,886 / 322 / 17.07% and names this repo's log. Verified by
+   reading that file on `main`, not from the merge notice.
 
    The parity test pins all four counts from the pair corpus, and this log
    pins the BMF figures, so a move in either shows up.
@@ -505,6 +507,39 @@ regression hard to attribute if several things move at once.
    installed normalizers. From a consumer's side 0.1.4–0.1.7 arrive as one
    signature move, and the release notes are the only place the pieces are
    separable.
+
+   *Basis for that 0.1.7, upgraded.* It was an inference here — from `NEWS.md`'s
+   attribution plus the timing — and it is now sourced. npnormalize keeps a
+   signature-to-version registry, and it agrees:
+
+   | signature | npnormalize |
+   |---|---|
+   | `v1-3e7b9f9d59bbb19e` | 0.1.0, 0.1.1 (the value npmatch gave before the normalizer moved out) |
+   | `v1-6d90b52d8b781673` | 0.1.2 |
+   | `v1-592912060053c4c3` | 0.1.3 |
+   | `v1-1179714ce1e9d31f` | 0.1.4 |
+   | `v1-533f186c123357cf` | 0.1.5 |
+   | `v1-d49b18cc81ab79fb` | 0.1.6 |
+   | `v1-59c6e84c5f38e9f5` | **0.1.7** |
+   | `v1-5e901add4a04a5d6` | 0.1.8 |
+
+   **Two of these are confirmed from this repo's own data, independently of the
+   registry**, which is what makes the rest worth trusting: the superseded
+   `pf_variants` recorded `npnormalize 0.1.6` beside `v1-d49b18cc81ab79fb` in
+   its own attributes, and the current one records 0.1.8 beside
+   `v1-5e901add4a04a5d6`.
+
+   **Two limits on citing it.** It lives as a *comment* in npnormalize's
+   `tests/testthat/test-signature.R`, above a pin that asserts only the
+   **current** signature — so nothing stops the historical rows drifting from
+   the pin, and nothing can read them programmatically, which a provenance
+   header written by a script would need. And three signatures this repo has
+   recorded are **absent** from it, because they predate the split and came
+   from npmatch's own normalizer: `v1-421e1e2a6afb024e`
+   (`BASELINE-2026-08`), `v1-6dcb298522cc5118` (`R/pipeline.R`) and
+   `v1-b42811fe6601afe6` (named in matchdb's `build-baseline-2026-10.R`
+   header). The registry starts at 0.1.0 and cannot speak to those, so a figure
+   stamped with one of them is still undated as to normalizer version.
 
    **The granted part.** §6's `street_num` ask said the 59 wanted a fix one
    layer down rather than a third key spelling, and K3 was rejected here
@@ -535,12 +570,21 @@ regression hard to attribute if several things move at once.
 
    *Status of the upstream text, 2026-11-02:* the stronger wording is corrected
    in **[npnormalize#20](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/pull/20)**
-   — open, mergeable, blocked on five R-CMD-check platforms, branch
-   `fix/weaken-split-claim`, 11 files. `main` still carries "none of them two
-   different streets", so cite #20 rather than the released note, and cite it
-   as open rather than landed. Verified here against the PR's own diff, not
-   from the description: `NEWS.md`, `R/normalize.R`, `README.md`, the pkgdown
-   docs and `tests/testthat/test-address.R` (+23).
+   — **merged 2026-11-02T18:14:25, all five R-CMD-check platforms green,
+   npnormalize `main` at `e29c17b`**; 11 files: `NEWS.md`, `R/normalize.R`,
+   `README.md`, the pkgdown docs and `tests/testthat/test-address.R` (+23).
+   Verified against the PR's diff before the merge and against `main` after it,
+   rather than from either notice.
+
+   *One precision about "corrected".* Both withdrawn claims are still present
+   in `main` as **quoted records of what was wrong** — `NEWS.md` now reads that
+   an earlier draft "wrongly offered" the `street_num` escape hatch and states
+   what is true instead, and the code comment says that an earlier draft quoted
+   2,278 and 42.67%. Neither is asserted any more. That is better than deletion
+   for the same reason this note keeps its own superseded figures: a reader who
+   remembers the old sentence finds out it was wrong rather than finding
+   nothing. So a grep for either string on `main` still hits — read the
+   surrounding lines before concluding the correction did not land.
 
    **The refused part, and it is the half we should stop asking for.** The
    *narrow* version of K3 — allow a space only where the join wants a hyphen,
@@ -598,8 +642,9 @@ regression hard to attribute if several things move at once.
    whole number on the hyphenated spelling only (#16)`, asserting
    `c("7011", "70", "875A", "875")` and that the compass pair agrees on
    `street_key` as well, so `street_num` buys nothing even there. Read off that
-   PR's diff. Until it merges, the released `NEWS.md` still offers the remedy,
-   which is the version a reader of the installed package sees.
+   PR's diff, and confirmed on `main` after it merged. The released `NEWS.md`
+   no longer offers the remedy: it records that an earlier draft did, and that
+   `street_num` is the whole number on the hyphenated spelling only.
 
    **One pair went the other way, and it is the same rule read backwards.**
    `875-A ISLAND DRIVE` now keys to `875A ISLAND DR` while the same address
