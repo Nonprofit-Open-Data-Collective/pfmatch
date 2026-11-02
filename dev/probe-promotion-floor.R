@@ -35,32 +35,38 @@
 # identity with no pair is NO rather than absent -- said once here because a
 # comparison across conventions is catalogue defect 4 (practice 5).
 #
-# WHAT A RUN AT npmatch 0.1.1.9000 FOUND. Two of the three columns came back
-# empty and one did not:
+# WHAT THE RUN FOUND -- dev/PROMOTION-FLOOR-PROBE.log, npmatch 0.1.1.9000.
+# Two of the three new columns came back empty and one did not:
 #
+#   ON  2,821 / 1,006 / 1,093      OFF  2,718 / 901 / 1,301   (both sum 4,920)
 #   gained 109    cost 6    net +103 = 109 - 6     (reconciles)
 #   all 109 fall to MAYBE (YES 0  MAYBE 109  NO 0  OOS 0)
 #   EIN churn 0 of 2,712
 #   geo on the floor-dependent pairs: state only 108, ZIP3 only 1
 #
 # THE COST COLUMN IS THE ONE THAT PAID. Six YES identities exist only with the
-# floor OFF -- selection moves, which a pmax can cause and which the old
-# one-number metric had no slot for. dev/PROMOTION-FLOOR-FINDINGS.md's
-# recommendation reads "Keep the floor. It carries 121 matches at ~85%
-# precision" with no cost side at all, because the metric it rests on could
-# only count wins. The net is +103.
+# floor OFF, and the mechanism is the MARGIN rather than the score: in four of
+# the six the floor keeps the same BMF record and still loses the YES, because
+# it lifted a runner-up to near-parity and np_tier() demotes when the margin
+# falls below min_margin (R/dyads.R "Collapse before selection";
+# R/match.R:287). So the floor's cost is the ties it manufactures -- the same
+# mechanism dev/ab-idf-gate.R sees with the opposite sign when REMOVING a
+# floored pair raises a margin from 0 and promotes MAYBE -> YES.
+#
+# The old one-number metric had no slot for any of that.
+# dev/PROMOTION-FLOOR-FINDINGS.md's recommendation read "Keep the floor. It
+# carries 121 matches at ~85% precision" with no cost side. The net is +103.
 #
 # The note's QUALITATIVE claim survives: all 109 land in MAYBE, so the floor is
 # deciding what gets adjudicated rather than creating matches from nothing.
 #
-# AND THE PUBLISHED FIGURES DO NOT REPRODUCE. The note publishes 121 and 4.3%
-# of the tier; this run gives 109, which is 3.9% of the 2,821 YES with the
-# floor or 4.0% of the 2,718 without -- the moving denominator this script now
-# prints on both bases, showing up in the published note rather than the code.
-# The note records no npmatch version anywhere, so version drift cannot be
-# distinguished from an original error. See dev/METRIC-SHAPES.md.
-#
-# (Figures above are from another session's run and were not re-derived here.)
+# WHY THE OLD 121 DIFFERS: configuration, not drift or error. The CORRECTION's
+# own main_only row (2,821 / 1,006 / 1,093) reproduces EXACTLY here, which
+# rules out version drift; every tier table sums to 4,920, which rules out a
+# population change. Section 1 was measured before distinct_name_main_only,
+# which np_config() now defaults to TRUE. So it was not wrong, it was
+# unlabelled -- correct for a pipeline that no longer exists. That is why this
+# script's log records the npmatch version. Section 1 is regenerated from it.
 # ============================================================================
 suppressWarnings(suppressMessages(library(data.table)))
 PF  <- Sys.getenv("PFMATCH_DIR", ".")

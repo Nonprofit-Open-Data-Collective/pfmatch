@@ -61,9 +61,21 @@ for (a in unique(z$arm)) {
       n2 - n1, tot, s$surf[2] - s$surf[1])
   say("    of which matching %+.2f pt (YES %+d on %s) and denominator %+.2f pt",
       num, s$YES[2] - s$YES[1], format(n2, big.mark = ","), den)
+  # Three cases worth shouting about, and the third is the one the first
+  # version of this block missed. On the committed run the headline is -0.17
+  # while matching is -1.30 and the denominator gives back +1.13: the
+  # population shrinking MASKED 87% of a real recall loss. Neither "headline
+  # rose" nor "denominator term is larger" catches that, because the headline
+  # moved the same way as the matching and the denominator term is smaller.
+  # What matters is that the two terms OPPOSE and the offset is large.
   if (tot > 0 && num < 0) {
     say("    *** the headline ROSE while matching got worse: every point of it")
     say("    *** is the population shrinking. Do not read it as an improvement.")
+  } else if (num * den < 0 && abs(den) > 0.5 * abs(num)) {
+    say("    *** MASKED: the two terms oppose, and the denominator offsets")
+    say("    *** %.0f%% of the matching move. The headline (%+.2f) is %.1fx",
+        100 * abs(den) / abs(num), tot, abs(num) / max(abs(tot), 1e-9))
+    say("    *** smaller than the matching change (%+.2f) underneath it.", num)
   } else if (tot != 0 && abs(den) > abs(num)) {
     say("    *** the denominator term is the larger of the two: most of this")
     say("    *** arm's headline is the population moving, not the matching.")
