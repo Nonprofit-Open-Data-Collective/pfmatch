@@ -110,3 +110,23 @@ test_that("pf_result_tiers() asserts the columns it reads instead of returning n
   expect_error(pf_result_tiers(x), "tier")
   expect_error(pf_result_tiers(as.data.frame(seam_match()$result)), "pf_match")
 })
+
+test_that("pf_result_tiers() reads the recovery pass's return, so both sides of a comparison can use it", {
+  # pf_fuzzy_recover() hands back a plain list, not a pf_match. If the accessor
+  # took only a pf_match, the AFTER side of the one before/after comparison it
+  # exists for would have to read $result$tier by hand -- which is how the two
+  # conventions got mixed and 159 identities were reported as moved where 28
+  # had. The shape is the same, so the accessor takes it.
+  x  <- seam_match()
+  fr <- list(result = x$result, before = NULL, after = NULL, moved = NULL)
+  expect_identical(pf_result_tiers(fr), pf_result_tiers(x))
+  # and a before/after over the two reads one convention on both sides
+  after <- fr
+  r <- as.data.frame(after$result); r$tier[r$.id == "G2"] <- "YES"
+  after$result <- r
+  b <- pf_result_tiers(x); a <- pf_result_tiers(after)
+  expect_identical(names(b)[b != a[names(b)]], "G2")
+  # G3 has no pair on either side, so it is absent from both and cannot appear
+  # as movement -- the property the whole seam section is about
+  expect_false("G3" %in% union(names(b), names(a)))
+})
