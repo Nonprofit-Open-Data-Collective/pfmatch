@@ -60,23 +60,37 @@ longer hypothetical:
 
 | | pfmatch artifacts were built under | installed now |
 |---|---|---|
-| normalizer signature | `v1-6dcb298522cc5118` | `v1-3e7b9f9d59bbb19e` |
+| normalizer signature | `v1-6dcb298522cc5118` | `v1-3e7b9f9d59bbb19e` — moved again since, to `v1-d49b18cc81ab79fb`; see the 2026-11-01 block below |
 | `np_addr_freq()` | absent | present, **exported** — and `np_cascade()` calls it itself, so pfmatch already has it (see step 5a) |
-| `np_addr_key()`, `np_unit_id()` | absent | present, **exported** from `npnormalize` 0.1.1 and **not** re-exported by npmatch — but also present as `npmatch:::.np_addr_key()` / `.np_unit_id()`, byte-identical (see step 4) |
-| `np_addr_class()` | absent | present, **not exported** — internal in *both* (`npmatch:::.np_addr_class`, `npnormalize:::.np_addr_class`), bodies identical |
+| `np_addr_key()`, `np_unit_id()` | absent | present, **exported** from `npnormalize` and **not** re-exported by npmatch. The `npmatch:::.np_addr_key()` / `.np_unit_id()` this row used to offer as a byte-identical alternative **no longer exist** — see the 2026-11-01 block below and step 4 |
+| `np_addr_class()` | absent | present, **not exported** — internal, and now only in npnormalize |
 | `street_unit_id` | absent | present |
 | `geo_weights` has a `unit` term | no | yes, `0.97`, and it fires — measured 0.988 vs 0.980 on a suite conflict |
 | `np_compare(addr_freq = )` | absent | present — but reachable only *through* `np_cascade()`, which has no `addr_freq =` of its own (step 5a) |
 
-**The installed npmatch has not had its normalizer extracted.** npmatch 0.1.1
-`Imports` does not list npnormalize; it carries its own full copy, with the same
-`np_normalize()` body, the same signature and its own `.np_addr_key`,
-`.np_unit_id`, `.np_addr_class` and `.np_extract_unit`. npnormalize 0.1.1 is
-installed *beside* it as an independent duplicate, and attaching it prints
-*"Registered S3 methods overwritten by 'npnormalize': print.np_addr_freq,
-print.np_signature"*. The extraction described in `dev/NPNORMALIZE.md` is
-npmatch 0.1.1.9000 / 0.2.0 and is **not** the build pfmatch runs against, so
-every normalizer call pfmatch makes today is npmatch's own, not a re-export.
+~~**The installed npmatch has not had its normalizer extracted.**~~ **Dead,
+2026-11-01 — it described npmatch 0.1.1 and the installed build is now
+0.1.1.9000.** The paragraph said npmatch carried its own full copy of the
+normalizer, that npnormalize was installed beside it as an independent
+duplicate, and that `npmatch:::.np_addr_key()` was therefore available and
+byte-identical. None of that holds any more:
+
+* **npmatch 0.1.1.9000 `Imports: npnormalize (>= 0.1.3)`.** The extraction
+  happened. `.np_addr_key`, `.np_unit_id`, `.np_extract_unit`, `.np_street_key`
+  and `.np_addr_class` live in npnormalize and *only* there —
+  `npmatch:::.np_addr_key()` fails with *"object '.np_addr_key' not found"*.
+  There is no duplicate copy and no S3 collision.
+* **The signature is `v1-d49b18cc81ab79fb`**, identical from both packages, and
+  npnormalize is at **0.1.6**. Everything the table above records as a *gap*
+  between the fixtures and the install is still a gap, and wider.
+* **pfmatch now `Imports: npnormalize (>= 0.1.5)` directly** on `main`, as of
+  `99fdf70` (pfmatch#17), which calls `npnormalize::np_has_box()` in place of
+  `.PF_BOX_RE`. That commit is not on this branch.
+
+The consequence for the plan below is a reversal, written out at step 4 and in
+§6: the exported `npnormalize::np_addr_key()` is the route, and the `:::` it
+was told to prefer is gone. `dev/NPNORMALIZE.md` carries the full current
+reading.
 
 Both values above are records of this machine, read with
 `np_normalize_signature()`, not predictions — see the warning above about
@@ -346,24 +360,40 @@ regression hard to attribute if several things move at once.
    *Check:* the group count moves as measured, and the key is byte-identical to
    npmatch's on addresses where nothing should change.
 
-   **Revised 2026-10-31, and it reverses which route to take.** The earlier
-   advice — `npnormalize::np_addr_key()` in preference to a `:::` — was written
-   expecting the installed npmatch to import npnormalize. It does not (see §1).
-   On this build `npmatch:::.np_addr_key()` is byte-identical to
-   npnormalize's and is the *same lineage* as the `street_key` it would
-   consume, whereas reaching the exported function means declaring a dependency
-   on a second, independent copy of the whole normalizer, with the S3 collision
-   above. So: `npmatch:::.np_addr_key()` with the parity test now, and switch to
-   the exported `npnormalize::np_addr_key()` when pfmatch is on an npmatch that
-   actually imports npnormalize (0.2.0). The parity test is what makes the
-   switch safe either way, so write it first.
+   ~~**Revised 2026-10-31, and it reverses which route to take.**~~
+   **Reversed back, 2026-11-01, and this time the route it recommended is
+   gone.** That revision said to use `npmatch:::.np_addr_key()` rather than the
+   export, because the installed npmatch did not import npnormalize and the
+   export therefore meant a second copy of the whole normalizer. The installed
+   npmatch is now 0.1.1.9000 and *does* import npnormalize (>= 0.1.3): there is
+   one copy, it is npnormalize's, and `npmatch:::.np_addr_key()` fails with
+   *"object '.np_addr_key' not found"*. pfmatch also already
+   `Imports: npnormalize (>= 0.1.5)` on `main` for `np_has_box()`, so the
+   dependency this step would have had to justify is already declared.
+
+   **So: `npnormalize::np_addr_key()`, and mind what it takes.** Its signature
+   is `np_addr_key(street_keys, zip5)` and its body pastes the two together and
+   blanks the result for a PO-box or mail-only street. It normalizes nothing.
+   Handed a raw `ADDR_L1` it returns `100 MAIN STREET 12210` against
+   `100 MAIN ST 12210` — the very split this step exists to remove. Handed
+   `street_key` from `np_normalize()`, all three of `100 MAIN STREET`,
+   `100 MAIN ST` and `100 MAIN STREET SUITE 3` collapse to
+   `100 MAIN ST 12210`. Normalize first, then key. The parity test is still
+   what makes the switch safe, so it is still the first thing to write.
 
    Measured cost of the current hand-rolled key, beyond the 22.7% above: it
    keys on raw `ADDR_L1` with `gsub("[^A-Z0-9]", "")`, so it never gets USPS
    suffix contraction and splits renderings npmatch unifies —
    `100 MAIN STREET` → `100MAINSTREET|12210` against `100 MAIN ST` →
-   `100MAINST|12210`, where `.np_addr_key()` gives `100 MAIN ST 12210` for
+   `100MAINST|12210`, where the npmatch route gives `100 MAIN ST 12210` for
    both. Its PO-box test (`^P?O?BOX|^POST`) is also weaker than npmatch's.
+
+   *One attribution corrected, 2026-11-01:* that unification is
+   `np_normalize()`'s doing, not `np_addr_key()`'s. The earlier wording here —
+   and in commit `5f528b3` — credited `.np_addr_key()` with the USPS suffix
+   contraction, which it has never done; it joins an already-normalized
+   `street_key` to the zip. The measured conclusion is unchanged, only the
+   mechanism: what the hand-rolled key skips is `street_key`.
 5. **Classify the groups with `np_addr_freq()` over the grant corpus.** Replace
    `flag_shared` and the `n_names < 25` filter with `addr_class`, keeping the
    raw counts in the queue beside it. Note the §2 caution on thresholds
@@ -463,18 +493,31 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   `np_addr_freq()`. Still internal: `.np_addr_class()` and `.np_extract_unit()`.
   So step 4 can call `npnormalize::np_addr_key()` rather than a port or a
   `:::`; step 5 still cannot reach the class rule.
-  **Qualified 2026-10-31:** only once pfmatch is on an npmatch that imports
-  npnormalize. On the installed 0.1.1 the exported route means depending on a
-  second copy of the normalizer, and `npmatch:::.np_addr_key()` is the better
-  of the two — see step 4 and `dev/NPNORMALIZE.md`. Also worth noting that
-  `.np_addr_class()` and `.np_extract_unit()` are internal in **both**
-  packages, so "still internal" is not a consequence of the move.
+  ~~**Qualified 2026-10-31:** only once pfmatch is on an npmatch that imports
+  npnormalize.~~ **The qualification is void, 2026-11-01.** npmatch 0.1.1.9000
+  imports npnormalize (>= 0.1.3), so there is no second copy to depend on and
+  `npmatch:::.np_addr_key()` no longer exists. `np_extract_unit()` has since
+  been exported as well, which was the second half of the ask below; of the
+  three functions matchdb asked for, only the class rule
+  (`npnormalize:::.np_addr_class`) is still internal, so step 5 still cannot
+  reach it.
 * ~~**Ask for `.np_extract_unit()`, or for a documented unit entry point.**~~
   ~~**Report the spelled-out `BUILDING` gap.**~~ **Both filed 2026-10-31 as
   [npnormalize#7](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/issues/7)**,
   with the `street_unit_id` comparison point below and two further items. Kept
   here in summary because the asks are pfmatch's and the issue may be closed
-  with only some of them taken:
+  with only some of them taken.
+
+  **Closed, with both asks taken — measured on npnormalize 0.1.6, 2026-11-01.**
+  `BUILDING` is in `.np_unit_pat`, so the two spellings below now agree:
+  `100 CAMPUS CENTER BUILDING 86E` and `100 CAMPUS CENTER BLDG 86E` both give
+  `street_key` `100 CAMPUS CENTER` with unit `BLDG 86E` and id `86E`.
+  `np_unit_id()` is gated: `NA` for `PO BOX 1367`, `BOX 19960`,
+  `114 HIGH ST`, `LAS VEGAS`, `C/O JOHN SMITH`, `NORTH TOWER` and `400891`,
+  `400` for `STE 400`. `np_extract_unit()` is exported. The box flag asked for
+  in §4 of the issue arrived as `np_has_box()` in 0.1.5 and `99fdf70` adopted
+  it, deleting `.PF_BOX_RE`. The two items below are kept as the record of what
+  was reported; neither describes the installed normalizer any longer.
 
   * The exported `np_unit_id()` takes an *already extracted* unit and only
     strips the designator, so on a raw `ADDR_L2` it returns nonsense with no
@@ -507,6 +550,16 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   for a value that cannot change, and cannot reach `share_min` /
   `unit_coverage_min` at all. The asymmetry with its three siblings looks like
   an oversight rather than a decision. See step 5a.
+* **Ask for `np_name_key()`, beside `np_addr_key()`.** There is no public
+  single-vector name key: `np_name_core()`, `np_name_rules()`, `np_name_freq()`
+  and `np_name_placeholder()` are exported, but a `name_key` can only be had by
+  normalizing a frame. Seven pfmatch scripts therefore chained
+  `.np_basic_clean`, `.np_replace_tokens`, `.np_abbrev`, `.np_strip_suffix` and
+  `.np_strip_lead_the` through `:::`, and all seven broke when those moved to
+  npnormalize — repointed 2026-11-01, and verified to reproduce
+  `np_normalize()`'s `name_key` exactly. Same shape as the `np_unit_id()` gate
+  in npnormalize#7: the exported surface serves the matcher, and a consumer who
+  wants one column goes around it.
 * **Report the grant-side use case.** npmatch's `addr_class` is documented over
   a reference frame. pfmatch wants it over a query corpus, where "records" are
   grant rows written by third parties rather than filings by occupants —

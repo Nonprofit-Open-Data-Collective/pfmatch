@@ -40,10 +40,10 @@ pairs <- list(
   c("MULTIPLE MYELOMA RESEARCH FOUNDATION", "MULTIPLE MYELOMA RESEARCH FOUNDATIO"))
 say("%-44s %-36s %6s %6s", "query name_key", "reference name_key", "JW", "prefJW")
 for (p in pairs) {
-  q <- npmatch:::.np_strip_lead_the(npmatch:::.np_strip_suffix(
-        npmatch:::.np_replace_tokens(npmatch:::.np_basic_clean(p[1]), npmatch:::.np_abbrev)))
-  r <- npmatch:::.np_strip_lead_the(npmatch:::.np_strip_suffix(
-        npmatch:::.np_replace_tokens(npmatch:::.np_basic_clean(p[2]), npmatch:::.np_abbrev)))
+  q <- npnormalize:::.np_strip_lead_the(npnormalize:::.np_strip_suffix(
+        npnormalize:::.np_replace_tokens(npnormalize:::.np_basic_clean(p[1]), npnormalize:::.np_abbrev)))
+  r <- npnormalize:::.np_strip_lead_the(npnormalize:::.np_strip_suffix(
+        npnormalize:::.np_replace_tokens(npnormalize:::.np_basic_clean(p[2]), npnormalize:::.np_abbrev)))
   jw <- 1 - stringdist::stringdist(q, r, method = "jw", p = 0.1)
   # prefix-aligned: cut the longer to the shorter, then compare
   k <- min(nchar(q), nchar(r))
@@ -54,8 +54,8 @@ for (p in pairs) {
 hr(); say("4. HOW MANY BMF RECORDS WOULD A PREFIX RULE PUT AT RISK?"); hr()
 # if we treat "reference is a prefix of query" as a match, how ambiguous is that?
 setDT(b)
-b[, nk := npmatch:::.np_strip_lead_the(npmatch:::.np_strip_suffix(
-     npmatch:::.np_replace_tokens(npmatch:::.np_basic_clean(org_name_join), npmatch:::.np_abbrev)))]
+b[, nk := npnormalize:::.np_strip_lead_the(npnormalize:::.np_strip_suffix(
+     npnormalize:::.np_replace_tokens(npnormalize:::.np_basic_clean(org_name_join), npnormalize:::.np_abbrev)))]
 b[, trunc := nchar(org_name_raw) == cap]
 say("distinct truncated name_keys: %s", format(uniqueN(b$nk[b$trunc]), big.mark = ","))
 tb <- table(b$nk[b$trunc])
