@@ -203,7 +203,7 @@ wholesale on the query side.
 
 Ordered by how quietly it fails.
 
-### 3a. `REF-augmented.rds` is not signature-stamped — fix this first
+### 3a. ~~`REF-augmented.rds` is not signature-stamped~~ — **done, and the gate fired for real on 2026-11-02**
 
 `pf_build_reference()` returns a plain
 `list(reference, name_freq, token_idf, ref_index, ...)`. The reference is
@@ -221,6 +221,31 @@ Checkpoints are safe: `.pf_run_stamp()` includes
 `npmatch::np_normalize_signature()` and `.pf_check_stamp()` refuses a mismatch.
 A *fresh* run against a stale reference sails straight through. Close that gap
 the same way — stamp the bundle, refuse a mismatch — before reinstalling.
+
+> **It was closed, and 2026-11-02 is the first time it earned its keep.** The
+> bundle is stamped and `pf_check_reference()` refuses a mismatch, so the
+> §4.2 triangulation re-run stopped ten minutes in — after drawing its 36,366
+> groups and preparing 91,104 identities, before a single batch was matched:
+>
+> ```
+> reference: REF-augmented.rds, 3,880,431 rows
+> Error: this reference bundle was built by a different normalizer.
+>   bundle:    v1-3e7b9f9d59bbb19e
+>   installed: v1-d49b18cc81ab79fb
+> ```
+>
+> Exactly the failure this section was written to prevent, caught at the cost
+> of ten minutes instead of a five-hour run whose keys came from two
+> normalizers at once.
+>
+> **The consequence for the plan, which §4.2 does not state:** after a
+> normalizer move, rebuilding the reference is a *prerequisite* for any match
+> run, not a parallel errand. `pf_reference()` returns an existing cache
+> untouched rather than rebuilding it, so the stale bundle has to be moved
+> aside first; `dev/REF-REBUILD.log` records the 2026-10-26 rebuild at 23.4
+> minutes and 2.83 GB, and keeps the outgoing bundle under a filename carrying
+> its normalizer. The chain is: rebuild the reference, re-run the
+> triangulation, then §4.3's fixture and §4.4's queue.
 
 ### 3b. `pf_parse_unit()` is superseded, and is wrong on two designators
 
@@ -370,8 +395,14 @@ regression hard to attribute if several things move at once.
    put all three spellings over `REF-augmented.rds`'s 3,880,431 rows with
    `street_key` recomputed under npnormalize 0.1.6, because that file's
    recorded column is stale (6 rows in a 50,000 sample, all of them the
-   `BUILDING` extraction or `PO DRAWER` → `PO BOX`; §4.1 flagged the file as
-   unstamped and it is).
+   `BUILDING` extraction or `PO DRAWER` → `PO BOX`).
+
+   *Corrected later the same day:* this paragraph first said the file was
+   *unstamped*, repeating §3a's old heading. It is **stamped**, at
+   `v1-3e7b9f9d59bbb19e`, and stale — which is why `pf_check_reference()` was
+   able to stop the §4.2 re-run cold. See the note under §3a. The recompute
+   was the right thing to do and for the right reason; only the word was
+   wrong.
 
    | spelling | rows keyed | groups | rows per group |
    |---|---:|---:|---:|
@@ -683,8 +714,11 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   so it skips while the fixture is stale.
 * `.pf_check_stamp()` refuses a checkpoint whose stamped normalizer differs.
 * `pf_check_reference()` stops on a reference bundle from a different
-  normalizer and warns on an unstamped one (§4.1). `REF-augmented.rds` is
-  currently in the warning case and will stay there until it is rebuilt.
+  normalizer and warns on an unstamped one (§4.1). ~~`REF-augmented.rds` is
+  currently in the warning case~~ — **it is in the stopping case, 2026-11-02:
+  stamped `v1-3e7b9f9d59bbb19e` against an installed `v1-d49b18cc81ab79fb`, so
+  it does not warn, it halts the run.** That is the tripwire paying for itself;
+  see the note under §3a for the transcript.
 * **Still missing:** nothing tells you that *matchdb* or *npmatch* moved. Both
   tripwires above fire only on a local reinstall. Checking
   `gh pr list --repo Nonprofit-Open-Data-Collective/npmatch` and matchdb's
