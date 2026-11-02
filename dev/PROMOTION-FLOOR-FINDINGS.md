@@ -178,8 +178,15 @@ current figures.
   rather than disappearing. The direction of this recommendation is unaffected —
   all 109 still fall to MAYBE, not NO — but it was first written as "carries 121
   matches" with no cost side at all, which is the half of it §1 now supplies.
-* **Ship `distinct_name_min_idf = 10`.** Cheap, targeted, four errors removed for
-  one questionable demotion, and it is off for any caller that does not supply
+* **Ship `distinct_name_min_idf = 10` — WITHDRAWN, and never shipped.** The
+  CORRECTION below found the gate moves almost nothing on the live pipeline, and
+  the Disposition records the default as `0`, disabled; `np_config()` ships `0`.
+  This bullet stood as a live recommendation under a heading reading
+  *Recommendation* long after the decision had been reversed two sections down,
+  which is how a reader acts on something the note itself has retracted. The
+  reasoning is kept below because it is why the gate exists and is retained as
+  an option, not because it is advice: cheap, targeted, four errors removed for
+  one questionable demotion, and off for any caller that does not supply
   `token_idf`.
 * **Do not raise the threshold** to chase the second failure mode. That is a
   Jaro-Winkler prefix-bonus problem on shared generic heads, affects 6% of

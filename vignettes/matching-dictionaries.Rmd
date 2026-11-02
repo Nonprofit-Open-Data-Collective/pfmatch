@@ -252,6 +252,17 @@ tab(md_arms, col.names = c("arm", "rows", "load", "match", "identities",
                            "clear rate", "YES+MAYBE"))
 ```
 
+**When this was measured, which these figures cannot tell you on their own.**
+The three arms were run on 2026-10-23 under normalizer signature
+`v1-6dcb298522cc5118` (`dev/BENCH-MD-REFERENCE.log`, which records the pfmatch
+and npmatch commits too). The installed normalizer is no longer that one, and a
+normalizer change moves `name_key` and `street_key` and so can move every
+figure here. Two further things the log says and this table cannot: the augmented
+arm's bundle was itself built under an *earlier* normalizer than the two matchdb
+arms, differing from them on missing streets and names, so that arm is not quite
+on the same footing as the other two; and the comparison between the three is
+the claim, not the absolute level of any one of them.
+
 The clear rate is **YES over the 4,868 in-scope identities**, which is the same
 denominator for all three arms. It is deliberately *not* YES over the
 `identities` column: that column counts the identities each arm found a pair
@@ -278,8 +289,9 @@ five times the +0.1 the per-arm reading showed, because `active-observed` has
 the fewest pairs of the three and so gained the most from being scored on its
 own denominator.
 
-For the current normalizer, the two local arms are frozen as
-`BASELINE-2026-10C`, on the same `efv2_1k` population: 2,667 YES on
+The two local arms are frozen as `BASELINE-2026-10C`, measured under normalizer
+`v1-3e7b9f9d59bbb19e` — a different signature again from the three arms above,
+and also not the installed one — on the same `efv2_1k` population: 2,667 YES on
 `REF-active.rds` (1,924,822 rows) and 2,979 on `REF-augmented.rds` (3,880,431
 rows), which on the shared base are **54.8%** and **61.2%**. So the
 **active-only BMF gives up 6.4 points** against the augmented one, which is the
