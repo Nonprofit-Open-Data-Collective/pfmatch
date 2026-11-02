@@ -24,7 +24,7 @@ Imports:
     data.table,
     stringi,
     npmatch (>= 0.1.1),
-    npnormalize (>= 0.1.5),
+    npnormalize (>= 0.1.8),
     stats,
     utils
 Suggests:
