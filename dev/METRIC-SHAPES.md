@@ -23,11 +23,22 @@ behind a recommendation *and* would flatter if wrong) is the same ranking this
 work needed, and its Part 3 denominator ledger named three of the four changes
 below before they were looked for.
 
-**Nothing was run.** `Rscript` is not on this machine, so no figure in this file
-is recomputed and none is claimed to be. Every change is the metric *definition*
+**Nothing was run here.** `Rscript` is not on this machine, so no figure in this
+file was recomputed by running anything. Every change is the metric *definition*
 in the script that computes it; the commands to re-derive the figures are given
-per change. The only verification performed was a paren/brace/quote balance check
-over the edited files — which is not an R parse, let alone a run.
+per change.
+
+Two things have since been settled from outside this session, and are marked
+where they appear:
+
+* **All nine changed scripts parse** under R 4.5.1, checked by the sibling
+  session running issue #15's proposal 3 in a detached worktree. Before that the
+  only verification was a paren/brace/quote balance pass, which is not an R
+  parse.
+* **Change 1's effect on the three reference arms is recomputed** from the exact
+  counts `dev/BENCH-MD-REFERENCE.log` already prints — not from a re-run. See
+  change 1. The ordering holds; the gap between the top two arms grows about
+  fivefold; and one published figure outside `dev/` is affected.
 
 ---
 
@@ -54,8 +65,10 @@ limit, an arm that found a pair for half the file and cleared all of them report
 a 100% clear rate.
 
 That is the one outcome a reference comparison has to be able to show, and the
-metric's definition excluded it. The script's own header says `active-observed`
-"won outright" on this benchmark and is the default since.
+metric's definition excluded it. The script's own header claimed
+`active-observed` "won outright" on this benchmark and has been the default
+since — a claim that turns out to be wrong on its own log, and is corrected
+below along with the header.
 
 **Now:** the base is `length(m$in_scope)` — a property of the grant file,
 identical across arms, unmoved by how well any of them retrieves. An `ABSENT`
@@ -70,14 +83,66 @@ re-derived downstream and the in-scope one not.
 
 **Which direction the figures move: down, for every arm.** The in-scope base is
 larger than the result frame by exactly the no-pair count, so each arm's clear
-rate falls. The precedent is exact: on `BASELINE-2026-10C` the same two bases are
-4,748 and 4,868, and the same YES count reads 62.74% or 61.20% depending on
-which is used. The gap is not uniform across arms — it is larger for the arm
-that retrieves less — so **the ordering of the three arms can change, and the
-"won outright" verdict is not re-established here.** It was reached on the
-result-frame reading.
+rate falls.
 
-*To re-derive:* one arm per process (the augmented bundle alone peaks near 37 GB).
+This one was settled after the first draft of this note, without a re-run.
+`dev/BENCH-MD-REFERENCE.log` prints exact YES counts and per-arm result-frame
+identities, not just rounded shares, and that is enough to recompute both
+readings. (Spotted and recomputed by the sibling session running issue #15's
+proposal 3; the counts below were re-checked against the log here.)
+
+| arm | result frame | in-scope base | change | no pair |
+|---|---:|---:|---:|---:|
+| `unified-observed` | 63.91% | 62.45% | −1.46 | 111 |
+| `active-observed` | 63.80% | 61.96% | −1.85 | 141 |
+| `augmented` | 62.77% | 61.24% | −1.53 | 119 |
+
+From `2981/4749`, `3040/4757`, `3016/4727` in the log, on the 4,868 in-scope
+identities of the `efv2_1k` population (4,903 grants less 35 OOS; the log prints
+`nrow(grants)` = 4,903, not the in-scope count, so 4,868 comes from
+`NO-TIER-EXPERIMENT.md` §denominator and is the one number here not read off
+this log).
+
+**The mechanism is confirmed and the ordering holds.** `active-observed` loses
+the most, −1.85 points, because it has the most absences — which is the effect
+the change exists to expose. But `unified > active > augmented` on both
+readings, and that is robust rather than lucky: all three arms share one fixed
+base, so the ordering on it is just the ordering of the YES counts.
+
+**What moves is the gap, by about five times.** On the result frame
+`unified-observed` leads `active-observed` by **0.10** points — but those two
+shares stand on 4,757 and 4,727, so `active-observed`'s smaller denominator is
+masking part of the difference. On a shared base the gap is `24/N`, about
+**0.49** points (0.4930 on 4,868, 0.4895 on 4,903 — invariant to the choice).
+This is the shape-3 defect operating on a *difference between two arms* rather
+than on one arm's level, which is the form it is hardest to see.
+
+**One correction to the first draft of this note, and to the script's own
+header.** Both said `active-observed` "won outright" on this benchmark and that
+the fix might unseat it. It did not win outright: on the log it is **second** on
+clear rate and **last** on YES+MAYBE (83.8% against 86.4% and 84.6%). What it
+wins is time — 11.5 min against 28.7 — and PR #12 chose it on exactly that:
+`unified-observed` buys its extra point for two and a half times the match time,
+~275 hours at full corpus scale. **So the default is not in question.** The
+"won outright" phrase was in the script header before this work and the first
+draft inherited it rather than checking it — which is the audit's own forward
+pattern, a claim left standing in the file where nobody re-reads it.
+
+**But the figure it feeds is published outside `dev/`.** The 0.1-point gap is in
+`R/pipeline.R`'s roxygen ("for two and a half times the match time and +0.1
+point") and in `vignettes/matching-dictionaries.Rmd` at four places, including
+the 62.8 / 63.9 / 63.8 clear-rate table and "0.1 point for 275 hours". Under
+the base this change adopts those become 61.2 / 62.5 / 62.0 and ~0.49. The
+275-hour argument is untouched; the tradeoff *sentence* understates the recall
+it gives up by about five times.
+
+**Not corrected here.** `R/`, `tests/` and `man/` are out of scope by
+instruction and the vignette is shipped material whose rebuild is the
+maintainer's call. Recorded as the one downstream edit this work identifies and
+does not make.
+
+*To re-derive from scratch:* one arm per process (the augmented bundle alone
+peaks near 37 GB).
 
 ```bash
 for ARM in augmented unified-observed active-observed; do MD_ARM=$ARM Rscript dev/bench-md-reference.R; done
@@ -290,20 +355,27 @@ cannot provide.
 
 Two narrower limits are worth stating plainly:
 
-**Nothing was run, so no change is verified to execute.** The changes are
-syntactically balanced and the identities in them are checked by `stopifnot()`
-at run time, which is not the same as having run. `compare-baselines`,
-`ab-idf-gate` and `probe-promotion-floor` are cheap and read committed `.rds`
-files; `bench-md-reference` needs ~37 GB and one process per arm;
-`measure-recovery` runs two full matches; `probe-threshold-recall` reads two
-committed test sets. Run the cheap ones first.
+**All nine scripts parse; none has been run.** Parsing is not executing, and the
+identities inside these changes are checked by `stopifnot()` at run time, which
+has not happened. `compare-baselines`, `ab-idf-gate` and `probe-promotion-floor`
+are cheap and read committed `.rds` files; `bench-md-reference` needs ~37 GB and
+one process per arm; `measure-recovery` runs two full matches;
+`probe-threshold-recall` reads two committed test sets. Run the cheap ones first.
+Change 1 is the exception and needs no run: its effect is recoverable from the
+committed log, and has been.
 
-**One change can move a conclusion and is not re-established.** Change 1 lowers
-every arm's clear rate, by an amount that is larger for the arm that retrieves
-less, and `active-observed` became the default by winning on the old reading.
-Re-running all three arms is the only way to know whether it still wins. That
-possibility is the practice working as intended — but it is an open question
-this file leaves open, not a result.
+**The one conclusion that was at risk survived.** Change 1 lowers every arm's
+clear rate, most for the arm that retrieves least — and the reference-tier
+ordering is unchanged, so the default stands. That is worth stating as plainly
+as the alternative would have been: the metric was redefined so that it *could*
+contradict the design, and it did not. A practice that only ever produces
+retractions is not being applied honestly.
+
+**What it did produce is a published figure that moves outside `dev/`.** The
+0.1-point gap between the top two arms is ~0.49 on the base this change adopts,
+and that figure is in `R/pipeline.R`'s roxygen and in
+`vignettes/matching-dictionaries.Rmd`. Out of scope here, and the one concrete
+piece of work this note hands on.
 
 **The audit's forward-looking pattern is not addressed here.**
 `dev/FIGURE-PROVENANCE.md` closes on the observation that a correction reaches

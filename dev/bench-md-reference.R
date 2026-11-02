@@ -8,7 +8,14 @@
 #   MD_ARM=augmented         the local bundle pfmatch has used so far
 #   MD_ARM=unified-observed  the matchdb tier closest to the augmented bundle
 #   MD_ARM=active-observed   the same without the inactive-BMF tranche -- the
-#                            default since this benchmark, which it won outright
+#                            default since this benchmark, on COST. The header
+#                            used to say it "won outright"; it did not. On the
+#                            run in dev/BENCH-MD-REFERENCE.log it is second on
+#                            clear rate (63.8% against unified-observed's
+#                            63.9%) and LAST on YES+MAYBE (83.8% against 86.4%
+#                            and 84.6%). What it wins is time -- 11.5 min
+#                            against 28.7 -- and that is the argument the
+#                            default actually rests on.
 #
 # THE CLEAR RATE IS ON THE IN-SCOPE BASE, NOT THE RESULT FRAME. The arms are
 # three different references, so they do not retrieve for the same identities,
@@ -16,9 +23,31 @@
 # result frame rather than NO. A share denominated on the result frame
 # therefore shrinks its own denominator exactly where the arm failed, and can
 # rise while coverage falls -- which is the one outcome a reference comparison
-# has to be able to show. See the denominator section at the bottom. The arm
-# that "won outright" won on the result-frame reading; re-run all three to see
-# whether it still does on this one.
+# has to be able to show. See the denominator section at the bottom.
+#
+# WHAT THE FIX DOES TO THE PUBLISHED FIGURES, recomputed from the YES counts
+# and result-frame identities this log already prints (2981/4749, 3040/4757,
+# 3016/4727) rather than from a re-run:
+#
+#   arm                result frame   in-scope base   change   no pair
+#   unified-observed      63.91%         62.45%       -1.46      111
+#   active-observed       63.80%         61.96%       -1.85      141
+#   augmented             62.77%         61.24%       -1.53      119
+#
+# THE ORDERING HOLDS. unified > active > augmented on both readings, and that
+# is robust: all three arms share one fixed base, so the ordering on it is just
+# the ordering of the YES counts. What moves is the GAP. On the result frame
+# unified leads active by 0.10 points -- but those two shares stand on 4,757
+# and 4,727, so active's smaller denominator is masking part of the difference.
+# On a shared base the gap is 24/N, about 0.49 points, roughly five times
+# larger and invariant to which fixed base is chosen.
+#
+# That 0.1-point figure is published in R/pipeline.R's roxygen and in
+# vignettes/matching-dictionaries.Rmd ("0.1 point for 275 hours"). Under this
+# base it is ~0.49. The 275-hour cost argument is untouched, so the default is
+# not in question -- but the tradeoff sentence understates the recall it gives
+# up by a factor of about five. Not corrected here: shipped docs and a pkgdown
+# rebuild are out of this script's scope.
 #
 #   PFMATCH_DIR=<checkout>  REF_CACHE=<augmented .rds>  OUT=<dir>  [GRANTS_DIR=<inputs>]
 #   [MATCHDB_CODE=<matchdb checkout, if not installed>]  [PF_BENCH_GRANTS=<pattern>]
