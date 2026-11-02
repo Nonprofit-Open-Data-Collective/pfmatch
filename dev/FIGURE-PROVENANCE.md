@@ -17,6 +17,33 @@ Classes, as commissioned:
   prose.
 * **(c) unattributable** — no script and no log ties to it.
 
+**What was executed.** R 4.5.1 is installed at
+`/c/Program Files/R/R-4.5.1/bin/Rscript.exe`. It is **not on `PATH`**, which is
+why a first pass of this audit wrongly recorded that nothing could be run; that
+caveat has been removed and the affected verdicts redone. What ran, all
+read-only and all writing nothing:
+
+* `dev/adjudicate-18-layer-costs.R` — executed as committed. Every §Phase 4b
+  dollar figure reproduced, **including the wrong ones**: it printed
+  "521 s, 8.9%" and "~136 core-hours" in front of me, which is finding 2
+  demonstrated rather than inferred.
+* `dev/ab-idf-gate.R` — executed read-only against the cached
+  `data-dev/PF-MATCH-RESULT-1k.rds`. Reproduced two rows of
+  `PROMOTION-FLOOR-FINDINGS.md`'s CORRECTION table exactly, and surfaced a live
+  assertion failure nobody had recorded (finding 4a).
+* `data-dev/ADJ-FUZZY-REGRESS.rds` and `data-dev/ADJ-FUZZY-CUTOFF.rds` — read
+  directly. These are richer than the logs and settle findings 1 and 2 at the
+  source rather than through prose.
+* a scratch script re-deriving **every** arithmetic claim in this file from the
+  figures the notes publish. 47 checks, 47 consistent. It found one error in
+  **this audit's own** arithmetic, corrected below.
+
+So a class-(a) verdict here means "I ran it and got this" for
+`adjudicate-18-layer-costs.R` and `ab-idf-gate.R`, and "the script's saved frame
+holds this" for `adjudicate-16-fuzzy-regress.R` and
+`adjudicate-17-fuzzy-cutoff.R`. For every other script it still means "the
+committed log prints this figure". Part 4 says which those are.
+
 Exposure is graded on two questions: does the figure support a recommendation or
 a go/no-go, and **would an error in it flatter the pipeline?** The catalogue's
 own observation is that a figure showing the work going well invites less
@@ -28,11 +55,11 @@ Of **96** numeric claims classified across the notes reached:
 
 | class | n | of which behind a recommendation | of which flattering if wrong |
 |---|---:|---:|---:|
-| (a) re-derivable, verified against the printing script | 41 | 31 | 18 |
+| (a) re-derivable — **33 of these re-derived by running the script or reading its saved frame** | 45 | 33 | 19 |
 | (a−) printed by a script, but **rounded, scaled or recombined by hand** in the prose | 14 | 11 | 9 |
 | (b) retyped from a log, log's label checked and correct | 23 | 9 | 6 |
 | (b−) retyped from a log whose label or run does **not** match the claim | 3 | 3 | 3 |
-| (c) unattributable | 15 | 8 | 5 |
+| (c) unattributable | 11 | 6 | 4 |
 
 The class-(a−) row is the one worth noticing. It is not a bookkeeping category:
 a script that computes a number the note then rescales by hand is **exactly
@@ -42,8 +69,9 @@ defect 2's shape**, and nine of the fourteen would flatter.
 
 # Part 1 — Highest exposure first
 
-Nine findings. The first four each sit behind a live recommendation and each
-would flatter the pipeline if wrong. Two of them are wrong.
+Ten findings. The first four each sit behind a live recommendation and each
+would flatter the pipeline if wrong. Two of them are wrong, and both are now
+confirmed by running or reading what the scripts themselves produced.
 
 ## 1. `DEVELOPMENT-PLAN.md` publishes the margin that defect 3 corrected — with the sign flipped back
 
@@ -72,9 +100,22 @@ between "0.85 is tight" and "0.85 has stopped separating organisations from
 individuals", and the plan's sentence is an argument for *not* lowering the
 cutoff that accidentally undercuts itself.
 
-*To settle:* nothing needs running — `dev/adjudicate-17-fuzzy-cutoff.R` already
-writes `data-dev/ADJ-FUZZY-CUTOFF.rds`, and the figure should be read from there
-rather than retyped a third time.
+**Settled by reading the frame.** `data-dev/ADJ-FUZZY-CUTOFF.rds`, which
+`adjudicate-17` writes, is a list of three: `summary` (the cutoff table),
+`top_personal = 0.8536738` and `in_here = 33`. Its `margin` column is
+`-0.004` at 0.85, `0.046` at 0.90, `0.096` at 0.95.
+
+The frame also shows **why `0.002` could never have been right**, which the log
+alone does not. `margin` is not measured independently — it is `cutoff −
+top_personal`, and all three rows reproduce exactly from
+`0.8536738`. A positive margin at 0.85 therefore requires a top personal-name
+similarity of **≤ 0.850**; the measured value is **0.8537**. `0.002` implies
+`top_personal = 0.848`, which is the approximate-normalizer artefact defect 3
+describes. So the wrong figure is not a transcription slip — it is the
+pre-correction *measurement*, carried forward intact.
+
+*Remaining work:* the figure should be read from this frame rather than retyped a
+third time. A parallel pass is doing exactly that; see "Status of these findings".
 
 ## 2. The exemplar script holds a constant from a superseded run — the defect it was written to prevent
 
@@ -115,12 +156,35 @@ hardened the hedge into two decimal places *and* drew the value from the wrong
 run. The source note was more careful than the note that quotes it — which is
 the general hazard this audit kept finding.
 
-*To settle:* have `adjudicate-18-layer-costs.R` read the timing from
-`data-dev/ADJ-FUZZY-REGRESS.rds`, which `adjudicate-16-fuzzy-regress.R` already
-writes, instead of holding a literal. Re-running stage 16 is cheap after the
-first pass (it caches its match in `ADJ-FUZZY-MATCH.rds`; the first run is ~2 h).
-The honest published form is a range, or the figure with its contention caveat
-attached.
+**Demonstrated, not inferred.** Running `dev/adjudicate-18-layer-costs.R` as
+committed prints, in front of me:
+
+```
+pf_fuzzy_recover() at the 0.90 default: 521 s, 8.9% of the 5830 s match
+Projected to 4,582,301 identities the scan is ~136 core-hours
+```
+
+And `data-dev/ADJ-FUZZY-REGRESS.rds`, the frame `adjudicate-16` saves, read
+directly:
+
+```
+  cutoff seconds residual pairs moved to_yes to_maybe yes_broken
+2   0.90  545.97     2009  2650    28     24        3          0
+```
+
+So the script's own upstream stage has held **545.97** on disk the whole time.
+At that value the projection is **~143 core-hours**, not 136.
+
+*To settle:* have `adjudicate-18-layer-costs.R` read the timing from that frame
+instead of holding a literal — no re-run needed, the frame is already there. The
+honest published form is a range, or the figure with its contention caveat
+attached. A parallel pass has done this; see "Status of these findings".
+
+**This is an eighth instance for the catalogue**, and arguably the sharpest:
+a constant hand-copied from a superseded run's log, inside the one script
+written so that those figures cannot drift, hardening a figure the source note
+deliberately left soft. `dev/PLAUSIBLE-WRONG-NUMBERS.md` is not edited here, as
+instructed.
 
 ## 3. `PROMOTION-FLOOR-FINDINGS.md` §5 recommends what its own CORRECTION retracts
 
@@ -168,11 +232,25 @@ nothing in the file's structure tells the reader it is dead.
 
 Two things in that sentence are not in the table above it.
 
-**121 against 116.** YES falls 2,814 → 2,698, which is **116**. Disabling a
-score floor can only lower scores, so YES can only lose: the net change *is* the
-gross count, and 121 is not it. The likely explanation is the convention
-collision of defect 4 — 121 **pairs** against 116 **identities** — but the note
-names neither side, which is precisely what practice 5 asks for.
+**121 against 116.** YES falls 2,814 → 2,698, which is **116**. The note's
+headline number is not the one its table supports, and the note does not say
+which convention either figure uses. The likely explanation is the collision of
+defect 4 — 121 **pairs** against 116 **identities** — and the geo-evidence table
+below it sums to exactly 121, so the pair reading is probably right. But the
+note names neither side, which is precisely what practice 5 asks for.
+
+> **A correction to this audit's own reasoning.** The first version of this
+> finding argued that 116 *must* be the gross count too, because "disabling a
+> score floor can only lower scores, so YES can only lose". **Running
+> `dev/ab-idf-gate.R` disproves that.** Tightening the IDF gate from 0 to 10 —
+> which can only *lower* scores — moves YES from 2,821 to 2,822, and the script
+> prints its own decomposition: 1 demoted, and **"YES gained (should be 0): 2"**.
+> Tier movement in this pipeline is not monotone in the score, because
+> `np_select()` picks one pair per identity and demoting the selected pair can
+> promote a different one into the slot. So gross and net genuinely differ here
+> and 121-vs-116 has more than one possible explanation. The finding stands —
+> the note is unreconciled and unlabelled — but my inference about *why* did
+> not, and only running the script showed it.
 
 **"All 121 fall to MAYBE, not NO" is contradicted.** When the floor is off,
 MAYBE does not rise by 121 — it *falls* by 152, and NO rises by **268**. Whatever
@@ -191,10 +269,53 @@ denominator that appears nowhere else in the repo — not 4,748 (10C result
 frame), not 4,868 (in scope), not 4,903 (all identities). The note says only
 "measured on 990-PF grants".
 
-*To settle:* `dev/probe-promotion-floor.R` and `dev/ab-idf-gate.R` are the two
-scripts behind these tables; neither has a log in `dev/`. Running both and
-printing pairs and identities side by side, with the population id, would
-resolve all four points. Not run here — it needs a match.
+**Partly settled by running it.** `dev/ab-idf-gate.R` is read-only (it rescores
+stored pairs, writes nothing) and runs off the cached
+`data-dev/PF-MATCH-RESULT-1k.rds`. Executed:
+
+```
+min_idf = 0    YES  2821  MAYBE  1006  NO  1093
+min_idf = 10   YES  2822  MAYBE   986  NO  1112
+```
+
+Those are **exactly** two rows of the CORRECTION's four-config table —
+`main_only` only (2,821 / 1,006 / 1,093) and both gates (2,822 / 986 / 1,112).
+So the CORRECTION's table is **class (a), re-derived**, not class (c) as first
+recorded here, and the unnamed population of **4,920** is confirmed by
+execution. That is the good news in this finding: the retracted recommendation
+is stale, but the measurement that retracted it holds up exactly.
+
+*Still open:* §1's `promotion ON/OFF` table (2,814 / 1,037 / 1,069) needs
+`dev/probe-promotion-floor.R`, which **writes to `data-dev`** (`saveRDS` at
+line 89) and so was not run. That is the run that would settle 121-vs-116
+directly, by printing pairs and identities side by side with the population id.
+
+## 4a. `ab-idf-gate.R` prints a failed assertion that nobody has recorded
+
+**Class (a), re-derived. New — not in any note.**
+
+The same run above ends with:
+
+```
+YES gained (should be 0): 2
+```
+
+The script states the invariant, measures it, gets 2, prints it — **and carries
+on.** Nothing in `PROMOTION-FLOOR-FINDINGS.md` mentions it, and no `.log` for
+this script exists in `dev/`, so the only way to see it is to run the script.
+
+It is not necessarily a defect: `np_select()` picks one pair per identity, so
+demoting the selected pair can promote a different one into the slot and lift an
+identity's tier even though every score moved down. But that is a *hypothesis*,
+and the script's own parenthesis says the author expected zero. This is practice
+7 working exactly as the catalogue describes — a metric defined so it *can* come
+out wrong, which then did — followed by the gap practice 8 names: the output was
+produced and not read.
+
+*To settle:* print the 2 gained identities with their before/after selected pair
+and `name_ver_y`. `ab-idf-gate.R` already holds both scored frames in memory,
+so this is a few lines in that script. Not written here — this audit does not
+fix what it finds.
 
 ## 5. Two notes publish two sets of dollars for the identical policy
 
@@ -256,9 +377,38 @@ npnormalize prefix and live in sibling repositories, which is fine.
 `dev/PLACES.md` in `PLACES-SYNC.md` is probably npmatch's and I did not confirm
 it.
 
-*To settle:* `dev/analyze-grant-dollars.R` exists and is presumably what produced
-the table. Running it would re-derive the four rows. It reads the grant file, so
-it is not free — recorded rather than run.
+**Run, and it disagrees on every row.** `dev/analyze-grant-dollars.R` is
+read-only (no writes anywhere in it) and runs off the cached
+`data-dev/PF-MATCH-RESULT-50k.rds`. Executed at `PF_SET=50k`, its curve is:
+
+| dollars covered | `ADJUDICATION-PLAN.md` §4 | re-derived now | ratio |
+|---|---:|---:|---:|
+| 50% | 195 cases | **113** | 1.7x |
+| **70%** | **738 cases** | **489** | **1.5x** |
+| 80% | 1,475 cases | **1,094** | 1.3x |
+| 90% | 3,528 cases | **2,806** | 1.3x |
+
+All four published rows are **higher** than the re-derivation — i.e. the note
+overstates the review burden, so this error does *not* flatter the pipeline. It
+is conservative, which is why this ranks sixth and not first.
+
+**The likely cause is a denominator, and it is the practice-4 question again.**
+The script's curve is over *unresolved* dollars (MAYBE + NO, $958,815,724 across
+23,842 cases). §4 says "**recoverable** unresolved dollars" and then lists two
+exclusions — non-itemizing `SEE ATTACHED` returns (497 returns, $394M) and
+foreign recipients. Removing unreachable dollars from the target changes how
+many cases 70% takes, which could account for a 1.5x gap. The script applies
+neither exclusion.
+
+So the published table is probably right for a denominator the script does not
+compute, and the note that would say so is the missing
+`dev/GRANT-DOLLARS-FINDINGS.md`. **That is the whole cost of a dangling
+citation**: two plausible tables, 1.5x apart, and no way to tell which
+population either describes.
+
+*To settle:* re-run with the two §4 exclusions applied and see whether 489 moves
+to 738. That needs a definition of "recoverable" that only the missing note
+holds — so this one needs its author, not a run.
 
 Minor, same figure: the table says **738** cases and the prose rounds to
 **~740**, which is honest. But `ADJUDICATION-EXPERIMENT.md` §Q1 independently
@@ -365,17 +515,45 @@ choice.
 
 ---
 
+# Status of these findings
+
+Recorded because this file is one of four parallel passes on issue #15 and a
+reader needs to know which findings are already moving. **This audit changed
+nothing but this file**; everything below is other sessions' work.
+
+* **Findings 1 and 2 are being fixed in a parallel pass** on branch
+  `fix-retyped-figures`. `adjudicate-18-layer-costs.R` there reads both saved
+  frames via `assert-lib`'s `need_cols()` / `need_rows()` instead of holding
+  `FZ_SEC` as a literal, and prints 546 s / 9% / ~143 core-hours / margin
+  −0.004, with `DEVELOPMENT-PLAN.md` updated to match and to cite the script.
+  The "to settle" lines above are what that pass acted on. As of this writing
+  it is uncommitted work in another tree, so **this file does not claim it has
+  landed** — check that branch before quoting any of the four figures.
+* **Findings 3, 4, 4a, 5, 6, 7, 8 and 9 are open.** None of them is touched by
+  that pass.
+* **Finding 2 is an eighth catalogue instance** and finding 4a is a candidate
+  ninth. A tenth is sitting in `NO-TIER-EXPERIMENT.md` §7 (Haiku's two-tier
+  pricing, $0.46 reported against $1.308). `dev/PLAUSIBLE-WRONG-NUMBERS.md` is
+  deliberately not edited here — a sibling pass appends to it.
+
+---
+
 # Part 2 — Full inventory
 
 Per note, for every numeric claim a reader could act on.
 
 ## `dev/adjudicate-18-layer-costs.R` — the exemplar, and what its discipline does and does not buy
 
-Every figure in `DEVELOPMENT-PLAN.md` §Phase 4b is printed by this script, and I
-checked all of them against `dev/NO-EXP-18-layer-costs.log`. **Every derived
-figure in §Phase 4b matches the log exactly** — the five whole-tier totals, the
-four cascade rows, the two ratios, the search shares, the batch column. The
+Every figure in `DEVELOPMENT-PLAN.md` §Phase 4b is printed by this script. **I
+ran it.** Every derived figure in §Phase 4b reproduced exactly — the five
+whole-tier totals, the four cascade rows, the two ratios, the search shares, the
+batch column — and matched `dev/NO-EXP-18-layer-costs.log` line for line. The
 practice works as advertised for everything downstream of the inputs.
+
+It also reproduced the two wrong figures, which is the point: a script that
+faithfully recomputes a bad constant is still a script nobody can catch by
+running it. Re-derivability is necessary and not sufficient; the inputs have to
+be re-derived too.
 
 What it does not buy is the inputs. The script derives nothing it does not first
 retype: **~20 literal constants**, each cited at point of use. Verifying each
@@ -396,7 +574,7 @@ because it has not been done before:
 | `searches` MAYBE deep+ | 2.2 | `ADJ-EXP-RESULTS.log` 220/100 | **(b) ✓** exact |
 | `searches` NO Haiku / Opus | 4.4 / 3.2 | `NO-TIER` §7, 436 and 319 per 100 | **(a−)** 4.36 and 3.19, rounded |
 | `ESC` | 0.18 | §Q2, low = 18 of 100 | **(b) ✓** exact |
-| `FZ_SEC` | 521 | `NO-EXP-16-fuzzy.log` | **(b−) ✗ finding 2** — that log says 546 |
+| `FZ_SEC` | 521 | `NO-EXP-16-fuzzy.log` | **(b−) ✗ finding 2** — that log, and the saved frame, say 545.97 |
 | `MATCH_SEC` | 5,830 | both fuzzy logs | **(b) ✓** |
 
 Eighteen of twenty hold. One is wrong (finding 2). The `(a−)` rows are the ones
@@ -504,8 +682,10 @@ publishes the corrected **−0.004**.
   the constants `adjudicate-18` retypes
 * §Scaling — finding 5. Plus one unattributable: the table gives "in scope at
   98.8% | **17,041,111**" and "identities at the measured 3.72x | **~4,585,000**",
-  but 17,041,111 / 3.72 = **4,581,482**. The note's own two rows disagree by
-  ~3,500, and the cost table's **4,585,061** matches neither. Class (c). It also
+  but 17,041,111 / 3.72 = **4,580,944**. The note's own two rows disagree by
+  ~4,000, and the cost table's **4,585,061** matches neither — it implies an
+  in-scope count of 17,056,427, or 98.86% of rows, a share appearing nowhere in
+  the repo. Class (c). It also
   differs from Phase 4b's 4,582,301 for the same corpus, because one applied the
   rounded 0.988 and the other did not — and neither says which. Immaterial to
   the dollars (0.03%), but **4,585,061** is published to seven significant
@@ -563,9 +743,14 @@ whole Phase 4b projection and worth naming once more.
 
 ## `dev/ADJUDICATION-PLAN.md`
 
-* §4 dollar-skew table (195 / **738** / 1,475 / 3,528) — finding 6, class (c)
+* §4 dollar-skew table (195 / **738** / 1,475 / 3,528) — finding 6. Class (c)
+  as published: the cited note is missing, and running the obvious candidate
+  script gives 113 / **489** / 1,094 / 2,806 instead. The published rows are all
+  ~1.3–1.7x higher, i.e. conservative.
 * §4 exclusions: **497 returns, $394M** non-itemizing — class (c), no log
-  reached. Supports an exclusion from the review queue.
+  reached. Supports an exclusion from the review queue, **and is the most likely
+  reason the table above does not reproduce** — "recoverable" unresolved dollars
+  are not the "unresolved" dollars `analyze-grant-dollars.R` curves over.
 * **72% precise** for the ZIP5+margin auto-accept rule — class (b), quoted in
   Phase 4b as the thing the confidence cascade beats. Cited to §1 of this note;
   I did not reach the run behind it.
@@ -589,10 +774,15 @@ Findings 3 and 4. Remaining figures:
   spans 29–31 for n = 30. ~85% = 25.5/30 ✓. Supports "Keep the floor", and the
   note does the right thing by contrasting it with the code's claimed ~97% "from
   a different dataset".
-* CORRECTION's four-config table — class (c), no log; the **0 of 3 / 3 of 3**
-  known-error column is what carries the disposition and it is a hand count
-* **13** YES demoted, all DBA matches — class (c); 2,834 − 2,821 = 13 ✓ against
-  the CORRECTION's own baseline
+* CORRECTION's four-config table — **class (a), re-derived.** Two of its four
+  rows reproduced exactly by running `dev/ab-idf-gate.R` (finding 4). No log
+  exists for that script, so this is the one figure in the sweep that went from
+  unattributable to re-derived purely by running something. The **0 of 3 / 3 of
+  3** known-error column, which carries the disposition, is still a hand count.
+* **13** YES demoted, all DBA matches — class (a−); 2,834 − 2,821 = 13 ✓, and
+  2,821 is now confirmed by execution
+* the "should be 0" invariant — finding 4a, printed by the script and recorded
+  in no note
 
 ## `dev/TRUNCATION-FINDINGS.md`
 
@@ -663,10 +853,11 @@ findings 4, 5, 8 and 9.
 | `ADJUDICATION-EXPERIMENT` §Scaling | 22.0% MAYBE | 4,748 result frame | 4,868 in scope — finding 5 |
 | `ADJUDICATION-EXPERIMENT` §Q1 | 62.74% → 78.28% | 4,748 result frame | 4,868 in scope — finding 9 |
 | `ADJUDICATION-PLAN` | 20.1% MAYBE | grants | identities elsewhere — disclosed |
+| `ADJUDICATION-PLAN` §4 | 738 cases = 70% of $ | "recoverable unresolved" | script's "unresolved" gives 489 — finding 6 |
 
 **Three live MAYBE shares** — 20.1% (grants), 21.45% (in-scope identities),
 22.0% (result-frame identities) — and **three identity counts for one corpus** —
-4,581,482, 4,582,301, 4,585,061. Each is defensible on its own base. None of the
+4,580,944, 4,582,301, 4,585,061. Each is defensible on its own base. None of the
 notes that use one says which of the others it is not, except Phase 4b.
 
 ---
@@ -739,14 +930,50 @@ description).
   only. `DEVELOPMENT-PLAN.md` §Phase 4b's own caveat says these numbers should
   carry their confidence intervals "before any of it goes into user-facing
   documentation"; whether anything already has is unexamined.
-* **Nothing was re-run.** `Rscript` is not on this machine, so even the
-  side-effect-free scripts could not be executed. Every class-(a) verdict here
-  means "the script's committed log prints this figure", not "I ran it and got
-  this figure". For `adjudicate-18-layer-costs.R` that distinction is thin — it
-  is pure arithmetic over literals, and `dev/NO-EXP-18-layer-costs.log` matches
-  §Phase 4b line for line — but it is the distinction, and finding 2 is a case
-  where a committed log and its citing prose disagreed and only reading both
-  caught it.
+* **Most scripts were still not run, though three were.** An earlier version of
+  this file claimed nothing could be run because `Rscript` was absent. **That
+  was wrong** — R 4.5.1 is installed, just not on `PATH`, and a `command -v
+  Rscript` check is what produced the false conclusion. Recording it here
+  because it is the same failure mode as the rest of this audit: a plausible
+  negative result from a check that did not measure what it appeared to.
+  What ran is listed under "What was executed" at the top.
+
+  Of the scripts behind the inventory, **three were executed**
+  (`adjudicate-18-layer-costs.R`, `ab-idf-gate.R`, `analyze-grant-dollars.R`)
+  and **two saved frames read** (`ADJ-FUZZY-REGRESS.rds`,
+  `ADJ-FUZZY-CUTOFF.rds`). Everything else was not, for stated reasons:
+
+  | not run | why |
+  |---|---|
+  | `probe-promotion-floor.R` | `saveRDS` to `data-dev` (line 89) |
+  | `adjudicate-17-fuzzy-cutoff.R` | writes `ADJ-FUZZY-CUTOFF.rds`; frame read instead |
+  | `adjudicate-16-fuzzy-regress.R` | ~2 h first run, writes `data-dev`; frame read instead |
+  | `adjudicate-10/11/12/14/15-*.R` | API calls, and stage 10 re-runs the match |
+  | `adjudicate-03/04-*.R` | API calls |
+  | `build-baseline.R` | full benchmark run, writes a baseline directory |
+  | everything behind the 11 unreached notes | not reached at all |
+
+  So class (a) means "I ran it and got this" for two scripts and "the saved
+  frame holds this" for two more. For the rest it still means "the committed log
+  prints this figure" — and finding 2 is precisely a case where a committed log
+  and its citing prose disagreed, so that is a weaker warrant than it looks.
+
+* **The two runs sit on data older than the notes.**
+  `PF-MATCH-RESULT-1k.rds` is dated 2026-08-20 and `PF-MATCH-RESULT-50k.rds`
+  2026-08-19, both well before the 2026-10-31 normalizer reinstall. The
+  `ab-idf-gate.R` result reproducing the CORRECTION table exactly suggests that
+  note was written against this same cached match; the `analyze-grant-dollars.R`
+  disagreement may partly be the same staleness rather than the denominator
+  I argue for in finding 6. I cannot separate those two causes without a fresh
+  match, which is not a cheap run.
+
+* **This audit describes `159f4b3`, which predates PR #24.** `origin/main` is
+  now `5486f37`. #24 adopted `pf_result_tiers()` inside
+  `dev/adjudicate-16-fuzzy-regress.R` and wired `dev/assert-lib.R` into
+  `adjudicate-03-score.R`, `-04-ablation.R` and `-12-no-score.R`. None of that
+  touches the notes audited here, but it does mean the version of `adjudicate-16`
+  on `main` differs from the one that wrote the `ADJ-FUZZY-REGRESS.rds` I read.
+  The frame's 545.97 is what the *pre-#24* script measured.
 * **External prices.** `SEARCH_USD = 0.01`, the $0.10/$0.50 and $0.50/$2.50
   Haiku tiers and the $5.00/MTok cache-write rate are unverifiable inside the
   repo. Phase 4b flags this ("prices are list prices at the time of
@@ -755,7 +982,7 @@ description).
   assessed, and a recommendation can be wrong without a wrong figure in it.
 
 **What the counts are not.** 96 is the number of claims I classified, not the
-number in the repo, and the denominator of "15 class (c)" is my sweep rather than
+number in the repo, and the denominator of "11 class (c)" is my sweep rather than
 `dev/`. The catalogue's closing sentence applies here unchanged: nothing above
 says how many remain unaudited, and by construction that is the one number this
 file cannot provide. The narrower honest summary is that **of the figure classes
