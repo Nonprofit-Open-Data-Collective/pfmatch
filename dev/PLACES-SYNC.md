@@ -550,6 +550,16 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   for a value that cannot change, and cannot reach `share_min` /
   `unit_coverage_min` at all. The asymmetry with its three siblings looks like
   an oversight rather than a decision. See step 5a.
+* **Ask for `np_name_key()`, beside `np_addr_key()`.** There is no public
+  single-vector name key: `np_name_core()`, `np_name_rules()`, `np_name_freq()`
+  and `np_name_placeholder()` are exported, but a `name_key` can only be had by
+  normalizing a frame. Seven pfmatch scripts therefore chained
+  `.np_basic_clean`, `.np_replace_tokens`, `.np_abbrev`, `.np_strip_suffix` and
+  `.np_strip_lead_the` through `:::`, and all seven broke when those moved to
+  npnormalize — repointed 2026-11-01, and verified to reproduce
+  `np_normalize()`'s `name_key` exactly. Same shape as the `np_unit_id()` gate
+  in npnormalize#7: the exported surface serves the matcher, and a consumer who
+  wants one column goes around it.
 * **Report the grant-side use case.** npmatch's `addr_class` is documented over
   a reference frame. pfmatch wants it over a query corpus, where "records" are
   grant rows written by third parties rather than filings by occupants —

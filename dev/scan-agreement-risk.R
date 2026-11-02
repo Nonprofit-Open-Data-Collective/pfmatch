@@ -42,9 +42,9 @@ sq  <- function(x) { x <- as.character(x); x[is.na(x)] <- ""; x }
 e9  <- function(v) { v <- gsub("[^0-9]", "", as.character(v))
                      ifelse(nchar(v) == 9L, v, NA_character_) }
 nkey <- function(x) {
-  nm <- npmatch:::.np_basic_clean(sq(x))
-  nm <- npmatch:::.np_replace_tokens(nm, npmatch:::.np_abbrev)
-  npmatch:::.np_strip_lead_the(npmatch:::.np_strip_suffix(nm))
+  nm <- npnormalize:::.np_basic_clean(sq(x))
+  nm <- npnormalize:::.np_replace_tokens(nm, npnormalize:::.np_abbrev)
+  npnormalize:::.np_strip_lead_the(npnormalize:::.np_strip_suffix(nm))
 }
 ncity <- function(x) gsub("[^A-Z]", "", toupper(sq(x)))
 

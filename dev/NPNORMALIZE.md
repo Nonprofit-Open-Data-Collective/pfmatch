@@ -41,10 +41,11 @@ five this note last recorded: `np_addr_key()`, `np_doc_freq()`,
 `np_tokenize()`, `np_unit_id()`. pfmatch wants two of them: `np_has_box()`,
 which it now has, and `np_addr_key()` for `dev/PLACES-SYNC.md` §4 step 4.
 
-### Seven scripts reach for internals that moved
+### Seven scripts reached for internals that moved — repointed
 
-Found while checking the above, and not yet fixed. The name-normalization
-internals went with the rest, so every `npmatch:::` call on them now errors:
+Found while checking the above and fixed in the same breath. The
+name-normalization internals went with the rest, so every `npmatch:::` call on
+them was erroring:
 
 | name | now in |
 |---|---|
@@ -57,11 +58,27 @@ internals went with the rest, so every `npmatch:::` call on them now errors:
 `dev/namesim-worked-examples.R`, `dev/probe-ref-truncation.R`,
 `dev/scan-agreement-risk.R`, `dev/spellcheck-diagnose.R` and
 `inst/probes/probe-ref-truncation.R` each rebuild a `name_key` out of the first
-five, through `npmatch:::`. All seven are broken on the installed build; the
-fix is one prefix per call, `npmatch:::` to `npnormalize:::`, and not a blanket
-substitution, because `dev/probe-variant-class-ab.R` uses
-`npmatch:::.np_hier_score` and must keep it. Nothing under `R/` is affected —
+five. All 55 calls are now `npnormalize:::`, one prefix per call rather than a
+blanket substitution: `dev/probe-variant-class-ab.R` keeps
+`npmatch:::.np_hier_score`, which it hands to `assignInNamespace(..., ns =
+"npmatch")`, and which is still npmatch's. Nothing under `R/` was affected —
 the package itself uses no `:::`.
+
+Checked rather than assumed: all eight scripts parse, and the repointed chain
+reproduces `np_normalize()`'s own `name_key` exactly on an article strip, a
+possessive, a `FOUNDATION` suffix and a kept `TR` —
+`THE MULTIPLE MYELOMA RESEARCH FOUNDATION, INC.` to
+`MULTIPLE MYELOMA RESEARCH`, `Saint Mary's Hospital Association` to
+`SAINT MARYS HOSPITAL`.
+
+**Why these are a `:::` at all, and a possible ask.** There is no public
+single-vector name key: npnormalize exports `np_name_core()`,
+`np_name_rules()`, `np_name_freq()` and `np_name_placeholder()`, but a
+`name_key` can only be had by normalizing a frame. That is the same shape as
+the `np_unit_id()` gate in npnormalize#7 — the exported surface serves the
+matcher, and a consumer who wants one column has to go around. Worth asking for
+`np_name_key()` beside `np_addr_key()`; until then these scripts are reaching
+into a neighbour's internals and will break again on the next move.
 
 ## pfmatch Imports npnormalize directly, as of `99fdf70`
 

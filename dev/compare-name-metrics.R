@@ -45,9 +45,9 @@ if (file.exists(IDFC)) {
   b <- fread(file.path(PF, "data-dev", "BMF-AUGMENTED-unified-fixed.csv"),
              colClasses = "character", showProgress = FALSE,
              select = "org_name_join")
-  nm <- npmatch:::.np_strip_lead_the(npmatch:::.np_strip_suffix(
-          npmatch:::.np_replace_tokens(npmatch:::.np_basic_clean(b$org_name_join),
-                                       npmatch:::.np_abbrev)))
+  nm <- npnormalize:::.np_strip_lead_the(npnormalize:::.np_strip_suffix(
+          npnormalize:::.np_replace_tokens(npnormalize:::.np_basic_clean(b$org_name_join),
+                                       npnormalize:::.np_abbrev)))
   IDF <- np_token_idf(nm)
   saveRDS(IDF, IDFC)
   rm(b, nm); invisible(gc())

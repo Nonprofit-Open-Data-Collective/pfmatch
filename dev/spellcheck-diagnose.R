@@ -29,9 +29,9 @@ hr  <- function() message(strrep("-", 80))
 sq  <- function(x) { x <- as.character(x); x[is.na(x)] <- ""; x }
 
 nkey <- function(x) {
-  nm <- npmatch:::.np_basic_clean(sq(x))
-  nm <- npmatch:::.np_replace_tokens(nm, npmatch:::.np_abbrev)
-  npmatch:::.np_strip_lead_the(npmatch:::.np_strip_suffix(nm))
+  nm <- npnormalize:::.np_basic_clean(sq(x))
+  nm <- npnormalize:::.np_replace_tokens(nm, npnormalize:::.np_abbrev)
+  npnormalize:::.np_strip_lead_the(npnormalize:::.np_strip_suffix(nm))
 }
 
 ## ---- reference token vocabulary with document frequency ---------------------

@@ -28,9 +28,9 @@ pairs <- rbind(
 colnames(pairs) <- c("filed", "reference")
 
 nkey <- function(x) {
-  nm <- npmatch:::.np_basic_clean(x)
-  nm <- npmatch:::.np_replace_tokens(nm, npmatch:::.np_abbrev)
-  npmatch:::.np_strip_lead_the(npmatch:::.np_strip_suffix(nm))
+  nm <- npnormalize:::.np_basic_clean(x)
+  nm <- npnormalize:::.np_replace_tokens(nm, npnormalize:::.np_abbrev)
+  npnormalize:::.np_strip_lead_the(npnormalize:::.np_strip_suffix(nm))
 }
 SW <- np_stopwords()
 tk <- function(x) { v <- strsplit(x, " +")[[1]]; v[nchar(v) >= 2L & !(v %in% SW)] }
