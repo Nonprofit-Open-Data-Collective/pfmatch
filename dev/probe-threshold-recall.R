@@ -21,16 +21,24 @@
 suppressWarnings(suppressMessages(library(data.table)))
 setDTthreads(0)
 PF  <- Sys.getenv("PFMATCH_DIR", ".")
+source(file.path(PF, "dev", "assert-lib.R"))
 say <- function(...) cat(sprintf(...), "\n")
 
 load_set <- function(f, contentful_only = TRUE) {
   d <- fread(file.path(PF, "data-dev", f), na.strings = NULL, showProgress = FALSE)
+  need_cols(d, "grant_id", "is_correct", "purpose_contentful", "has_truth",
+            "score", "cov_all", "cos_all", what = sprintf("the %s sweep", f))
   d[, is_correct := is_correct %in% c(TRUE, "TRUE", "true")]
   d[, purpose_contentful := purpose_contentful %in% c(TRUE, "TRUE", "true")]
   d <- d[has_truth %in% c(TRUE, "TRUE", "true")]
   if (contentful_only) d <- d[purpose_contentful == TRUE]
   d[, score := as.numeric(score)]
-  d[, .SD[.N >= 2 & sum(is_correct) == 1], by = grant_id]
+  out <- d[, .SD[.N >= 2 & sum(is_correct) == 1], by = grant_id]
+  # Four filters run above and each can empty the frame. An empty one gives a
+  # sweep of NaN recalls and zero prune rates, which prints as a table rather
+  # than failing -- the shape of catalogue defect 7.
+  need_rows(out, min = 1L, what = sprintf("%s rows surviving the four filters", f))
+  out
 }
 
 # NA handling: a candidate with no text cannot clear a floor on evidence, but
@@ -53,6 +61,12 @@ sweep <- function(d, m, na_keep) {
   }))
 }
 
+# The best floor at a recall target, which is a which.max and therefore a
+# one-sided summary: it reports what the floor pruned and not what the pruning
+# cost. `recall >= 0.95` is satisfied by 0.951 and by 1.000 alike, so the
+# realised recall is returned too and printed beside the prune rate -- a floor
+# that only just clears the target is a different recommendation from one that
+# clears it with room, and the prune rate alone cannot tell them apart.
 safe_floor <- function(s, target) {
   ok <- s[recall >= target & prune_rate > 0]
   if (!nrow(ok)) return(NULL)
@@ -74,8 +88,11 @@ report <- function(d, label) {
       for (tgt in c(1.00, 0.99, 0.95)) {
         f <- safe_floor(s, tgt)
         if (is.null(f)) say("  recall >= %.2f with any pruning: NOT ACHIEVABLE", tgt)
-        else say("  recall >= %.2f : best floor t=%.3f prunes %4.1f%% of distractors",
-                 tgt, f$t, 100 * f$prune_rate)
+        else say(paste("  recall >= %.2f : best floor t=%.3f prunes %4.1f%% of",
+                       "distractors at recall %.3f (%.3f above the target),",
+                       "keeping %.2f candidates/grant"),
+                 tgt, f$t, 100 * f$prune_rate, f$recall, f$recall - tgt,
+                 f$mean_kept)
       }
     }
   }

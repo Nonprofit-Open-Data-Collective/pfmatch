@@ -10,6 +10,16 @@
 #   MD_ARM=active-observed   the same without the inactive-BMF tranche -- the
 #                            default since this benchmark, which it won outright
 #
+# THE CLEAR RATE IS ON THE IN-SCOPE BASE, NOT THE RESULT FRAME. The arms are
+# three different references, so they do not retrieve for the same identities,
+# and an identity no blocking pass produced a pair for is ABSENT from the
+# result frame rather than NO. A share denominated on the result frame
+# therefore shrinks its own denominator exactly where the arm failed, and can
+# rise while coverage falls -- which is the one outcome a reference comparison
+# has to be able to show. See the denominator section at the bottom. The arm
+# that "won outright" won on the result-frame reading; re-run all three to see
+# whether it still does on this one.
+#
 #   PFMATCH_DIR=<checkout>  REF_CACHE=<augmented .rds>  OUT=<dir>  [GRANTS_DIR=<inputs>]
 #   [MATCHDB_CODE=<matchdb checkout, if not installed>]  [PF_BENCH_GRANTS=<pattern>]
 #   Rscript dev/bench-md-reference.R
@@ -26,6 +36,7 @@ suppressWarnings(suppressMessages({
     pkgload::load_all(Sys.getenv("MATCHDB_CODE"), quiet = TRUE, export_all = FALSE)
   devtools::load_all(PF, quiet = TRUE)
 }))
+source(file.path(PF, "dev", "assert-lib.R"))
 say <- function(...) message(sprintf(...))
 
 t0 <- proc.time()[["elapsed"]]
@@ -50,7 +61,38 @@ say("matched %s grants in %.1f min", format(nrow(grants), big.mark = ","),
 
 res <- as.data.frame(m$result); attr(res, "pairs") <- NULL
 tb  <- table(factor(res$tier, levels = c("YES", "MAYBE", "NO")))
-say("%-6s %6d  %5.1f%%", names(tb), as.integer(tb), 100 * as.integer(tb) / nrow(res))
-say("identities %d   clear rate %.1f%%   YES+MAYBE %.1f%%", nrow(res),
-    100 * tb[["YES"]] / nrow(res), 100 * (tb[["YES"]] + tb[["MAYBE"]]) / nrow(res))
+
+## ---- the denominator, which is the whole comparison -----------------------
+# The base is the in-scope identity count: a property of the grant file,
+# identical across the three arms, and unmoved by how well any of them
+# retrieves. Both readings are printed and the gap between them is named,
+# because that gap IS the coverage the arm lost and the result-frame reading
+# hides it. Conventions named on both sides (practice 5): pf_result_tiers() is
+# the result-frame side, x$in_scope the population that was submitted.
+scope   <- as.character(m$in_scope)
+tier    <- pf_result_tiers(m)
+no_pair <- setdiff(scope, names(tier))
+need_rows(length(scope), min = 1L,
+          what = "in-scope identities, the fixed base every share below uses")
+need_vocab(tier, c("YES", "MAYBE", "NO"),
+           what = "result-frame tiers; ABSENT is reported separately, not as a level")
+stopifnot(length(tier) == nrow(res), all(names(tier) %in% scope))
+
+say("%-6s %6d  %5.1f%%", names(tb), as.integer(tb),
+    100 * as.integer(tb) / length(scope))
+say("%-6s %6d  %5.1f%%   (in scope, no pair from any blocking pass)",
+    "ABSENT", length(no_pair), 100 * length(no_pair) / length(scope))
+say("in-scope identities %d   clear rate %.2f%%   YES+MAYBE %.2f%%",
+    length(scope), 100 * tb[["YES"]] / length(scope),
+    100 * (tb[["YES"]] + tb[["MAYBE"]]) / length(scope))
+say("  on the result frame instead (%d identities, the %d with no pair dropped):",
+    nrow(res), length(no_pair))
+say("  clear %.2f%%   YES+MAYBE %.2f%%   -- %.2f points higher, and that gap",
+    100 * tb[["YES"]] / nrow(res), 100 * (tb[["YES"]] + tb[["MAYBE"]]) / nrow(res),
+    100 * tb[["YES"]] / nrow(res) - 100 * tb[["YES"]] / length(scope))
+say("  widens as the arm retrieves less. Compare arms on the line above it.")
+# The base travels with the artifact. Saving the frame alone is what let the
+# result-frame denominator be re-derived downstream and the in-scope one not.
+attr(res, "in_scope") <- scope
+attr(res, "no_pair")  <- no_pair
 saveRDS(res, file.path(OUT, sprintf("BENCH-MDREF-%s.rds", ARM)), compress = "xz")
