@@ -1,0 +1,103 @@
+# dev/measure-addr-key-spellings.R, re-run under the new normalizer
+# run 2026-11-02 09:36-09:55, pfmatch at 05153af (main through #43)
+# R 4.5.1, npnormalize 0.1.8, npmatch 0.1.1.9000, data.table 1.17.8
+# normalizer v1-5e901add4a04a5d6 -- the installed one
+# reference data-dev/REF-augmented.rds, 3,880,431 rows, stamp v1-3e7b9f9d59bbb19e
+#   (stale, as before: street_key is recomputed over the whole file and cached
+#   as ADDR-KEY-STREETKEY-v1-5e901add4a04a5d6.rds, 734s)
+# supersedes dev/ADDR-KEY-SPELLINGS.log, which is the same script over the same
+#   reference under v1-d49b18cc81ab79fb (npnormalize 0.1.6). That log's
+#   2,278-merge / 42.67% line is quoted in npnormalize's code comment and in
+#   both NEWS.md files; it is the line this run replaces.
+# matchdb is NOT read by this script and nothing was installed during the run.
+#
+# WHAT MOVED, 0.1.6 -> 0.1.8 (K1 is hand-rolled and normalizer-independent, so
+# its row is identical, which is the control):
+#   K2 groups           1,941,116 -> 1,940,724   (-392)
+#   K3 groups           1,939,261 -> 1,939,261   (identical, and necessarily so:
+#                         K3 strips all spaces, so it cannot see whether a
+#                         hyphen became a space or nothing -- an internal check
+#                         that the run is measuring what it claims)
+#   K1 -> K2 splits     1,612 (0.08%) -> 1,482 (0.07%)
+#   K2 merges >1 K1     87,790 (4.53%) -> 87,928 (4.54%)
+#   K3 merges >1 K2     2,278 (0.12%) -> 1,886 (0.10%)
+#   of those, street_num disagrees   972 (42.67%) -> 322 (17.07%)
+#
+# READ THE LAST LINE AGAINST THE LOCAL CASE AGAINST K3, NOT FOR IT. The 0.1.6
+# figure is what this repo rejected K3 on. 17.07% is a materially better trade
+# than 42.67%, so our own evidence against K3 is now WEAKER than it was. The
+# rejection stands on the upstream 22,026,817-row measurement of the narrow
+# variant instead (92,797 street-name strings moved, 17,614 of them
+# unresolvable), which is stronger than anything this file can show. Said
+# plainly in dev/PLACES-SYNC.md section 4 step 4 rather than left for a reader
+# to notice.
+==============================================================================
+measure-addr-key-spellings  2026-11-02 09:36:32
+==============================================================================
+installed normalizer: v1-5e901add4a04a5d6  (npnormalize 0.1.8)
+loaded 3,880,431 rows x 41 cols in 74s
+recorded street_key matches a fresh normalize on 50,000 sampled rows: FALSE
+  85 of 50,000 differ; first few:
+                    street                recorded                  fresh
+1        17-535 PAAHANA ST       17 535 PAAHANA ST       17535 PAAHANA ST
+2          69-30 AUSTIN ST         69 30 AUSTIN ST         6930 AUSTIN ST
+3  15-179 PUNI PAKA LOOP S 15 179 PUNI PAKA LOOP S 15179 PUNI PAKA LOOP S
+4 206-A S LOOP 336 W - 244  206 A S LOOP 336 W 244  206A S LOOP 336 W 244
+5         73-4927 ANINI ST        73 4927 ANINI ST        734927 ANINI ST
+  recomputing street_key over the whole file
+  recomputed in 734s, cached as ADDR-KEY-STREETKEY-v1-5e901add4a04a5d6.rds
+==============================================================================
+THE THREE KEY SPELLINGS
+==============================================================================
+               spelling   keyed  groups dropped rows_per_group
+                 <char>   <int>   <int>   <int>          <num>
+1:              K1 hand 2627588 2110592 1252843          1.245
+2:   K2 np (street_key) 2628491 1940724 1251940          1.354
+3: K3 tight (no spaces) 2628961 1939261 1251470          1.356
+
+rows the box rule drops: K1 1,252,843 (32.29%), K2 1,251,940 (32.26%)
+==============================================================================
+K1 -> K2: WHAT ADOPTING street_key DOES
+==============================================================================
+K1 groups that K2 splits:   1,482 of 2,109,207 (0.07%)
+K2 groups that merge >1 K1: 87,928 of 1,938,612 (4.54%)
+==============================================================================
+K2 -> K3: WHAT SPACE-BLINDNESS BUYS, AND WHAT IT RISKS
+==============================================================================
+K3 groups that merge >1 K2 group: 1,886 of 1,938,780 (0.10%)
+  of those, groups whose merged rows disagree on street_num: 322
+  i.e. merges where the house number itself differs: 17.07% of the merges
+K3 never splits a K2 group by construction: TRUE
+==============================================================================
+EXAMPLES: K2 groups that K3 glues together
+==============================================================================
+K3 COJPMORGANCHASEBANKNAPOBOX 53201    <- C O JPMORGAN CHASE BANKNAP O BOX  |  C O JPMORGAN CHASE BANKNAPO BOX  |  C O JPMORGAN CHASE BANK NAPO BOX  |  C O JPMORGAN CHASE BANK NAPOBOX  |  C O JPMORGAN CHASE BANK NA PO BOX
+K3 4900TIEDEMANRDOH01490150 44144      <- 4900 TIEDEMAN RD OH 01 49 0150  |  4900 TIEDEMAN RD OH01490150  |  4900 TIEDEMAN RD OH 0149 0150  |  4900 TIEDEMAN RD OH01 49 0150
+K3 26W171ROOSEVELTRD 60187             <- 26 W 171 ROOSEVELT RD  |  26W171 ROOSEVELT RD  |  26W 171 ROOSEVELT RD  |  26 W171 ROOSEVELT RD
+K3 33003RDSTEETNENO9 59404             <- 3300 3RD STEET N E NO9  |  3300 3RD STEET N E NO 9  |  3300 3RD STEET NE NO 9  |  3300 3RD STEET NE NO9
+K3 6709LATIJERABLVD 90045              <- 6709 LA TIJERA BLVD  |  6709 LA TIJERA BLV D  |  6709 LATIJERA BLVD
+K3 10SDEARBORNIL10111 60603            <- 10 S DEARBORN IL1 0111  |  10 S DEARBORN IL10111  |  10 S DEARBORN IL 1 0111
+K3 NUTTERMCCLENNENFISHLLPPOB514 02205  <- NUTTER MCCLENNEN FISH LLP POB 514  |  NUTTER MCCLENNEN FISHLLP POB 514  |  NUTTERMCCLENNEN FISH LLP POB 514
+K3 JMFORBES121MTVERNONST 02108         <- JM FORBES121 MT VERNON ST  |  JM FORBES 121 MT VERNON ST  |  J M FORBES121 MT VERNON ST
+K3 101NINDEPENDENCEMALLE 19106         <- 101N INDEPENDENCE MALL E  |  101 N INDEPENDENCEMALL E  |  101 N INDEPENDENCE MALL E
+K3 1525WWTHARRISBLVDD1114044 28262     <- 1525 W W T HARRIS BLVD D1114 044  |  1525 W WT HARRIS BLVD D1114 044  |  1525 WWT HARRIS BLVD D 1114 044
+K3 114WOODLANDSTMS510358 06105         <- 114 WOODLAND ST MS510358  |  114 WOODLAND ST MS 510358  |  114 WOODLAND ST MS 5 103 58
+K3 3110THOMSONAVEE413 11101            <- 31 10 THOMSON AVE E 413  |  3110 THOMSON AVE E 413  |  3110 THOMSON AVE E413
+==============================================================================
+EXAMPLES: the risky merges, where street_num disagrees
+==============================================================================
+K3 26W171ROOSEVELTRD 60187             <- 26 W 171 ROOSEVELT RD (num 26)  |  26W171 ROOSEVELT RD (num 26W171)  |  26W 171 ROOSEVELT RD (num 26W)  |  26 W171 ROOSEVELT RD (num 26)
+K3 101NINDEPENDENCEMALLE 19106         <- 101N INDEPENDENCE MALL E (num 101N)  |  101 N INDEPENDENCEMALL E (num 101)  |  101 N INDEPENDENCE MALL E (num 101)
+K3 101NINDEPENDENCEMALLEMACY1372 19106  <- 101N INDEPENDENCE MALL E MACY 1372 (num 101N)  |  101N INDEPENDENCE MALL E MACY1372 (num 101N)  |  101 N INDEPENDENCE MALL E MACY 1372 (num 101)
+K3 50ERIVERCENTERBLVD 41011            <- 50 E RIVERCENTER BLVD (num 50)  |  50E RIVERCENTER BLVD (num 50E)  |  50 E RIVER CENTER BLVD (num 50)
+K3 900BCENTREPARKDR 28805              <- 900B CENTREPARK DR (num 900B)  |  900 B CENTRE PARK DR (num 900)  |  900 B CENTREPARK DR (num 900)
+K3 104RNCHWY54W 27510                  <- 104R NC HWY 54 W (num 104R)  |  104 R NC HWY 54 W (num 104)  |  104 RNC HWY 54 W (num 104)
+K3 4780155N 39211                      <- 4780 1 55 N (num 4780)  |  4780155 N (num 47801)  |  4780 155 N (num 4780)
+K3 57CHOWARDRD 04750                   <- 57C HOWARD RD (num 57C)  |  57 C HOWARD RD (num 57)
+K3 4240BELLBLVD 11361                  <- 4240 BELL BLVD (num 4240)  |  4240 BELL BLVD (num 42)  |  42 40 BELL BLVD (num 42)
+K3 2499DHWY117S 27530                  <- 2499 D HWY 117 S (num 2499)  |  2499D HWY 117 S (num 2499D)
+K3 11875METROPOLITANAVE 11415          <- 11875 METROPOLITAN AVE (num 11875)  |  118 75 METROPOLITAN AVE (num 118)
+K3 1717KSTNW 20036                     <- 1717 K ST NW (num 1717)  |  1717K ST NW (num 1717K)
+==============================================================================
+done  2026-11-02 09:55:50   (1158s total)
+==============================================================================

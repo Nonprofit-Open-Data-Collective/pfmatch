@@ -24,18 +24,30 @@
 # loss. Pinning the decomposition is the point of the file: step 4 has to
 # answer for the 49 before it ships.
 #
-# 2026-11-02, npnormalize 0.1.6 -> 0.1.8. The headline was 92 splits of which
-# 59 were a loss, and the 10 that closed are all one class: the hyphenated
-# house number. Queens writes 70-11 and both spellings are filed. 0.1.6 turned
-# the hyphen into a space, so `70 11 150TH ST` and `7011 150TH ST` disagreed;
-# 0.1.8 deletes it, and all 24 hyphenated-house-number pairs in the corpus now
+# 2026-11-02, npnormalize 0.1.6 -> 0.1.8 (the join itself is #16 in 0.1.7; the
+# intermediate signature v1-59c6e84c5f38e9f5 was that release, and 0.1.8 is the
+# compass carve-out noted below). The headline was 92 splits of which 59 were a
+# loss, and the 10 that closed are all one class: the hyphenated house number.
+# Queens writes 70-11 and both spellings are filed. 0.1.6 turned the hyphen
+# into a space, so `70 11 150TH ST` and `7011 150TH ST` disagreed;
+# 0.1.8 deletes it, and all 24 digits-hyphen-digits pairs in the corpus now
 # agree. The loss this file was written to hold step 4 to is being repaid
 # upstream, which is what a pinned decomposition is for -- and it cost one pair
-# in the mirror image, because a hyphen is now deleted where a space in the
-# same position is kept: `875-A ISLAND DRIVE` keys to `875A ISLAND DR` while
-# the same address filed as `875 A ISLAND DRIVE` keeps its space. Net 11 pairs
-# merged, 1 split, and both exemplars are pinned below so the next move is
-# readable in the same terms.
+# in the mirror image: `875-A ISLAND DRIVE` keys to `875A ISLAND DR` while the
+# same address filed as `875 A ISLAND DRIVE` keeps its space. Net 11 pairs
+# merged, 1 split, and both exemplars are pinned below.
+#
+# THE DELETION IS NOT BLANKET, and an earlier version of this comment said it
+# was. Probed against the installed 0.1.8: the hyphen is deleted before digits
+# (`70-11` -> `7011`) and before a lone non-compass letter (`875-A` -> `875A`,
+# `57-C` -> `57C`), but before a lone COMPASS letter it still becomes a space
+# (`1002-E SENECA ST` -> `1002 E SENECA ST`, `100-N 6TH ST` -> `100 N 6TH ST`),
+# which is what keeps it agreeing with the spaced spelling of the same door
+# rather than inventing the house number `1002E`. That carve-out moves nothing
+# here -- the corpus holds 0 digits-hyphen-compass pairs and 4
+# digits-hyphen-letter pairs, 1 of which splits -- so it changes no count
+# below. It is recorded because the rule, not the count, is what a reader takes
+# away from this block.
 
 # the hand-rolled recipe, lifted verbatim so the comparison is honest
 hand_key <- function(street, zip5) {
@@ -130,7 +142,8 @@ test_that("adopting the key splits 82 of 5,410 pairs, in three known ways", {
   # spacing. What remains after 0.1.8 is spacing in the FILED text that no
   # separator rule reaches -- `2200 S W 10TH` against `2200 SW 10TH`,
   # `100 N6TH ST` against `100 N 6TH ST`, `1147CENTRALAVE` against
-  # `1147 CENTRAL AVE`, `C/O` against `CO`.
+  # `1147 CENTRAL AVE`, `C/O` against `CO`. 47 of the 49 contain no hyphen
+  # anywhere, so no separator rule upstream can reach them.
   rest <- split & !blanked
   spacing <- rest & gsub(" ", "", v$a_street_key) == gsub(" ", "", v$b_street_key)
   expect_identical(sum(spacing), 49L)
