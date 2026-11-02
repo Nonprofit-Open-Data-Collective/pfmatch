@@ -68,6 +68,18 @@ below before they were looked for.
 > no such claim — it is past tense about events that happened, which cannot be
 > falsified by anything happening next. The fix for a locative claim is not to
 > date it. It is not to make it.
+>
+> **Where the superseded text went, since replacing it rather than stacking it
+> was the contested call.** Into `git log -p dev/METRIC-SHAPES.md`, which holds
+> every version with its date and the commit message arguing for it. So the
+> choice was never between recording the errors and repairing them — it was
+> where superseded present-tense belongs, and the answer is the history, not the
+> note. **A note is read by someone who wants to know what is true; a history is
+> read by someone who wants to know what was claimed.** Keeping a wrong claim
+> verbatim in the note is right for a first correction, where the error is the
+> finding; by a third stacked layer it is three live falsehoods earning nothing.
+> (That distinction is the audit's author's, offered against their own earlier
+> position.)
 
 > **Correction, and an embarrassing one for a note about unverified figures.**
 > The first two drafts of this file said `Rscript` "is not on this machine" and
