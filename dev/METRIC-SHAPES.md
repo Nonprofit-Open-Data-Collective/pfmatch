@@ -28,17 +28,20 @@ file was recomputed by running anything. Every change is the metric *definition*
 in the script that computes it; the commands to re-derive the figures are given
 per change.
 
-Two things have since been settled from outside this session, and are marked
-where they appear:
+Several things have since been settled from outside this session, by the sibling
+session running issue #15's proposal 3, and are marked where they appear. None
+of its figures was re-derived here; they are attributed, not adopted.
 
-* **All nine changed scripts parse** under R 4.5.1, checked by the sibling
-  session running issue #15's proposal 3 in a detached worktree. Before that the
-  only verification was a paren/brace/quote balance pass, which is not an R
-  parse.
+* **All nine changed scripts parse** under R 4.5.1. Before that the only
+  verification was a paren/brace/quote balance pass, which is not an R parse.
 * **Change 1's effect on the three reference arms is recomputed** from the exact
-  counts `dev/BENCH-MD-REFERENCE.log` already prints — not from a re-run. See
-  change 1. The ordering holds; the gap between the top two arms grows about
-  fivefold; and one published figure outside `dev/` is affected.
+  counts `dev/BENCH-MD-REFERENCE.log` already prints — not from a re-run. The
+  ordering holds; the gap between the top two arms grows about fivefold; and one
+  published figure outside `dev/` is affected. See change 1.
+* **Changes 3 and 4 have been run** on the cached 1k match at npmatch
+  0.1.1.9000. See "What the runs found" below. **Both of the hypotheses that
+  motivated change 4 were wrong**, and one of change 3's columns found something
+  the published note has no slot for.
 
 ---
 
@@ -316,6 +319,104 @@ and `dev/PURPOSE-MATCH-FINDINGS.md` was not reached by the provenance audit.
 
 ---
 
+## What the runs found
+
+Changes 3 and 4 were run on the cached 1k match at npmatch **0.1.1.9000** by the
+sibling session. Recorded here because a redefinition that is never run is a
+proposal, not a measurement — and because what came back is not what was
+predicted.
+
+### The EIN-churn hypothesis is disconfirmed. Twice.
+
+Changes 3 and 4 both rest on the reasoning that a status comparison records an
+identity re-pointed to a different EIN as "no change", and that this hidden cost
+was what the one-sided counts were missing. Measured:
+
+| script | EIN churn |
+|---|---:|
+| `probe-promotion-floor.R` | **0** of 2,712 |
+| `ab-idf-gate.R` | **0** of 2,820 |
+
+The columns stay. A zero that was measured and a quantity nobody looked at print
+identically in a note and differently in a log, and the second is what these
+scripts are for. But the reasoning in the commit message was wrong: churn is not
+where the missing cost lives, and this note should not imply it was vindicated.
+
+### `ab-idf-gate.R`: the gross-against-net line found it instead, and the assertion was wrong
+
+```
+min_idf 0  : YES 2821  MAYBE 1006  NO 1093
+min_idf 10 : YES 2822  MAYBE  986  NO 1112
+demoted 1   gained 2   net +1 YES
+```
+
+Two results, and the second corrects this work rather than the repo.
+
+**`PROMOTION-FLOOR-FINDINGS.md`'s "moves 2 cases, net zero" does not
+reproduce.** The net is **+1**. That figure is what shipped
+`distinct_name_min_idf = 0`, and it does not balance on the status comparison
+the CORRECTION used.
+
+**But `gained` was never a defect indicator, and asserting that it was is a
+defect of its own.** The original line read `YES gained (should be 0)` and change
+4 kept that framing, adding "non-zero … is a selection move or a defect". The
+invariant is simply false. The gate removes pairs; `np_tier()` demotes on the
+**margin to the runner-up** — `R/dyads.R`'s "Collapse before selection" section
+says so, and `R/match.R:287` records a case of it — so removing a runner-up
+*raises* the winner's margin and can carry it MAYBE → YES. A gain is expected
+behaviour.
+
+This is practice 7 failing in the opposite direction, and worth naming as such:
+a metric that reports a **false** alarm is as bad as one that cannot alarm,
+because it teaches the reader to skip the line. The script now asserts the
+invariant that is true — no gained identity's *score* rose, which a veto cannot
+cause — prints the margins beside it so the mechanism is visible, and
+`stopifnot()`s the score condition rather than the gain.
+
+### `probe-promotion-floor.R`: the cost column paid
+
+```
+gained 109   cost 6   net +103 = 109 - 6        (reconciles)
+all 109 fall to MAYBE (YES 0  MAYBE 109  NO 0  OOS 0)
+geo on the floor-dependent pairs: state only 108, ZIP3 only 1
+```
+
+**Six YES identities exist only with the floor off** — selection moves, exactly
+what a `pmax` can cause. `PROMOTION-FLOOR-FINDINGS.md` §5 reads "Keep the floor.
+It carries 121 matches at ~85% precision" and has no slot for them, because the
+metric it rests on could only count wins. The net is **+103**, not +121.
+
+**The note's qualitative claim survives.** All 109 fall to MAYBE, so the floor
+is deciding what gets adjudicated rather than creating recall from nothing.
+
+**And the published figures are stale, in three ways.** 121 and 4.3% against a
+re-run's 109 and 3.9%/4.0%; both tier arms moved (2,821 / 2,718 against the
+note's 2,814 / 2,698); and "4.3% of the tier" is denominated on the YES count
+the floor itself inflates, which is this note's shape 3 appearing in a published
+note rather than in code. So the audit's "121 pairs or 116 identities?" has a
+third answer: **neither reproduces today.** The note records no npmatch version,
+so drift cannot be separated from an original error — while the population is
+stable, every tier table summing to 4,920 including the re-run.
+
+Flagged in a `STALE` box in `dev/PROMOTION-FLOOR-FINDINGS.md` §1 and at §5's
+recommendation, **as a staleness flag rather than as replacement values** —
+retyping another run's numbers into a recommendation is catalogue defect 2's
+mechanism. The box says to regenerate the section and record the npmatch version
+beside it.
+
+### What this exchange says about the practice
+
+Of the four shapes this note set out to fix, the scorecard so far is: one
+confirmed and consequential (change 1's denominator, now carrying a published
+figure outside `dev/`), one confirmed where it was not expected (change 3's cost
+column, 6 against a published 0), one disconfirmed twice (EIN churn), and one
+case where the new metric's *alarm* was wrong rather than its value
+(`ab-idf-gate`'s `gained`). Three of those four are things only a run could
+establish. The redefinitions were worth making; the reasoning offered for two of
+them was not right, and the honest form of practice 7 includes saying so.
+
+---
+
 ## Considered and left alone
 
 Saying so with the reason is the result in these cases. Several are the practice
@@ -355,27 +456,36 @@ cannot provide.
 
 Two narrower limits are worth stating plainly:
 
-**All nine scripts parse; none has been run.** Parsing is not executing, and the
-identities inside these changes are checked by `stopifnot()` at run time, which
-has not happened. `compare-baselines`, `ab-idf-gate` and `probe-promotion-floor`
-are cheap and read committed `.rds` files; `bench-md-reference` needs ~37 GB and
-one process per arm; `measure-recovery` runs two full matches;
-`probe-threshold-recall` reads two committed test sets. Run the cheap ones first.
-Change 1 is the exception and needs no run: its effect is recoverable from the
-committed log, and has been.
+**All nine scripts parse. Three changes have been run; three have not.** Changes
+3 and 4's two cheap scripts were run at npmatch 0.1.1.9000 (see "What the runs
+found"), and change 1 needed no run — its effect is recoverable from the
+committed log. Still unrun: **change 2** (`compare-baselines`, cheap, reads two
+committed `.rds` files), **change 5**'s two adjudication scripts (need the
+adjudication runs), **change 6** (`probe-threshold-recall`, reads two committed
+test sets), and `measure-recovery` from change 4, which runs two full matches and
+is the expensive one. None of their figures is claimed here.
 
-**The one conclusion that was at risk survived.** Change 1 lowers every arm's
-clear rate, most for the arm that retrieves least — and the reference-tier
-ordering is unchanged, so the default stands. That is worth stating as plainly
-as the alternative would have been: the metric was redefined so that it *could*
-contradict the design, and it did not. A practice that only ever produces
-retractions is not being applied honestly.
+**No figure from another session's run was re-derived in this session.** Every
+such number is attributed where it appears, and the `STALE` box added to
+`PROMOTION-FLOOR-FINDINGS.md` deliberately flags rather than replaces, because
+retyping a figure out of someone else's run is the mechanism of catalogue defect
+2 whoever retypes it.
 
-**What it did produce is a published figure that moves outside `dev/`.** The
-0.1-point gap between the top two arms is ~0.49 on the base this change adopts,
-and that figure is in `R/pipeline.R`'s roxygen and in
-`vignettes/matching-dictionaries.Rmd`. Out of scope here, and the one concrete
-piece of work this note hands on.
+**The conclusion that was at risk survived; a different one did not.** Change 1
+lowers every arm's clear rate, most for the arm that retrieves least — and the
+reference-tier ordering is unchanged, so the default stands. Worth stating as
+plainly as the alternative would have been: the metric was redefined so that it
+*could* contradict the design, and it did not. A practice that only ever
+produces retractions is not being applied honestly. What did not survive is
+`PROMOTION-FLOOR-FINDINGS.md`'s 121 and its costless recommendation, found by
+change 3 and not predicted by it.
+
+**Two published figures move outside this work's reach.** The 0.1-point
+reference-arm gap is ~0.49 on change 1's base, and it sits in `R/pipeline.R`'s
+roxygen and `vignettes/matching-dictionaries.Rmd` — out of scope by instruction,
+and needing a pkgdown rebuild. `PROMOTION-FLOOR-FINDINGS.md`'s §1 and §5 are in
+scope and are flagged, but regenerating them needs a run and the npmatch version
+recorded beside it. Those two are the concrete work this note hands on.
 
 **The audit's forward-looking pattern is not addressed here.**
 `dev/FIGURE-PROVENANCE.md` closes on the observation that a correction reaches
