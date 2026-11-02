@@ -523,6 +523,17 @@ regression hard to attribute if several things move at once.
    | `v1-59c6e84c5f38e9f5` | **0.1.7** |
    | `v1-5e901add4a04a5d6` | 0.1.8 |
 
+   **Read each row as the release that INTRODUCED that signature, not as the
+   release that produced a given stamp.** The mapping is not one-to-one in that
+   direction: a release that changes no rule reuses the previous signature, and
+   the first row above already shows it — 0.1.0 and 0.1.1 share
+   `v1-3e7b9f9d59bbb19e`. So a figure stamped `v1-5e901add4a04a5d6` was
+   produced by **0.1.8 or any later release that changed no rule**, and
+   `np_signature_history()` (npnormalize#21, open) is explicit that it answers
+   "which release produced this value" rather than "which release am I
+   running" — that is still `packageVersion()`. A provenance header therefore
+   wants both, which is what today's two logs record.
+
    **Two of these are confirmed from this repo's own data, independently of the
    registry**, which is what makes the rest worth trusting: the superseded
    `pf_variants` recorded `npnormalize 0.1.6` beside `v1-d49b18cc81ab79fb` in
