@@ -1,0 +1,25 @@
+# dev/bench-md-reference.R, MD_ARM=augmented
+# run 2026-11-02, pfmatch at 381750b (main through #35)
+# R 4.5.1, npnormalize 0.1.6, npmatch 0.1.1.9000, matchdb 0.1.1.9000, data.table 1.17.8
+# normalizer v1-d49b18cc81ab79fb -- the installed one, matching the bundle's stamp
+# reference data-dev/REF-augmented.rds, 3,880,431 rows, stamp v1-d49b18cc81ab79fb
+#   (rebuilt 2026-11-02 23:37 by another session; its own check reported
+#   "stamp: NONE" by reading $stamp$normalize_signature only -- the stamp is on
+#   $normalizer, which is the convention pf_build_reference() writes and
+#   .pf_ref_signature() checks first. pf_check_reference() passes it clean.)
+# grants inputs/efv2_1k_grants_* -- 4,903 grants, 4,868 in scope, 35 OOS
+# scratch on D:/pfmatch-tmp; four other R processes were live, so the 39.0 min
+#   match time is contention and is NOT a timing measurement. Compare outcomes.
+#
+# RESULT: identical to dev/BASELINE-2026-10C/MANIFEST.md's augmented arm, which
+# was measured under v1-3e7b9f9d59bbb19e -- 2,979 YES, 1,044 MAYBE, 725 NO over
+# a 4,748-row result frame, 62.74% on that frame and 61.20% on the in-scope base.
+# Not one identity moved across the normalizer change.
+arm augmented: local reference, 3,880,431 rows (loaded in 1.5 min)
+matched 4,903 grants in 39.0 min
+YES      2979   61.2%MAYBE    1044   21.4%NO        725   14.9%
+ABSENT    120    2.5%   (in scope, no pair from any blocking pass)
+in-scope identities 4868   clear rate 61.20%   YES+MAYBE 82.64%
+  on the result frame instead (4748 identities, the 120 with no pair dropped):
+  clear 62.74%   YES+MAYBE 84.73%   -- 1.55 points higher, and that gap
+  widens as the arm retrieves less. Compare arms on the line above it.

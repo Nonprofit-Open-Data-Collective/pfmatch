@@ -1,0 +1,25 @@
+# dev/bench-md-reference.R, MD_ARM=active-observed -- REFUSED, kept as the record
+# run 2026-11-02, pfmatch at 381750b (main through #35)
+# R 4.5.1, npnormalize 0.1.6, npmatch 0.1.1.9000, matchdb 0.1.1.9000
+#
+# WHY THIS IS COMMITTED. A refusal is a result. matchdb is installed and the
+# package loads, so the default tier is still unmeasurable for a reason that is
+# upstream of this repo: the published bundle was built under an older
+# normalizer and matchdb declines to serve it. Until the tiers are republished,
+# neither active-observed nor unified-observed can be benchmarked here, so the
+# three-arm comparison in vignettes/matching-dictionaries.Rmd cannot be
+# reproduced and its figures stay dated to the 2026-10-23 run.
+#
+# The fetch lines below are matchdb pulling the bundle before checking its
+# stamp, which is why they appear despite the refusal.
+fetching active-observed/9cc7b76e3e144a87/reference.parquet
+fetching active-observed/9cc7b76e3e144a87/name_freq.parquet
+fetching active-observed/9cc7b76e3e144a87/token_idf.parquet
+fetching active-observed/9cc7b76e3e144a87/report.json
+fetching active-observed/9cc7b76e3e144a87/addr_freq.parquet
+fetching active-observed/9cc7b76e3e144a87/place.parquet
+fetching active-observed/9cc7b76e3e144a87/place_layer.parquet
+fetching active-observed/9cc7b76e3e144a87/place_unit.parquet
+fetching active-observed/9cc7b76e3e144a87/clusters.parquet
+Error: matchdb reference active-observed: bundle active-observed/9cc7b76e3e144a87 was built by normalizer v1-592912060053c4c3; the installed one is v1-d49b18cc81ab79fb. Its derived columns and statistics would be wrong for this normalizer - republish it.
+Execution halted
