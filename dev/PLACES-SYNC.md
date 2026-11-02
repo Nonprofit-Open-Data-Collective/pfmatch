@@ -480,8 +480,10 @@ regression hard to attribute if several things move at once.
    code comment, which quotes this repo's 0.1.6 log for it. npnormalize#20
    refreshes that comment to 1,886 / 322 / 17.07%, cites
    `dev/ADDR-KEY-SPELLINGS-20261102.log`, and states in the same place that the
-   better trade does **not** carry the rejection on its own. Until #20 merges,
-   the released comment is the stale one.
+   better trade does **not** carry the rejection on its own. **#20 merged
+   2026-11-02T18:14, npnormalize `main` at `e29c17b`**, so the released comment
+   now carries 1,886 / 322 / 17.07% and names this repo's log. Verified by
+   reading that file on `main`, not from the merge notice.
 
    The parity test pins all four counts from the pair corpus, and this log
    pins the BMF figures, so a move in either shows up.
@@ -535,12 +537,21 @@ regression hard to attribute if several things move at once.
 
    *Status of the upstream text, 2026-11-02:* the stronger wording is corrected
    in **[npnormalize#20](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/pull/20)**
-   — open, mergeable, blocked on five R-CMD-check platforms, branch
-   `fix/weaken-split-claim`, 11 files. `main` still carries "none of them two
-   different streets", so cite #20 rather than the released note, and cite it
-   as open rather than landed. Verified here against the PR's own diff, not
-   from the description: `NEWS.md`, `R/normalize.R`, `README.md`, the pkgdown
-   docs and `tests/testthat/test-address.R` (+23).
+   — **merged 2026-11-02T18:14:25, all five R-CMD-check platforms green,
+   npnormalize `main` at `e29c17b`**; 11 files: `NEWS.md`, `R/normalize.R`,
+   `README.md`, the pkgdown docs and `tests/testthat/test-address.R` (+23).
+   Verified against the PR's diff before the merge and against `main` after it,
+   rather than from either notice.
+
+   *One precision about "corrected".* Both withdrawn claims are still present
+   in `main` as **quoted records of what was wrong** — `NEWS.md` now reads that
+   an earlier draft "wrongly offered" the `street_num` escape hatch and states
+   what is true instead, and the code comment says that an earlier draft quoted
+   2,278 and 42.67%. Neither is asserted any more. That is better than deletion
+   for the same reason this note keeps its own superseded figures: a reader who
+   remembers the old sentence finds out it was wrong rather than finding
+   nothing. So a grep for either string on `main` still hits — read the
+   surrounding lines before concluding the correction did not land.
 
    **The refused part, and it is the half we should stop asking for.** The
    *narrow* version of K3 — allow a space only where the join wants a hyphen,
@@ -598,8 +609,9 @@ regression hard to attribute if several things move at once.
    whole number on the hyphenated spelling only (#16)`, asserting
    `c("7011", "70", "875A", "875")` and that the compass pair agrees on
    `street_key` as well, so `street_num` buys nothing even there. Read off that
-   PR's diff. Until it merges, the released `NEWS.md` still offers the remedy,
-   which is the version a reader of the installed package sees.
+   PR's diff, and confirmed on `main` after it merged. The released `NEWS.md`
+   no longer offers the remedy: it records that an earlier draft did, and that
+   `street_num` is the whole number on the hyphenated spelling only.
 
    **One pair went the other way, and it is the same rule read backwards.**
    `875-A ISLAND DRIVE` now keys to `875A ISLAND DR` while the same address
