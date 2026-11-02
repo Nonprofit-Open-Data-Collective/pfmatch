@@ -228,13 +228,21 @@ pf_grade_verdicts <- function(verdicts, truth = NULL, population = NULL,
 #' its own Wilson interval, so a 3-case cell cannot read like a finding.
 #'
 #' @section On monotonicity, which is reported and never assumed:
-#' T3 gates the dropped `pf_adjudicate_auto()` on confidence being monotone, and
-#' `dev/adjudicate-15-no-arms.R` records the MAYBE search arm's confidence
-#' *rising as accuracy fell* — "worse than useless" — while Opus on the NO tier
-#' was the inverse. So for `confidence` this orders the levels `high`, `medium`,
-#' `low` and returns a `monotone` attribute that distinguishes decreasing,
-#' increasing and neither. An increasing result is a finding, not a bug, and is
-#' the one that forbids using confidence as a gate.
+#' For `confidence` this orders the levels `high`, `medium`, `low` and returns a
+#' `monotone` attribute distinguishing decreasing, increasing and neither. An
+#' increasing result is a *finding* — the one that forbids using confidence as
+#' an acceptance gate — not a bug.
+#'
+#' It is reported rather than assumed in **either** direction, and an earlier
+#' version of this paragraph got that wrong in the pessimistic direction: it
+#' stated, on the authority of a sentence in `dev/adjudicate-15-no-arms.R`, that
+#' the MAYBE search arm's confidence had risen as accuracy fell. That sentence
+#' is prose in a NO-tier script, not a measurement in it. Measured over the two
+#' MAYBE-tier rounds in `data-dev/` (`ADJ-CAL-*`, `ADJ-EXP-*`), confidence is
+#' monotone *decreasing* in **5 of 5 arms** and steeply — 100/81/25% in one of
+#' them, with disjoint intervals. See `dev/ADJUDICATION-PREREQS.md` §6b.1.
+#' Those rounds used the unenriched packet, so the levels do not transfer; the
+#' direction is what the correction is about.
 #'
 #' @param graded A `pf_graded` from [pf_grade_verdicts()].
 #' @param by Column name to cut on, e.g. `"confidence"` (T3),

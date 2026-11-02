@@ -27,9 +27,14 @@ set for the API request schema; this is the package's copy, and the one
 candidates cannot be separated. \code{NONE} is first-class on purpose: a
 reviewer with no good answer must be able to say so, and a schema without
 it collects a guess instead.
-\item \code{confidence} — the reviewer's own \code{high} / \code{medium} / \code{low}. Usable for
-\emph{ordering} a queue and not for accepting: on the MAYBE search arm,
-confidence rose as accuracy fell (\code{dev/adjudicate-15-no-arms.R}).
+\item \code{confidence} — the reviewer's own \code{high} / \code{medium} / \code{low}. Collected so
+that it can be tested, not because it is trusted. Measured over the two
+MAYBE-tier rounds in \verb{data-dev/}, accuracy falls monotonically with it in
+\strong{5 of 5 arms} (100/81/25\% in the steepest, intervals disjoint), which
+makes a high-confidence acceptance gate the policy worth testing — on the
+\emph{enriched} packet, which those rounds are not. An earlier version of this
+line asserted the opposite from a dev-script sentence; see
+\code{dev/ADJUDICATION-PREREQS.md} §6b.1.
 \item \code{evidence_class} — \code{QUOTE} (a sentence in the packet says so), \code{NTEE}
 (the classification implies it), \code{INFER} (neither, but the reviewer
 concluded it), \code{NONE}. Whether these rank by accuracy is unmeasured; the

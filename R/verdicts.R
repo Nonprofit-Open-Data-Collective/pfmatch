@@ -28,9 +28,14 @@
 #'   candidates cannot be separated. `NONE` is first-class on purpose: a
 #'   reviewer with no good answer must be able to say so, and a schema without
 #'   it collects a guess instead.
-#' * `confidence` — the reviewer's own `high` / `medium` / `low`. Usable for
-#'   *ordering* a queue and not for accepting: on the MAYBE search arm,
-#'   confidence rose as accuracy fell (`dev/adjudicate-15-no-arms.R`).
+#' * `confidence` — the reviewer's own `high` / `medium` / `low`. Collected so
+#'   that it can be tested, not because it is trusted. Measured over the two
+#'   MAYBE-tier rounds in `data-dev/`, accuracy falls monotonically with it in
+#'   **5 of 5 arms** (100/81/25% in the steepest, intervals disjoint), which
+#'   makes a high-confidence acceptance gate the policy worth testing — on the
+#'   *enriched* packet, which those rounds are not. An earlier version of this
+#'   line asserted the opposite from a dev-script sentence; see
+#'   `dev/ADJUDICATION-PREREQS.md` §6b.1.
 #' * `evidence_class` — `QUOTE` (a sentence in the packet says so), `NTEE`
 #'   (the classification implies it), `INFER` (neither, but the reviewer
 #'   concluded it), `NONE`. Whether these rank by accuracy is unmeasured; the

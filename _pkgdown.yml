@@ -182,6 +182,7 @@ reference:
   - pf_validate_grants
   - pf_truth_schema
   - pf_population_id
+  - pf_round_sample
   - pf_grade_verdicts
   - pf_grade_by
   - pf_grade_layers
