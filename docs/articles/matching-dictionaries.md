@@ -236,15 +236,20 @@ denominator.
 
 The two local arms are frozen as `BASELINE-2026-10C`, measured under
 normalizer `v1-3e7b9f9d59bbb19e` — a different signature again from the
-three arms above, and also not the installed one — on the same `efv2_1k`
-population: 2,667 YES on `REF-active.rds` (1,924,822 rows) and 2,979 on
-`REF-augmented.rds` (3,880,431 rows), which on the shared base are
-**54.8%** and **61.2%**. So the **active-only BMF gives up 6.4 points**
-against the augmented one, which is the span the alias rows cover. The
-manifest reports those arms per-arm instead — 56.90% over 4,687
-identities and 62.74% over 4,748, a span of 5.8 — and the difference
-between 5.8 and 6.4 is the same denominator effect: the active arm finds
-pairs for 61 fewer identities, so dividing by its own count flatters it.
+three arms above. The augmented one of the two was **re-run on
+2026-11-02 under `v1-d49b18cc81ab79fb` and reproduced exactly**, not one
+identity moved (`dev/BENCH-MD-AUGMENTED-20261102.log`), so for that arm
+the signature gap is documented rather than merely open. The three arms
+above have had no such re-run, and cannot until matchdb’s tiers are
+republished. On the same `efv2_1k` population: 2,667 YES on
+`REF-active.rds` (1,924,822 rows) and 2,979 on `REF-augmented.rds`
+(3,880,431 rows), which on the shared base are **54.8%** and **61.2%**.
+So the **active-only BMF gives up 6.4 points** against the augmented
+one, which is the span the alias rows cover. The manifest reports those
+arms per-arm instead — 56.90% over 4,687 identities and 62.74% over
+4,748, a span of 5.8 — and the difference between 5.8 and 6.4 is the
+same denominator effect: the active arm finds pairs for 61 fewer
+identities, so dividing by its own count flatters it.
 
 <div class="section level3">
 

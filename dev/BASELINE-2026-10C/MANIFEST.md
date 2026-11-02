@@ -34,6 +34,22 @@ The clear rate is **YES over identities**. YES+MAYBE is 77.94% active and
 84.73% augmented, and is not a clear rate: there is no safe automatic
 acceptance of the MAYBE tier (`dev/ADJUDICATION-PLAN.md`).
 
+> **Addendum 2026-11-02: the augmented arm still reproduces, exactly.** Re-run
+> under normalizer `v1-d49b18cc81ab79fb` — two signatures on from the
+> `v1-3e7b9f9d59bbb19e` these figures were measured under — against a
+> `REF-augmented.rds` rebuilt and stamped for it: **2,979 YES, 1,044 MAYBE, 725
+> NO over the same 4,748-row result frame**, 62.74% on that frame and 61.20%
+> over the 4,868 in-scope identities. Not one identity moved. The frozen figures
+> above are unchanged and are not superseded; this only dates them, since
+> nothing in them said which normalizer they belonged to.
+> `dev/BENCH-MD-AUGMENTED-20261102.log` is the run.
+>
+> The **active arm was not re-run**, and the two matchdb tiers could not be: the
+> published bundles were built under an older normalizer and matchdb declines to
+> serve them until they are republished
+> (`dev/BENCH-MD-ACTIVE-20261102.log`). So on the current normalizer this
+> benchmark has one confirmed arm, not three.
+
 ### Against the baseline it supersedes
 
 | arm | 10B | 10C | Δ clear | Δ YES | Δ MAYBE | Δ NO |
