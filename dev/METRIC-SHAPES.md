@@ -269,6 +269,24 @@ matching measurement at all, and no amount of checking the *arithmetic* would
 have caught that. Practice 6 verifies that two terms sum to a third; it has
 nothing to say about whether either term means what it is called.
 
+**That boundary is sharper than it reads, and it is a limit on the assertion
+practices (2, 3 and 6) that the catalogue does not state.** It has a clean
+demonstration. When the audit session transcribed this formula it flipped the
+denominator term's sign, giving −1.13 instead of +1.13; those two terms sum to
+−2.43 against a headline of −0.17, so the `stopifnot()` here **would have caught
+that error on the first run**. It caught nothing of the mislabelling, because
+the terms summed perfectly. One guard, one error it stops dead and one it is
+structurally blind to, in the same line of code.
+
+So: `need_cols()` proves a column exists, `need_levels()` that a level is
+populated, `need_rows()` that a denominator is the size you expect, and a sum
+check that the arithmetic closes. **None of them can tell you that a quantity is
+not the thing you named it** — and a mislabelled quantity passes every one of
+them while every downstream verification confirms the wrong thing faithfully.
+Catching it needs the quantity recomputed from a different direction, which is a
+heavier instrument than any assertion: here, joining the two frames and
+restricting to the identities both hold.
+
 **What the script does now:** holds the identity set fixed and compares the same
 identities in both baselines, which measures matching directly, and reports
 composition — who left, who arrived, and how each cleared — beside it.
