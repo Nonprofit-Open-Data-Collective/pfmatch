@@ -45,6 +45,7 @@
 suppressWarnings(suppressMessages(library(data.table)))
 PF <- Sys.getenv("PFMATCH_DIR", ".")
 DD <- file.path(PF, "data-dev")
+source(file.path(PF, "dev", "assert-lib.R"))
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr  <- function() cat(strrep("=", 78), "\n")
@@ -127,7 +128,9 @@ for (a in c("l", "n", "s"))
   d[[paste0(a, "_grade")]] <- grade(d[[paste0(a, "_verdict")]],
       d[[paste0(a, "_ein")]], d$target, d$correct_ein)
 B <- d[!is.na(target)]
+need_levels(d$stratum, "A-estimation", what = "the estimation stratum")
 A <- d[stratum == "A-estimation"]
+need_rows(A, min = 1L, what = "stratum A, the decomposition's denominator")
 
 ## ============================================================================
 h2("1. ACCURACY on the hand-adjudicated cases -- the decomposition")

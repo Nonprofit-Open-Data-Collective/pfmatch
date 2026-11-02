@@ -147,9 +147,12 @@ print(table(st0$status, useNA = "ifany"))
 # means absent before and after, and out-of-scope identities are excluded
 # rather than relabelled. pf_status() is still printed, because the tier counts
 # a reader will recognize are the ones above.
-r0 <- as.data.frame(m$result)
-need_cols(r0, "tier", ".id", what = "the baseline tier, read from the result frame")
-base_tier <- stats::setNames(as.character(r0$tier), as.character(r0$.id))
+#
+# pf_result_tiers() is that choice made out loud, and it is why this line no
+# longer spells the convention out by hand: two calls to the same accessor say
+# at the call site that both sides agree on what absence means. It asserts
+# `.id` and `tier` itself, so the column guard lives there now.
+base_tier <- pf_result_tiers(m)
 # Every movement count below names its tiers literally. A tier the result frame
 # gains and this script does not mention would be excluded from all of them at
 # once, leaving a movement table that still adds up over a smaller universe.
@@ -194,7 +197,7 @@ for (cut in CUTOFFS) {
   el <- proc.time()[["elapsed"]] - t0
   say("  %.1f s  (%.2f%% of the %.0f s match it supplements)", el, 100 * el / t_match, t_match)
 
-  new_tier <- setNames(as.character(fr$result$tier), as.character(fr$result$.id))
+  new_tier <- pf_result_tiers(fr)
   # The universe is the in-scope identities, so an identity with no pair before
   # AND no pair after appears as ABSENT -> ABSENT and is visible as a
   # non-movement rather than invisible. Out-of-scope identities are not here at
