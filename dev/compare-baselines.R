@@ -2,6 +2,39 @@
 # BASELINE-2026-10 (v1 ef1k) against BASELINE-2026-10B (v2 lifted, deduplicated).
 # Same references, same passes, same normalizer signature: the population is the
 # only thing that moved, so every difference here is attributable to it.
+#
+# HOW THE MATCHING MOVE IS ISOLATED, and a withdrawn claim.
+#
+# An earlier version of this script decomposed the clear-rate delta as
+#
+#   clear2 - clear1  =  dYES / n2                     <- labelled "matching"
+#                    +  YES1 * (n1 - n2) / (n1 * n2)  <- labelled "denominator"
+#
+# The identity is exact. The LABEL on the first term is wrong, and the wrong
+# label produced a published false alarm: it read -1.30 and -1.45 points and
+# the script shouted that the population shrinking had MASKED 87% of a recall
+# loss. There was no recall loss. dYES is the change in the YES COUNT, which
+# mixes matching with WHICH IDENTITIES ARE PRESENT, so when the population
+# changes that term absorbs the composition effect and reports it as matching.
+#
+# These frames carry `.id`, so the matching move is directly measurable: hold
+# the identity set fixed and compare the SAME identities in both baselines.
+# That is what the script now does. On the committed run it gives -0.20 points
+# for `active` and **+0.04** for `augmented` -- against the -1.30 and -1.45 the
+# mislabelled term reported. BASELINE-2026-10B/MANIFEST.md's published -0.17 /
+# -0.21 and its sentence "the direction is the expected one rather than a
+# regression" are both correct, and the alarm this script raised against them
+# was not.
+#
+# The population change is also not the clean removal the old comment assumed.
+# 299 identities leave and 206 arrive in `active`, 244 and 150 in `augmented`,
+# because the v2 lift re-keys some of them -- so "97 superseded filings were
+# removed" does not describe the id set either.
+#
+# The lesson is the one dev/ab-idf-gate.R already carries, which this script
+# had not learnt: a metric that raises a FALSE alarm is as bad as one that
+# cannot alarm. Practice 7 asks for a measurement that can come out wrong; it
+# does not excuse the alarming direction from needing a second instrument.
 suppressWarnings(suppressMessages(library(data.table)))
 say <- function(...) message(sprintf(...))
 hr  <- function() message(strrep("=", 84))
@@ -35,63 +68,55 @@ for (i in seq_len(nrow(z)))
       format(z$n[i], big.mark = ","), z$YES[i], z$MAYBE[i], z$NO[i],
       z$clear[i], z$surf[i])
 
-hr(); say("DELTA, v2 minus v1")
-# The two clear rates stand on DIFFERENT denominators -- the identity count is
-# the thing that moved between these baselines -- so their difference is not a
-# measurement of matching. It is the sum of two effects, and dropping fewer
-# identities would raise it just as readily as matching more of them:
-#
-#   clear2 - clear1  =  dYES / n2        <- the matching term
-#                    +  YES1 * (n1 - n2) / (n1 * n2)   <- the denominator term
-#
-# Identity, not approximation: the two terms sum to the headline exactly. The
-# second is positive whenever the population shrank, which it did here, so a
-# headline "clear rate up" is reported WITHOUT knowing whether anything was
-# matched better. Printing both lets the decomposition say the gain was all
-# denominator -- the finding the single difference could not produce.
+
+hr(); say("DELTA, v2 minus v1"); hr()
+# The matching move, measured on the identities both baselines hold. This is
+# the term the old decomposition mislabelled; see the header. Composition is
+# reported beside it as who left and who arrived, with their clear rates, so
+# the net is attributable without inferring anything.
+tiers <- function(dir, arm) {
+  r <- as.data.table(readRDS(file.path(PF, "dev", dir,
+         sprintf("benchmark-1k-%s.rds", arm))))
+  need_cols(r, ".id", "tier", what = sprintf("%s %s, keyed comparison", dir, arm))
+  stopifnot(!anyDuplicated(as.character(r$.id)))
+  setNames(r$tier == "YES", as.character(r$.id))
+}
 for (a in unique(z$arm)) {
   s <- z[arm == a]
   if (nrow(s) != 2L) next
-  n1 <- s$n[1]; n2 <- s$n[2]
-  num <- 100 * (s$YES[2] - s$YES[1]) / n2
-  den <- 100 * s$YES[1] * (n1 - n2) / (n1 * n2)
+  y1 <- tiers("BASELINE-2026-10", a); y2 <- tiers("BASELINE-2026-10B", a)
+  sh <- intersect(names(y1), names(y2))
+  gone <- setdiff(names(y1), names(y2)); new <- setdiff(names(y2), names(y1))
+  need_rows(length(sh), min = 1L, what = "identities both baselines hold")
+  m1 <- 100 * mean(y1[sh]); m2 <- 100 * mean(y2[sh])
   tot <- s$clear[2] - s$clear[1]
-  stopifnot(abs((num + den) - tot) < 1e-9)   # practice 6: check the identity
   say("  %-10s identities %+5d   clear %+.2f points   Y+M %+.2f points", a,
-      n2 - n1, tot, s$surf[2] - s$surf[1])
-  say("    of which matching %+.2f pt (YES %+d on %s) and denominator %+.2f pt",
-      num, s$YES[2] - s$YES[1], format(n2, big.mark = ","), den)
-  # Three cases worth shouting about, and the third is the one the first
-  # version of this block missed. On the committed run the headline is -0.17
-  # while matching is -1.30 and the denominator gives back +1.13: the
-  # population shrinking MASKED 87% of a real recall loss. Neither "headline
-  # rose" nor "denominator term is larger" catches that, because the headline
-  # moved the same way as the matching and the denominator term is smaller.
-  # What matters is that the two terms OPPOSE and the offset is large.
-  if (tot > 0 && num < 0) {
-    say("    *** the headline ROSE while matching got worse: every point of it")
-    say("    *** is the population shrinking. Do not read it as an improvement.")
-  } else if (num * den < 0 && abs(den) > 0.5 * abs(num)) {
-    say("    *** MASKED: the two terms oppose, and the denominator offsets")
-    say("    *** %.0f%% of the matching move. The headline (%+.2f) is %.1fx",
-        100 * abs(den) / abs(num), tot, abs(num) / max(abs(tot), 1e-9))
-    say("    *** smaller than the matching change (%+.2f) underneath it.", num)
-  } else if (tot != 0 && abs(den) > abs(num)) {
-    say("    *** the denominator term is the larger of the two: most of this")
-    say("    *** arm's headline is the population moving, not the matching.")
-  }
+      s$n[2] - s$n[1], tot, s$surf[2] - s$surf[1])
+  say("    MATCHING, on the %s identities both hold : %.2f%% -> %.2f%%  %+.2f pt",
+      format(length(sh), big.mark = ","), m1, m2, m2 - m1)
+  say("    COMPOSITION: %d left (cleared %.1f%%), %d arrived (cleared %.1f%%)",
+      length(gone), 100 * mean(y1[gone]), length(new), 100 * mean(y2[new]))
+  # Fire only on a real divergence between the matching move and the headline,
+  # measured rather than inferred from a mislabelled term. The old condition
+  # fired on both arms and was wrong on both.
+  if (abs(m2 - m1) > 0.25 && abs(m2 - m1) > 2 * abs(tot))
+    say("    *** the headline (%+.2f) understates the matching move (%+.2f) by %.1fx",
+        tot, m2 - m1, abs(m2 - m1) / max(abs(tot), 1e-9))
+  else
+    say("    (headline and matching move agree in sign and size; no masking)")
 }
 hr()
-say("The identity count falls because deduplication removed 97 of the 5,000")
-say("sampled grants as superseded filings, and because identities are grants")
-say("collapsed on normalized name+address, so the two do not fall in step.")
+say("The identity set changes in both directions -- identities leave AND arrive")
+say("-- because v2 re-keys some of them, so the net identity count understates")
+say("how much of the population moved. That is why matching is measured on the")
+say("intersection rather than inferred from the counts.")
 say("")
 say("Both `clear` columns above are YES over the RESULT FRAME -- these are")
 say("saved benchmark frames and the in-scope identity count is not in them, so")
 say("identities no pass retrieved for are missing from both numerator and")
-say("denominator. The decomposition separates the population move from the")
-say("matching move; it cannot recover the retrieval failures neither base")
-say("counts. For that, read a run through pf_result_tiers() against x$in_scope")
+say("denominator. Holding the identity set fixed removes the composition")
+say("effect; it cannot recover the retrieval failures neither base counts. For")
+say("that, read a run through pf_result_tiers() against x$in_scope")
 say("(dev/bench-md-reference.R, dev/adjudicate-16-fuzzy-regress.R).")
 fwrite(z, file.path(PF, "data-dev", "BASELINE-COMPARISON.csv"))
 say("wrote data-dev/BASELINE-COMPARISON.csv")

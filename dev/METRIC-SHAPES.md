@@ -255,54 +255,82 @@ bottom. It then reported `clear %+.2f points` as a single difference, which is
 not a measurement of matching: dropping fewer identities raises it exactly as
 readily as matching more of them.
 
-**Now:** the delta is decomposed, and the decomposition is an identity rather
-than an approximation:
+**The first attempt** decomposed the delta algebraically:
 
 ```
-clear2 − clear1  =  ΔYES / n2                      ← the matching term
-                 +  YES1 · (n1 − n2) / (n1 · n2)   ← the denominator term
+clear2 − clear1  =  ΔYES / n2                      ← labelled "the matching term"
+                 +  YES1 · (n1 − n2) / (n1 · n2)   ← labelled "the denominator term"
 ```
 
-Both terms print, `stopifnot()` checks that they sum to the headline (practice 6
-— a guard that only the guarded code tests is not a guard), and the script says
-so out loud when the denominator term is the larger of the two, or when the
-headline rose while the matching term went *negative*. That last case is the one
-the single difference could not produce and the decomposition can.
+An exact identity, `stopifnot()`-checked against the headline — and the label on
+the first term is wrong, which is the subject of the withdrawal below. **`ΔYES`
+is a change in a count over a population that also changed**, so it is not a
+matching measurement at all, and no amount of checking the *arithmetic* would
+have caught that. Practice 6 verifies that two terms sum to a third; it has
+nothing to say about whether either term means what it is called.
 
-**Run: `dev/COMPARE-BASELINES.log`. This is the largest finding in the note.**
-The headline deltas are small and benign-looking. The decomposition is not:
+**What the script does now:** holds the identity set fixed and compares the same
+identities in both baselines, which measures matching directly, and reports
+composition — who left, who arrived, and how each cleared — beside it.
 
-```
-active     identities   -93   clear -0.17 points
-  of which matching -1.30 pt (YES -61 on 4,687) and denominator +1.13 pt
-augmented  identities   -94   clear -0.21 points
-  of which matching -1.45 pt (YES -69 on 4,748) and denominator +1.25 pt
-```
+> ## WITHDRAWN. This change's published finding was a false alarm, and it was
+> the loudest thing in this note.
+>
+> Earlier drafts called this "the largest finding in the note" and reported:
+>
+> > The v1 → v2 population change cost 1.3–1.45 points of matching, and the
+> > shrinking denominator gave back 86–87% of it. The published headline is
+> > −0.17 and −0.21 — seven times smaller than the move underneath.
+>
+> **There was no matching loss.** The decomposition
+> `Δclear = ΔYES/n₂ + YES₁·Δn/(n₁·n₂)` is algebraically exact, and the label on
+> the first term was wrong. `ΔYES` is the change in the YES **count**, which
+> mixes matching with *which identities are present* — so when the population
+> changes, that term absorbs the composition effect and reports it as matching.
+>
+> The frames carry `.id`, so the matching move is directly measurable: hold the
+> identity set fixed and compare the same identities in both baselines.
+>
+> ```
+> active     clear -0.17 pt   MATCHING on the 4,481 both hold: 56.97% -> 56.77%  -0.20 pt
+>                             COMPOSITION: 299 left (57.9%), 206 arrived (58.7%)
+> augmented  clear -0.21 pt   MATCHING on the 4,598 both hold: 62.88% -> 62.92%  +0.04 pt
+>                             COMPOSITION: 244 left (65.6%), 150 arrived (59.3%)
+> ```
+>
+> Matching moved **−0.20** and **+0.04**. `BASELINE-2026-10B/MANIFEST.md`'s
+> published −0.17 / −0.21 are accurate summaries and its sentence "the direction
+> is the expected one rather than a regression" is correct — `augmented`'s
+> matching slightly *improved*. Nothing was masked and nothing needed carrying
+> into that note.
+>
+> A second error was stacked under the first: the population change is not a
+> clean removal. **299 identities leave and 206 arrive** in `active`, 244 and 150
+> in `augmented`, because v2 re-keys some — so the reasoning that "93 rows left"
+> was also false, and the net identity count understates how much moved.
+>
+> **This is the defect this note had already diagnosed, one file over.** A
+> metric that raises a *false* alarm is as bad as one that cannot alarm, because
+> it teaches the reader to skip the line — written here about
+> `ab-idf-gate.R`'s `YES gained (should be 0)`, then rebuilt in this change,
+> believed, promoted to the headline finding, and flagged to a peer as the figure
+> most wanting a second reader. Practice 7 asks for a measurement that can come
+> out wrong. It does not excuse the *alarming* direction from needing a second
+> instrument, and there was none on this one for three rounds.
+>
+> `compare-baselines.R` now measures matching on the intersection, and its
+> warning fires on a measured divergence between the matching move and the
+> headline rather than on a mislabelled term. On the committed run it reports no
+> masking, correctly. The withdrawn figures are in `git log -p`.
 
-**The v1 → v2 population change cost 1.3–1.45 points of matching, and the
-shrinking denominator gave back 86–87% of it.** The published headline is
-−0.17 and −0.21 — seven times smaller than the move underneath. A reader of the
-old single difference would conclude the deduplication was roughly neutral. It
-was not: it lost 61 and 69 YES identities, and only looks neutral because it
-also removed the identities from the base.
-
-This is the shape at its most consequential, because nothing about the headline
-invites a second look. No *published* figure changes — the headline delta is
-unchanged and two terms are now printed under it — but what the headline *means*
-does.
-
-**It also exposed a gap in this change's own warning.** The first version
-shouted only when the headline rose while matching fell, or when the
-denominator term was the larger of the two. Neither fires here: the headline
-moved the *same* way as the matching, and the denominator term is smaller. What
-matters is that the two terms **oppose** and the offset is large, so the warning
-now tests for that and reports the ratio. It fires on both arms. Found by
-running it, not by reading it.
-
-The stated limit holds: these are saved benchmark frames and the in-scope count
-is not in them, so both `clear` columns remain result-frame shares. The
-decomposition separates the population move from the matching move; it cannot
-recover the retrieval failures neither base counts.
+**Run: `dev/COMPARE-BASELINES.log`.** What the change is actually worth, after
+the withdrawal above: the headline delta is unchanged, and underneath it the
+matching move and the composition effect are now separated and measured rather
+than inferred. That is a real improvement on a single difference — a reader can
+see that `augmented`'s matching held while its population moved — it is simply
+not a finding about the pipeline. The denominator for both `clear` columns
+remains the result frame, so neither reading recovers the retrieval failures
+neither base counts.
 
 *To re-derive:* `Rscript dev/compare-baselines.R` (reads four committed `.rds`
 files; seconds).
@@ -598,14 +626,33 @@ file is a figure nobody can check. `dev/PROMOTION-FLOOR-PROBE.log` is that file.
 
 ### What this exchange says about the practice
 
-Of the four shapes this note set out to fix, the scorecard so far is: one
-confirmed and consequential (change 1's denominator, now carrying a published
-figure outside `dev/`), one confirmed where it was not expected (change 3's cost
-column, 6 against a published 0), one disconfirmed twice (EIN churn), and one
-case where the new metric's *alarm* was wrong rather than its value
-(`ab-idf-gate`'s `gained`). Three of those four are things only a run could
-establish. The redefinitions were worth making; the reasoning offered for two of
-them was not right, and the honest form of practice 7 includes saying so.
+The scorecard, counting the withdrawal:
+
+| | |
+|---|---|
+| **confirmed, consequential** | change 1's denominator — moved three published figures and a shipped vignette |
+| **confirmed where not expected** | change 3's cost column — 6 against a published 0 |
+| **disconfirmed twice** | EIN churn, 0 of 2,712 and 0 of 2,820 |
+| **false alarm** ×2 | `ab-idf-gate`'s `gained`, and change 2's `MASKED` — the second promoted to this note's headline finding before it was checked |
+
+Every row but the first needed a run. One shape in four paid; two of the four
+produced an alarm that was wrong rather than a value that was wrong.
+
+**That ratio is the result, and it cuts against the practice as this note first
+stated it.** "Prefer a measurement that can come out wrong" is sound, and
+incomplete in a way this note demonstrated twice at its own expense: a
+measurement that can come out wrong can come out wrong *in the alarming
+direction*, and an alarm is exactly the output nobody audits, because it reads
+as the metric working. Both false alarms here were believed on sight — one of
+them after this very file had written the paragraph explaining why that is a
+defect. The missing half of practice 7 is that **a new alarm needs a second
+instrument before it is published**, and the cheapest second instrument is
+usually the one that holds the population fixed.
+
+The reasoning offered for three of the six changes turned out wrong — churn
+twice, masking once — while the changes themselves mostly stand. That is a
+reasonable outcome for a first pass and a poor one to have published without
+running, which was the original sin and is corrected in the box at the top.
 
 ---
 
