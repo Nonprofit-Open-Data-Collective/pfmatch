@@ -179,11 +179,13 @@ Four readings so far, in order: `v1-6dcb298522cc5118` (what the fixtures were
 originally built under), `v1-3e7b9f9d59bbb19e` (the first post-extraction
 reading), `v1-533f186c123357cf` (npnormalize 0.1.5, which `cbcecd3` re-pinned
 the fixtures to), and `v1-d49b18cc81ab79fb` — npnormalize 0.1.6, what is
-installed. So the fixture gate is firing again, one version behind rather than
-three generations: `test-unit.R:182` and `test-variants.R:147` skip with
-*"normalizer moved … rebuild with `data-raw/make-pf-variants.R`"*, which is
-still outstanding. None of these is a value to quote forward — read it. The
-pre-move restore points, both at `v1-3e7b9f9d59bbb19e`:
+installed — and what the fixtures pin **as of 2026-11-02**, rebuilt on 0.1.6 so
+that `test-unit.R:182` and `test-variants.R:147` run again rather than skipping
+(400 passing, 0 failures, 3 skips, all `{matchdb}`). The whole 0.1.6 rebuild
+moved six cells: `PO DRAWER 2440` to `PO BOX 2440` on three pairs, with
+`unit_evidence` identical across all 5,410 rows. `dev/UNIT-UPSTREAM-SYNC.md`
+§4.3 has the detail. None of these signatures is a value to quote forward —
+read it. The pre-move restore points, both at `v1-3e7b9f9d59bbb19e`:
 
 ```r
 renv::install("Nonprofit-Open-Data-Collective/npmatch@v0.1.1")
