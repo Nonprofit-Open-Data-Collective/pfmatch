@@ -564,10 +564,35 @@ regression hard to attribute if several things move at once.
    `ddfd967`, witnessed by that log" — a version, a commit and a witness, short
    of a reproduction.
 
-   The other two name no commit in the notes that cite them, so there is no
-   DESCRIPTION to read and they stay undated. Pulling that thread means finding
-   whether the 2026-08 baseline or matchdb's `build-baseline-2026-10.R`
-   recorded a commit anywhere beside the signature.
+   **A second one is dated too, and the sentence this replaces was wrong.** It
+   read: "the other two name no commit in the notes that cite them, so there is
+   no DESCRIPTION to read". That was false for `v1-421e1e2a6afb024e`, and the
+   commit was in this repository the whole time — `dev/BASELINE-2026-08/`
+   `environment.txt` lines 4–6 read `pfmatch 1c657f8`, `npmatch f14f1d9`,
+   `normalizer sig v1-421e1e2a6afb024e`, so the commit sits **three lines above
+   the signature**. I searched the notes that cite the signature and not the
+   baseline's own environment record, and then wrote the absence up as a fact.
+   Found by the npnormalize session looking here after I told it it was better
+   placed to look.
+
+   Verified at the commit: **npmatch 0.0.0.9000** at `f14f1d9`, committed
+   2026-08-23T05:11Z, `Imports` of `data.table, parallel, stats, stringi,
+   stringr, tools, utils` — again no npnormalize, so pre-split on the evidence.
+   That matches the 2026-08-22 measurement date in
+   `GROUP-STRUCTURE-FINDINGS.md`.
+
+   **Only `v1-b42811fe6601afe6` is now undated**, and it has no commit anywhere:
+   it appears solely in matchdb's `build-baseline-2026-10.R` as the value
+   npmatch moved to after `v1-421e1e2a6afb024e`. Upstream now asserts its `NA`
+   in a test, so nobody interpolates it from the releases either side.
+
+   **The transferable lesson is about the two rows that were recoverable.** Both
+   were recovered because a run-time record wrote the signature and the identity
+   of what produced it *in the same breath* — `environment.txt` put the commit
+   three lines from the signature, and `BENCH-MD-REFERENCE.log` put
+   `npmatch@ddfd967` on the same line as it. The signature alone is not
+   provenance; it is a key with no table unless something recorded what produced
+   it at the same moment.
 
    **The granted part.** §6's `street_num` ask said the 59 wanted a fix one
    layer down rather than a third key spelling, and K3 was rejected here
