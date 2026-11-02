@@ -1175,28 +1175,34 @@ description).
   Finding 6's missing file is confirmed absent by `git ls-tree origin/main`, not
   by failing to find it locally.
 
-* **`dev/METRIC-SHAPES.md` cites this file, and that citation has gone stale in
-  the direction this file is about.** Its box at lines 26–50 says the audit is
-  "on a branch that was never pushed to `origin`" and that "none of it is on
-  `origin`, so a clone cannot see it and it survives only in this working copy".
-  That was true when written and is **no longer**: the branch is on `origin`,
-  and this merge is on it. The box also lists the audit's history as `159f4b3`,
-  `ecc8e9b`, `0d16fd1` and so predates `bd1b59c`, which corrected finding 4a —
-  the one framing that note's own author had supplied.
+* **`dev/METRIC-SHAPES.md`'s references to this file were dangling for about a
+  day, and then its correction of that went stale three times.** Settled now;
+  recorded because it is this file's own finding 6 happening to the note that
+  cited finding 6. See that file's box, *"This box records a defect in this file
+  that is now fixed"*, which carries the whole sequence.
 
-  The part that still holds is narrower and worth keeping: `FIGURE-PROVENANCE.md`
-  has never existed on `main`.
+  In outline: the audit was written in a sibling worktree and not pushed, so
+  three references to it resolved to no file. Pushing the branch falsified the
+  box's claim that it never had been. A superseding paragraph I added there
+  named a branch head and a file count that its own commit invalidated. Merging
+  #36 then falsified that paragraph's "has never existed on `main`" — which was
+  the one clause I had singled out as still holding. PR #37 collapsed the whole
+  stack to past tense, which is the right instrument and not the dated
+  correction I had reached for: **past tense about events cannot be falsified by
+  what happens next.**
 
-  **Corrected on this branch, on the user's authorization**, as a dated
-  superseding paragraph at the top of that box rather than a rewrite — the box
-  itself argues that a wrong claim is "worth recording rather than quietly
-  repairing", so both original paragraphs are left verbatim as the record and
-  the new one marks them as such. **This is the one place this audit edits a
-  file other than itself**, which is why it is called out here: the statements
-  were false, they were false specifically *about this branch*, and leaving them
-  on `main` when I could date them accurately would have been worse than the
-  rail against editing audited notes is worth. `METRIC-SHAPES.md` postdates the
-  sweep and is not among the notes audited.
+  That edit is **the one place this audit changed a file other than itself**,
+  made on the user's authorization and at the request of that file's owner, who
+  preferred the correction to land in the same diff as the push that caused it.
+  `METRIC-SHAPES.md` postdates the sweep and is not among the notes audited.
+
+  This bullet is written in the past tense for the reason above. Its earlier
+  version cited the box as "lines 26–50" — a line range into another file, which
+  is an identifier that moves, and #37 moved it. The rule against exactly that
+  was already stated in this file's closing section, *"an identifier that the
+  act of recording changes cannot be used to record it"*, and I had not applied
+  it here. Hence the heading-text citation above: it survives the next edit to
+  that file, which a range does not.
 
   `METRIC-SHAPES.md` is the **proposal-4 session's** file, created and
   maintained on its branches (`3d8e577`, `de4c27b`, `044b98d`, `e4197b9`,
@@ -1242,6 +1248,51 @@ description).
   measurement"). Every dollar figure in this audit is conditional on them.
 * **Figure-free claims.** Prose assertions with no number attached were not
   assessed, and a recommendation can be wrong without a wrong figure in it.
+
+* **Whether a quantity is what it is called.** This is the method's principal
+  limit and the one most likely to be mistaken for coverage it does not have:
+
+  > **A provenance audit establishes that a figure came from where it claims. It
+  > says nothing about whether the quantity is what it is called.**
+
+  Every class in this inventory is a statement about *origin* — which script
+  printed it, which log holds it, whether the prose rescaled it. A figure can
+  pass all of that and still be mislabelled at source, and then every downstream
+  check confirms the wrong thing faithfully.
+
+  **This is not hypothetical; it happened during the audit.**
+  `dev/COMPARE-BASELINES.log` decomposes the 10→10B clear-rate change and labels
+  one term "matching −1.30 pt", flagging in its own output that the published
+  **−0.17** headline is 7.7x smaller. I verified the provenance correctly — the
+  log holds those lines, `compare-baselines.R` prints them,
+  `BASELINE-2026-10B/MANIFEST.md` publishes only the net — and reported it as a
+  high-exposure finding. It is not one. That term is the change in the YES
+  *count*, which mixes matching with *which identities are present*, so on a
+  changing population it absorbs composition and reports it as matching. Joining
+  the two committed frames and restricting to the 4,481 identities present in
+  both gives matching at **−0.20 pt** on the active arm and **+0.04** on
+  augmented. There is no 1.3-point loss, the published figures are accurate, and
+  the warning was a false alarm. The note was right to omit it.
+
+  I checked that the figure came from where it said and never that it measured
+  what it was called — which is practice 4, the one this inventory applies to
+  every other table it reaches. Catching a mislabelled quantity requires
+  **recomputing it from a different direction**, a heavier instrument than
+  finding the script that printed it, and one this sweep does not carry
+  anywhere. A reader who takes the inventory as covering semantics will trust it
+  further than it reaches.
+
+  The assertion practices have the same boundary one level down, and it is worth
+  stating with them: `need_cols` proves a column exists, `need_levels` that a
+  level is populated, `need_rows` that a denominator is the size expected, a sum
+  check that the arithmetic closes. **None can tell you a quantity is not the
+  thing you named it**, and a mislabelled quantity passes all of them. The
+  demonstration is in `dev/METRIC-SHAPES.md`: transcribing that decomposition I
+  flipped the denominator term's sign, and the script's `stopifnot()` would have
+  caught my error on the first run because the terms no longer summed to the
+  headline. It caught nothing of the mislabelling, because those terms summed
+  perfectly. One guard, one error it stops dead and one it is structurally blind
+  to, in the same line of code.
 
 **What the counts are not.** 96 is the number of claims I classified, not the
 number in the repo, and the denominator of "11 class (c)" is my sweep rather than
