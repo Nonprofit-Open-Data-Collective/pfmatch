@@ -31,11 +31,29 @@ below before they were looked for.
 > existed on `main`. That is **the audit's own finding 6** (a recommendation
 > resting on `dev/GRANT-DOLLARS-FINDINGS.md`, "cited twice" and absent from the
 > repo) reproduced by the note that cited the finding, which is worth recording
-> rather than quietly repairing. What this file says about the audit's contents
-> is therefore unverifiable by a reader of this repository, and should be read
-> as attribution rather than as a citation. Its substantive results that bear on
-> the work below — the exposure ranking, the denominator ledger, findings 1, 2,
-> 4 and 9 — are restated here where they are used.
+> rather than quietly repairing. Its substantive results that bear on the work
+> below — the exposure ranking, the denominator ledger, findings 1, 2, 4 and 9
+> — are restated here where they are used, so nothing in this file depends on
+> reaching it.
+>
+> **A reader on this machine can nonetheless read it, and the first draft of
+> this box wrongly said otherwise.** The sessions on this project work in
+> `git worktree`s of one repository: `git rev-parse --git-common-dir` returns
+> the same `.git` from each, so they share one object store, and a commit one
+> session has made but not pushed is a reachable object from any of the others.
+> The audit is `dev/FIGURE-PROVENANCE.md` on `claude/figure-provenance-audit-50121f`,
+> whose history reads directly from here — `159f4b3` publishes it, `ecc8e9b`
+> corrects its `Rscript` caveat, `0d16fd1` withdraws two of its catalogue
+> candidates. **Unpushed is not unreachable when the sessions share a
+> checkout.** What is true is narrower and still worth saying: none of it is on
+> `origin`, so a clone cannot see it and it survives only in this working copy.
+>
+> This is the third unchecked claim about verifiability in this file's short
+> history — after `Rscript` and the dangling citation itself — and the shortest
+> to check of the three. The lesson is not about `git` but about the shape: a
+> statement that something *cannot be verified* licenses every unverified
+> verdict downstream, and is therefore the claim most worth spending a command
+> on, not least.
 
 > **Correction, and an embarrassing one for a note about unverified figures.**
 > The first two drafts of this file said `Rscript` "is not on this machine" and
