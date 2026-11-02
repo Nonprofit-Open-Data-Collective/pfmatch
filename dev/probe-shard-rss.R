@@ -110,7 +110,7 @@ say("reference: %s rows, loaded in %.0f s | working set now %.2f GB",
 
 DY <- readRDS(file.path(DD, "PF-DYADS-UNIFIED.rds"))
 ws_dy <- peak_ws()
-say("dyads: %s pairs | working set now %.2f GB (+%.2f)",
+say("dyads: %s pairs | working set now %.2f GB (%+.2f)",
     format(nrow(DY), big.mark = ","), ws_dy, ws_dy - ws_ref)
 
 # B2-token-concat is the single largest candidate producer -- 10.35M candidates

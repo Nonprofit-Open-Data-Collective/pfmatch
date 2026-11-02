@@ -21,6 +21,51 @@ This is what it does on 990-PF grants.
 recall out of nothing, it is deciding whether these get adjudicated or
 auto-accepted.
 
+> ### STALE — do not quote 121 or 4.3%, and this note has a missing cost column
+>
+> Added 2026-11-01 under issue #15 proposal 4 (`dev/METRIC-SHAPES.md`). Three
+> separate problems, in descending order of how much they change the reading.
+>
+> **1. The recommendation has no cost side, because the metric could not
+> produce one.** "121 YES matches exist only because of the floor" counts what
+> the floor won. `dev/probe-promotion-floor.R` has been changed to measure the
+> other direction too, and it is **not zero**: a re-run reports **6 YES
+> identities that exist only with the floor OFF** — selection moves, which a
+> `pmax` floor can cause by changing which pair `np_select()` picks. §5's
+> "Keep the floor. It carries 121 matches" has nothing to put them in. The net
+> move is **gained − cost**, not the gross count.
+>
+> **2. Neither 121 nor the table's 116 reproduces.** A re-run gives **109**
+> gained, 6 cost, net **+103**, with both tier arms moved: YES **2,821** with
+> the floor and **2,718** without, against this note's 2,814 and 2,698. The
+> audit question "is it 121 pairs or 116 identities?" therefore has a third
+> answer — *neither number reproduces today*.
+>
+> **3. The share's denominator moves with the setting under test.** "4.3% of
+> the tier" is denominated on the YES count *with* the floor, which the floor
+> itself inflates. On the re-run, 109 is 3.9% of the 2,821 with it or 4.0% of
+> the 2,718 without. The probe now prints both bases.
+>
+> **What survives.** The qualitative claim does: all 109 fall to **MAYBE**, not
+> NO, so the floor is deciding what gets adjudicated rather than creating
+> recall from nothing. The evidence profile keeps its shape too — state-only on
+> 108 of 109.
+>
+> **Why the drift cannot be attributed.** The re-run is at npmatch
+> **0.1.1.9000**; **this note records no npmatch version anywhere**, so there
+> is no way to tell version drift from an original error. The one thing that
+> *is* stable is the population: every tier table here and in the CORRECTION
+> sums to **4,920**, and so does the re-run. So the denominator held and the
+> scoring moved.
+>
+> **These figures were not re-derived in the session that wrote this box** —
+> they come from another session's run and are recorded as a staleness flag,
+> not as replacement values. Do not retype them into a recommendation; that is
+> catalogue defect 2's mechanism. Regenerate the whole section with
+> `Rscript dev/probe-promotion-floor.R` (cheap — it rescores stored pairs from
+> `data-dev/PF-MATCH-RESULT-1k.rds`, no re-blocking) and record the npmatch
+> version beside the output this time.
+
 Their evidence profile is stark:
 
 | geo evidence on the floor-dependent pairs | n | share |
@@ -120,6 +165,11 @@ fixes for ~80 unnecessary demotions.
 
 * **Keep the floor.** It carries 121 matches at ~85% precision, and without it
   they go to the adjudication queue rather than disappearing.
+  **→ 121 is stale (a re-run gives 109) and this bullet has no cost side: the
+  same re-run finds 6 YES that exist only with the floor off, for a net of
+  +103. See the STALE box in §1. The direction of the recommendation is not
+  obviously affected — all 109 still fall to MAYBE — but the number in it is
+  wrong and the tradeoff is unstated.**
 * **Ship `distinct_name_min_idf = 10`.** Cheap, targeted, four errors removed for
   one questionable demotion, and it is off for any caller that does not supply
   `token_idf`.
