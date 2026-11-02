@@ -1119,13 +1119,23 @@ description).
   The part that still holds is narrower and worth keeping: `FIGURE-PROVENANCE.md`
   has never existed on `main`.
 
-  I have **not** edited `METRIC-SHAPES.md` — it is another session's work and a
-  note this audit would be auditing. Recording it instead, because it is the
-  cleanest instance in the repo of the pattern below: that note set out to
-  document finding 6 reproducing itself, was careful enough to correct its own
-  first draft about reachability, and still went stale on the one fact it took
-  most trouble over, because the world moved under it. A figure that depends on
-  where a branch lives is a figure with a shelf life.
+  **Corrected on this branch, on the user's authorization**, as a dated
+  superseding paragraph at the top of that box rather than a rewrite — the box
+  itself argues that a wrong claim is "worth recording rather than quietly
+  repairing", so both original paragraphs are left verbatim as the record and
+  the new one marks them as such. **This is the one place this audit edits a
+  file other than itself**, which is why it is called out here: the statements
+  were false, they were false specifically *about this branch*, and leaving them
+  on `main` when I could date them accurately would have been worse than the
+  rail against editing audited notes is worth. `METRIC-SHAPES.md` postdates the
+  sweep and is not among the notes audited.
+
+  It is recorded at length because it is the cleanest instance in the repo of
+  the pattern below: that note set out to document finding 6 reproducing itself,
+  was careful enough to correct its own first draft about reachability, and still
+  went stale on the one fact it took most trouble over — because the world moved
+  under it, not because anyone was careless. A figure that depends on where a
+  branch lives is a figure with a shelf life.
 * **External prices.** `SEARCH_USD = 0.01`, the $0.10/$0.50 and $0.50/$2.50
   Haiku tiers and the $5.00/MTok cache-write rate are unverifiable inside the
   repo. Phase 4b flags this ("prices are list prices at the time of

@@ -24,6 +24,28 @@ behind a recommendation *and* would flatter if wrong) is the same ranking this
 work needed, and its Part 3 denominator ledger named three of the four changes
 below before they were looked for.
 
+> **Superseded 2026-11-01: the audit is on `origin` now, and a clone can see
+> it.** `claude/figure-provenance-audit-50121f` was pushed at the user's
+> instruction and stands at `5bba437`, with `main` through #34 merged into it, so
+> a pull request from it adds `dev/FIGURE-PROVENANCE.md` and nothing else. The
+> two paragraphs below are left exactly as written, because this file's own
+> standard is that a wrong claim is "worth recording rather than quietly
+> repairing" — but read them as a record, not as current fact. Three of their
+> statements are now false: that the branch "was never pushed to `origin`", that
+> "there is nothing here to open", and that "none of it is on `origin` … it
+> survives only in this working copy". Their history list also stops at
+> `0d16fd1`, so it predates `bd1b59c` — the commit that corrected the audit's
+> finding 4a, which is the framing this note's author supplied and then
+> retracted. What still holds, and is worth keeping: `dev/FIGURE-PROVENANCE.md`
+> has never existed on `main`, and the object-store point about worktrees is
+> right.
+>
+> That this box went stale on the single fact it took most trouble over is a
+> fourth instance of its own closing lesson, and the cleanest of them, because
+> nobody was careless — the world moved underneath it. A claim about where a
+> branch lives has a shelf life. That is a reason to date such a claim, not a
+> reason to avoid making it.
+
 > **That audit is not in this repository.** It was written as
 > `dev/FIGURE-PROVENANCE.md` on a branch that was never pushed to `origin`, so
 > there is nothing here to open and the three references to it in earlier drafts
