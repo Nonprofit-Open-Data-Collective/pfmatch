@@ -207,7 +207,7 @@ suite-box, `BOXWOOD LANE` and `BOXER ST` cases. The fixture-reproduction
 assertion is now **signature-gated**, the same way `test-variants.R`'s pinned
 block is, and currently skips.
 
-### 4.3 Rebuild the fixture — NOT DONE, and not a rebuild
+### 4.3 Rebuild the fixture — DONE three times since, caveat intact
 
 `data-raw/make-pf-variants.R` reads `data-dev/TRI-V2-MATCH.rds`, which was
 produced 2026-10-25 under the **old** normalizer. Running it now would stamp
@@ -218,6 +218,42 @@ prevent. So this waits on a triangulation re-run under the current normalizer,
 which `dev/PLACES-SYNC.md` §4.2 already records as a separate measurement pass.
 Until then the gated test skips with the rebuild instruction, and the 22 changes
 in §4.1 are what the rebuild should reproduce.
+
+**What happened instead, 2026-11-02.** The paragraph above argued for waiting;
+the fixture has since been rebuilt from the same old-normalizer match run three
+times — `46168d1` (npnormalize 0.1.4), `cbcecd3` (0.1.5) and now 0.1.6. The
+caveat is not withdrawn and the two reasons it was overridden are worth
+recording, because they are what makes the rebuild honest: the fixture's *keys*
+are recomputed by the current normalizer on raw text, so they are not stale; it
+is only the *pair selection* that came from a `v1-6dcb298522cc5118` run, which
+is a question about what the corpus contains, not about what it claims. And a
+stamp naming a normalizer the keys really were built under is strictly better
+than a gate that skips forever. The triangulation re-run in
+`dev/PLACES-SYNC.md` §4.2 is still what would settle composition.
+
+**The 0.1.6 rebuild, measured against the committed 0.1.5 fixture.** 5,410 rows
+× 58 columns, same row order, and **six cells differ**: `a_street_key` and
+`b_street_key` on rows 64, 3641 and 4312, all of them `PO DRAWER 2440` to
+`PO BOX 2440`. That is 0.1.6's box vocabulary reaching a drawer, and
+`street_key_equal` is TRUE on all three both before and after, so no pair's
+blocking behaviour moves. `unit_evidence` is identical across all 5,410 rows —
+`absent` 5,254, `one_sided` 121, `agree` 26, `conflict` 9, a perfectly diagonal
+crosstab. Every name and dba key, both zip5s and both states are untouched.
+
+**One prediction that did not come true, recorded because the reasoning was
+wrong rather than the measurement.** §4.1's single `one_sided` → `absent` pair
+was `100 CAMPUS CENTER BUILDING 86E`, blamed on `.np_unit_pat` lacking the
+spelled-out `BUILDING`. npnormalize has since fixed exactly that —
+`pf_street_unit("100 CAMPUS CENTER BUILDING 86E")` now returns `BLDG 86E` — so
+the pair was expected to move back. It did not, because it never had anywhere
+to move: the other side of that pair is a bare `100 CAMPUS CENTER`, which
+yields no unit under any normalizer, so one side holding a unit is `one_sided`
+whichever way the `BUILDING` question is answered. The fix is real and visible
+in `pf_street_unit()`; it is invisible in this corpus.
+
+Both gated blocks now run. `testthat::test_local()`: **400 passing, 0 failures,
+3 skips** — `test-reference.R:40`, `:63` and `:83`, all `{matchdb}` not
+installed. That is seven assertions more than the 393 the gate was hiding.
 
 ### 4.4 Regenerate the queue — NOT DONE
 
