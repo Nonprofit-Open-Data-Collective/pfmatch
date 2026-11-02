@@ -352,6 +352,25 @@ regression hard to attribute if several things move at once.
    `place_key` and discriminating by `street_unit_id` is the clean split
    pfmatch's hand-rolled version was groping toward.
 
+   **Measured 2026-11-02, and the switch is not only a merge.** The parity test
+   is written — `tests/testthat/test-addr-key.R`, 23 assertions — and it says
+   this step costs something the 22.7% figure above does not show. Over all
+   5,410 shipped pairs, each of which sits at one hand-rolled key by
+   construction, `np_addr_key(street_key, zip5)` **splits 92**:
+
+   | pairs | why | verdict |
+   |---:|---|---|
+   | 11 | one side is a box or mail-only (`PO BOX 2440`, `GENERAL DELIVERY`), which `np_addr_key()` blanks and the local `^P?O?BOX|^POST` regex let through | npmatch is right; these should never have grouped |
+   | 59 | the keys differ **only in spacing**: the hand-rolled `gsub("[^A-Z0-9]", "")` deleted every separator, so `70-11 150TH STREET` agreed with `7011 150TH STREET`; `street_key` keeps a space where the hyphen was (`70 11 150TH ST` against `7011 150TH ST`) | **a loss**, and Queens files both spellings |
+   | 22 | the keys differ by more than spacing — almost all a suite fused to the street word (`4550 WEST 77TH STREETSUITE 200`), which `.np_unit_pat`'s word boundary cannot split, so it survives inside `street_key` on one side only | npnormalize#7 §5, recorded upstream as intended |
+
+   So step 4 has to answer for the 59 before it ships. The cheapest answer is
+   probably to key on `gsub(" ", "", street_key)` rather than `street_key` —
+   normalized, suffix-contracted, suite-stripped, and separator-blind the way
+   the hand-rolled key accidentally was — but that is a third key spelling and
+   wants its own measurement over the BMF, not a decision made here. The test
+   pins all four counts, so whichever way it goes the change is visible.
+
    **Call npmatch's function; do not port it.** matchdb ported only because it
    needs SQL macros, and even then it pins the port with a parity test against
    `.np_addr_key()` on 4,000 random rows covering every PO-box spelling.
