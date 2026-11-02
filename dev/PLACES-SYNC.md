@@ -477,7 +477,11 @@ regression hard to attribute if several things move at once.
    them a house number followed by a bare numeric or single-letter street name
    that no rule can distinguish. That is the argument to cite. The 42.67% line
    is superseded and should not be quoted again — including from npnormalize's
-   code comment, which quotes this repo's 0.1.6 log for it.
+   code comment, which quotes this repo's 0.1.6 log for it. npnormalize#20
+   refreshes that comment to 1,886 / 322 / 17.07%, cites
+   `dev/ADDR-KEY-SPELLINGS-20261102.log`, and states in the same place that the
+   better trade does **not** carry the rejection on its own. Until #20 merges,
+   the released comment is the stale one.
 
    The parity test pins all four counts from the pair corpus, and this log
    pins the BMF figures, so a move in either shows up.
@@ -530,9 +534,13 @@ regression hard to attribute if several things move at once.
    separators, and for 20 of them that does not settle which street.**
 
    *Status of the upstream text, 2026-11-02:* the stronger wording is corrected
-   on local branches in npnormalize and matchdb that **are not pushed**, so
-   github still shows "none of them two different streets". Cite the corrected
-   form as pending, not as published.
+   in **[npnormalize#20](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/pull/20)**
+   — open, mergeable, blocked on five R-CMD-check platforms, branch
+   `fix/weaken-split-claim`, 11 files. `main` still carries "none of them two
+   different streets", so cite #20 rather than the released note, and cite it
+   as open rather than landed. Verified here against the PR's own diff, not
+   from the description: `NEWS.md`, `R/normalize.R`, `README.md`, the pkgdown
+   docs and `tests/testthat/test-address.R` (+23).
 
    **The refused part, and it is the half we should stop asking for.** The
    *narrow* version of K3 — allow a space only where the join wants a hyphen,
@@ -584,6 +592,14 @@ regression hard to attribute if several things move at once.
    the closed-up one, which `street_key` already merges, so it buys nothing we
    do not have. **Nothing here should be built on that remedy without
    measuring it first.**
+
+   The remedy is **removed** upstream in npnormalize#20, with this probe in its
+   place, and the asymmetry is pinned there as a test — `street_num is the
+   whole number on the hyphenated spelling only (#16)`, asserting
+   `c("7011", "70", "875A", "875")` and that the compass pair agrees on
+   `street_key` as well, so `street_num` buys nothing even there. Read off that
+   PR's diff. Until it merges, the released `NEWS.md` still offers the remedy,
+   which is the version a reader of the installed package sees.
 
    **One pair went the other way, and it is the same rule read backwards.**
    `875-A ISLAND DRIVE` now keys to `875A ISLAND DR` while the same address
