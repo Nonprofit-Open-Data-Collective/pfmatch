@@ -18,10 +18,24 @@ contradicts the design it measures, or whether it is floored, clamped, bucketed
 into adjectives, reported as a share whose denominator moves with the thing being
 measured, or summarised on one side only.
 
-`dev/FIGURE-PROVENANCE.md` was the input. Its Part 1 ranking (which figures sit
+A provenance audit of the repo's 96 numeric claims was the input, written the
+same day under issue #15's proposal 3. Its Part 1 ranking (which figures sit
 behind a recommendation *and* would flatter if wrong) is the same ranking this
 work needed, and its Part 3 denominator ledger named three of the four changes
 below before they were looked for.
+
+> **That audit is not in this repository.** It was written as
+> `dev/FIGURE-PROVENANCE.md` on a branch that was never pushed to `origin`, so
+> there is nothing here to open and the three references to it in earlier drafts
+> of this file were dangling citations — `dev/FIGURE-PROVENANCE.md` has never
+> existed on `main`. That is **the audit's own finding 6** (a recommendation
+> resting on `dev/GRANT-DOLLARS-FINDINGS.md`, "cited twice" and absent from the
+> repo) reproduced by the note that cited the finding, which is worth recording
+> rather than quietly repairing. What this file says about the audit's contents
+> is therefore unverifiable by a reader of this repository, and should be read
+> as attribution rather than as a citation. Its substantive results that bear on
+> the work below — the exposure ranking, the denominator ledger, findings 1, 2,
+> 4 and 9 — are restated here where they are used.
 
 > **Correction, and an embarrassing one for a note about unverified figures.**
 > The first two drafts of this file said `Rscript` "is not on this machine" and
@@ -34,13 +48,19 @@ below before they were looked for.
 > which Rscript   # → nothing, and I stopped there
 > ```
 >
-> The provenance audit had recorded the same thing ("`Rscript` is not on this
-> machine, so even the side-effect-free scripts could not be executed") and this
-> note inherited it without re-checking. That is the audit's own closing pattern
-> — a claim propagating to the note that quotes it — applied to a claim about
-> whether anything *could* be checked, which is worse than the figures it was
-> used to excuse. Every "not run" statement below has been re-examined and the
-> ones that were only true of `PATH` are now runs.
+> The provenance audit had recorded the same thing and this note inherited it
+> without re-checking — the audit's own closing pattern, a claim propagating to
+> the note that quotes it, applied to a claim about whether anything *could* be
+> checked, which is worse than the figures it was used to excuse. Every "not
+> run" statement below has been re-examined and the ones that were only true of
+> `PATH` are now runs.
+>
+> **The inheritance is the point, not the other note's error.** That author
+> found and corrected the same caveat independently, on their own branch, before
+> this was raised with them; and since that branch is not in this repository
+> (see above), nothing false on the subject is published anywhere a reader can
+> reach. The failure recorded here is wholly this file's: it repeated a claim
+> about the limits of verification without spending one command on it.
 
 Status of each change, after the correction above:
 
@@ -603,22 +623,36 @@ produces retractions is not being applied honestly. What did not survive is
 `PROMOTION-FLOOR-FINDINGS.md`'s 121 and its costless recommendation, found by
 change 3 and not predicted by it.
 
-**Two published figures move outside this work's reach.** The 0.1-point
-reference-arm gap is ~0.49 on change 1's base, and it sits in `R/pipeline.R`'s
-roxygen and `vignettes/matching-dictionaries.Rmd` — out of scope by instruction,
-and needing a pkgdown rebuild. `PROMOTION-FLOOR-FINDINGS.md`'s §1 and §5 are in
-scope and are flagged, but regenerating them needs a run and the npmatch version
-recorded beside it. Those two are the concrete work this note hands on.
+**Both published figures this work identified have since been corrected, by
+other hands.** They are recorded here because the point of the exercise was to
+find them, not to own them:
 
-**The audit's forward-looking pattern is not addressed here.**
-`dev/FIGURE-PROVENANCE.md` closes on the observation that a correction reaches
-the note where it was found and not the notes that quote the figure, and that
-practice 1's remedy — print the figure at point of use — would fix it. Change 1
+* **`PROMOTION-FLOOR-FINDINGS.md` §1 and §5** — regenerated in **#28**, with the
+  `main_only` cause named; the run logs behind them cited in **#30**.
+* **The 0.1-point reference-arm gap** in `R/pipeline.R`'s roxygen and
+  `vignettes/matching-dictionaries.Rmd` — corrected in **#31**, which puts all
+  three arms on the 4,868 in-scope base at 61.2 / 62.4 / 62.0 (YES+MAYBE
+  82.6 / 84.4 / 81.3), takes unified-over-active from +0.1 to **+0.49** and
+  augmented-to-active from +1.0 to **+0.72**, and rebuilds the site. Verified
+  against `dev/BENCH-MD-REFERENCE.log` here: 2981, 3040 and 3016 over 4,868 give
+  61.24%, 62.45% and 61.96%, and the two gaps follow. #31 also had to fix
+  `_pkgdown.yml`, because `pf_result_tiers()` shipped unindexed in #23 and
+  pkgdown would not build at all — a side effect of practice 5's accessor that
+  nobody predicted.
+
+So the shape-3 defect in change 1 moved three published figures and a shipped
+vignette, and every one of them is now on one denominator.
+
+**The audit's forward-looking pattern is not addressed here.** It closes on the
+observation that a correction reaches the note where it was found and not the
+notes that quote the figure, and that practice 1's remedy — print the figure at
+point of use — would fix it. Change 1
 takes one step in that direction by attaching the in-scope base to the saved
 artifact, so a downstream consumer can re-derive the right denominator instead of
 the convenient one. The rest of that work is practice 1's, not practice 7's.
 
 See also `dev/PLAUSIBLE-WRONG-NUMBERS.md` for the catalogue and the eight
-practices, `dev/FIGURE-PROVENANCE.md` for where the published figures come from,
-`dev/assert-lib.R` for practices 2–4 as code, and `R/report.R`'s
-`pf_result_tiers()` for practice 5's seam.
+practices, `dev/assert-lib.R` for practices 2–4 as code, and `R/report.R`'s
+`pf_result_tiers()` for practice 5's seam. The provenance audit this work was
+built on is not in the repository — see the note under "Metrics that cannot come
+out wrong" above.
