@@ -25,7 +25,8 @@
 # answer for the 49 before it ships.
 #
 # 2026-11-02, npnormalize 0.1.6 -> 0.1.8 (the join itself is #16 in 0.1.7; the
-# intermediate signature v1-59c6e84c5f38e9f5 was that release, and 0.1.8 is the
+# intermediate signature v1-59c6e84c5f38e9f5 was that release -- per
+# npnormalize's own signature registry, not inferred here -- and 0.1.8 is the
 # compass carve-out noted below). The headline was 92 splits of which 59 were a
 # loss, and the 10 that closed are all one class: the hyphenated house number.
 # Queens writes 70-11 and both spellings are filed. 0.1.6 turned the hyphen

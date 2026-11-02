@@ -508,6 +508,39 @@ regression hard to attribute if several things move at once.
    signature move, and the release notes are the only place the pieces are
    separable.
 
+   *Basis for that 0.1.7, upgraded.* It was an inference here — from `NEWS.md`'s
+   attribution plus the timing — and it is now sourced. npnormalize keeps a
+   signature-to-version registry, and it agrees:
+
+   | signature | npnormalize |
+   |---|---|
+   | `v1-3e7b9f9d59bbb19e` | 0.1.0, 0.1.1 (the value npmatch gave before the normalizer moved out) |
+   | `v1-6d90b52d8b781673` | 0.1.2 |
+   | `v1-592912060053c4c3` | 0.1.3 |
+   | `v1-1179714ce1e9d31f` | 0.1.4 |
+   | `v1-533f186c123357cf` | 0.1.5 |
+   | `v1-d49b18cc81ab79fb` | 0.1.6 |
+   | `v1-59c6e84c5f38e9f5` | **0.1.7** |
+   | `v1-5e901add4a04a5d6` | 0.1.8 |
+
+   **Two of these are confirmed from this repo's own data, independently of the
+   registry**, which is what makes the rest worth trusting: the superseded
+   `pf_variants` recorded `npnormalize 0.1.6` beside `v1-d49b18cc81ab79fb` in
+   its own attributes, and the current one records 0.1.8 beside
+   `v1-5e901add4a04a5d6`.
+
+   **Two limits on citing it.** It lives as a *comment* in npnormalize's
+   `tests/testthat/test-signature.R`, above a pin that asserts only the
+   **current** signature — so nothing stops the historical rows drifting from
+   the pin, and nothing can read them programmatically, which a provenance
+   header written by a script would need. And three signatures this repo has
+   recorded are **absent** from it, because they predate the split and came
+   from npmatch's own normalizer: `v1-421e1e2a6afb024e`
+   (`BASELINE-2026-08`), `v1-6dcb298522cc5118` (`R/pipeline.R`) and
+   `v1-b42811fe6601afe6` (named in matchdb's `build-baseline-2026-10.R`
+   header). The registry starts at 0.1.0 and cannot speak to those, so a figure
+   stamped with one of them is still undated as to normalizer version.
+
    **The granted part.** §6's `street_num` ask said the 59 wanted a fix one
    layer down rather than a third key spelling, and K3 was rejected here
    because only 410 of its 2,278 merges touched the hyphenated case. 0.1.7 made
