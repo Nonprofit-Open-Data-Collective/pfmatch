@@ -1,5 +1,5 @@
 # dev/compare-baselines.R
-# run 2026-11-02T06:01:08Z on branch 044b98d, R 4.5.1
+# run 2026-11-02T07:01:13Z on branch 3ab40c4, R 4.5.1
 
 ====================================================================================
 BASELINE-2026-10 (v1, undeduplicated)  vs  -10B (v2, deduplicated)
@@ -11,27 +11,27 @@ augmented  BASELINE-2026-10     4,842   3051   1057    734   63.01%   84.84%
 augmented  BASELINE-2026-10B    4,748   2982   1041    725   62.81%   84.73%
 ====================================================================================
 DELTA, v2 minus v1
-  active     identities   -93   clear -0.17 points   Y+M -0.09 points
-    of which matching -1.30 pt (YES -61 on 4,687) and denominator +1.13 pt
-    *** MASKED: the two terms oppose, and the denominator offsets
-    *** 87% of the matching move. The headline (-0.17) is 7.7x
-    *** smaller than the matching change (-1.30) underneath it.
-  augmented  identities   -94   clear -0.21 points   Y+M -0.11 points
-    of which matching -1.45 pt (YES -69 on 4,748) and denominator +1.25 pt
-    *** MASKED: the two terms oppose, and the denominator offsets
-    *** 86% of the matching move. The headline (-0.21) is 7.1x
-    *** smaller than the matching change (-1.45) underneath it.
 ====================================================================================
-The identity count falls because deduplication removed 97 of the 5,000
-sampled grants as superseded filings, and because identities are grants
-collapsed on normalized name+address, so the two do not fall in step.
+  active     identities   -93   clear -0.17 points   Y+M -0.09 points
+    MATCHING, on the 4,481 identities both hold : 56.97% -> 56.77%  -0.20 pt
+    COMPOSITION: 299 left (cleared 57.9%), 206 arrived (cleared 58.7%)
+    (headline and matching move agree in sign and size; no masking)
+  augmented  identities   -94   clear -0.21 points   Y+M -0.11 points
+    MATCHING, on the 4,598 identities both hold : 62.88% -> 62.92%  +0.04 pt
+    COMPOSITION: 244 left (cleared 65.6%), 150 arrived (cleared 59.3%)
+    (headline and matching move agree in sign and size; no masking)
+====================================================================================
+The identity set changes in both directions -- identities leave AND arrive
+-- because v2 re-keys some of them, so the net identity count understates
+how much of the population moved. That is why matching is measured on the
+intersection rather than inferred from the counts.
 
 Both `clear` columns above are YES over the RESULT FRAME -- these are
 saved benchmark frames and the in-scope identity count is not in them, so
 identities no pass retrieved for are missing from both numerator and
-denominator. The decomposition separates the population move from the
-matching move; it cannot recover the retrieval failures neither base
-counts. For that, read a run through pf_result_tiers() against x$in_scope
+denominator. Holding the identity set fixed removes the composition
+effect; it cannot recover the retrieval failures neither base counts. For
+that, read a run through pf_result_tiers() against x$in_scope
 (dev/bench-md-reference.R, dev/adjudicate-16-fuzzy-regress.R).
 wrote data-dev/BASELINE-COMPARISON.csv
 
