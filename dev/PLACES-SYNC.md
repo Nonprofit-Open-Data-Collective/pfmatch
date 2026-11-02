@@ -605,13 +605,16 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   for a value that cannot change, and cannot reach `share_min` /
   `unit_coverage_min` at all. The asymmetry with its three siblings looks like
   an oversight rather than a decision. See step 5a.
-* **Report the hyphenated house number: a space is inserted inside it, and
-  `street_num` keeps only the part before the hyphen.** Measured 2026-11-02
-  over `REF-augmented.rds`: **6,459 of 3,880,431 rows (0.166%)** carry one, and
-  they are not a curiosity — Queens (`77-06 BROADWAY`), Hawaii
+* ~~**Report the hyphenated house number: a space is inserted inside it, and
+  `street_num` keeps only the part before the hyphen.**~~ **Filed 2026-11-02 as
+  [npnormalize#16](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/issues/16).**
+  Measured over `REF-augmented.rds`: **6,459 of 3,880,431 rows (0.166%)** carry
+  one, and they are not a curiosity — Queens (`77-06 BROADWAY`), Hawaii
   (`91-400 KOMOHANA`, `41-1347 KALANIANAOLE HWY`, `73-4460 QUEEN KAAHUMANU
   HWY`) and Chicago ranges (`5830-5832 W LAWRENCE AVE`) all write addresses
-  this way. Two consequences:
+  this way. Kept here in summary because the ask is pfmatch's and the issue may
+  be closed with only part of it taken. **Three** consequences, not the two this
+  note first listed — writing the issue turned up the third:
 
   * `street_key` becomes `77 06 BROADWAY`, which does not block with the same
     address filed `7706 BROADWAY`. That is what the 59 splits in step 4 are
@@ -619,12 +622,21 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   * `street_num` is `77` for `77-06 BROADWAY` and `73` for
     `73-4460 QUEEN KAAHUMANU HWY` — a house number truncated at the hyphen,
     which anything keying or comparing on `street_num` inherits.
+  * `street_name` absorbs the remainder: `06 BROADWAY` for `77-06 BROADWAY`,
+    `4460 QUEEN KAAHUMANU HWY` for the Kona address, `11 150TH` for
+    `70-11 150TH STREET`. The street *name* is wrong, not merely truncated,
+    so anything comparing `street_name` is affected as well as the key. The
+    hyphen survives nowhere in the frame — no `street_key` or `street_num`
+    contains one.
 
   **Ask:** treat a hyphenated house number as one token — either strip the
   hyphen (`7706`) or keep it (`77-06`), consistently, and let `street_num`
-  carry the whole thing. pfmatch is not patching this locally; the measurement
-  says a local space-blind key costs more than it recovers (step 4), so the
-  fix belongs upstream or nowhere.
+  carry the whole thing while `street_name` starts at the real name. Stripping
+  is the choice that serves the filings, since it makes the two spellings one
+  key, which is the same reasoning as the USPS suffix contraction already
+  applied. pfmatch is not patching this locally; the measurement says a local
+  space-blind key costs more than it recovers (step 4), so the fix belongs
+  upstream or nowhere.
 * **Ask for `np_name_key()`, beside `np_addr_key()`.** There is no public
   single-vector name key: `np_name_core()`, `np_name_rules()`, `np_name_freq()`
   and `np_name_placeholder()` are exported, but a `name_key` can only be had by
