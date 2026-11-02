@@ -29,6 +29,7 @@ suppressWarnings(suppressMessages(library(data.table)))
 PF <- Sys.getenv("PFMATCH_DIR", ".")
 DD <- file.path(PF, "data-dev")
 source(file.path(PF, "dev", "adjudicate-lib.R"))
+source(file.path(PF, "dev", "assert-lib.R"))
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr  <- function() cat(strrep("=", 78), "\n")
@@ -76,7 +77,12 @@ if (nrow(bad))
   stop(sprintf("%d of %d rows pair verdicts about DIFFERENT filed names. The join is broken; do not read the numbers below.",
        nrow(bad), nrow(d)), call. = FALSE)
 say("join verified: %d rows, every pair the same filed name", nrow(d))
-a <- d[stratum_o == "A-estimation"]
+## The label is `A-estimation`, not `A`. Filtering on the short form returns an
+## empty frame rather than complaining (defect 7), so the level is proven to be
+## there before the filter runs and the kept denominator is printed.
+a <- keep_level(d, "stratum_o", "A-estimation",
+                what = "the only stratum that estimates a rate")
+need_rows(a, min = 1L, what = "stratum A")
 say("stratum A (the only stratum that estimates a rate): %d", nrow(a))
 
 ## ---- 1. the load-bearing number: recoveries --------------------------------
@@ -89,7 +95,7 @@ say("")
 # returns NULL, sum(NULL %in% TRUE) is 0, and the arm reads as having found
 # nothing whatever -- which is how the first version of this line was caught.
 # Asserted rather than trusted, because the failure is silent.
-stopifnot(!is.null(a$ein_in_ref_o), !is.null(a$ein_in_ref_h))
+need_cols(a, "ein_in_ref_o", "ein_in_ref_h", what = "recoveries, the load-bearing number")
 ro <- a$ein_in_ref_o %in% TRUE; rh <- a$ein_in_ref_h %in% TRUE
 say("  Opus  recoverable: %s  %s", pct(sum(ro), nrow(a)), ci(sum(ro), nrow(a)))
 say("  Haiku recoverable: %s  %s", pct(sum(rh), nrow(a)), ci(sum(rh), nrow(a)))
@@ -131,7 +137,7 @@ say("These are the vignette's breakdowns. If the cheap arm reproduces them the")
 say("published shares do not rest on the expensive model.")
 say("")
 for (v in c("entity_class", "bmf_expectation", "outside_reason", "miss_hypothesis")) {
-  stopifnot(!is.null(a[[paste0(v, "_o")]]), !is.null(a[[paste0(v, "_h")]]))
+  need_cols(a, paste0(v, c("_o", "_h")), what = sprintf("%s agreement", v))
   k <- kappa2(a[[paste0(v, "_o")]], a[[paste0(v, "_h")]])
   say("  %-18s n=%3d  agreement %5.1f%%  kappa %.3f", v, k[["n"]],
       100 * k[["agree"]], k[["kappa"]])
@@ -152,6 +158,15 @@ say("")
 # organisations without an exemption of their own, so the two measure different
 # things and the larger number is not a revision of the smaller one.
 say("  'the BMF should not list it', structural floor included:")
+# This is a NEGATED filter on one label, which is defect 6's exact shape: were
+# `LISTED` renamed upstream, every row would count as "should not list it" and
+# the share would read as 100% rather than erroring. Two guards, because the
+# negation is wrong in two different ways -- the label has to be real, and any
+# level the enum gains lands on the should-not side by default.
+need_levels(c(a$bmf_expectation_o, a$bmf_expectation_h), "LISTED",
+            what = "the structural-floor share")
+need_vocab(c(a$bmf_expectation_o, a$bmf_expectation_h),
+           c("LISTED", "NOT_LISTED", "UNCERTAIN"), what = "bmf_expectation")
 no_o <- sum(!(a$bmf_expectation_o %in% "LISTED")); no_h <- sum(!(a$bmf_expectation_h %in% "LISTED"))
 say("    Opus  %s  %s", pct(no_o, nrow(a)), ci(no_o, nrow(a)))
 say("    Haiku %s  %s", pct(no_h, nrow(a)), ci(no_h, nrow(a)))

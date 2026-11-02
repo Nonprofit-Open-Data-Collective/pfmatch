@@ -47,6 +47,7 @@ PF <- Sys.getenv("PFMATCH_DIR", ".")
 DD <- file.path(PF, "data-dev")
 suppressWarnings(suppressMessages(library(pfmatch)))
 suppressWarnings(suppressMessages(library(stringdist)))
+source(file.path(PF, "dev", "assert-lib.R"))
 
 GRANTS  <- Sys.getenv("PF_FZ_GRANTS", "^efv2_1k_grants_.*\\.csv$")
 CUTOFFS <- as.numeric(strsplit(Sys.getenv("PF_FZ_CUTOFFS", "0.95,0.90,0.85"), ",")[[1]])
@@ -61,8 +62,10 @@ hr(); say("FUZZY CUTOFF table on npmatch's own name_key"); hr()
 
 ## ---- 1. the 91 cases ------------------------------------------------------
 v <- as.data.table(readRDS(file.path(DD, "ADJ-NO-SCORED.rds")))
-a <- v[stratum == "A-estimation"]
-stopifnot(nrow(a) == 91L)
+need_cols(v, "stratum", "ein_in_ref", "bmf_expectation", what = "the 91 cases")
+a <- keep_level(v, "stratum", "A-estimation", what = "the estimation stratum")
+need_rows(a, n = 91L, what = "A-estimation cases, the denominator every share below uses")
+need_levels(a$bmf_expectation, "NOT_LISTED", what = "false offers by construction")
 hold  <- a[ein_in_ref %in% TRUE, .(grant_id, ein = pfmatch:::.pf_ein(ein))]
 notin <- a[bmf_expectation %in% "NOT_LISTED", .(grant_id)]
 say("%d cases; %d with an EIN the old reference held; %d judged NOT_LISTED",
