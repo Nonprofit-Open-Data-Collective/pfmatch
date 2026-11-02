@@ -8,7 +8,46 @@
 #   MD_ARM=augmented         the local bundle pfmatch has used so far
 #   MD_ARM=unified-observed  the matchdb tier closest to the augmented bundle
 #   MD_ARM=active-observed   the same without the inactive-BMF tranche -- the
-#                            default since this benchmark, which it won outright
+#                            default since this benchmark, on COST. The header
+#                            used to say it "won outright"; it did not. On the
+#                            run in dev/BENCH-MD-REFERENCE.log it is second on
+#                            clear rate (63.8% against unified-observed's
+#                            63.9%) and LAST on YES+MAYBE (83.8% against 86.4%
+#                            and 84.6%). What it wins is time -- 11.5 min
+#                            against 28.7 -- and that is the argument the
+#                            default actually rests on.
+#
+# THE CLEAR RATE IS ON THE IN-SCOPE BASE, NOT THE RESULT FRAME. The arms are
+# three different references, so they do not retrieve for the same identities,
+# and an identity no blocking pass produced a pair for is ABSENT from the
+# result frame rather than NO. A share denominated on the result frame
+# therefore shrinks its own denominator exactly where the arm failed, and can
+# rise while coverage falls -- which is the one outcome a reference comparison
+# has to be able to show. See the denominator section at the bottom.
+#
+# WHAT THE FIX DOES TO THE PUBLISHED FIGURES, recomputed from the YES counts
+# and result-frame identities this log already prints (2981/4749, 3040/4757,
+# 3016/4727) rather than from a re-run:
+#
+#   arm                result frame   in-scope base   change   no pair
+#   unified-observed      63.91%         62.45%       -1.46      111
+#   active-observed       63.80%         61.96%       -1.85      141
+#   augmented             62.77%         61.24%       -1.53      119
+#
+# THE ORDERING HOLDS. unified > active > augmented on both readings, and that
+# is robust: all three arms share one fixed base, so the ordering on it is just
+# the ordering of the YES counts. What moves is the GAP. On the result frame
+# unified leads active by 0.10 points -- but those two shares stand on 4,757
+# and 4,727, so active's smaller denominator is masking part of the difference.
+# On a shared base the gap is 24/N, about 0.49 points, roughly five times
+# larger and invariant to which fixed base is chosen.
+#
+# That 0.1-point figure is published in R/pipeline.R's roxygen and in
+# vignettes/matching-dictionaries.Rmd ("0.1 point for 275 hours"). Under this
+# base it is ~0.49. The 275-hour cost argument is untouched, so the default is
+# not in question -- but the tradeoff sentence understates the recall it gives
+# up by a factor of about five. Not corrected here: shipped docs and a pkgdown
+# rebuild are out of this script's scope.
 #
 #   PFMATCH_DIR=<checkout>  REF_CACHE=<augmented .rds>  OUT=<dir>  [GRANTS_DIR=<inputs>]
 #   [MATCHDB_CODE=<matchdb checkout, if not installed>]  [PF_BENCH_GRANTS=<pattern>]
@@ -26,6 +65,7 @@ suppressWarnings(suppressMessages({
     pkgload::load_all(Sys.getenv("MATCHDB_CODE"), quiet = TRUE, export_all = FALSE)
   devtools::load_all(PF, quiet = TRUE)
 }))
+source(file.path(PF, "dev", "assert-lib.R"))
 say <- function(...) message(sprintf(...))
 
 t0 <- proc.time()[["elapsed"]]
@@ -50,7 +90,38 @@ say("matched %s grants in %.1f min", format(nrow(grants), big.mark = ","),
 
 res <- as.data.frame(m$result); attr(res, "pairs") <- NULL
 tb  <- table(factor(res$tier, levels = c("YES", "MAYBE", "NO")))
-say("%-6s %6d  %5.1f%%", names(tb), as.integer(tb), 100 * as.integer(tb) / nrow(res))
-say("identities %d   clear rate %.1f%%   YES+MAYBE %.1f%%", nrow(res),
-    100 * tb[["YES"]] / nrow(res), 100 * (tb[["YES"]] + tb[["MAYBE"]]) / nrow(res))
+
+## ---- the denominator, which is the whole comparison -----------------------
+# The base is the in-scope identity count: a property of the grant file,
+# identical across the three arms, and unmoved by how well any of them
+# retrieves. Both readings are printed and the gap between them is named,
+# because that gap IS the coverage the arm lost and the result-frame reading
+# hides it. Conventions named on both sides (practice 5): pf_result_tiers() is
+# the result-frame side, x$in_scope the population that was submitted.
+scope   <- as.character(m$in_scope)
+tier    <- pf_result_tiers(m)
+no_pair <- setdiff(scope, names(tier))
+need_rows(length(scope), min = 1L,
+          what = "in-scope identities, the fixed base every share below uses")
+need_vocab(tier, c("YES", "MAYBE", "NO"),
+           what = "result-frame tiers; ABSENT is reported separately, not as a level")
+stopifnot(length(tier) == nrow(res), all(names(tier) %in% scope))
+
+say("%-6s %6d  %5.1f%%", names(tb), as.integer(tb),
+    100 * as.integer(tb) / length(scope))
+say("%-6s %6d  %5.1f%%   (in scope, no pair from any blocking pass)",
+    "ABSENT", length(no_pair), 100 * length(no_pair) / length(scope))
+say("in-scope identities %d   clear rate %.2f%%   YES+MAYBE %.2f%%",
+    length(scope), 100 * tb[["YES"]] / length(scope),
+    100 * (tb[["YES"]] + tb[["MAYBE"]]) / length(scope))
+say("  on the result frame instead (%d identities, the %d with no pair dropped):",
+    nrow(res), length(no_pair))
+say("  clear %.2f%%   YES+MAYBE %.2f%%   -- %.2f points higher, and that gap",
+    100 * tb[["YES"]] / nrow(res), 100 * (tb[["YES"]] + tb[["MAYBE"]]) / nrow(res),
+    100 * tb[["YES"]] / nrow(res) - 100 * tb[["YES"]] / length(scope))
+say("  widens as the arm retrieves less. Compare arms on the line above it.")
+# The base travels with the artifact. Saving the frame alone is what let the
+# result-frame denominator be re-derived downstream and the in-scope one not.
+attr(res, "in_scope") <- scope
+attr(res, "no_pair")  <- no_pair
 saveRDS(res, file.path(OUT, sprintf("BENCH-MDREF-%s.rds", ARM)), compress = "xz")

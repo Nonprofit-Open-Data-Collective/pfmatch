@@ -1,0 +1,143 @@
+# dev/probe-promotion-floor.R
+# run 2026-11-02T05:56:00Z on branch 044b98d
+# R 4.5.1, npmatch 0.1.1.9000, pfmatch 0.1.0, data.table 1.17.8
+# input data-dev/PF-MATCH-RESULT-1k.rds (hardlink to the main checkout's copy)
+
+-------------------------------------------------------------------------- 
+1. HOW MUCH OF THE YES TIER DEPENDS ON THE FLOOR? 
+-------------------------------------------------------------------------- 
+                           YES   MAYBE      NO 
+promotion ON (default)    2821    1006    1093 
+promotion OFF             2718     901    1301 
+
+YES identities that exist ONLY because of the floor: 109 
+  as a share of YES, which base matters: 3.9% of the 2821 YES WITH the floor, 
+  4.0% of the 2718 without it. The floor moves its own denominator, so the 
+  share is quoted on both bases rather than on whichever is flattering. 
+  of those, they fall to: YES=0  MAYBE=109  NO=0  OOS=0 
+  these are IDENTITIES (pf_status rows), not pairs. A pair count over the 
+  same set is larger and is not interchangeable with it. 
+
+YES identities the floor COSTS (YES only with it off): 6 
+  *** a pmax floor cannot lower a score, so these are selection moves: 
+  *** the floor raised a different pair past the one that was winning. 
+                              name with_floor                     bmf_with
+                            <char>     <char>                       <char>
+                   OHIO FOUNDATION      MAYBE                 OHIO SOCIETY
+ RUTGERS THE STATE UNIVERSITY OF N      MAYBE RUTGERS THE STATE UNIVERSITY
+          GEORGIA STATE UNIVERSITY      MAYBE GEORGIA STATE UNIVERSITY ATH
+           UC San Diego Foundation      MAYBE     U C SAN DIEGO FOUNDATION
+   Lakes Region Community Services      MAYBE LAKES REGION COMMUNITY SERVI
+ FAMILY AND CHILDREN'S ASSOCIATION      MAYBE FAMILY AND CHILDRENS ASSOCIA
+                  bmf_without
+                       <char>
+                   Ohio Lecet
+ RUTGERS THE STATE UNIVERSITY
+ GEORGIA STATE UNIVERSITY ATH
+     U C SAN DIEGO FOUNDATION
+ Lakes Region Charitable Auct
+ FAMILY AND CHILDRENS ASSOCIA
+
+YES both ways but on a DIFFERENT EIN: 0 of 2712 
+  The old section 1 counted these as no change. They are not: one of the 
+  two EINs is wrong and nothing downstream can tell which. 
+
+reconciliation: net YES move +103 = gained 109 - cost 6 = +103 
+MAYBE +105, NO -208 with the floor on -- a dependency count that does not 
+match where these identities land is a count over the wrong population. 
+-------------------------------------------------------------------------- 
+2. WHAT EVIDENCE DO THE FLOOR-DEPENDENT MATCHES ACTUALLY HAVE? 
+-------------------------------------------------------------------------- 
+geo evidence on the floor-dependent pairs: 
+  ZIP5 exact .......    0 (0%) 
+  ZIP3 only ........    1 (1%) 
+  state only .......  108 (99%) 
+  no geo at all ....    0 (0%) 
+
+name_freq (how many BMF records share the name) among promoted pairs: 
+
+ 1  2 
+96 13 
+-------------------------------------------------------------------------- 
+3. IS maxfreq = 3 THE RIGHT CUTOFF? 
+-------------------------------------------------------------------------- 
+across ALL scored pairs, YES rate by name_freq: 
+ name_freq     n pct_yes
+     <num> <int>   <num>
+         1  3911    62.7
+         2   345    44.1
+         3    87    57.5
+         4    46    60.9
+         5    29    44.8
+         6   309    40.8
+-------------------------------------------------------------------------- 
+4. A SAMPLE TO HAND-CHECK 
+-------------------------------------------------------------------------- 
+                              name         qcity    qst     qz
+                            <char>        <char> <char> <char>
+                NEIMAS BAIS YAAKOV       JACKSON     NJ  08527
+     Smiles for Seniors Foundation  Palm Springs     CA  92262
+                      TIDES CENTER   LOS ANGELES     CA  90088
+              GEORGIA FOREST WATCH       ATLANTA     GA  30303
+         Houston Ballet Foundation       Houston     TX  77219
+ CRISIS CENTER OF ANDERSON AND CHE     PALESTINE     TX  75802
+     DAWG NATION HOCKEY FOUNDATION  INDIAN HILLS     CO  80454
+ VERMONT POLICE CANINE ASSOCIATION     PITTSFORD     VT  05763
+                            YAFFED      NEW CITY     NY  10956
+           School Choice Wisconsin    Wast Allis     WI  53227
+       OREGON CONTEMPORARY THEATRE      PORTLAND     OR  97217
+ DAVID HOCHSTEIN MEMORIAL MUSIC SC       HONEOYE     NY  14471
+       NOAHS ARK ANIMAL RESCUE INC      GLENDALE     AZ  85306
+          CONGREGATION BETH ISREAL       HOUSTON     TX  77096
+            PROLIFE ACROSS AMERICA   MINNEAPOLIS     MN  55418
+           BEYOND ENTREPRENEURSHIP       ADDISON     TX  75001
+         FUTURE LEADERS OF AMERICA SANTA BARBARA     CA  93101
+        CONGREGATION AHAVAS SHALOM  FOREST HILLS     NY  11375
+ UNIVERSITY OF COLORADO FOUNDATION       BOULDER     CO  80309
+              FURNITURE SHAREHOUSE  WHITE PLAINS     NY  10604
+                     SIX FEET OVER       DETROIT     MI  48232
+            COVENANT HOUSE FLORIDA       ORLANDO     FL  32807
+    Anti-Racist Education Alliance     Baltimore     MD  21229
+                    PAISLEY'S PALS     GRAPEVINE     TX  76051
+                  START LIGHTHOUSE         BRONX     NY  10455
+                     RESOURCED INC   SAINT LOUIS     MO  63132
+       LIFTING HANDS INTERNATIONAL    Clearfield     UT  84016
+                      ST LOUIS ARC  CHESTERFIELD     MO  63005
+    NOVO CENTER FOR MARINE SCIENCE     SAUSALITO     CA  94965
+  CRIME PREVENTION RESEARCH CENTER      MISSOULA     MT  59801
+                              name         qcity    qst     qz
+                               bmf         bcity    bst     bz sc_on sc_off
+                            <char>        <char> <char> <char> <num>  <num>
+                NEIMAS BAIS YAAKOV      LAKEWOOD     NJ  08701   0.9  0.680
+     SMILES FOR SENIORS FOUNDATION       YUCAIPA     CA  92399   0.9  0.680
+                      TIDES CENTER SAN FRANCISCO     CA  94129   0.9  0.680
+               GEORGIA FORESTWATCH     DAHLONEGA     GA  30533   0.9  0.760
+         HOUSTON BALLET FOUNDATION       HOUSTON     TX  77002   0.9  0.680
+ CRISIS CENTER OF ANDERSON AND CHE  JACKSONVILLE     TX  75766   0.9  0.680
+     DAWG NATION HOCKEY FOUNDATION     LITTLETON     CO  80127   0.9  0.680
+ VERMONT POLICE CANINE ASSOCIATION         BARRE     VT  05641   0.9  0.680
+                            YAFFED      BROOKLYN     NY  11216   0.9  0.680
+           SCHOOL CHOICE WISCONSIN    BROOKFIELD     WI  53005   0.9  0.680
+       OREGON CONTEMPORARY THEATRE        EUGENE     OR  97401   0.9  0.680
+ DAVID HOCHSTEIN MEMORIAL MUSIC SC     ROCHESTER     NY  14614   0.9  0.680
+           NOAHS ARK ANIMAL RESCUE         MIAMI     AZ  85539   0.9  0.680
+          CONGREGATION BETH ISREAL   COLLEYVILLE     TX  76034   0.9  0.680
+            PROLIFE ACROSS AMERICA     ROSEVILLE     MN  55113   0.9  0.680
+           BEYOND ENTREPRENEURSHIP    MIDLOTHIAN     TX  76065   0.9  0.680
+         FUTURE LEADERS OF AMERICA   SANTA MARIA     CA  93456   0.9  0.680
+        CONGREGATION AHAVAS SHALOM      BROOKLYN     NY  11210   0.9  0.680
+ UNIVERSITY OF COLORADO FOUNDATION        DENVER     CO  80203   0.9  0.680
+              FURNITURE SHAREHOUSE     LARCHMONT     NY  10538   0.9  0.680
+                     SIX FEET OVER       LIVONIA     MI  48154   0.9  0.680
+            COVENANT HOUSE FLORIDA FT LAUDERDALE     FL  33304   0.9  0.680
+    ANTI RACIST EDUCATION ALLIANCE      COLUMBIA     MD  21045   0.9  0.680
+                     PAISLEYS PALS       ROANOKE     TX  76262   0.9  0.680
+                  START LIGHTHOUSE      NEW YORK     NY  10011   0.9  0.680
+                         RESOURCED   SPRINGFIELD     MO  65804   0.9  0.680
+       LIFTING HANDS INTERNATIONAL SALT LAKE CTY     UT  84104   0.9  0.680
+                   SAINT LOUIS ARC   SAINT LOUIS     MO  63132   0.9  0.680
+    NOYO CENTER FOR MARINE SCIENCE    FORT BRAGG     CA  95437   0.9  0.667
+  CRIME PREVENTION RESEARCH CENTER         BUTTE     MT  59701   0.9  0.680
+                               bmf         bcity    bst     bz sc_on sc_off
+
+# exit 0

@@ -58,6 +58,7 @@ setDTthreads(0)
 PF <- Sys.getenv("PFMATCH_DIR", ".")
 DD <- file.path(PF, "data-dev")
 TAG <- Sys.getenv("PF_NO_TAG", "")
+source(file.path(PF, "dev", "assert-lib.R"))
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr  <- function() cat(strrep("=", 78), "\n")
@@ -169,8 +170,11 @@ d[, cleared_web  := !is.na(ein) & ein_source %in% "WEB" & ein_in_ref %in% TRUE]
 d[, cleared_cand := !is.na(ein) & ein_source %in% "CANDIDATE" & ein_in_ref %in% TRUE]
 d[, cleared_any  := cleared_web | cleared_cand]
 
+need_levels(d$stratum, c("A-estimation", "B-calibration"), what = "the two strata")
+need_vocab(d$stratum, c("A-estimation", "B-calibration"), what = "stratum")
 A <- d[stratum == "A-estimation"]
 B <- d[stratum == "B-calibration"]
+need_rows(A, min = 1L, what = "stratum A, the only stratum that estimates a rate")
 
 hr(); say("1. RECOVERABLE -- how much of the NO tier has an EIN after all"); hr()
 say("Stratum A (%d cases, simple random from the %d-case NO tier) is the only",

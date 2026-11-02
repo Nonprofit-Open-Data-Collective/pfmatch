@@ -203,7 +203,7 @@ wholesale on the query side.
 
 Ordered by how quietly it fails.
 
-### 3a. `REF-augmented.rds` is not signature-stamped — fix this first
+### 3a. ~~`REF-augmented.rds` is not signature-stamped~~ — **done, and the gate fired for real on 2026-11-02**
 
 `pf_build_reference()` returns a plain
 `list(reference, name_freq, token_idf, ref_index, ...)`. The reference is
@@ -221,6 +221,31 @@ Checkpoints are safe: `.pf_run_stamp()` includes
 `npmatch::np_normalize_signature()` and `.pf_check_stamp()` refuses a mismatch.
 A *fresh* run against a stale reference sails straight through. Close that gap
 the same way — stamp the bundle, refuse a mismatch — before reinstalling.
+
+> **It was closed, and 2026-11-02 is the first time it earned its keep.** The
+> bundle is stamped and `pf_check_reference()` refuses a mismatch, so the
+> §4.2 triangulation re-run stopped ten minutes in — after drawing its 36,366
+> groups and preparing 91,104 identities, before a single batch was matched:
+>
+> ```
+> reference: REF-augmented.rds, 3,880,431 rows
+> Error: this reference bundle was built by a different normalizer.
+>   bundle:    v1-3e7b9f9d59bbb19e
+>   installed: v1-d49b18cc81ab79fb
+> ```
+>
+> Exactly the failure this section was written to prevent, caught at the cost
+> of ten minutes instead of a five-hour run whose keys came from two
+> normalizers at once.
+>
+> **The consequence for the plan, which §4.2 does not state:** after a
+> normalizer move, rebuilding the reference is a *prerequisite* for any match
+> run, not a parallel errand. `pf_reference()` returns an existing cache
+> untouched rather than rebuilding it, so the stale bundle has to be moved
+> aside first; `dev/REF-REBUILD.log` records the 2026-10-26 rebuild at 23.4
+> minutes and 2.83 GB, and keeps the outgoing bundle under a filename carrying
+> its normalizer. The chain is: rebuild the reference, re-run the
+> triangulation, then §4.3's fixture and §4.4's queue.
 
 ### 3b. `pf_parse_unit()` is superseded, and is wrong on two designators
 
@@ -364,12 +389,54 @@ regression hard to attribute if several things move at once.
    | 59 | the keys differ **only in spacing**: the hand-rolled `gsub("[^A-Z0-9]", "")` deleted every separator, so `70-11 150TH STREET` agreed with `7011 150TH STREET`; `street_key` keeps a space where the hyphen was (`70 11 150TH ST` against `7011 150TH ST`) | **a loss**, and Queens files both spellings |
    | 22 | the keys differ by more than spacing — almost all a suite fused to the street word (`4550 WEST 77TH STREETSUITE 200`), which `.np_unit_pat`'s word boundary cannot split, so it survives inside `street_key` on one side only | npnormalize#7 §5, recorded upstream as intended |
 
-   So step 4 has to answer for the 59 before it ships. The cheapest answer is
-   probably to key on `gsub(" ", "", street_key)` rather than `street_key` —
-   normalized, suffix-contracted, suite-stripped, and separator-blind the way
-   the hand-rolled key accidentally was — but that is a third key spelling and
-   wants its own measurement over the BMF, not a decision made here. The test
-   pins all four counts, so whichever way it goes the change is visible.
+   **Measured over the whole BMF, 2026-11-02 — and the answer is: adopt
+   `street_key`, accept the 59, do not invent a third key.**
+   `dev/measure-addr-key-spellings.R`, logged in `dev/ADDR-KEY-SPELLINGS.log`,
+   put all three spellings over `REF-augmented.rds`'s 3,880,431 rows with
+   `street_key` recomputed under npnormalize 0.1.6, because that file's
+   recorded column is stale (6 rows in a 50,000 sample, all of them the
+   `BUILDING` extraction or `PO DRAWER` → `PO BOX`).
+
+   *Corrected later the same day:* this paragraph first said the file was
+   *unstamped*, repeating §3a's old heading. It is **stamped**, at
+   `v1-3e7b9f9d59bbb19e`, and stale — which is why `pf_check_reference()` was
+   able to stop the §4.2 re-run cold. See the note under §3a. The recompute
+   was the right thing to do and for the right reason; only the word was
+   wrong.
+
+   | spelling | rows keyed | groups | rows per group |
+   |---|---:|---:|---:|
+   | K1 hand-rolled, `gsub("[^A-Z0-9]", "")` + `\|` + zip5 | 2,627,588 | 2,110,592 | 1.245 |
+   | K2 `np_addr_key(street_key, zip5)` | 2,628,491 | 1,941,116 | 1.354 |
+   | K3 `np_addr_key(gsub(" ", "", street_key), zip5)` | 2,628,961 | 1,939,261 | 1.356 |
+
+   Both box rules drop about the same third of the file: 1,252,843 rows for K1
+   (32.29%) against 1,251,940 for K2 (32.26%).
+
+   **K2 is the win the 22.7% figure promised, and the splitting is a corpus
+   artefact.** It merges 87,790 K1 groups (4.53%) and cuts the group count by
+   169,476 — 8.0% fewer groups over the same rows. It splits just 1,612 of
+   2,109,207 K1 groups, **0.08%**. The 92 splits in `pf_variants` are 1.7% of
+   that corpus because the corpus is *selected* for addresses with multiple
+   renderings; across the BMF the same behaviour is two orders of magnitude
+   rarer.
+
+   **K3 does not pay for itself.** It adds 2,278 merges, 0.12% of groups, and
+   972 of them — **42.67%** — join rows whose parsed `street_num` disagrees.
+   The examples are mixed in a way no reviewer could sort at that volume:
+   `110 04 ATLANTIC AVE` with `11004 ATLANTIC AVE` and `57C HOWARD RD` with
+   `57 C HOWARD RD` are right, while `4780 1 55 N` with `47801 55 N` is simply
+   wrong. A rule that fires on 0.12% of groups and is unreviewable in half of
+   those is a bad trade for 59 pairs.
+
+   **And K3 is aimed at the wrong target anyway.** Of its 2,278 merges only
+   **410** involve a hyphenated spelling meeting an unhyphenated one — the case
+   the 59 are made of. The other 1,864 are unrelated spacing noise, which is
+   where the wrong merges live. So the 59 want a fix one layer down, not a
+   third key: see the new `street_num` ask in §6.
+
+   The parity test pins all four counts from the pair corpus, and this log
+   pins the BMF figures, so a move in either shows up.
 
    **Call npmatch's function; do not port it.** matchdb ported only because it
    needs SQL macros, and even then it pins the port with a parity test against
@@ -569,6 +636,38 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   for a value that cannot change, and cannot reach `share_min` /
   `unit_coverage_min` at all. The asymmetry with its three siblings looks like
   an oversight rather than a decision. See step 5a.
+* ~~**Report the hyphenated house number: a space is inserted inside it, and
+  `street_num` keeps only the part before the hyphen.**~~ **Filed 2026-11-02 as
+  [npnormalize#16](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/issues/16).**
+  Measured over `REF-augmented.rds`: **6,459 of 3,880,431 rows (0.166%)** carry
+  one, and they are not a curiosity — Queens (`77-06 BROADWAY`), Hawaii
+  (`91-400 KOMOHANA`, `41-1347 KALANIANAOLE HWY`, `73-4460 QUEEN KAAHUMANU
+  HWY`) and Chicago ranges (`5830-5832 W LAWRENCE AVE`) all write addresses
+  this way. Kept here in summary because the ask is pfmatch's and the issue may
+  be closed with only part of it taken. **Three** consequences, not the two this
+  note first listed — writing the issue turned up the third:
+
+  * `street_key` becomes `77 06 BROADWAY`, which does not block with the same
+    address filed `7706 BROADWAY`. That is what the 59 splits in step 4 are
+    made of, and 410 such twin groups exist across the BMF.
+  * `street_num` is `77` for `77-06 BROADWAY` and `73` for
+    `73-4460 QUEEN KAAHUMANU HWY` — a house number truncated at the hyphen,
+    which anything keying or comparing on `street_num` inherits.
+  * `street_name` absorbs the remainder: `06 BROADWAY` for `77-06 BROADWAY`,
+    `4460 QUEEN KAAHUMANU HWY` for the Kona address, `11 150TH` for
+    `70-11 150TH STREET`. The street *name* is wrong, not merely truncated,
+    so anything comparing `street_name` is affected as well as the key. The
+    hyphen survives nowhere in the frame — no `street_key` or `street_num`
+    contains one.
+
+  **Ask:** treat a hyphenated house number as one token — either strip the
+  hyphen (`7706`) or keep it (`77-06`), consistently, and let `street_num`
+  carry the whole thing while `street_name` starts at the real name. Stripping
+  is the choice that serves the filings, since it makes the two spellings one
+  key, which is the same reasoning as the USPS suffix contraction already
+  applied. pfmatch is not patching this locally; the measurement says a local
+  space-blind key costs more than it recovers (step 4), so the fix belongs
+  upstream or nowhere.
 * **Ask for `np_name_key()`, beside `np_addr_key()`.** There is no public
   single-vector name key: `np_name_core()`, `np_name_rules()`, `np_name_freq()`
   and `np_name_placeholder()` are exported, but a `name_key` can only be had by
@@ -615,8 +714,11 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   so it skips while the fixture is stale.
 * `.pf_check_stamp()` refuses a checkpoint whose stamped normalizer differs.
 * `pf_check_reference()` stops on a reference bundle from a different
-  normalizer and warns on an unstamped one (§4.1). `REF-augmented.rds` is
-  currently in the warning case and will stay there until it is rebuilt.
+  normalizer and warns on an unstamped one (§4.1). ~~`REF-augmented.rds` is
+  currently in the warning case~~ — **it is in the stopping case, 2026-11-02:
+  stamped `v1-3e7b9f9d59bbb19e` against an installed `v1-d49b18cc81ab79fb`, so
+  it does not warn, it halts the run.** That is the tripwire paying for itself;
+  see the note under §3a for the transcript.
 * **Still missing:** nothing tells you that *matchdb* or *npmatch* moved. Both
   tripwires above fire only on a local reinstall. Checking
   `gh pr list --repo Nonprofit-Open-Data-Collective/npmatch` and matchdb's

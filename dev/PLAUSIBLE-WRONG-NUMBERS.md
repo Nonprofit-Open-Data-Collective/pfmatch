@@ -71,19 +71,28 @@ drift from the runs they describe — it prints all of them, with its inputs
 cited at point of use. A figure that cannot be re-derived by running a file is
 a figure nobody can check.
 
-**2. Assert the column, don't read it.** `stopifnot(!is.null(a$ein_in_ref_o))`
-at `dev/adjudicate-15-no-arms.R:92` converts the silent `NULL` of number 5
-into a stop. One line, and it is the only reason that join is trustworthy now.
+**2. Assert the column, don't read it.** `need_cols(a, "ein_in_ref_o")` at
+`dev/adjudicate-15-no-arms.R` converts the silent `NULL` of number 5 into a
+stop, and names the suffixed columns the frame does carry — which is the whole
+of that defect. One line, and it is the only reason that join is trustworthy
+now.
 
 **3. Assert the level before filtering on it.** Numbers 6 and 7 are the same
 mistake in two directions — a filter against a label that does not exist,
-matching everything or nothing. `stopifnot(all(x %in% known_levels))` or a
-printed `table()` of the column before use catches both.
+matching everything or nothing. `need_levels(x, "A-estimation")` stops on the
+label that is not there and prints the ones that are; `keep_level()` is that
+check and the filter in one line. `need_vocab()` is the other direction, for a
+level the enum gains that the code reading it does not mention.
 
 **4. Read the denominator.** Number 6 was caught by nothing cleverer than
 noticing that a table of "the cases the BMF should not hold" had 91 rows when
 that population is 57. The denominator is the cheapest integrity check
-available and it is free on every table.
+available and it is free on every table; `need_rows(a, n = 91L)` is it,
+asserted rather than read.
+
+These four live in `dev/assert-lib.R`, which is issue #15's proposal 1.
+`Rscript dev/assert-lib.R` reconstructs 5, 6 and 7 at their real sizes, prints
+the number each defect reported, and shows the guard stopping it.
 
 **5. Name the convention on both sides of a comparison.** Number 4's fix is one
 sentence of code and ten of comment: both sides now read the result frame, and

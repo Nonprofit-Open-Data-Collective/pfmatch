@@ -9,12 +9,71 @@
 #
 # The code comments cite ~97% reliability, but that was measured on the
 # SAM/USASpending training set. This asks what it does here.
+#
+# SECTION 1 USED TO REPORT ONE NUMBER, AND IT COULD ONLY FLATTER THE FLOOR.
+# "YES matches that exist ONLY because of the floor: N" counts what the floor
+# won and nothing it cost, so the floor could not come out of this script
+# looking worse than neutral. Three things are now measured beside it:
+#
+#   * the reverse direction -- identities that are YES only with the floor OFF.
+#     A score floor is a pmax, so it cannot lower a pair's score, but it CAN
+#     change which pair np_select() picks, and the selected pair's tier can
+#     then fall. This is the column that can embarrass the floor, so it is
+#     printed whether or not it is zero.
+#   * EIN churn -- identities YES under both settings but matched to a
+#     DIFFERENT EIN. The old count saw these as "no change". One of the two
+#     EINs is wrong and the pipeline cannot say which, so the floor repointing
+#     a cleared match is a cost even where the tier is unmoved. MEASURED AT
+#     ZERO (0 of 2,712 at npmatch 0.1.1.9000): a negative result, kept because
+#     a zero that was measured is a different claim from one nobody looked at.
+#   * gross against net -- the dependency count printed next to the net tier
+#     deltas it must reconcile with. A floor can only win YES, so the net move
+#     IS the gross count; two numbers that disagree mean one of them is over a
+#     different population (pairs rather than identities) and must say which.
+#
+# Both sides are read through pf_status(), the per-grant convention, where an
+# identity with no pair is NO rather than absent -- said once here because a
+# comparison across conventions is catalogue defect 4 (practice 5).
+#
+# WHAT THE RUN FOUND -- dev/PROMOTION-FLOOR-PROBE.log, npmatch 0.1.1.9000.
+# Two of the three new columns came back empty and one did not:
+#
+#   ON  2,821 / 1,006 / 1,093      OFF  2,718 / 901 / 1,301   (both sum 4,920)
+#   gained 109    cost 6    net +103 = 109 - 6     (reconciles)
+#   all 109 fall to MAYBE (YES 0  MAYBE 109  NO 0  OOS 0)
+#   EIN churn 0 of 2,712
+#   geo on the floor-dependent pairs: state only 108, ZIP3 only 1
+#
+# THE COST COLUMN IS THE ONE THAT PAID. Six YES identities exist only with the
+# floor OFF, and the mechanism is the MARGIN rather than the score: in four of
+# the six the floor keeps the same BMF record and still loses the YES, because
+# it lifted a runner-up to near-parity and np_tier() demotes when the margin
+# falls below min_margin (R/dyads.R "Collapse before selection";
+# R/match.R:287). So the floor's cost is the ties it manufactures -- the same
+# mechanism dev/ab-idf-gate.R sees with the opposite sign when REMOVING a
+# floored pair raises a margin from 0 and promotes MAYBE -> YES.
+#
+# The old one-number metric had no slot for any of that.
+# dev/PROMOTION-FLOOR-FINDINGS.md's recommendation read "Keep the floor. It
+# carries 121 matches at ~85% precision" with no cost side. The net is +103.
+#
+# The note's QUALITATIVE claim survives: all 109 land in MAYBE, so the floor is
+# deciding what gets adjudicated rather than creating matches from nothing.
+#
+# WHY THE OLD 121 DIFFERS: configuration, not drift or error. The CORRECTION's
+# own main_only row (2,821 / 1,006 / 1,093) reproduces EXACTLY here, which
+# rules out version drift; every tier table sums to 4,920, which rules out a
+# population change. Section 1 was measured before distinct_name_main_only,
+# which np_config() now defaults to TRUE. So it was not wrong, it was
+# unlabelled -- correct for a pipeline that no longer exists. That is why this
+# script's log records the npmatch version. Section 1 is regenerated from it.
 # ============================================================================
 suppressWarnings(suppressMessages(library(data.table)))
 PF  <- Sys.getenv("PFMATCH_DIR", ".")
 NPM <- Sys.getenv("NPMATCH_DIR", "../npmatch")
 suppressWarnings(suppressMessages(library(npmatch)))
 suppressWarnings(suppressMessages(devtools::load_all(PF, quiet = TRUE)))
+source(file.path(PF, "dev", "assert-lib.R"))
 say <- function(...) cat(sprintf(...), "\n")
 hr  <- function() cat(strrep("-", 74), "\n")
 
@@ -40,13 +99,76 @@ tb_off <- table(factor(off$st$status, pf_status_levels()))
 say("%-22s %7s %7s %7s", "", "YES", "MAYBE", "NO")
 say("%-22s %7d %7d %7d", "promotion ON (default)", tb_on[["YES"]], tb_on[["MAYBE"]], tb_on[["NO"]])
 say("%-22s %7d %7d %7d", "promotion OFF", tb_off[["YES"]], tb_off[["MAYBE"]], tb_off[["NO"]])
+
+# match() on an id the other arm does not carry yields NA, and
+# `"YES" & NA != "YES"` is NA, which which() drops -- so an identity that fell
+# out of one arm's status frame would be silently excluded from every count
+# below rather than counted as a change. Both arms rescore the SAME stored
+# pairs, so the id sets must be identical; assert it rather than rely on it.
 k <- match(on$st$grant_id, off$st$grant_id)
-dep <- which(on$st$status == "YES" & off$st$status[k] != "YES")
-say("\nYES matches that exist ONLY because of the floor: %d (%.1f%% of YES)",
-    length(dep), 100 * length(dep) / tb_on[["YES"]])
+stopifnot(!anyNA(k), setequal(on$st$grant_id, off$st$grant_id))
+need_rows(nrow(on$st), n = nrow(off$st),
+          what = "identities in both arms, the denominator every share below uses")
+need_vocab(c(on$st$status, off$st$status), pf_status_levels(),
+          what = "pf_status() vocabulary on both arms")
+off_st  <- off$st[k, , drop = FALSE]        # off, aligned to on, row for row
+on_yes  <- on$st$status  == "YES"
+off_yes <- off_st$status == "YES"
+
+dep <- which(on_yes & !off_yes)
+say("\nYES identities that exist ONLY because of the floor: %d", length(dep))
+say("  as a share of YES, which base matters: %.1f%% of the %d YES WITH the floor,",
+    100 * length(dep) / tb_on[["YES"]], tb_on[["YES"]])
+say("  %.1f%% of the %d without it. The floor moves its own denominator, so the",
+    100 * length(dep) / max(1L, tb_off[["YES"]]), tb_off[["YES"]])
+say("  share is quoted on both bases rather than on whichever is flattering.")
 say("  of those, they fall to: %s",
-    paste(sprintf("%s=%d", names(table(off$st$status[k][dep])),
-                  table(off$st$status[k][dep])), collapse = "  "))
+    paste(sprintf("%s=%d", names(table(off_st$status[dep])),
+                  table(off_st$status[dep])), collapse = "  "))
+say("  these are IDENTITIES (pf_status rows), not pairs. A pair count over the")
+say("  same set is larger and is not interchangeable with it.")
+
+# The companion columns. Each is printed whether or not it is zero: a column
+# that appears only when it is non-empty cannot be read as evidence that it was
+# measured, and the floor's cost is exactly what this section used to omit.
+cost_set <- which(!on_yes & off_yes)
+say("\nYES identities the floor COSTS (YES only with it off): %d", length(cost_set))
+if (length(cost_set)) {
+  say("  *** a pmax floor cannot lower a score, so these are selection moves:")
+  say("  *** the floor raised a different pair past the one that was winning.")
+  print(data.table(name = substr(on$st$recip_name[cost_set], 1, 33),
+                   with_floor = as.character(on$st$status[cost_set]),
+                   bmf_with = substr(on$st$bmf_name[cost_set], 1, 28),
+                   bmf_without = substr(off_st$bmf_name[cost_set], 1, 28)),
+        row.names = FALSE)
+} else say("  none -- the floor took nothing out of YES on this population.")
+
+both <- which(on_yes & off_yes)
+churn <- both[!is.na(on$st$ein[both]) & !is.na(off_st$ein[both]) &
+              on$st$ein[both] != off_st$ein[both]]
+say("\nYES both ways but on a DIFFERENT EIN: %d of %d", length(churn), length(both))
+say("  The old section 1 counted these as no change. They are not: one of the")
+say("  two EINs is wrong and nothing downstream can tell which.")
+if (length(churn))
+  print(head(data.table(name = substr(on$st$recip_name[churn], 1, 30),
+                        ein_with = on$st$ein[churn],
+                        bmf_with = substr(on$st$bmf_name[churn], 1, 26),
+                        ein_without = off_st$ein[churn],
+                        bmf_without = substr(off_st$bmf_name[churn], 1, 26)), 20),
+        row.names = FALSE)
+
+# Gross against net. A pmax floor can only add YES, so the net YES move must
+# equal gross gains minus gross losses; where it does not, one of the two
+# counts is over a different population and the figure must not be published
+# until it says which. This is the check that 121-against-116 needed.
+net <- tb_on[["YES"]] - tb_off[["YES"]]
+say("\nreconciliation: net YES move %+d = gained %d - cost %d = %+d",
+    net, length(dep), length(cost_set), length(dep) - length(cost_set))
+if (net != length(dep) - length(cost_set))
+  say("*** THESE DISAGREE. Do not publish either until the populations are named.")
+say("MAYBE %+d, NO %+d with the floor on -- a dependency count that does not",
+    tb_on[["MAYBE"]] - tb_off[["MAYBE"]], tb_on[["NO"]] - tb_off[["NO"]])
+say("match where these identities land is a count over the wrong population.")
 
 hr(); say("2. WHAT EVIDENCE DO THE FLOOR-DEPENDENT MATCHES ACTUALLY HAVE?"); hr()
 pr <- on$pairs
@@ -84,7 +206,10 @@ d <- data.table(name = substr(on$st$recip_name[s], 1, 33),
                 bmf = substr(on$st$bmf_name[s], 1, 33),
                 bcity = substr(on$st$bmf_city[s], 1, 14), bst = on$st$bmf_state[s],
                 bz = on$st$bmf_zip5[s],
-                sc_on = on$st$score[s], sc_off = off$st$score[k][s])
+                sc_on = on$st$score[s], sc_off = off_st$score[s])
 print(d, row.names = FALSE)
-saveRDS(list(dep_ids = on$st$grant_id[dep], on = on$st, off = off$st),
+saveRDS(list(dep_ids = on$st$grant_id[dep],
+             cost_ids = on$st$grant_id[cost_set],       # YES only without the floor
+             churn_ids = on$st$grant_id[churn],    # YES both ways, different EIN
+             on = on$st, off = off$st),
         file.path(PF, "data-dev", "PROMOTION-PROBE.rds"))

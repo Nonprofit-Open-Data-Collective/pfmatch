@@ -45,6 +45,7 @@
 suppressWarnings(suppressMessages(library(data.table)))
 PF <- Sys.getenv("PFMATCH_DIR", ".")
 DD <- file.path(PF, "data-dev")
+source(file.path(PF, "dev", "assert-lib.R"))
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr  <- function() cat(strrep("=", 78), "\n")
@@ -127,7 +128,9 @@ for (a in c("l", "n", "s"))
   d[[paste0(a, "_grade")]] <- grade(d[[paste0(a, "_verdict")]],
       d[[paste0(a, "_ein")]], d$target, d$correct_ein)
 B <- d[!is.na(target)]
+need_levels(d$stratum, "A-estimation", what = "the estimation stratum")
 A <- d[stratum == "A-estimation"]
+need_rows(A, min = 1L, what = "stratum A, the decomposition's denominator")
 
 ## ============================================================================
 h2("1. ACCURACY on the hand-adjudicated cases -- the decomposition")
@@ -228,7 +231,10 @@ csr <- adj_cost(sf$model[1], sum(sf$in_tokens), sum(sf$out_tokens),
                 sum(sf$cache_read), sum(sf$cache_write)) / nrow(sf)
 say("measured token cost per case")
 say("  deep, no search : $%.6f", cn)
-say("  deep, search    : $%.6f  (+%.0f%%), PLUS %.1f searches/case billed per use",
+# %+.0f%%, not "+%.0f%%": the question this ablation exists to answer is
+# whether search earns its cost, so the premium has to be able to print
+# negative. A hard-coded plus renders that case as "+-12%".
+say("  deep, search    : $%.6f  (%+.0f%%), PLUS %.1f searches/case billed per use",
     csr, 100 * (csr / cn - 1), mean(sf$searches, na.rm = TRUE))
 MB <- 1008713
 say("\nover the projected %s MAYBE identities, escalating 18%%:", format(MB, big.mark = ","))

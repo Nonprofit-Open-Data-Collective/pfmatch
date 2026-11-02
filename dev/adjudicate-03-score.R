@@ -49,6 +49,7 @@
 suppressWarnings(suppressMessages(library(data.table)))
 PF  <- Sys.getenv("PFMATCH_DIR", ".")
 DD  <- file.path(PF, "data-dev")
+source(file.path(PF, "dev", "assert-lib.R"))
 TAG <- Sys.getenv("PF_ADJ_TAG", "")
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
@@ -179,8 +180,11 @@ grade <- function(verdict, ein, target, correct) {
 d[, l_grade := grade(l_verdict, l_ein, target, correct_ein)]
 d[, d_grade := grade(d_verdict, d_ein, target, correct_ein)]
 
+need_levels(d$stratum, c("A-estimation", "B-calibration"), what = "the two strata")
 A <- d[stratum == "A-estimation"]
 B <- d[stratum == "B-calibration" & !is.na(target)]
+need_rows(A, min = 1L, what = "stratum A, which every rate below is computed over")
+need_rows(B, min = 1L, what = "stratum B")
 
 ## ============================================================================
 h2("(a) ABSOLUTE ACCURACY on the hand-adjudicated cases -- the gate")
@@ -289,7 +293,18 @@ poststrat <- function(sub, pool) {
     var <- var + TIE_W[[lv]]^2 * p * (1 - p) / nrow(pl)
   }
   se <- sqrt(var); z <- qnorm(0.975)
-  c(est = est, lo = max(0, est - z * se), hi = min(1, est + z * se), se = se)
+  # This is a NORMAL interval, not Wilson: the post-stratified estimator is a
+  # weighted sum and has no Wilson form. A normal interval on small strata can
+  # run outside [0,1], and `max(0, .)` / `min(1, .)` used to absorb that
+  # silently -- which is the one thing the clamp must not do. An interval that
+  # needed clamping is an interval whose approximation has failed, and the
+  # clamped version reads as tighter and better behaved than the measurement
+  # is. So the raw bounds are carried alongside the clamped ones and the caller
+  # says when they differ. (Wilson, used everywhere else in this file, is
+  # analytically inside [0,1]; its clamps cannot bite and are left alone.)
+  raw_lo <- est - z * se; raw_hi <- est + z * se
+  c(est = est, lo = max(0, raw_lo), hi = min(1, raw_hi), se = se,
+    raw_lo = raw_lo, raw_hi = raw_hi)
 }
 if (!any(is.na(TIE_W))) {
   say("\ntie-adjusted clearance (post-stratified on the tier's %.1f%% / %.1f%% tie split;",
@@ -304,6 +319,16 @@ if (!any(is.na(TIE_W))) {
     say("  %-14s : %.1f%% (95%% CI %.1f-%.1f)   raw %.1f%%, shift %+.1f pt", nm,
         100 * ps[["est"]], 100 * ps[["lo"]], 100 * ps[["hi"]],
         100 * raw[["est"]], 100 * (ps[["est"]] - raw[["est"]]))
+    # Say so when the clamp bit. The published interval is then narrower than
+    # the estimator produced, and the reason is that a normal interval on these
+    # strata has run off the end of the scale -- which is a statement about n,
+    # not about the clearance rate.
+    if (ps[["raw_lo"]] < 0 || ps[["raw_hi"]] > 1) {
+      say("  %-14s   *** CLAMPED: unclamped CI is %.1f-%.1f. The normal", nm,
+          100 * ps[["raw_lo"]], 100 * ps[["raw_hi"]])
+      say("  %-14s   *** approximation has failed at this n -- read the width", nm)
+      say("  %-14s   *** as a statement about n, not about the clearance rate.", nm)
+    }
   }
   say("  by tie class, any MATCH:")
   for (lv in c("TRUE", "FALSE")) {
@@ -332,7 +357,9 @@ say("\nwhat that does to the benchmark's clear rate (4,748 identities, 2,979 YES
 for (nm in c("any MATCH", "medium+ conf", "+ confirmed")) {
   e <- est_for(nm); w <- e$w
   add <- 1044 * w[["est"]]
-  say("  %-14s : %.2f%% -> %.2f%%  (+%.2f points, CI +%.2f to +%.2f)  [%s]", nm,
+  # %+.2f, not "+%.2f": a hard-coded plus renders a negative delta as "+-0.50"
+  # and a reader skims past it. The sign belongs to the number.
+  say("  %-14s : %.2f%% -> %.2f%%  (%+.2f points, CI %+.2f to %+.2f)  [%s]", nm,
       100 * 2979 / 4748, 100 * (2979 + add) / 4748, 100 * add / 4748,
       100 * 1044 * w[["lo"]] / 4748, 100 * 1044 * w[["hi"]] / 4748, e$lab)
 }

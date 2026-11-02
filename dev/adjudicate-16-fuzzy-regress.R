@@ -35,6 +35,7 @@ PF <- Sys.getenv("PFMATCH_DIR", ".")
 DD <- file.path(PF, "data-dev")
 suppressWarnings(suppressMessages(library(pfmatch)))
 suppressWarnings(suppressMessages(library(stringdist)))
+source(file.path(PF, "dev", "assert-lib.R"))
 
 # The same default as dev/adjudicate-10-no-packet.R's PF_ADJ_GRANTS. A
 # regression has to run on the file the baseline was measured on; a different
@@ -146,8 +147,16 @@ print(table(st0$status, useNA = "ifany"))
 # means absent before and after, and out-of-scope identities are excluded
 # rather than relabelled. pf_status() is still printed, because the tier counts
 # a reader will recognize are the ones above.
-r0 <- as.data.frame(m$result)
-base_tier <- stats::setNames(as.character(r0$tier), as.character(r0$.id))
+#
+# pf_result_tiers() is that choice made out loud, and it is why this line no
+# longer spells the convention out by hand: two calls to the same accessor say
+# at the call site that both sides agree on what absence means. It asserts
+# `.id` and `tier` itself, so the column guard lives there now.
+base_tier <- pf_result_tiers(m)
+# Every movement count below names its tiers literally. A tier the result frame
+# gains and this script does not mention would be excluded from all of them at
+# once, leaving a movement table that still adds up over a smaller universe.
+need_vocab(base_tier, c("YES", "MAYBE", "NO"), what = "result-frame tier")
 scope <- as.character(m$in_scope)
 yes0 <- names(base_tier)[base_tier == "YES"]
 say("\nbaseline: %s YES, %s in-scope identities not YES (of which %s have no pair at all)",
@@ -163,6 +172,12 @@ for (f in c("ADJ-NO-SCORED.rds", "ADJ-NO-SCORED-haiku.rds")) {
   p <- file.path(DD, f)
   if (!file.exists(p)) next
   v <- as.data.table(readRDS(p))
+  # Three clauses, each one a label this script spells out by hand, and a
+  # target set that silently empties if any of the three is misremembered --
+  # which would report the fuzzy pass as reaching none of the LLM's EINs.
+  need_cols(v, "ein_in_ref", "ein_source", "stratum", what = sprintf("target set from %s", f))
+  need_levels(v$ein_source, "WEB", what = sprintf("WEB-sourced EINs in %s", f))
+  need_levels(v$stratum, "A-estimation", what = sprintf("estimation stratum in %s", f))
   v <- v[ein_in_ref %in% TRUE & ein_source %in% "WEB" & stratum == "A-estimation",
          .(grant_id, ein, arm = if (grepl("haiku", f)) "haiku" else "opus")]
   target <- rbind(target, v)
@@ -182,7 +197,7 @@ for (cut in CUTOFFS) {
   el <- proc.time()[["elapsed"]] - t0
   say("  %.1f s  (%.2f%% of the %.0f s match it supplements)", el, 100 * el / t_match, t_match)
 
-  new_tier <- setNames(as.character(fr$result$tier), as.character(fr$result$.id))
+  new_tier <- pf_result_tiers(fr)
   # The universe is the in-scope identities, so an identity with no pair before
   # AND no pair after appears as ABSENT -> ABSENT and is visible as a
   # non-movement rather than invisible. Out-of-scope identities are not here at
@@ -190,6 +205,8 @@ for (cut in CUTOFFS) {
   ids <- scope
   bt  <- ifelse(is.na(base_tier[ids]), "ABSENT", base_tier[ids])
   at  <- ifelse(is.na(new_tier[ids]),  "ABSENT", new_tier[ids])
+  need_vocab(c(bt, at), c("YES", "MAYBE", "NO", "ABSENT"),
+             what = "tier vocabulary, ABSENT injected for no-pair identities")
 
   # The independent re-check. pf_fuzzy_recover() stops on this itself; a guard
   # that only the guarded code tests is not a guard.

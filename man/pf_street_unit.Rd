@@ -38,7 +38,7 @@ field, and npmatch's bare-identifier path reads each as a unit id. The
 digit requirement is pfmatch's, and it is why it belongs on the bare path
 only: \verb{SUITE B} is a real suite with no digit in it.
 \item \strong{A box number at a box street.} At \verb{211 EMMET STREET SOUTH PO BOX}, the
-\code{400891} on line 2 is a box, not a door. See \code{.PF_BOX_RE}.
+\code{400891} on line 2 is a box, not a door. See \code{\link[npnormalize:np_tokenize]{npnormalize::np_has_box()}}.
 }
 }
 \seealso{
