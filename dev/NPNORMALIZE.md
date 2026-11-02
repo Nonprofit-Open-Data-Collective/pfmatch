@@ -93,11 +93,12 @@ was not the address key this note expected but the box flag — a function that
 exists only in npnormalize, that npmatch does not re-export, and that was added
 upstream for this consumer.
 
-**Branch note.** `99fdf70` reached `main` through pfmatch#17 and is *not* on
-`maybe-tier-adjudication`. On this branch `DESCRIPTION` still has no
-npnormalize line and `R/unit.R` still carries `.PF_BOX_RE`, so the paragraph
-above describes `main`, not the working tree you are reading it in. It becomes
-true here when main is merged.
+~~**Branch note.**~~ **Resolved 2026-11-02.** This note previously warned that
+`99fdf70` was on `main` only, so the paragraph above described `main` rather
+than the tree it was being read in. `main` has since been merged here
+(`325a4e5`, which is also pfmatch#19 carrying this note into main), so
+`DESCRIPTION` has the npnormalize line and `R/unit.R` calls `np_has_box()` on
+every branch that matters.
 
 ## `np_addr_key()` takes a street key, not a street
 
@@ -174,11 +175,15 @@ was pfmatch's report of five unit-extraction defects. Measured again on 0.1.6:
 
 ## To reproduce results from before the move
 
-The signature has moved twice: the fixtures pin `v1-6dcb298522cc5118`, the
-first post-extraction reading was `v1-3e7b9f9d59bbb19e`, and the installed
-normalizer is now `v1-d49b18cc81ab79fb`. None of these is a value to quote
-forward — read it. The pre-move restore points, both at
-`v1-3e7b9f9d59bbb19e`:
+Four readings so far, in order: `v1-6dcb298522cc5118` (what the fixtures were
+originally built under), `v1-3e7b9f9d59bbb19e` (the first post-extraction
+reading), `v1-533f186c123357cf` (npnormalize 0.1.5, which `cbcecd3` re-pinned
+the fixtures to), and `v1-d49b18cc81ab79fb` — npnormalize 0.1.6, what is
+installed. So the fixture gate is firing again, one version behind rather than
+three generations: `test-unit.R:182` and `test-variants.R:147` skip with
+*"normalizer moved … rebuild with `data-raw/make-pf-variants.R`"*, which is
+still outstanding. None of these is a value to quote forward — read it. The
+pre-move restore points, both at `v1-3e7b9f9d59bbb19e`:
 
 ```r
 renv::install("Nonprofit-Open-Data-Collective/npmatch@v0.1.1")
