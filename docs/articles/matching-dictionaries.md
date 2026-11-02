@@ -190,31 +190,48 @@ from the same runs.
 
 | arm                      | rows      | load    | match    | identities | clear rate | YES+MAYBE |
 |:-------------------------|:----------|:--------|:---------|:-----------|:-----------|:----------|
-| BMF augmented (local)    | 3,891,187 | 1.3 min | 23.2 min | 4,749      | 62.8%      | 84.6%     |
-| matchdb unified-observed | 5,136,818 | 7.1 min | 28.7 min | 4,757      | 63.9%      | 86.4%     |
-| matchdb active-observed  | 2,890,597 | 3.2 min | 11.5 min | 4,727      | 63.8%      | 83.8%     |
+| BMF augmented (local)    | 3,891,187 | 1.3 min | 23.2 min | 4,749      | 61.2%      | 82.6%     |
+| matchdb unified-observed | 5,136,818 | 7.1 min | 28.7 min | 4,757      | 62.4%      | 84.4%     |
+| matchdb active-observed  | 2,890,597 | 3.2 min | 11.5 min | 4,727      | 62.0%      | 81.3%     |
 
-The clear rate is **YES over identities**. YES+MAYBE is not a clear
-rate: there is no safe automatic acceptance of the MAYBE tier.
+The clear rate is **YES over the 4,868 in-scope identities**, which is
+the same denominator for all three arms. It is deliberately *not* YES
+over the `identities` column: that column counts the identities each arm
+found a pair for, so an arm that retrieves less gets a smaller
+denominator and its share can rise while its coverage falls — the one
+thing a comparison of references has to be able to show. Earlier
+versions of this vignette quoted the per-arm reading (62.8% / 63.9% /
+63.8%); the figures below are on the shared base. YES+MAYBE is not a
+clear rate either way: there is no safe automatic acceptance of the
+MAYBE tier.
 
 Two results, and the second is the one that changes a decision.
 
-**matchdb beats the augmented BMF by about a point** — 63.8% or 63.9%
-against 62.8%. Some of that is the wider variant set, some is the newer
-e-file vintage; the arms cannot separate them.
+**matchdb beats the augmented BMF, by about a point for
+`unified-observed` and by rather less for `active-observed`** — 62.4%
+and 62.0% against 61.2%. Some of that is the wider variant set, some is
+the newer e-file vintage; the arms cannot separate them.
 
 **`active-observed` is half the cost of the augmented BMF and still
 better.** 11.5 minutes against 23.2, with 2.89M rows against 3.89M, for
-+1.0 point. Dropping the inactive tranche removes most of the rows, most
-of the runtime and most of the candidate noise, and costs nothing at the
-YES tier. `unified-observed` buys 0.1 point more for two and a half
-times the match time.
++0.72 point. Dropping the inactive tranche removes most of the rows,
+most of the runtime and most of the candidate noise, and costs nothing
+at the YES tier. `unified-observed` buys 0.49 point more for two and a
+half times the match time — a gap four to five times the +0.1 the
+per-arm reading showed, because `active-observed` has the fewest pairs
+of the three and so gained the most from being scored on its own
+denominator.
 
 For the current normalizer, the two local arms are frozen as
-`BASELINE-2026-10C`: 56.90% clear on `REF-active.rds` (1,924,822 rows)
-and 62.74% on `REF-augmented.rds` (3,880,431 rows), over 4,687 and 4,748
-identities. So the **active-only BMF gives up 5.8 points** against the
-augmented one, which is the span the alias rows cover.
+`BASELINE-2026-10C`, on the same `efv2_1k` population: 2,667 YES on
+`REF-active.rds` (1,924,822 rows) and 2,979 on `REF-augmented.rds`
+(3,880,431 rows), which on the shared base are **54.8%** and **61.2%**.
+So the **active-only BMF gives up 6.4 points** against the augmented
+one, which is the span the alias rows cover. The manifest reports those
+arms per-arm instead — 56.90% over 4,687 identities and 62.74% over
+4,748, a span of 5.8 — and the difference between 5.8 and 6.4 is the
+same denominator effect: the active arm finds pairs for 61 fewer
+identities, so dividing by its own count flatters it.
 
 <div class="section level3">
 
@@ -234,6 +251,13 @@ run (`dev/EXP-HEAD-REFERENCE.log` addendum 3):
 | BMF run alone      |        — | 61.18%                      |      — |
 | `accept = "agree"` |       42 | 61.18% → **62.08%** (+0.90) |     64 |
 | `accept = "all"`   |      106 | 61.18% → 63.44% (+2.26)     |      0 |
+
+These rows are on the **recipient-identity unit of 4,683**, not the
+4,868 in-scope base the dictionary arms above use, and they have not
+been reconciled to it: the unit differs rather than the cut, so
+re-dividing by 4,868 would mix two populations rather than fix a
+denominator. The `+0.90` and `+2.26` rows of the trade-off table carry
+the same caveat and are the only rows in it not on the shared base.
 
 1,818 unresolved identities were retried and 106 cleared; 42 of those
 agreed with the EIN the BMF reference had already surfaced as its own
