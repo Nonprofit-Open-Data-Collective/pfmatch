@@ -337,6 +337,77 @@ regression hard to attribute if several things move at once.
    bundle rather than the kept one. `REF-active.rds`, `REF-unified.rds` and
    `REF-augmented-collapsed.rds` are all still on the old normalizer and
    unstamped.
+
+   **Done a second time, 2026-11-02**, because the normalizer moved again
+   (npnormalize 0.1.6, `v1-d49b18cc81ab79fb`). 23.2 min, 3,880,431 rows
+   unchanged, 2.90 GB, `ref$normalizer` matching the installed signature and
+   `pf_check_reference()` passing, with recovery keys (`name_acro`, `name_pre`,
+   `name_is_acro`) present. Log: `dev/REF-REBUILD-20261102.log`. The outgoing
+   bundle is kept as `REF-augmented-v1-3e7b9f9d59bbb19e.rds`. Note for whoever
+   does this a third time: `pf_reference()` returns an existing cache untouched
+   rather than rebuilding it, so the stale bundle must be moved aside first,
+   and the stamp lives at `ref$normalizer` — not in `ref$stamp` and not in an
+   attribute of `ref$reference`. A verification helper that looked in the wrong
+   two places reported a perfectly good rebuild as unstamped and aborted the
+   job behind it.
+2a. **Re-run the triangulation under the current normalizer — PAUSED
+   2026-11-02, and this is the TO-DO.**
+
+   Why it is needed: recomputing keys is not enough. `pf_prepare()` collapses
+   renderings that share a normalized name key, so *which* renderings become
+   separate identities — and which of them the cascade then resolves — are both
+   decided by the normalizer in force **during the match**. Rebuilding
+   `pf_variants` from the old match pairs new keys with old match outcomes,
+   which is the objection `dev/UNIT-UPSTREAM-SYNC.md` §4.3 raises and the
+   reason the 2026-11-02 fixture rebuild is a re-stamp rather than a real one.
+
+   Why it is paused: matchdb is being refreshed to 0.1.6 with address-key and
+   `is_po_box` standardization changes, and two other sessions are rebuilding
+   normalizer-pinned artifacts right now — one against
+   `v1-592912060053c4c3` (npnormalize 0.1.3) and one inside the npnormalize
+   repo itself. If any of that lands a new npnormalize, a finished run plus the
+   fixture and queue behind it are invalidated the moment it does; the fixture
+   has already been re-pinned three times in one week across 0.1.3 → 0.1.4 →
+   0.1.5 → 0.1.6. Waiting costs nothing because nothing downstream of it has
+   started. There is also a rule still in flight that the run would bake in:
+   [npnormalize#16](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/issues/16),
+   the hyphenated house number, which decides `street_key` on 6,459 BMF rows
+   and which matchdb's port will have to match.
+
+   What is already done, so resuming is cheap:
+
+   * the reference is rebuilt, stamped and verified under 0.1.6 (step 2 above);
+   * `data-dev/ckpt-tri-v2` is **empty** — the run reached
+     `pf_run_batches: 91,104 rows in 4 batches of 25,000` and was stopped
+     before the first checkpoint, so there is no partial state to reconcile
+     and nothing stale to clear;
+   * October's artifacts are untouched at their live paths (`TRI-V2-MATCH.rds`
+     still Oct 25, 622 MB), so the current `pf_variants` stays reproducible,
+     and a copy of all five plus the old checkpoints sits in
+     `data-dev/PRE-RERUN-2026-11-02/`;
+   * the partial log is `dev/TRI-V2-BUILD-20261102.log`; it is not committed,
+     since it describes a run that did not finish.
+
+   Resume checklist:
+
+   1. Confirm the normalizer is settled — `np_normalize_signature()` against
+      what matchdb 0.1.6 and npnormalize have agreed on. **Read it, do not
+      quote this note's value.**
+   2. If it moved, redo step 2 (23 min) before anything else. A match run
+      against a stale bundle now stops at the gate rather than producing
+      quiet nonsense (§3a), so this is enforced rather than remembered.
+   3. Check `data-dev/ckpt-tri-v2` is empty. Checkpoints are stamped and
+      `.pf_check_stamp()` refuses a mismatch, but an empty directory needs no
+      reasoning about.
+   4. `PFMATCH_DIR=<repo> Rscript dev/build-triangulation-v2.R` — about
+      4 h 49 min by October's timing, 36,366 groups (the draw is seeded at
+      `20261024L`, so it is the same groups and directly comparable).
+   5. Compare against October before using it: case yield per bucket, the
+      population id, and whether `dev/UNIT-UPSTREAM-SYNC.md` §4.1's 22
+      unit-evidence changes reproduce.
+   6. Then §4.3's fixture rebuild and §4.4's queue regeneration, which are
+      blocked on this and nothing else, and step 4's implementation, which
+      changes the group key and therefore wants the new draw underneath it.
 3. ~~**Retire `pf_parse_unit()`.**~~ **Done**, 2026-10-31. `pf_street_unit()`
    hands line 2 to `npmatch::np_normalize()` and reads `street_unit` back;
    `pf_parse_unit()` and its three designator tables are deleted, `NO` and

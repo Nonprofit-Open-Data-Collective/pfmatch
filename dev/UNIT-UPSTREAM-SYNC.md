@@ -228,8 +228,11 @@ are recomputed by the current normalizer on raw text, so they are not stale; it
 is only the *pair selection* that came from a `v1-6dcb298522cc5118` run, which
 is a question about what the corpus contains, not about what it claims. And a
 stamp naming a normalizer the keys really were built under is strictly better
-than a gate that skips forever. The triangulation re-run in
-`dev/PLACES-SYNC.md` §4.2 is still what would settle composition.
+than a gate that skips forever. The triangulation re-run is still what would
+settle composition, and it is now a written-down TO-DO with a resume checklist:
+`dev/PLACES-SYNC.md` §4 **step 2a**, started 2026-11-02 and paused the same day
+until the matchdb 0.1.6 refresh settles the normalizer. §4.3 and §4.4 here are
+blocked on that step and on nothing else.
 
 **The 0.1.6 rebuild, measured against the committed 0.1.5 fixture.** 5,410 rows
 × 58 columns, same row order, and **six cells differ**: `a_street_key` and
