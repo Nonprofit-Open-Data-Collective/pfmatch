@@ -309,6 +309,17 @@ attr(pf_variants, "population")  <- "cb3c78ff0f1a9546"
 attr(pf_variants, "source_run")  <- "dev/build-triangulation-v2.R, 2026-10-25"
 attr(pf_variants, "normalizer")  <- tryCatch(npmatch::np_normalize_signature(),
                                              error = function(e) NA_character_)
+# The signature alone says only THAT a fixture's normalizer differs from the
+# installed one, never which direction or how far, so a skip on it costs a
+# manual check to interpret. npnormalize released three signatures in the week
+# of 2026-10-27 (0.1.3 v1-592912060053c4c3, 0.1.4 v1-1179714ce1e9d31f, 0.1.5
+# v1-533f186c123357cf), and at that rate the version is the part a reader can
+# actually act on. Recorded beside the signature, and quoted in the skip
+# messages in test-variants.R and test-unit.R.
+pkgver <- function(p) tryCatch(as.character(utils::packageVersion(p)),
+                               error = function(e) NA_character_)
+attr(pf_variants, "normalizer_pkg") <- c(npnormalize = pkgver("npnormalize"),
+                                         npmatch     = pkgver("npmatch"))
 attr(pf_variants, "built")       <- as.character(Sys.Date())
 
 hr(); say("pf_variants: %s rows, %s columns", nf(nrow(pf_variants)), ncol(pf_variants))

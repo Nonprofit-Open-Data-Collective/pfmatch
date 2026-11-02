@@ -166,18 +166,20 @@ test_that("conflict stays rare on the corpus", {
 test_that("the fixture's recorded evidence reproduces under the pinned normalizer", {
   # Version-scoped for the same reason as test-variants.R's pinned block: the
   # parse is npmatch's now, so an intentional normalizer improvement SHOULD be
-  # able to move a verdict. The fixture is on v1-6dcb298522cc5118 and the
-  # retirement of the local parser moved 22 of the 5,410 pairs; every one is
-  # traced in dev/UNIT-UPSTREAM-SYNC.md §4. Rebuilding needs a triangulation
-  # run under the current normalizer, not just a fixture rebuild, so this
-  # skips until that measurement pass happens.
+  # able to move a verdict. The sentence this replaces said rebuilding needed a
+  # fresh triangulation run and not just a fixture rebuild, so the test would
+  # skip until that measurement pass happened. That was wrong about this
+  # particular test: pf_unit_evidence() is a pure function of a_unit, b_unit,
+  # a_street and b_street, all four of them raw filed strings that the fixture
+  # already carries, so re-running make-pf-variants.R over the same frozen
+  # triangulation output (population cb3c78ff0f1a9546) recomputes the verdicts
+  # under the installed normalizer and the comparison is live again. Rebuilt on
+  # v1-1179714ce1e9d31f, which moved 21 of the 5,410 pairs -- 14 of them to the
+  # weightless `one_sided`, and `conflict` unchanged at 9. The earlier
+  # v1-6dcb298522cc5118 move of 22 pairs is traced in
+  # dev/UNIT-UPSTREAM-SYNC.md §4.
   v <- pfmatch::pf_variants
-  built <- attr(v, "normalizer")
-  live  <- tryCatch(npmatch::np_normalize_signature(), error = function(e) NA_character_)
-  skip_if(is.na(built) || is.na(live))
-  skip_if_not(identical(built, live),
-              sprintf(paste("normalizer moved (fixture %s, installed %s);",
-                            "rebuild with data-raw/make-pf-variants.R"), built, live))
+  skip_if_normalizer_moved(v)
   expect_identical(
     pf_unit_evidence(v$a_unit, v$b_unit, v$a_street, v$b_street),
     v$unit_evidence)

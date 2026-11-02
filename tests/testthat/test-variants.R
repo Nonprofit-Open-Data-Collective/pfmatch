@@ -18,6 +18,9 @@ keys_for <- function(name, street, unit, city, state, zip5) {
                   recip_zip5 = zip5, stringsAsFactors = FALSE)
   as.data.frame(npmatch::np_normalize(npmatch::np_query(g, pf_map_grants())))
 }
+name_key_of <- function(nm) keys_for(nm, "1 MAIN ST", NA_character_, "FAIRFAX",
+                                     "VA", "22030")$name_key
+
 side <- function(v, s) keys_for(v[[paste0(s, "_name")]], v[[paste0(s, "_street")]],
                                 v[[paste0(s, "_unit")]], v[[paste0(s, "_city")]],
                                 v[[paste0(s, "_state")]], v[[paste0(s, "_zip5")]])
@@ -59,9 +62,25 @@ test_that("a leading THE never decides a name key", {
 })
 
 test_that("& and AND normalize together", {
+  # Stated on literal strings for the same reason as the street invariants
+  # below: written against the corpus, this test selected
+  # name_class == "and vs ampersand" and that cell is empty -- so it skipped
+  # with `nrow(v) == 0L` and asserted nothing. The class is not reachable from
+  # this corpus. make-pf-variants.R classifies on the RAW names precisely so
+  # the ampersand CAN be seen, and still finds no pair: a rendering that
+  # differs from its anchor only in & vs AND is not among the 5,410 that
+  # reached the comparator and split. That is a fact about the corpus, not
+  # about the normalizer, and no fixture rebuild changes it. The invariant is
+  # real and must hold regardless, so assert it directly.
+  expect_identical(name_key_of("SMITH & JONES FOUNDATION"),
+                   name_key_of("SMITH AND JONES FOUNDATION"))
+  expect_identical(name_key_of("BOYS & GIRLS CLUB OF AMERICA"),
+                   name_key_of("BOYS AND GIRLS CLUB OF AMERICA"))
+  expect_identical(name_key_of("ARTS & SCIENCES CENTER"),
+                   name_key_of("ARTS AND SCIENCES CENTER"))
+  # and over the corpus too, on the day a pair of that shape appears in it
   v <- pfmatch::pf_variants[pfmatch::pf_variants$name_class == "and vs ampersand", ]
-  skip_if(nrow(v) == 0L)
-  expect_identical(side(v, "a")$name_key, side(v, "b")$name_key)
+  if (nrow(v)) expect_identical(side(v, "a")$name_key, side(v, "b")$name_key)
 })
 
 ## These two were written against the fixture's recorded `street_key_equal`,
@@ -125,12 +144,7 @@ test_that("city spelling cannot change a blocked pass", {
 
 test_that("every recorded key reproduces under the pinned normalizer", {
   v <- pfmatch::pf_variants
-  built <- attr(v, "normalizer")
-  live  <- tryCatch(npmatch::np_normalize_signature(), error = function(e) NA_character_)
-  skip_if(is.na(built) || is.na(live))
-  skip_if_not(identical(built, live),
-              sprintf(paste("normalizer moved (fixture %s, installed %s);",
-                            "rebuild with data-raw/make-pf-variants.R"), built, live))
+  skip_if_normalizer_moved(v)
   ka <- side(v, "a"); kb <- side(v, "b")
   expect_identical(ka$name_key,   v$a_name_key)
   expect_identical(kb$name_key,   v$b_name_key)
