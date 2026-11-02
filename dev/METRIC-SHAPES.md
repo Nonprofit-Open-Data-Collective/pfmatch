@@ -24,73 +24,62 @@ behind a recommendation *and* would flatter if wrong) is the same ranking this
 work needed, and its Part 3 denominator ledger named three of the four changes
 below before they were looked for.
 
-> **Superseded 2026-11-01: the audit is on `origin` now, and a clone can see
-> it.** `claude/figure-provenance-audit-50121f` was pushed at the user's
-> instruction, with `main` through #34 merged into it, and is open as **PR #36**.
-> It adds `dev/FIGURE-PROVENANCE.md` and this paragraph, which is the only thing
-> the audit changes outside its own file.
+> **This box records a defect in this file that is now fixed: for about a day,
+> its references to the provenance audit pointed at nothing.** The audit was
+> written as `dev/FIGURE-PROVENANCE.md` in a sibling worktree and not pushed, so
+> the three references to it in #25 resolved to no file in the repository. It
+> landed on `main` in **#36** and they resolve now.
 >
-> *This paragraph's first draft cited the branch head as `5bba437` and said the
-> branch touched nothing but the audit's own file. The commit that added the
-> paragraph falsified both — it became the new head, and it is the second file.
-> Fixed by naming the branch and the PR, which do not move, instead of a SHA
-> that does. Left on the record, and worth distinguishing from this box's own
-> lesson: nothing external moved here. A claim about a branch, written in a
-> commit to that branch, is only ever read after the commit lands, so it was
-> never true at any instant after being recorded. The paragraphs below went
-> stale because time passed; this was self-reference. A date fixes the first and
-> cannot touch the second. The general form: an identifier that the act of
-> recording changes cannot be used to record it — which is why naming the branch
-> and the PR is the fix rather than a tidier style.*
+> **That was the audit's own finding 6, reproduced by the note that cited the
+> finding** — finding 6 being a recommendation resting on
+> `dev/GRANT-DOLLARS-FINDINGS.md`, "cited twice" and absent from the repo.
+> Recorded rather than quietly repaired, because a note arguing for provenance
+> while having none of its own is the better example of the thing.
 >
-> The two paragraphs below are left exactly as written, because this file's own
-> standard is that a wrong claim is "worth recording rather than quietly
-> repairing" — but read them as a record, not as current fact. Three of their
-> statements are now false: that the branch "was never pushed to `origin`", that
-> "there is nothing here to open", and that "none of it is on `origin` … it
-> survives only in this working copy". Their history list also stops at
-> `0d16fd1`, so it predates `bd1b59c` — the commit that corrected the audit's
-> finding 4a, which is the framing this note's author supplied and then
-> retracted. What still holds, and is worth keeping: `dev/FIGURE-PROVENANCE.md`
-> has never existed on `main`, and the object-store point about worktrees is
-> right.
+> **Then this box went stale three times in two days, and that is the part
+> worth keeping.** It claimed the audit was unverifiable here (wrong: sibling
+> worktrees share one object store, `git rev-parse --git-common-dir` returns the
+> same `.git`, so another session's unpushed commits are reachable objects). It
+> claimed the branch was never pushed (wrong once it was). It claimed the audit
+> had never existed on `main` and that its PR was open (wrong once #36 merged).
+> A correcting paragraph added here also named a branch head and a file count
+> that its own commit invalidated. Four distinct ways to be wrong, none of them
+> arithmetic:
 >
-> That this box went stale on the single fact it took most trouble over is a
-> fourth instance of its own closing lesson, and the cleanest of them, because
-> nobody was careless — the world moved underneath it. A claim about where a
-> branch lives has a shelf life. That is a reason to date such a claim, not a
-> reason to avoid making it.
-
-> **That audit is not in this repository.** It was written as
-> `dev/FIGURE-PROVENANCE.md` on a branch that was never pushed to `origin`, so
-> there is nothing here to open and the three references to it in earlier drafts
-> of this file were dangling citations — `dev/FIGURE-PROVENANCE.md` has never
-> existed on `main`. That is **the audit's own finding 6** (a recommendation
-> resting on `dev/GRANT-DOLLARS-FINDINGS.md`, "cited twice" and absent from the
-> repo) reproduced by the note that cited the finding, which is worth recording
-> rather than quietly repairing. Its substantive results that bear on the work
-> below — the exposure ranking, the denominator ledger, findings 1, 2, 4 and 9
-> — are restated here where they are used, so nothing in this file depends on
-> reaching it.
+> | | |
+> |---|---|
+> | **time passed** | true when written, never re-read — the `Rscript` caveat, the normalizer signatures |
+> | **the world moved** | someone else pushed a branch, merged a PR |
+> | **self-reference** | a claim about a branch, written in a commit to that branch, is only read after the commit lands — never true at any instant after being recorded |
+> | **false instrument** | a check blind to what it claims to measure — `grep -v '^---'` cannot see a deleted `---`, and neither can `grep '^-[^-]'` |
 >
-> **A reader on this machine can nonetheless read it, and the first draft of
-> this box wrongly said otherwise.** The sessions on this project work in
-> `git worktree`s of one repository: `git rev-parse --git-common-dir` returns
-> the same `.git` from each, so they share one object store, and a commit one
-> session has made but not pushed is a reachable object from any of the others.
-> The audit is `dev/FIGURE-PROVENANCE.md` on `claude/figure-provenance-audit-50121f`,
-> whose history reads directly from here — `159f4b3` publishes it, `ecc8e9b`
-> corrects its `Rscript` caveat, `0d16fd1` withdraws two of its catalogue
-> candidates. **Unpushed is not unreachable when the sessions share a
-> checkout.** What is true is narrower and still worth saying: none of it is on
-> `origin`, so a clone cannot see it and it survives only in this working copy.
+> Two rules came out of it, and they are the durable content:
+> **an identifier that the act of recording changes cannot be used to record
+> it**, and **a check that cannot fail is not evidence**. The second is the
+> sharper: every instance above reported a *confident negative* — nothing
+> deleted, nothing verifiable, nothing on `origin` — and a wrong number can be
+> recomputed where an absence that was never measured leaves nothing behind to
+> recompute. That is `sum(NULL %in% TRUE)` being `0` in catalogue defect 5,
+> one level up.
 >
-> This is the third unchecked claim about verifiability in this file's short
-> history — after `Rscript` and the dangling citation itself — and the shortest
-> to check of the three. The lesson is not about `git` but about the shape: a
-> statement that something *cannot be verified* licenses every unverified
-> verdict downstream, and is therefore the claim most worth spending a command
-> on, not least.
+> **And the structural fix, learnt the hard way here:** a dated correction was
+> the wrong instrument. Three of them were added and each went stale in turn,
+> because they all asserted *where something currently is*. This paragraph makes
+> no such claim — it is past tense about events that happened, which cannot be
+> falsified by anything happening next. The fix for a locative claim is not to
+> date it. It is not to make it.
+>
+> **Where the superseded text went, since replacing it rather than stacking it
+> was the contested call.** Into `git log -p dev/METRIC-SHAPES.md`, which holds
+> every version with its date and the commit message arguing for it. So the
+> choice was never between recording the errors and repairing them — it was
+> where superseded present-tense belongs, and the answer is the history, not the
+> note. **A note is read by someone who wants to know what is true; a history is
+> read by someone who wants to know what was claimed.** Keeping a wrong claim
+> verbatim in the note is right for a first correction, where the error is the
+> finding; by a third stacked layer it is three live falsehoods earning nothing.
+> (That distinction is the audit's author's, offered against their own earlier
+> position.)
 
 > **Correction, and an embarrassing one for a note about unverified figures.**
 > The first two drafts of this file said `Rscript` "is not on this machine" and
