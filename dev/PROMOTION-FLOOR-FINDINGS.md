@@ -14,7 +14,11 @@ This is what it does on 990-PF grants.
 Re-measured 2026-11-02 by `dev/probe-promotion-floor.R` on
 `data-dev/PF-MATCH-RESULT-1k.rds` under npmatch 0.1.1.9000 and the current
 defaults — `distinct_name_main_only = TRUE`, `distinct_name_min_idf = 0`,
-`distinct_name_maxfreq = 3`. The figures first published in this section
+`distinct_name_maxfreq = 3`. **The run is committed: every figure in this
+section is in `dev/PROMOTION-FLOOR-PROBE.log`**, whose header records the
+script, the input, and the R and package versions, so the section can be
+checked without re-running it — and re-derived with one command if you would
+rather. The figures first published in this section
 predate the `distinct_name_main_only` gate that the CORRECTION below
 introduces, so they describe a pipeline that no longer exists. They are kept at
 the foot of this section rather than deleted.
@@ -192,9 +196,11 @@ demoted 5 of 121 promoted matches, 4 of them errors. **A clean A/B on the live
 pipeline showed it moves almost nothing.** The probe was wrong in a specific
 and instructive way.
 
-Re-run 2026-11-02 (`dev/ab-idf-gate.R`, same cached match, npmatch 0.1.1.9000):
-the gate demotes **1** identity and gains **2**, a net of **+1** YES — 2,821 to
-2,822 — with **0 of 2,820** identities YES both ways on a different EIN. This
+Re-run 2026-11-02 (`dev/ab-idf-gate.R`, same cached match, npmatch 0.1.1.9000;
+committed as `dev/AB-IDF-GATE.log`, which holds every figure in this paragraph
+including the margin table below): the gate demotes **1** identity and gains
+**2**, a net of **+1** YES — 2,821 to 2,822 — with **0 of 2,820** identities
+YES both ways on a different EIN. This
 section first described that as "moves 2 cases, net zero"; the 2 is the gained
 count, the demoted count is 1, and the net is +1 rather than 0. The conclusion
 is unaffected and if anything stronger: a gate whose whole purpose is to demote
