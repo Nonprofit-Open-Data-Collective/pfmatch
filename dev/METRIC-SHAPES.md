@@ -26,8 +26,18 @@ below before they were looked for.
 
 > **Superseded 2026-11-01: the audit is on `origin` now, and a clone can see
 > it.** `claude/figure-provenance-audit-50121f` was pushed at the user's
-> instruction and stands at `5bba437`, with `main` through #34 merged into it, so
-> a pull request from it adds `dev/FIGURE-PROVENANCE.md` and nothing else. The
+> instruction, with `main` through #34 merged into it, and is open as **PR #36**.
+> It adds `dev/FIGURE-PROVENANCE.md` and this paragraph, which is the only thing
+> the audit changes outside its own file.
+>
+> *This paragraph's first draft cited the branch head as `5bba437` and said the
+> branch touched nothing but the audit's own file. The commit that added the
+> paragraph falsified both — it became the new head, and it is the second file.
+> Fixed by naming the branch and the PR, which do not move, instead of a SHA
+> that does. Left on the record because a box about claims with a shelf life
+> should say when it wrote one itself, two sentences after the lesson.*
+>
+> The
 > two paragraphs below are left exactly as written, because this file's own
 > standard is that a wrong claim is "worth recording rather than quietly
 > repairing" — but read them as a record, not as current fact. Three of their

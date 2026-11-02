@@ -214,7 +214,14 @@ This is not strictly a provenance defect, but it is the same failure the
 catalogue describes: a well-formed number supporting a recommendation, where
 nothing in the file's structure tells the reader it is dead.
 
-> **Still live on `origin/main`, and now contradicted three ways inside one
+> **Withdrawn in PR #35, which is open and not merged.** `date-the-figures`
+> rewrites §5's line to "Ship `distinct_name_min_idf = 10` — **WITHDRAWN, and
+> never shipped**", keeping the reasoning because it explains why the gate
+> exists and is retained as an option rather than as advice. That is the right
+> fix and it is the fix this finding asked for. Until it merges the text below
+> describes `main`.
+>
+> **Still live on `origin/main`, and contradicted three ways inside one
 > file.** Checked after PR #29: §5 line 181 still reads "Ship
 > `distinct_name_min_idf = 10`", while the note's own header (line 16) lists the
 > shipped defaults as `distinct_name_main_only = TRUE,
@@ -1130,12 +1137,28 @@ description).
   rail against editing audited notes is worth. `METRIC-SHAPES.md` postdates the
   sweep and is not among the notes audited.
 
+  `METRIC-SHAPES.md` is the **proposal-4 session's** file, created and
+  maintained on its branches (`3d8e577`, `de4c27b`, `044b98d`, `e4197b9`,
+  `32b3d61`, `e2d5482`); `13f56d9` here is the only commit touching it from
+  anywhere else. I twice told the wrong session it was theirs before checking
+  `git log -- dev/METRIC-SHAPES.md`, which would have taken one command.
+
   It is recorded at length because it is the cleanest instance in the repo of
   the pattern below: that note set out to document finding 6 reproducing itself,
   was careful enough to correct its own first draft about reachability, and still
   went stale on the one fact it took most trouble over — because the world moved
   under it, not because anyone was careless. A figure that depends on where a
   branch lives is a figure with a shelf life.
+
+  **And then my correction did it again, twice, in its own commit.** The dated
+  paragraph I added said the branch "stands at `5bba437`" and that a PR from it
+  "adds `dev/FIGURE-PROVENANCE.md` and nothing else". The commit that added the
+  paragraph falsified both: it became the new head, and it is itself the second
+  file. Both are fixed by naming the branch and PR #36 — identifiers that do not
+  move — rather than a SHA that does, and the slip is left on the record there.
+  A claim about a repository's current state, written into that repository,
+  can be falsified by the act of writing it. That is not carelessness either,
+  and it is the sharpest form of the shelf-life problem I found.
 * **External prices.** `SEARCH_USD = 0.01`, the $0.10/$0.50 and $0.50/$2.50
   Haiku tiers and the $5.00/MTok cache-write rate are unverifiable inside the
   repo. Phase 4b flags this ("prices are list prices at the time of
@@ -1178,5 +1201,23 @@ this audit is one of its own is the honest note to end on: the practice that
 catches a plausible wrong number is the same whether the number is in a research
 note or in the audit of one, and reading output — a peer's as well as my own —
 is what caught it both times.
+
+**A second class, if the catalogue takes one out of this sweep.** Three things
+found here are not arithmetic anybody got wrong — they are true statements about
+a moving world, recorded once and never re-read:
+
+* `METRIC-SHAPES.md`'s reachability box, true when written, falsified by a push
+* its earlier `Rscript` claim, and mine — a statement that something *cannot be
+  verified*, which licenses every unverified verdict downstream and is the
+  cheapest of all claims to check
+* my own dated correction, falsified by the commit that wrote it
+
+None is a wrong number and none would be caught by any of the eight practices,
+which are all aimed at arithmetic and denominators. The shared shape is a claim
+whose truth depends on the state of the world at the moment of writing, with
+nothing in it saying when that was. The defence is not a better calculation; it
+is a date, a stable identifier instead of a moving one, and the habit of
+re-reading a claim about verifiability before relying on it. That framing is the
+proposal-4 session's, arrived at independently, and it is better than mine.
 
 `PLAUSIBLE-WRONG-NUMBERS.md` is not edited here, as instructed.
