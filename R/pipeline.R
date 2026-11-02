@@ -103,12 +103,14 @@ pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
 #' `tier = "active-observed"` is the default because it wins on both axes at
 #' once: the `bmf_active` layer with legal, DBA and observed name variants,
 #' 2.89M rows, it matched the 1k benchmark in 11.5 min against 23.2 for the
-#' augmented BMF pfmatch built for itself, and cleared 63.8% against 62.8%
-#' (`dev/BENCH-MD-REFERENCE.log`). `"unified-observed"` is the closer
-#' correspondence to the augmented bundle — it adds the inactive tranche, so
-#' every BMF release rather than the current one — but that is 1.76M more rows
-#' for two and a half times the match time and +0.1 point. Ask for it when the
-#' question is grantees that no longer exist, not for the clear rate. The
+#' augmented BMF pfmatch built for itself, and cleared 62.0% against 61.2%
+#' (`dev/BENCH-MD-REFERENCE.log`, YES over the 4,868 in-scope identities — the
+#' same denominator for every arm, since each arm finds pairs for a different
+#' number of them). `"unified-observed"` is the closer correspondence to the
+#' augmented bundle — it adds the inactive tranche, so every BMF release rather
+#' than the current one — but that is 1.76M more rows for two and a half times
+#' the match time and +0.49 point. Ask for it when the question is grantees that
+#' no longer exist, not for the clear rate. The
 #' "Choosing a matching dictionary" vignette has the comparison;
 #' `matchdb::md_reference()` lists the tiers.
 #'

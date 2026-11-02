@@ -125,6 +125,7 @@ reference:
   - pf_add_recovery_keys
   - pf_drop_self_matches
   - pf_status
+  - pf_result_tiers
   - pf_crosstab
   - pf_geo_agreement
 

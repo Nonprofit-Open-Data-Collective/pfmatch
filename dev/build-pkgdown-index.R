@@ -13,6 +13,15 @@
 # So the group assignments below are by topic name, and anything unassigned
 # lands in a catch-all section. check_pkgdown() then passes by construction, and
 # a newly added topic shows up in the catch-all rather than vanishing.
+#
+# STALE AS OF 2026-11-02 -- READ BEFORE RUNNING. The committed _pkgdown.yml has
+# been curated by hand since this script last wrote it, and GROUPS below has not
+# kept up. Running it as it stands deletes three sections that exist only in the
+# yml -- "Character-level recovery", "Recovery against resolved grants", and the
+# placements of pf_check_reference, pf_street_unit, pf_unit_evidence and
+# pf_variants -- and collapses their eight topics into "Other", descriptions and
+# all. That is a silent loss of prose, not a reindex. Catch GROUPS up with the
+# yml first, or add the one topic by hand as pf_result_tiers was added.
 # ============================================================================
 suppressWarnings(suppressMessages(library(pkgdown)))
 PF <- Sys.getenv("PFMATCH_DIR", ".")
@@ -53,8 +62,8 @@ GROUPS <- list(
        topics = c("pf_match", "pf_match_grants", "pf_staged_passes",
                   "pf_default_passes", "pf_recover", "pf_recovery_passes",
                   "pf_add_recovery_keys", "pf_pass_stage", "pf_initials",
-                  "pf_drop_self_matches", "pf_status", "pf_crosstab",
-                  "pf_geo_agreement")),
+                  "pf_drop_self_matches", "pf_status", "pf_result_tiers",
+                  "pf_crosstab", "pf_geo_agreement")),
   list(title = "Stage 5 — adjudication",
        desc = paste("Build the sheet a human or an LLM reviews. There is no",
                     "safe automatic acceptance of the MAYBE tier; see",

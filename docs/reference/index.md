@@ -152,6 +152,7 @@ for what each pass does and which cases it clears.
 -   `pf_drop_self_matches()` : Never match a grant to the foundation
     that made it
 -   `pf_status()` : Per-grant outcome frame
+-   `pf_result_tiers()` : Tiers in the result-frame convention
 -   `pf_crosstab()` : Outcome x recipient-type crosstab
 -   `pf_geo_agreement()` : Geographic-agreement diagnostics
 
