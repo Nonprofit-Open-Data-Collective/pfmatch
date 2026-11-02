@@ -214,23 +214,31 @@ This is not strictly a provenance defect, but it is the same failure the
 catalogue describes: a well-formed number supporting a recommendation, where
 nothing in the file's structure tells the reader it is dead.
 
-> **Withdrawn in PR #35, which is open and not merged.** `date-the-figures`
-> rewrites §5's line to "Ship `distinct_name_min_idf = 10` — **WITHDRAWN, and
-> never shipped**", keeping the reasoning because it explains why the gate
-> exists and is retained as an option rather than as advice. That is the right
-> fix and it is the fix this finding asked for. Until it merges the text below
-> describes `main`.
+> **CLOSED on `origin/main` by `5958fab`.** §5 line 181 now reads "Ship
+> `distinct_name_min_idf = 10` — **WITHDRAWN, and never shipped**", and the
+> bullet keeps its reasoning while naming the failure in the note's own words:
+> "This bullet stood as a live recommendation under a heading reading
+> *Recommendation* long after the decision had been reversed two sections down."
+> §1 on `main` also explains *why* it stood — the floor's benefit was published
+> without its cost, and "the direction of the error flattered the floor". That
+> is the fix this finding asked for, and the finding is spent.
 >
-> **Still live on `origin/main`, and contradicted three ways inside one
-> file.** Checked after PR #29: §5 line 181 still reads "Ship
-> `distinct_name_min_idf = 10`", while the note's own header (line 16) lists the
-> shipped defaults as `distinct_name_main_only = TRUE,
-> distinct_name_min_idf = 0` and the Disposition (line 297) says the default was
-> "changed to disabled". §1 on `main` now also explains *why* §5 said it — the
-> floor's benefit was published without its cost, and "the direction of the
-> error flattered the floor". So the cause is documented and the recommendation
-> it produced is not yet withdrawn. This is the oldest open finding here and the
-> cheapest to close.
+> **What survives is smaller, and is a different defect.** Line 130, from the
+> original commit and never touched since, still reads:
+>
+> > Implemented as `distinct_name_min_idf` (default **10**):
+>
+> The shipped default is **0**. I ran it rather than reading the Disposition and
+> assuming: `np_config()$distinct_name_min_idf` returns `0`, and
+> `distinct_name_main_only` returns `TRUE`. So one parenthetical asserts a
+> default that was **never shipped**, and is contradicted three times inside its
+> own note — the header at line 16, the §5 bullet above, and the Disposition.
+> The supersede notice at lines 169–172 does not reach it: it sits 39 lines
+> earlier and is scoped to the four-row table, so a reader arriving at line 130
+> takes "default 10" as current.
+>
+> A one-phrase fix, and **not made here** — this PR adds an audit. Recorded as
+> the corrected finding 3: a stale parenthetical, not a live recommendation.
 
 ## 4. The same note's headline cannot be reproduced from its own table
 
@@ -614,12 +622,17 @@ nothing but this file**; everything below is other sessions' work.
   `dev/AB-IDF-GATE.log` and rewrote `PROMOTION-FLOOR-FINDINGS.md` §1. Both are
   kept here with their resolutions recorded, because the resolution of each
   corrected this audit's own account of it.
-* **Findings 3, 5, 6, 7, 8 and 9 are open.** Finding 3 is confirmed still live
-  on `main` after #29 — §5 line 181 against the defaults at line 16. None is
-  touched by `fix-retyped-figures`, nor by PR #25
-  (`claude/vigilant-franklin-8b512d`, "Apply practice 7: redefine the metrics
-  that could not come out wrong"), which is proposal 4 and was scoped away from
-  the margin and `FZ_SEC` deliberately.
+* **Finding 3's recommendation half is closed on `origin/main` by `5958fab`**,
+  which marks §5's bullet "WITHDRAWN, and never shipped". A smaller defect in
+  the same note survives and is recorded under finding 3 as the corrected form:
+  the stale "(default **10**)" parenthetical at line 130, against a shipped
+  default of `0`.
+* **Findings 1, 5, 6, 7, 8 and 9 are open** — six of nine. Each was re-read in
+  context on `origin/main`, not matched as a string; see Part 4 for why that
+  distinction cost a wrong count once. None is touched by `fix-retyped-figures`,
+  nor by PR #25 (`claude/vigilant-franklin-8b512d`, "Apply practice 7: redefine
+  the metrics that could not come out wrong"), which is proposal 4 and was
+  scoped away from the margin and `FZ_SEC` deliberately.
 * **Finding 2 is an eighth catalogue instance.** Finding 4a is **not** a ninth —
   see below. `dev/PLAUSIBLE-WRONG-NUMBERS.md` is deliberately not edited here;
   a sibling pass appends to it.
@@ -1106,13 +1119,33 @@ description).
   `dev/assert-lib.R` are new and were **not audited**: they postdate the sweep
   and nothing here covers them.
 
-  **Every other finding was re-checked against the merged tree and is still
-  live.** Not assumed — grepped after the merge: finding 1 (`falls to 0.002`),
-  3 (`Ship distinct_name_min_idf = 10`), 5 (`$6,175` twice in
-  `ADJUDICATION-EXPERIMENT.md` and once in `DEVELOPMENT-PLAN.md`; `4,585,061` in
-  both), 6 (`GRANT-DOLLARS-FINDINGS.md` still cited in `ADJUDICATION-PLAN.md`
-  and `PACKAGE-PLAN.md`, still absent), 7 (`$8,107`), 8 (`estimation (75)`) and
-  9 (`78.28`). Seven of nine open after thirteen merged PRs.
+  **Six of nine findings are still live; three are closed.** Findings 4 and 4a
+  by #29, finding 3 by `5958fab`. Findings 1, 5, 6, 7, 8 and 9 remain, each
+  re-read in context on `origin/main` rather than matched as a string.
+
+  > **The first version of this re-check was unsound, and it is the audit's own
+  > subject matter.** It reported "seven of nine still live" on the strength of
+  > `grep`-ing for each finding's recorded string. For finding 3 the string
+  > `Ship distinct_name_min_idf = 10` **still matches** — inside the line
+  > `Ship distinct_name_min_idf = 10 — WITHDRAWN, and never shipped`. The repair
+  > kept the phrase and negated it, so a substring match reported the defect as
+  > live when the next four words retract it.
+  >
+  > That is a check which looks like it measures liveness and does not, in a file
+  > whose whole subject is checks that look like they measure one thing and
+  > measure another — the same shape as `x != "LEVEL_THAT_DOES_NOT_EXIST"` in
+  > the catalogue's defect 6, where a filter on a label that does not exist
+  > silently selects everything. A `grep` for a retracted claim finds the
+  > retraction. Re-verified by reading each hit with surrounding context, which
+  > is what the second count above rests on, and the method is recorded because
+  > the count was wrong in the direction that made this audit look more current
+  > than it was.
+
+  Re-reading also turned up a **third** instance of finding 5 that the inventory
+  had missed: `$6,175` appears in `ADJUDICATION-EXPERIMENT.md` at line 458 *and*
+  line 533, in two separate tables, both on the result-frame tier of 1,008,713.
+  Finding 6's missing file is confirmed absent by `git ls-tree origin/main`, not
+  by failing to find it locally.
 
 * **`dev/METRIC-SHAPES.md` cites this file, and that citation has gone stale in
   the direction this file is about.** Its box at lines 26–50 says the audit is
@@ -1156,9 +1189,17 @@ description).
   paragraph falsified both: it became the new head, and it is itself the second
   file. Both are fixed by naming the branch and PR #36 — identifiers that do not
   move — rather than a SHA that does, and the slip is left on the record there.
-  A claim about a repository's current state, written into that repository,
-  can be falsified by the act of writing it. That is not carelessness either,
-  and it is the sharpest form of the shelf-life problem I found.
+  **And this is not the shelf-life problem**, which is a distinction worth
+  drawing because I first filed it as one. Nothing external moved. A claim about
+  the state of a branch, made in a commit *to* that branch, is evaluated only
+  after the commit lands, so it has to account for itself — mine was never true
+  at any instant after being recorded. The reachability box and the `Rscript`
+  caveat went stale because **time passed**; this went wrong because of
+  **self-reference**. Decay and self-reference are different mechanisms with
+  different defences: dating a claim fixes the first and cannot touch the
+  second, which needs an identifier that does not move (a branch name, a PR
+  number) or a statement scoped to the commit's parent and *said* to be.
+  That separation is the tracking session's, and it is right.
 * **External prices.** `SEARCH_USD = 0.01`, the $0.10/$0.50 and $0.50/$2.50
   Haiku tiers and the $5.00/MTok cache-write rate are unverifiable inside the
   repo. Phase 4b flags this ("prices are list prices at the time of
@@ -1211,13 +1252,26 @@ a moving world, recorded once and never re-read:
   verified*, which licenses every unverified verdict downstream and is the
   cheapest of all claims to check
 * my own dated correction, falsified by the commit that wrote it
+* my `grep`-based re-check, which reported a retracted recommendation as live
+  because the retraction kept the phrase it retracts
 
-None is a wrong number and none would be caught by any of the eight practices,
-which are all aimed at arithmetic and denominators. The shared shape is a claim
-whose truth depends on the state of the world at the moment of writing, with
-nothing in it saying when that was. The defence is not a better calculation; it
-is a date, a stable identifier instead of a moving one, and the habit of
-re-reading a claim about verifiability before relying on it. That framing is the
-proposal-4 session's, arrived at independently, and it is better than mine.
+None is a wrong number, and none would be caught by any of the eight practices,
+which all aim at arithmetic and denominators. But they are **two mechanisms, not
+one**, and conflating them was my error:
+
+* **Decay** — true when written, overtaken by events. The reachability box, the
+  `Rscript` caveat, the undated normalizer signatures. The defence is a date.
+* **Self-reference and false instruments** — never true once recorded, or a
+  check that cannot see what it claims to. My self-falsifying correction, and
+  the `grep` that matched inside its own repair. A date does nothing for these.
+  The defence is an identifier that does not move, and reading the thing rather
+  than matching a string in it.
+
+The first grouping is the proposal-4 session's, the split is the tracking
+session's, and both are better than what I had. Between them they also make the
+case for a ninth practice that is not about arithmetic at all: **a claim about
+what is true of this repository right now needs a date, a stable referent, or a
+re-read before it is relied on** — and the cheapest claims to check are exactly
+the ones asserting that something cannot be checked.
 
 `PLAUSIBLE-WRONG-NUMBERS.md` is not edited here, as instructed.

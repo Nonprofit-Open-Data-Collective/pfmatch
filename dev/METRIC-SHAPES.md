@@ -34,8 +34,12 @@ below before they were looked for.
 > branch touched nothing but the audit's own file. The commit that added the
 > paragraph falsified both — it became the new head, and it is the second file.
 > Fixed by naming the branch and the PR, which do not move, instead of a SHA
-> that does. Left on the record because a box about claims with a shelf life
-> should say when it wrote one itself, two sentences after the lesson.*
+> that does. Left on the record, and worth distinguishing from this box's own
+> lesson: nothing external moved here. A claim about a branch, written in a
+> commit to that branch, is only ever read after the commit lands, so it was
+> never true at any instant after being recorded. The paragraphs below went
+> stale because time passed; this was self-reference. A date fixes the first
+> and cannot touch the second.*
 >
 > The
 > two paragraphs below are left exactly as written, because this file's own
