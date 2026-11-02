@@ -552,6 +552,23 @@ regression hard to attribute if several things move at once.
    header). The registry starts at 0.1.0 and cannot speak to those, so a figure
    stamped with one of them is still undated as to normalizer version.
 
+   **One of the three is now dated.** `dev/BENCH-MD-REFERENCE.log` records
+   `npmatch@ddfd967` beside `v1-6dcb298522cc5118`, and reading the DESCRIPTION
+   at that commit gives **npmatch 0.1.0.9000** (committed 2026-10-24, merge of
+   npmatch#17 `fix/na-street-key`). Its `Imports` are `data.table, datasets,
+   parallel, stats, stringi, stringr, tools, utils` — **no npnormalize**, which
+   confirms on the evidence rather than by date that this value came from
+   npmatch's own normalizer. Note the limit: `0.1.0.9000` is a development
+   version naming a range of commits, and nobody has re-run `ddfd967` to
+   reproduce the signature, so the defensible claim is "npmatch 0.1.0.9000 at
+   `ddfd967`, witnessed by that log" — a version, a commit and a witness, short
+   of a reproduction.
+
+   The other two name no commit in the notes that cite them, so there is no
+   DESCRIPTION to read and they stay undated. Pulling that thread means finding
+   whether the 2026-08 baseline or matchdb's `build-baseline-2026-10.R`
+   recorded a commit anywhere beside the signature.
+
    **The granted part.** §6's `street_num` ask said the 59 wanted a fix one
    layer down rather than a third key spelling, and K3 was rejected here
    because only 410 of its 2,278 merges touched the hyphenated case. 0.1.7 made
