@@ -540,11 +540,40 @@ regression hard to attribute if several things move at once.
    its own attributes, and the current one records 0.1.8 beside
    `v1-5e901add4a04a5d6`.
 
-   **Two limits on citing it.** It lives as a *comment* in npnormalize's
-   `tests/testthat/test-signature.R`, above a pin that asserts only the
-   **current** signature — so nothing stops the historical rows drifting from
-   the pin, and nothing can read them programmatically, which a provenance
-   header written by a script would need. And three signatures this repo has
+   **Both limits below were lifted later the same day; they are kept because
+   the dates matter.** npnormalize 0.1.9 shipped `np_signature_history()`, so
+   the registry is now a function rather than a comment. Read from the
+   installed 0.1.9 in this session:
+
+   ```
+   np_signature_history(c("v1-421e1e2a6afb024e", "v1-6dcb298522cc5118",
+                          "v1-b42811fe6601afe6", "v1-59c6e84c5f38e9f5",
+                          "v1-5e901add4a04a5d6"))
+     v1-421e1e2a6afb024e  npmatch      0.0.0.9000
+     v1-6dcb298522cc5118  npmatch      0.1.0.9000
+     v1-b42811fe6601afe6  npmatch      NA
+     v1-59c6e84c5f38e9f5  npnormalize  0.1.7
+     v1-5e901add4a04a5d6  npnormalize  0.1.8
+   ```
+
+   Eleven rows; an unknown signature returns **0 rows**, which is a different
+   answer from a listed row whose version is `NA` — so "not one of these
+   normalizers" is distinguishable from "a value with no release recorded".
+   Both npmatch rows are the ones dated in this session's commits; the third
+   stays `NA` and upstream asserts that in a test. And note
+   `v1-5e901add4a04a5d6` dates to **0.1.8, not the installed 0.1.9**, which is
+   the introducing-release semantics above working rather than a stale row.
+
+   `np_signature_history()` needs npnormalize >= 0.1.9. This package's floor
+   stays at `>= 0.1.8`, which is what the shipped fixture needs; a floor should
+   say what the code requires, and pfmatch does not call this function.
+
+   **Two limits on citing it, as of the morning of 2026-11-02.** It lived as a
+   *comment* in npnormalize's `tests/testthat/test-signature.R`, above a pin
+   that asserts only the **current** signature — so nothing stopped the
+   historical rows drifting from the pin, and nothing could read them
+   programmatically, which a provenance header written by a script would need.
+   And three signatures this repo has
    recorded are **absent** from it, because they predate the split and came
    from npmatch's own normalizer: `v1-421e1e2a6afb024e`
    (`BASELINE-2026-08`), `v1-6dcb298522cc5118` (`R/pipeline.R`) and
