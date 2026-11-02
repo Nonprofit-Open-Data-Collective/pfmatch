@@ -593,6 +593,9 @@ nothing but this file**; everything below is other sessions' work.
   reads "a personal-name margin that falls to 0.002". So anyone quoting that
   passage from `main` today is quoting the wrong figure, fix or no fix.
 
+  The user has chosen to keep `fix-retyped-figures` local and unpushed, so the
+  live defect on `main` is a deliberate decision rather than an oversight.
+
   > **A warning for whoever lands the fix.** `0.002` occurs twice in `dev/`.
   > The second, `PLAUSIBLE-WRONG-NUMBERS.md:20`, is the catalogue's own
   > reported-vs-true record of defect 3 — "margin **+0.002**" against
@@ -1082,13 +1085,47 @@ description).
   I argue for in finding 6. I cannot separate those two causes without a fresh
   match, which is not a cheap run.
 
-* **This audit describes `159f4b3`, which predates PR #24.** `origin/main` is
-  now `5486f37`. #24 adopted `pf_result_tiers()` inside
+* **The inventory describes the repo at `26e6cd4` (PR #21); this branch now
+  carries `main` through PR #34.** Merged in as `064a523` so that a pull request
+  from here shows only this file. The audit was *written* against the older
+  tree, so two things follow.
+
+  **What main has since changed.** #24 adopted `pf_result_tiers()` inside
   `dev/adjudicate-16-fuzzy-regress.R` and wired `dev/assert-lib.R` into
-  `adjudicate-03-score.R`, `-04-ablation.R` and `-12-no-score.R`. None of that
-  touches the notes audited here, but it does mean the version of `adjudicate-16`
-  on `main` differs from the one that wrote the `ADJ-FUZZY-REGRESS.rds` I read.
-  The frame's 545.97 is what the *pre-#24* script measured.
+  `adjudicate-03-score.R`, `-04-ablation.R` and `-12-no-score.R`, so the version
+  of `adjudicate-16` on `main` differs from the one that wrote the
+  `ADJ-FUZZY-REGRESS.rds` I read — the frame's 545.97 is what the *pre-#24*
+  script measured. #29 resolved findings 4 and 4a. `dev/METRIC-SHAPES.md` and
+  `dev/assert-lib.R` are new and were **not audited**: they postdate the sweep
+  and nothing here covers them.
+
+  **Every other finding was re-checked against the merged tree and is still
+  live.** Not assumed — grepped after the merge: finding 1 (`falls to 0.002`),
+  3 (`Ship distinct_name_min_idf = 10`), 5 (`$6,175` twice in
+  `ADJUDICATION-EXPERIMENT.md` and once in `DEVELOPMENT-PLAN.md`; `4,585,061` in
+  both), 6 (`GRANT-DOLLARS-FINDINGS.md` still cited in `ADJUDICATION-PLAN.md`
+  and `PACKAGE-PLAN.md`, still absent), 7 (`$8,107`), 8 (`estimation (75)`) and
+  9 (`78.28`). Seven of nine open after thirteen merged PRs.
+
+* **`dev/METRIC-SHAPES.md` cites this file, and that citation has gone stale in
+  the direction this file is about.** Its box at lines 26–50 says the audit is
+  "on a branch that was never pushed to `origin`" and that "none of it is on
+  `origin`, so a clone cannot see it and it survives only in this working copy".
+  That was true when written and is **no longer**: the branch is on `origin`,
+  and this merge is on it. The box also lists the audit's history as `159f4b3`,
+  `ecc8e9b`, `0d16fd1` and so predates `bd1b59c`, which corrected finding 4a —
+  the one framing that note's own author had supplied.
+
+  The part that still holds is narrower and worth keeping: `FIGURE-PROVENANCE.md`
+  has never existed on `main`.
+
+  I have **not** edited `METRIC-SHAPES.md` — it is another session's work and a
+  note this audit would be auditing. Recording it instead, because it is the
+  cleanest instance in the repo of the pattern below: that note set out to
+  document finding 6 reproducing itself, was careful enough to correct its own
+  first draft about reachability, and still went stale on the one fact it took
+  most trouble over, because the world moved under it. A figure that depends on
+  where a branch lives is a figure with a shelf life.
 * **External prices.** `SEARCH_USD = 0.01`, the $0.10/$0.50 and $0.50/$2.50
   Haiku tiers and the $5.00/MTok cache-write rate are unverifiable inside the
   repo. Phase 4b flags this ("prices are list prices at the time of
