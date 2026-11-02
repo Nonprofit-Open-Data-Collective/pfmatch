@@ -7,7 +7,7 @@
 # produce and cannot argue against it. Three things print beside it: the YES it
 # gains, the net it has to reconcile with, and EIN churn.
 #
-# WHAT A RUN AT npmatch 0.1.1.9000 FOUND, and it is not what was expected here:
+# WHAT THE RUN FOUND -- dev/AB-IDF-GATE.log, npmatch 0.1.1.9000:
 #
 #   min_idf 0  : YES 2821  MAYBE 1006  NO 1093
 #   min_idf 10 : YES 2822  MAYBE  986  NO 1112
@@ -18,15 +18,22 @@
 # the figure that shipped distinct_name_min_idf = 0 -- does not reproduce. The
 # net is +1, not zero.
 #
+# THE SIGNATURE OF A LEGITIMATE GAIN, so a future reader knows what normal
+# looks like here. Both gained rows have margin_off EXACTLY 0 -- ties -- rising
+# to 0.068 and 0.140, while the SCORE FALLS, 0.900 -> 0.888 and 0.900 -> 0.820.
+# Falling is the right signature and flat would have been suspicious: once the
+# floored pair is vetoed a DIFFERENT pair wins, scoring slightly lower but
+# carrying a real margin. Flat would mean the same pair survived and only its
+# runner-up left. Both of these identities are also among the six that
+# dev/probe-promotion-floor.R finds the floor COSTS -- one tie-driven
+# selection, seen from either side of the floor.
+#
 # EIN CHURN WAS THE WRONG HYPOTHESIS. This script was changed on the reasoning
 # that "net zero" on a status comparison might hide identities re-pointed to a
 # different EIN. Measured: zero of 2,820. The column stays because zero
 # measured is a different statement from nothing measured, but it is not where
 # the discrepancy lives -- the status comparison itself does not balance, and
 # the gross-against-net line below is what shows it.
-#
-# (Figures above are from another session's run and were not re-derived here;
-# re-run to confirm before quoting them.)
 suppressWarnings(suppressMessages(library(data.table)))
 PF  <- Sys.getenv("PFMATCH_DIR", ".")
 suppressWarnings(suppressMessages(library(npmatch)))

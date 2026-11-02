@@ -23,25 +23,45 @@ behind a recommendation *and* would flatter if wrong) is the same ranking this
 work needed, and its Part 3 denominator ledger named three of the four changes
 below before they were looked for.
 
-**Nothing was run here.** `Rscript` is not on this machine, so no figure in this
-file was recomputed by running anything. Every change is the metric *definition*
-in the script that computes it; the commands to re-derive the figures are given
-per change.
+> **Correction, and an embarrassing one for a note about unverified figures.**
+> The first two drafts of this file said `Rscript` "is not on this machine" and
+> declined to report any computed figure on that basis. **That was wrong.** R
+> 4.5.1 is installed at `C:\Program Files\R\R-4.5.1`, with `npmatch`
+> 0.1.1.9000, `pfmatch`, `data.table` and `stringdist` all present — it is
+> simply not on `PATH`, which is all the original check established:
+>
+> ```
+> which Rscript   # → nothing, and I stopped there
+> ```
+>
+> The provenance audit had recorded the same thing ("`Rscript` is not on this
+> machine, so even the side-effect-free scripts could not be executed") and this
+> note inherited it without re-checking. That is the audit's own closing pattern
+> — a claim propagating to the note that quotes it — applied to a claim about
+> whether anything *could* be checked, which is worse than the figures it was
+> used to excuse. Every "not run" statement below has been re-examined and the
+> ones that were only true of `PATH` are now runs.
 
-Several things have since been settled from outside this session, by the sibling
-session running issue #15's proposal 3, and are marked where they appear. None
-of its figures was re-derived here; they are attributed, not adopted.
+Status of each change, after the correction above:
 
-* **All nine changed scripts parse** under R 4.5.1. Before that the only
-  verification was a paren/brace/quote balance pass, which is not an R parse.
+* **Changes 3 and 4 are run here**, on the cached 1k match under R 4.5.1 /
+  npmatch 0.1.1.9000, with the transcripts committed as
+  `dev/PROMOTION-FLOOR-PROBE.log` and `dev/AB-IDF-GATE.log`. Every figure
+  attributed to them below is in those logs. See "What the runs found".
 * **Change 1's effect on the three reference arms is recomputed** from the exact
-  counts `dev/BENCH-MD-REFERENCE.log` already prints — not from a re-run. The
-  ordering holds; the gap between the top two arms grows about fivefold; and one
-  published figure outside `dev/` is affected. See change 1.
-* **Changes 3 and 4 have been run** on the cached 1k match at npmatch
-  0.1.1.9000. See "What the runs found" below. **Both of the hypotheses that
-  motivated change 4 were wrong**, and one of change 3's columns found something
-  the published note has no slot for.
+  counts `dev/BENCH-MD-REFERENCE.log` already prints — no re-run needed, and a
+  re-run is still expensive (~37 GB, one process per arm). The ordering holds;
+  the gap between the top two arms grows about fivefold; and one published
+  figure outside `dev/` is affected.
+* **Changes 2, 5 and 6 are not run.** Their figures are not claimed anywhere.
+
+The sibling session running issue #15's proposal 3 reached several of these
+first, independently, and two of its findings corrected this work rather than
+the repo — the `main_only` diagnosis in change 3 and the false-alarm in change
+4. Credited where they appear. Its figures were never adopted as published
+values. `PROMOTION-FLOOR-FINDINGS.md` §1 and §5 are regenerated in **PR #28**,
+that session's work; the run logged here agrees with it figure for figure and is
+the artifact behind it.
 
 ---
 
@@ -174,14 +194,43 @@ so out loud when the denominator term is the larger of the two, or when the
 headline rose while the matching term went *negative*. That last case is the one
 the single difference could not produce and the decomposition can.
 
-**No published figure moves.** The headline delta is unchanged; two terms are
-printed under it. The limit is stated in the output: these are saved benchmark
-frames and the in-scope count is not in them, so both `clear` columns remain
-result-frame shares. The decomposition separates the population move from the
-matching move; it cannot recover the retrieval failures neither base counts.
+**Run: `dev/COMPARE-BASELINES.log`. This is the largest finding in the note.**
+The headline deltas are small and benign-looking. The decomposition is not:
 
-*To re-derive:* `Rscript dev/compare-baselines.R` (reads two committed `.rds`
-files; cheap).
+```
+active     identities   -93   clear -0.17 points
+  of which matching -1.30 pt (YES -61 on 4,687) and denominator +1.13 pt
+augmented  identities   -94   clear -0.21 points
+  of which matching -1.45 pt (YES -69 on 4,748) and denominator +1.25 pt
+```
+
+**The v1 → v2 population change cost 1.3–1.45 points of matching, and the
+shrinking denominator gave back 86–87% of it.** The published headline is
+−0.17 and −0.21 — seven times smaller than the move underneath. A reader of the
+old single difference would conclude the deduplication was roughly neutral. It
+was not: it lost 61 and 69 YES identities, and only looks neutral because it
+also removed the identities from the base.
+
+This is the shape at its most consequential, because nothing about the headline
+invites a second look. No *published* figure changes — the headline delta is
+unchanged and two terms are now printed under it — but what the headline *means*
+does.
+
+**It also exposed a gap in this change's own warning.** The first version
+shouted only when the headline rose while matching fell, or when the
+denominator term was the larger of the two. Neither fires here: the headline
+moved the *same* way as the matching, and the denominator term is smaller. What
+matters is that the two terms **oppose** and the offset is large, so the warning
+now tests for that and reports the ratio. It fires on both arms. Found by
+running it, not by reading it.
+
+The stated limit holds: these are saved benchmark frames and the in-scope count
+is not in them, so both `clear` columns remain result-frame shares. The
+decomposition separates the population move from the matching move; it cannot
+recover the retrieval failures neither base counts.
+
+*To re-derive:* `Rscript dev/compare-baselines.R` (reads four committed `.rds`
+files; seconds).
 
 ### 3. `dev/probe-promotion-floor.R` — a recovery count with no column for what it cost
 
@@ -314,17 +363,42 @@ in it, each can empty the frame, and an empty one gives a sweep of `NaN` recalls
 and zero prune rates that prints as a table rather than failing — catalogue
 defect 7's shape.
 
-**No published figure moves;** this note publishes none of this script's figures,
-and `dev/PURPOSE-MATCH-FINDINGS.md` was not reached by the provenance audit.
+**Run: `dev/THRESHOLD-RECALL.log`.** No published figure moves — this note
+publishes none of this script's figures, and `dev/PURPOSE-MATCH-FINDINGS.md` was
+not reached by the provenance audit. The companion column pays anyway, in three
+ways that the prune rate alone could not show:
+
+```
+recall >= 1.00 : best floor t=0.550 prunes 65.2% at recall 1.000 (0.000 above target), keeping 2.39/grant
+recall >= 0.99 : best floor t=0.550 prunes 65.2% at recall 1.000 (0.010 above target), keeping 2.39/grant
+recall >= 0.95 : best floor t=0.650 prunes 78.6% at recall 0.964 (0.014 above target), keeping 1.82/grant
+...
+recall >= 0.99 : best floor t=0.000 prunes  0.1% at recall 0.997 (0.007 above target), keeping 4.22/grant
+```
+
+* The **1.00 and 0.99 rows are the same floor** (`t = 0.550`, recall 1.000).
+  Two rows that look like two operating points are one. The realised-recall
+  column is what says so.
+* The 0.95 row clears its target by **0.014** — a floor that barely makes it,
+  reported identically to one that clears with room.
+* On the silver set the "best floor" is **`t = 0.000` pruning 0.1%**, i.e. no
+  pruning at all. "Best floor prunes 0.1%" reads as a result; `t = 0.000` beside
+  it reads as what it is.
+
+Twenty of the thirty target rows print `NOT ACHIEVABLE`, which was already the
+honest form and is why this change ranked last.
 
 ---
 
 ## What the runs found
 
-Changes 3 and 4 were run on the cached 1k match at npmatch **0.1.1.9000** by the
-sibling session. Recorded here because a redefinition that is never run is a
-proposal, not a measurement — and because what came back is not what was
-predicted.
+Changes 3 and 4 were run on the cached 1k match under R 4.5.1 / npmatch
+**0.1.1.9000**, transcripts committed as `dev/PROMOTION-FLOOR-PROBE.log` and
+`dev/AB-IDF-GATE.log`. Recorded here because a redefinition that is never run is
+a proposal, not a measurement — and because what came back is not what was
+predicted. The two runs cross-check: `probe-promotion-floor`'s floor-on arm and
+`ab-idf-gate`'s `min_idf = 0` arm are the same configuration and both report
+2,821 / 1,006 / 1,093.
 
 ### The EIN-churn hypothesis is disconfirmed. Twice.
 
@@ -370,8 +444,26 @@ This is practice 7 failing in the opposite direction, and worth naming as such:
 a metric that reports a **false** alarm is as bad as one that cannot alarm,
 because it teaches the reader to skip the line. The script now asserts the
 invariant that is true — no gained identity's *score* rose, which a veto cannot
-cause — prints the margins beside it so the mechanism is visible, and
-`stopifnot()`s the score condition rather than the gain.
+cause — prints the margins beside it, and `stopifnot()`s the score condition
+rather than the gain. **The assertion holds and the margins show the
+mechanism:**
+
+```
+                           name    was score_off score_on margin_off margin_on
+                OHIO FOUNDATION  MAYBE       0.9    0.888          0     0.068
+ FAMILY AND CHILDREN'S ASSOCIAT  MAYBE       0.9    0.820          0     0.140
+```
+
+`margin_off` is **exactly 0** in both — ties — and the **score falls**. Falling
+is the right signature and flat would have been the suspicious one: once the
+floored pair is vetoed a *different* pair wins, scoring slightly lower but
+carrying a real margin. Flat would mean the same pair survived and only its
+runner-up left. (I predicted flat; the sibling session's run showed otherwise
+and this one confirms it.)
+
+Both of those identities also appear among the **six the floor costs** in change
+3 below. One tie-driven selection mechanism, observed from either side of the
+floor, in two scripts that were changed for unrelated reasons.
 
 ### `probe-promotion-floor.R`: the cost column paid
 
@@ -389,20 +481,45 @@ metric it rests on could only count wins. The net is **+103**, not +121.
 **The note's qualitative claim survives.** All 109 fall to MAYBE, so the floor
 is deciding what gets adjudicated rather than creating recall from nothing.
 
-**And the published figures are stale, in three ways.** 121 and 4.3% against a
-re-run's 109 and 3.9%/4.0%; both tier arms moved (2,821 / 2,718 against the
-note's 2,814 / 2,698); and "4.3% of the tier" is denominated on the YES count
-the floor itself inflates, which is this note's shape 3 appearing in a published
-note rather than in code. So the audit's "121 pairs or 116 identities?" has a
-third answer: **neither reproduces today.** The note records no npmatch version,
-so drift cannot be separated from an original error — while the population is
-stable, every tier table summing to 4,920 including the re-run.
+**And the published figures were stale: 121 and 4.3% against 109 and
+3.9%/4.0%**, with both tier arms moved (2,821 / 2,718 against the note's
+2,814 / 2,698). "4.3% of the tier" was also denominated on the YES count the
+floor itself inflates — this note's shape 3, appearing in a published note
+rather than in code. So the audit's "121 pairs or 116 identities?" had a third
+answer: neither reproduced.
 
-Flagged in a `STALE` box in `dev/PROMOTION-FLOOR-FINDINGS.md` §1 and at §5's
-recommendation, **as a staleness flag rather than as replacement values** —
-retyping another run's numbers into a recommendation is catalogue defect 2's
-mechanism. The box says to regenerate the section and record the npmatch version
-beside it.
+**The cause is configuration, not drift and not an error.** §1 was measured
+before `distinct_name_main_only`, the gate the CORRECTION below it introduces
+and which `np_config()` now defaults to `TRUE` — verified here. Two things pin
+it down, and this is the sibling session's diagnosis, reached from the first:
+
+* the CORRECTION's own `main_only` row, **2,821 / 1,006 / 1,093**, reproduces
+  **exactly**, which rules out version drift — drift would have moved it too;
+* every tier table in the note, in the CORRECTION, and in both runs here sums
+  to **4,920**, which rules out a population change.
+
+A stable population plus a reproducing control row leaves the config default.
+**So the old §1 was not wrong; it was unlabelled** — correct for a pipeline that
+no longer exists. The defect was a missing configuration and version line, not
+the arithmetic. That is a better diagnosis than the first draft of this note
+reached, and it is worth recording that the first draft's "drift or original
+error, cannot tell" was a failure to look for the control row that was eighty
+lines further down the same file.
+
+**§1 and §5 are regenerated in PR #28**, by the sibling session, which reached
+the `main_only` diagnosis first. That PR removes the `STALE` box #25 put there
+as a holding action — which is the right end for a flag: it existed to make the
+figure unquotable while neither session could re-run it, and it is retired by
+the fix rather than left standing beside it.
+
+The regeneration was also done independently here, from
+`dev/PROMOTION-FLOOR-PROBE.log`, and **the two agree figure for figure** —
+2,821 / 1,006 / 1,093 and 2,718 / 901 / 1,301, gained 109, cost 6, net +103,
+churn 0, state-only 108 of 109. That duplicate prose is not committed; #28 owns
+the note. What this branch contributes instead is the **run log #28 does not
+have**: that PR's §1 cites "npmatch 0.1.1.9000" with no artifact behind it, and
+practice 1's standard is that a figure which cannot be re-derived by running a
+file is a figure nobody can check. `dev/PROMOTION-FLOOR-PROBE.log` is that file.
 
 ### What this exchange says about the practice
 
@@ -456,20 +573,26 @@ cannot provide.
 
 Two narrower limits are worth stating plainly:
 
-**All nine scripts parse. Three changes have been run; three have not.** Changes
-3 and 4's two cheap scripts were run at npmatch 0.1.1.9000 (see "What the runs
-found"), and change 1 needed no run — its effect is recoverable from the
-committed log. Still unrun: **change 2** (`compare-baselines`, cheap, reads two
-committed `.rds` files), **change 5**'s two adjudication scripts (need the
-adjudication runs), **change 6** (`probe-threshold-recall`, reads two committed
-test sets), and `measure-recovery` from change 4, which runs two full matches and
-is the expensive one. None of their figures is claimed here.
+**Five of the six changes are now run, with committed logs.** Changes 2, 3, 4
+and 6 were run under R 4.5.1 / npmatch 0.1.1.9000 —
+`dev/COMPARE-BASELINES.log`, `dev/PROMOTION-FLOOR-PROBE.log`,
+`dev/AB-IDF-GATE.log`, `dev/THRESHOLD-RECALL.log` — and change 1's effect is
+derived from the already-committed `dev/BENCH-MD-REFERENCE.log`.
 
-**No figure from another session's run was re-derived in this session.** Every
-such number is attributed where it appears, and the `STALE` box added to
-`PROMOTION-FLOOR-FINDINGS.md` deliberately flags rather than replaces, because
-retyping a figure out of someone else's run is the mechanism of catalogue defect
-2 whoever retypes it.
+**What is still unrun, and what that costs:**
+
+* **Change 5** (`adjudicate-03-score.R`, `adjudicate-04-ablation.R`) needs the
+  saved adjudication runs. Its claim — that the clamp does not currently bite —
+  is arithmetic from the published CI and is stated as such, not as a run.
+* **`measure-recovery.R`** from change 4 runs two full matches and is the one
+  genuinely expensive script here. Its EIN-churn column is therefore the one
+  that remains *unmeasured*, as against the two measured at zero.
+* **Change 1's three reference arms** were not re-run (~37 GB, one process per
+  arm); the ordering was settled from the committed log instead.
+
+No figure in this note is retyped from another session's run. Where the sibling
+session reached a result first, the result is credited and the figure comes from
+the log committed here.
 
 **The conclusion that was at risk survived; a different one did not.** Change 1
 lowers every arm's clear rate, most for the arm that retrieves least — and the

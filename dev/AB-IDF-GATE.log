@@ -1,0 +1,33 @@
+# dev/ab-idf-gate.R
+# run 2026-11-02T05:58:39Z on branch 044b98d
+# R 4.5.1, npmatch 0.1.1.9000, pfmatch 0.1.0
+
+pairs carry name_idf: 312,468 non-missing of 312,468 
+-------------------------------------------------------------------------- 
+A/B: distinct_name_min_idf 0 vs 10 (identical pairs) 
+-------------------------------------------------------------------------- 
+min_idf = 0    YES  2821  MAYBE  1006  NO  1093 
+min_idf = 10   YES  2822  MAYBE   986  NO  1112 
+
+YES -> demoted by the gate: 1 
+                    name                     bmf     qcity   bcity    now
+                  <char>                  <char>    <char>  <char> <char>
+ THE CENTER FOR MICHIGAN THE CENTER FOR MICHIGAN YPSILANTI DETROIT  MAYBE
+
+YES gained by the gate: 2 
+  Expected, not a defect: the gate removes pairs, and np_tier() demotes on 
+  margin to the runner-up, so removing a runner-up can promote the winner. 
+  of the 2, 0 had their SCORE rise -- that one would be a defect, since 
+  a veto cannot raise a score. Anything above 0 stops the run. 
+                           name    was score_off score_on margin_off margin_on
+                         <char> <char>     <num>    <num>      <num>     <num>
+                OHIO FOUNDATION  MAYBE       0.9    0.888          0     0.068
+ FAMILY AND CHILDREN'S ASSOCIAT  MAYBE       0.9    0.820          0     0.140
+
+reconciliation: net YES +1 = gained 2 - demoted 1 = +1 
+
+YES both ways on a DIFFERENT EIN: 0 of 2820 
+  Measured at 0 at npmatch 0.1.1.9000. Printed anyway: a zero that was 
+  measured is a different claim from a quantity nobody looked at. 
+
+# exit 0
