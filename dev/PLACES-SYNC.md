@@ -523,6 +523,17 @@ regression hard to attribute if several things move at once.
    | `v1-59c6e84c5f38e9f5` | **0.1.7** |
    | `v1-5e901add4a04a5d6` | 0.1.8 |
 
+   **Read each row as the release that INTRODUCED that signature, not as the
+   release that produced a given stamp.** The mapping is not one-to-one in that
+   direction: a release that changes no rule reuses the previous signature, and
+   the first row above already shows it — 0.1.0 and 0.1.1 share
+   `v1-3e7b9f9d59bbb19e`. So a figure stamped `v1-5e901add4a04a5d6` was
+   produced by **0.1.8 or any later release that changed no rule**, and
+   `np_signature_history()` (npnormalize#21, open) is explicit that it answers
+   "which release produced this value" rather than "which release am I
+   running" — that is still `packageVersion()`. A provenance header therefore
+   wants both, which is what today's two logs record.
+
    **Two of these are confirmed from this repo's own data, independently of the
    registry**, which is what makes the rest worth trusting: the superseded
    `pf_variants` recorded `npnormalize 0.1.6` beside `v1-d49b18cc81ab79fb` in
@@ -540,6 +551,48 @@ regression hard to attribute if several things move at once.
    `v1-b42811fe6601afe6` (named in matchdb's `build-baseline-2026-10.R`
    header). The registry starts at 0.1.0 and cannot speak to those, so a figure
    stamped with one of them is still undated as to normalizer version.
+
+   **One of the three is now dated.** `dev/BENCH-MD-REFERENCE.log` records
+   `npmatch@ddfd967` beside `v1-6dcb298522cc5118`, and reading the DESCRIPTION
+   at that commit gives **npmatch 0.1.0.9000** (committed 2026-10-24, merge of
+   npmatch#17 `fix/na-street-key`). Its `Imports` are `data.table, datasets,
+   parallel, stats, stringi, stringr, tools, utils` — **no npnormalize**, which
+   confirms on the evidence rather than by date that this value came from
+   npmatch's own normalizer. Note the limit: `0.1.0.9000` is a development
+   version naming a range of commits, and nobody has re-run `ddfd967` to
+   reproduce the signature, so the defensible claim is "npmatch 0.1.0.9000 at
+   `ddfd967`, witnessed by that log" — a version, a commit and a witness, short
+   of a reproduction.
+
+   **A second one is dated too, and the sentence this replaces was wrong.** It
+   read: "the other two name no commit in the notes that cite them, so there is
+   no DESCRIPTION to read". That was false for `v1-421e1e2a6afb024e`, and the
+   commit was in this repository the whole time — `dev/BASELINE-2026-08/`
+   `environment.txt` lines 4–6 read `pfmatch 1c657f8`, `npmatch f14f1d9`,
+   `normalizer sig v1-421e1e2a6afb024e`, so the commit sits **three lines above
+   the signature**. I searched the notes that cite the signature and not the
+   baseline's own environment record, and then wrote the absence up as a fact.
+   Found by the npnormalize session looking here after I told it it was better
+   placed to look.
+
+   Verified at the commit: **npmatch 0.0.0.9000** at `f14f1d9`, committed
+   2026-08-23T05:11Z, `Imports` of `data.table, parallel, stats, stringi,
+   stringr, tools, utils` — again no npnormalize, so pre-split on the evidence.
+   That matches the 2026-08-22 measurement date in
+   `GROUP-STRUCTURE-FINDINGS.md`.
+
+   **Only `v1-b42811fe6601afe6` is now undated**, and it has no commit anywhere:
+   it appears solely in matchdb's `build-baseline-2026-10.R` as the value
+   npmatch moved to after `v1-421e1e2a6afb024e`. Upstream now asserts its `NA`
+   in a test, so nobody interpolates it from the releases either side.
+
+   **The transferable lesson is about the two rows that were recoverable.** Both
+   were recovered because a run-time record wrote the signature and the identity
+   of what produced it *in the same breath* — `environment.txt` put the commit
+   three lines from the signature, and `BENCH-MD-REFERENCE.log` put
+   `npmatch@ddfd967` on the same line as it. The signature alone is not
+   provenance; it is a key with no table unless something recorded what produced
+   it at the same moment.
 
    **The granted part.** §6's `street_num` ask said the 59 wanted a fix one
    layer down rather than a third key spelling, and K3 was rejected here
