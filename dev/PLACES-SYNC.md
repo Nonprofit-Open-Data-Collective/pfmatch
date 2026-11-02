@@ -364,12 +364,48 @@ regression hard to attribute if several things move at once.
    | 59 | the keys differ **only in spacing**: the hand-rolled `gsub("[^A-Z0-9]", "")` deleted every separator, so `70-11 150TH STREET` agreed with `7011 150TH STREET`; `street_key` keeps a space where the hyphen was (`70 11 150TH ST` against `7011 150TH ST`) | **a loss**, and Queens files both spellings |
    | 22 | the keys differ by more than spacing — almost all a suite fused to the street word (`4550 WEST 77TH STREETSUITE 200`), which `.np_unit_pat`'s word boundary cannot split, so it survives inside `street_key` on one side only | npnormalize#7 §5, recorded upstream as intended |
 
-   So step 4 has to answer for the 59 before it ships. The cheapest answer is
-   probably to key on `gsub(" ", "", street_key)` rather than `street_key` —
-   normalized, suffix-contracted, suite-stripped, and separator-blind the way
-   the hand-rolled key accidentally was — but that is a third key spelling and
-   wants its own measurement over the BMF, not a decision made here. The test
-   pins all four counts, so whichever way it goes the change is visible.
+   **Measured over the whole BMF, 2026-11-02 — and the answer is: adopt
+   `street_key`, accept the 59, do not invent a third key.**
+   `dev/measure-addr-key-spellings.R`, logged in `dev/ADDR-KEY-SPELLINGS.log`,
+   put all three spellings over `REF-augmented.rds`'s 3,880,431 rows with
+   `street_key` recomputed under npnormalize 0.1.6, because that file's
+   recorded column is stale (6 rows in a 50,000 sample, all of them the
+   `BUILDING` extraction or `PO DRAWER` → `PO BOX`; §4.1 flagged the file as
+   unstamped and it is).
+
+   | spelling | rows keyed | groups | rows per group |
+   |---|---:|---:|---:|
+   | K1 hand-rolled, `gsub("[^A-Z0-9]", "")` + `\|` + zip5 | 2,627,588 | 2,110,592 | 1.245 |
+   | K2 `np_addr_key(street_key, zip5)` | 2,628,491 | 1,941,116 | 1.354 |
+   | K3 `np_addr_key(gsub(" ", "", street_key), zip5)` | 2,628,961 | 1,939,261 | 1.356 |
+
+   Both box rules drop about the same third of the file: 1,252,843 rows for K1
+   (32.29%) against 1,251,940 for K2 (32.26%).
+
+   **K2 is the win the 22.7% figure promised, and the splitting is a corpus
+   artefact.** It merges 87,790 K1 groups (4.53%) and cuts the group count by
+   169,476 — 8.0% fewer groups over the same rows. It splits just 1,612 of
+   2,109,207 K1 groups, **0.08%**. The 92 splits in `pf_variants` are 1.7% of
+   that corpus because the corpus is *selected* for addresses with multiple
+   renderings; across the BMF the same behaviour is two orders of magnitude
+   rarer.
+
+   **K3 does not pay for itself.** It adds 2,278 merges, 0.12% of groups, and
+   972 of them — **42.67%** — join rows whose parsed `street_num` disagrees.
+   The examples are mixed in a way no reviewer could sort at that volume:
+   `110 04 ATLANTIC AVE` with `11004 ATLANTIC AVE` and `57C HOWARD RD` with
+   `57 C HOWARD RD` are right, while `4780 1 55 N` with `47801 55 N` is simply
+   wrong. A rule that fires on 0.12% of groups and is unreviewable in half of
+   those is a bad trade for 59 pairs.
+
+   **And K3 is aimed at the wrong target anyway.** Of its 2,278 merges only
+   **410** involve a hyphenated spelling meeting an unhyphenated one — the case
+   the 59 are made of. The other 1,864 are unrelated spacing noise, which is
+   where the wrong merges live. So the 59 want a fix one layer down, not a
+   third key: see the new `street_num` ask in §6.
+
+   The parity test pins all four counts from the pair corpus, and this log
+   pins the BMF figures, so a move in either shows up.
 
    **Call npmatch's function; do not port it.** matchdb ported only because it
    needs SQL macros, and even then it pins the port with a parity test against
@@ -569,6 +605,26 @@ whole grant corpus, as `build-group-index.R` already does, and pass them in.
   for a value that cannot change, and cannot reach `share_min` /
   `unit_coverage_min` at all. The asymmetry with its three siblings looks like
   an oversight rather than a decision. See step 5a.
+* **Report the hyphenated house number: a space is inserted inside it, and
+  `street_num` keeps only the part before the hyphen.** Measured 2026-11-02
+  over `REF-augmented.rds`: **6,459 of 3,880,431 rows (0.166%)** carry one, and
+  they are not a curiosity — Queens (`77-06 BROADWAY`), Hawaii
+  (`91-400 KOMOHANA`, `41-1347 KALANIANAOLE HWY`, `73-4460 QUEEN KAAHUMANU
+  HWY`) and Chicago ranges (`5830-5832 W LAWRENCE AVE`) all write addresses
+  this way. Two consequences:
+
+  * `street_key` becomes `77 06 BROADWAY`, which does not block with the same
+    address filed `7706 BROADWAY`. That is what the 59 splits in step 4 are
+    made of, and 410 such twin groups exist across the BMF.
+  * `street_num` is `77` for `77-06 BROADWAY` and `73` for
+    `73-4460 QUEEN KAAHUMANU HWY` — a house number truncated at the hyphen,
+    which anything keying or comparing on `street_num` inherits.
+
+  **Ask:** treat a hyphenated house number as one token — either strip the
+  hyphen (`7706`) or keep it (`77-06`), consistently, and let `street_num`
+  carry the whole thing. pfmatch is not patching this locally; the measurement
+  says a local space-blind key costs more than it recovers (step 4), so the
+  fix belongs upstream or nowhere.
 * **Ask for `np_name_key()`, beside `np_addr_key()`.** There is no public
   single-vector name key: `np_name_core()`, `np_name_rules()`, `np_name_freq()`
   and `np_name_placeholder()` are exported, but a `name_key` can only be had by

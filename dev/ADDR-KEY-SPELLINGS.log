@@ -1,0 +1,76 @@
+==============================================================================
+measure-addr-key-spellings  2026-11-01 22:18:50
+==============================================================================
+installed normalizer: v1-d49b18cc81ab79fb  (npnormalize 0.1.6)
+loaded 3,880,431 rows x 38 cols in 80s
+recorded street_key matches a fresh normalize on 50,000 sampled rows: FALSE
+  6 of 50,000 differ; first few:
+                               street                       recorded
+1     4702 TRANSPORT DRIVE BUILDING 6       4702 TRANSPORT DR BLDG 6
+2  P221 FRANKLIN BUILDING 3451 WALNUT P221 FRANKLIN BLDG 3451 WALNUT
+3                      PO DRAWER 1290                 PO DRAWER 1290
+4 2269 SAW MILL RIVER ROAD BUILDING 3  2269 SAW MILL RIVER RD BLDG 3
+5             FORT MASON BUILDING 201            FORT MASON BLDG 201
+                   fresh
+1      4702 TRANSPORT DR
+2   P221 FRANKLIN WALNUT
+3            PO BOX 1290
+4 2269 SAW MILL RIVER RD
+5             FORT MASON
+  recomputing street_key over the whole file
+  recomputed in 707s, cached as ADDR-KEY-STREETKEY-v1-d49b18cc81ab79fb.rds
+==============================================================================
+THE THREE KEY SPELLINGS
+==============================================================================
+               spelling   keyed  groups dropped rows_per_group
+                 <char>   <int>   <int>   <int>          <num>
+1:              K1 hand 2627588 2110592 1252843          1.245
+2:   K2 np (street_key) 2628491 1941116 1251940          1.354
+3: K3 tight (no spaces) 2628961 1939261 1251470          1.356
+
+rows the box rule drops: K1 1,252,843 (32.29%), K2 1,251,940 (32.26%)
+==============================================================================
+K1 -> K2: WHAT ADOPTING street_key DOES
+==============================================================================
+K1 groups that K2 splits:   1,612 of 2,109,207 (0.08%)
+K2 groups that merge >1 K1: 87,790 of 1,939,004 (4.53%)
+==============================================================================
+K2 -> K3: WHAT SPACE-BLINDNESS BUYS, AND WHAT IT RISKS
+==============================================================================
+K3 groups that merge >1 K2 group: 2,278 of 1,938,780 (0.12%)
+  of those, groups whose merged rows disagree on street_num: 972
+  i.e. merges where the house number itself differs: 42.67% of the merges
+K3 never splits a K2 group by construction: TRUE
+==============================================================================
+EXAMPLES: K2 groups that K3 glues together
+==============================================================================
+K3 COJPMORGANCHASEBANKNAPOBOX 53201    <- C O JPMORGAN CHASE BANKNAP O BOX  |  C O JPMORGAN CHASE BANKNAPO BOX  |  C O JPMORGAN CHASE BANK NAPO BOX  |  C O JPMORGAN CHASE BANK NAPOBOX  |  C O JPMORGAN CHASE BANK NA PO BOX
+K3 4900TIEDEMANRDOH01490150 44144      <- 4900 TIEDEMAN RD OH 01 49 0150  |  4900 TIEDEMAN RD OH01490150  |  4900 TIEDEMAN RD OH 0149 0150  |  4900 TIEDEMAN RD OH01 49 0150
+K3 26W171ROOSEVELTRD 60187             <- 26 W 171 ROOSEVELT RD  |  26W171 ROOSEVELT RD  |  26W 171 ROOSEVELT RD  |  26 W171 ROOSEVELT RD
+K3 33003RDSTEETNENO9 59404             <- 3300 3RD STEET N E NO9  |  3300 3RD STEET N E NO 9  |  3300 3RD STEET NE NO 9  |  3300 3RD STEET NE NO9
+K3 6709LATIJERABLVD 90045              <- 6709 LA TIJERA BLVD  |  6709 LA TIJERA BLV D  |  6709 LATIJERA BLVD
+K3 10SDEARBORNIL10111 60603            <- 10 S DEARBORN IL1 0111  |  10 S DEARBORN IL10111  |  10 S DEARBORN IL 1 0111
+K3 NUTTERMCCLENNENFISHLLPPOB514 02205  <- NUTTER MCCLENNEN FISH LLP POB 514  |  NUTTER MCCLENNEN FISHLLP POB 514  |  NUTTERMCCLENNEN FISH LLP POB 514
+K3 JMFORBES121MTVERNONST 02108         <- JM FORBES121 MT VERNON ST  |  JM FORBES 121 MT VERNON ST  |  J M FORBES121 MT VERNON ST
+K3 101NINDEPENDENCEMALLE 19106         <- 101N INDEPENDENCE MALL E  |  101 N INDEPENDENCEMALL E  |  101 N INDEPENDENCE MALL E
+K3 1525WWTHARRISBLVDD1114044 28262     <- 1525 W W T HARRIS BLVD D1114 044  |  1525 W WT HARRIS BLVD D1114 044  |  1525 WWT HARRIS BLVD D 1114 044
+K3 114WOODLANDSTMS510358 06105         <- 114 WOODLAND ST MS510358  |  114 WOODLAND ST MS 510358  |  114 WOODLAND ST MS 5 103 58
+K3 11004ATLANTICAVE 11419              <- 11004 ATLANTIC AVE  |  110 04 ATLANTIC AVE  |  110 04ATLANTIC AVE
+==============================================================================
+EXAMPLES: the risky merges, where street_num disagrees
+==============================================================================
+K3 26W171ROOSEVELTRD 60187             <- 26 W 171 ROOSEVELT RD (num 26)  |  26W171 ROOSEVELT RD (num 26W)  |  26W 171 ROOSEVELT RD (num 26W)  |  26 W171 ROOSEVELT RD (num 26)
+K3 101NINDEPENDENCEMALLE 19106         <- 101N INDEPENDENCE MALL E (num 101N)  |  101 N INDEPENDENCEMALL E (num 101)  |  101 N INDEPENDENCE MALL E (num 101)
+K3 11004ATLANTICAVE 11419              <- 11004 ATLANTIC AVE (num 11004)  |  110 04 ATLANTIC AVE (num 110)  |  110 04ATLANTIC AVE (num 110)
+K3 101NINDEPENDENCEMALLEMACY1372 19106  <- 101N INDEPENDENCE MALL E MACY 1372 (num 101N)  |  101N INDEPENDENCE MALL E MACY1372 (num 101N)  |  101 N INDEPENDENCE MALL E MACY 1372 (num 101)
+K3 50ERIVERCENTERBLVD 41011            <- 50 E RIVERCENTER BLVD (num 50)  |  50E RIVERCENTER BLVD (num 50E)  |  50 E RIVER CENTER BLVD (num 50)
+K3 3322RR620S 78738                    <- 3322 RR 620 S (num 3322)  |  3322RR 620 S (num 3322R)  |  3322 RR 620S (num 3322)
+K3 900BCENTREPARKDR 28805              <- 900B CENTREPARK DR (num 900B)  |  900 B CENTRE PARK DR (num 900)  |  900 B CENTREPARK DR (num 900)
+K3 104RNCHWY54W 27510                  <- 104R NC HWY 54 W (num 104R)  |  104 R NC HWY 54 W (num 104)  |  104 RNC HWY 54 W (num 104)
+K3 4780155N 39211                      <- 4780 1 55 N (num 4780)  |  47801 55 N (num 47801)  |  4780 155 N (num 4780)
+K3 57CHOWARDRD 04750                   <- 57C HOWARD RD (num 57C)  |  57 C HOWARD RD (num 57)
+K3 4240BELLBLVD 11361                  <- 4240 BELL BLVD (num 4240)  |  42 40 BELL BLVD (num 42)
+K3 2499DHWY117S 27530                  <- 2499 D HWY 117 S (num 2499)  |  2499D HWY 117 S (num 2499D)
+==============================================================================
+done  2026-11-01 22:37:59   (1149s total)
+==============================================================================
