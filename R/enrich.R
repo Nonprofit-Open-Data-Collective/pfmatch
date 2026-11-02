@@ -180,12 +180,21 @@ pf_candidate_frame <- function(x, ids = NULL, k = 5, bmf_context = NULL) {
       if (nm %in% names(ctx))
         out[[sub("^BMF_", "FDN_", nm)]] <- ctx[[nm]][fi]
     }
-    out$same_sector <- ifelse(
-      is.na(out$CAND_nteev2_subsector) | is.na(out$FDN_nteev2_subsector), NA,
-      out$CAND_nteev2_subsector == out$FDN_nteev2_subsector)
-    out$fdn_recip_same_state <- ifelse(
-      is.na(out$FDN_org_addr_state) | is.na(out$recip_state), NA,
-      out$FDN_org_addr_state == out$recip_state)
+    # The two derived comparisons need a column on each side, and a caller is
+    # free to pass a context that carries neither -- pf_bmf_context() keeps
+    # whatever the BMF it was given actually held. Read the sides through a
+    # length-safe accessor: an absent column is NA for every row, never
+    # logical(0). ifelse() on a NULL side returns logical(0), and assigning that
+    # to a frame is an error with no column named in it, so this used to make a
+    # BMF without `org_addr_state` look like a bug in the sheet.
+    side <- function(nm) if (is.null(out[[nm]])) rep(NA_character_, nrow(out))
+                         else as.character(out[[nm]])
+    cand_sec <- side("CAND_nteev2_subsector"); fdn_sec <- side("FDN_nteev2_subsector")
+    out$same_sector <- ifelse(is.na(cand_sec) | is.na(fdn_sec), NA,
+                              cand_sec == fdn_sec)
+    fdn_st <- side("FDN_org_addr_state"); recip_st <- side("recip_state")
+    out$fdn_recip_same_state <- ifelse(is.na(fdn_st) | is.na(recip_st), NA,
+                                       fdn_st == recip_st)
   }
   out[order(out$grant_id, out$rank), ]
 }
