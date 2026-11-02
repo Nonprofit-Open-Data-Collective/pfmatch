@@ -27,15 +27,45 @@ normalizer_versions <- function(v) {
   c(built = built, live = live)
 }
 
+## Skipping forward, failing backward ----------------------------------------
+#
+# A skip is the right answer in ONE direction only. Installed NEWER than the
+# fixture means the fixture is stale and the keys legitimately moved: skip, and
+# say to rebuild. Installed OLDER than the fixture means the environment is
+# wrong -- somebody is running against a normalizer that predates the data in
+# this package -- and that is a broken install, not a stale fixture.
+#
+# The distinction is load-bearing because nothing else catches it. DESCRIPTION's
+# floor is the only automatic guard, and it is a FLOOR: it cannot notice a
+# downgrade after installation. And it could not be relied on transitively
+# either -- npmatch's released v0.1.1 does not import npnormalize at all, so
+# `npmatch (>= 0.1.1)` constrains the normalizer not at all. Before this, a
+# too-old install surfaced as four skips, which is indistinguishable from four
+# passes in a summary line, and this session twice watched exactly that happen
+# under a normalizer that had moved underneath it.
+.npn_older <- function(live, built) {
+  if (live == "unrecorded" || built == "unrecorded") return(FALSE)
+  isTRUE(tryCatch(utils::compareVersion(live, built) < 0, error = function(e) FALSE))
+}
+
 skip_if_normalizer_moved <- function(v) {
   built <- attr(v, "normalizer")
   live  <- tryCatch(npmatch::np_normalize_signature(),
                     error = function(e) NA_character_)
   skip_if(is.na(built) || is.na(live))
   pk <- normalizer_versions(v)
-  skip_if_not(
-    identical(built, live),
-    sprintf(paste("normalizer moved (fixture %s, npnormalize %s; installed %s,",
-                  "npnormalize %s); rebuild with data-raw/make-pf-variants.R"),
-            built, pk[["built"]], live, pk[["live"]]))
+  if (identical(built, live)) return(invisible(TRUE))
+
+  if (.npn_older(pk[["live"]], pk[["built"]]))
+    stop(sprintf(paste0(
+      "installed npnormalize %s is OLDER than the %s this fixture was built",
+      " against (%s vs %s).\n",
+      "  This is a broken environment, not a stale fixture, so it fails rather",
+      " than skipping.\n",
+      "  DESCRIPTION requires npnormalize (>= %s); install at least that."),
+      pk[["live"]], pk[["built"]], live, built, pk[["built"]]), call. = FALSE)
+
+  skip(sprintf(paste("normalizer moved (fixture %s, npnormalize %s; installed %s,",
+                     "npnormalize %s); rebuild with data-raw/make-pf-variants.R"),
+               built, pk[["built"]], live, pk[["live"]]))
 }
