@@ -1105,10 +1105,32 @@ description).
   I argue for in finding 6. I cannot separate those two causes without a fresh
   match, which is not a cheap run.
 
-* **The inventory describes the repo at `26e6cd4` (PR #21); this branch now
-  carries `main` through PR #34.** Merged in as `064a523` so that a pull request
-  from here shows only this file. The audit was *written* against the older
-  tree, so two things follow.
+* **The inventory describes the repo at `26e6cd4` (PR #21); this branch carries
+  `main` through PR #34**, merged in as `064a523`. `main` has since moved to
+  `f35fad5` (PR #35) and is no longer an ancestor of this branch, which affects
+  nothing: GitHub reports PR #36 `MERGEABLE` / `CLEAN` with
+  `dev/FIGURE-PROVENANCE.md` and `dev/METRIC-SHAPES.md` at **0 deletions each**.
+  The audit was *written* against the older tree, so two things follow.
+
+  > **The merge was hygiene, not a rescue, and the reason first recorded here
+  > for doing it was false.** This bullet originally said the merge was needed
+  > "so that a pull request from here shows only this file", on a warning that
+  > an unsynced PR would display ~2,770 deletions and that merging it would
+  > revert PRs #22–#34. **Both halves were wrong**, and the tracking session that
+  > raised them retracted them. GitHub diffs a pull request **three-dot**,
+  > against the merge base, so it would have reported 0 deletions either way;
+  > and a merge combines histories rather than applying a diff, so a branch
+  > lacking `main`'s newer commits reverts nothing when merged.
+  >
+  > The 2,770 came from `git diff main..branch`, a **two-dot** comparison of two
+  > tips. That answers neither the question GitHub asks nor the question a merge
+  > asks — it is a **false instrument** in the sense set out at the end of this
+  > file, and the cleanest instance in the sweep, because the thing measuring
+  > wrongly was the measuring tool itself. I ran that command, read its output,
+  > and reached the same wrong conclusion independently before being warned;
+  > neither of us checked it against `gh pr view --json files`, which settles it
+  > in one call. What does hold is the part that was verified against the merge
+  > base: **my own commits delete nothing.**
 
   **What main has since changed.** #24 adopted `pf_result_tiers()` inside
   `dev/adjudicate-16-fuzzy-regress.R` and wired `dev/assert-lib.R` into
@@ -1122,6 +1144,12 @@ description).
   **Six of nine findings are still live; three are closed.** Findings 4 and 4a
   by #29, finding 3 by `5958fab`. Findings 1, 5, 6, 7, 8 and 9 remain, each
   re-read in context on `origin/main` rather than matched as a string.
+
+  Re-confirmed against `f35fad5` (PR #35), the newest `main`: #35 touched
+  `R/pipeline.R`, `dev/PROMOTION-FLOOR-FINDINGS.md`, `man/pf_reference.Rd`,
+  `vignettes/matching-dictionaries.Rmd` and the rendered docs — **none of the
+  notes behind findings 1, 5, 6, 7, 8 or 9** — so the count holds. The corrected
+  finding 3 also survives it: line 130's "(default **10**)" is still there.
 
   > **The first version of this re-check was unsound, and it is the audit's own
   > subject matter.** It reported "seven of nine still live" on the strength of
@@ -1262,6 +1290,10 @@ a moving world, recorded once and never re-read:
 * my own dated correction, falsified by the commit that wrote it
 * my `grep`-based re-check, which reported a retracted recommendation as live
   because the retraction kept the phrase it retracts
+* `git diff main..branch`, read as if it showed what a pull request shows — a
+  **two-dot** comparison of two tips standing in for the **three-dot** diff
+  against the merge base that GitHub actually renders. It reported 2,770
+  deletions where the PR has none
 
 None is a wrong number, and none would be caught by any of the eight practices,
 which all aim at arithmetic and denominators. But they are **not one failure**,
@@ -1285,9 +1317,18 @@ account for itself. The general form is sharper still:
 > it.**
 
 Which is why "name the branch and the PR, not the SHA" is the fix and not merely
-a tidier style. The same test condemns my `grep` for a different reason — it is
-a **false instrument**, a check that cannot see what it claims to measure,
-and the defence there is reading the thing rather than matching a string in it.
+a tidier style.
+
+**False instruments are the fourth mechanism**, and two of this sweep's errors
+are that rather than any kind of staleness: the `grep` that matched a phrase
+inside its own retraction, and `git diff main..branch` read as the diff a pull
+request shows. Both ran clean, returned a well-formed answer, and answered a
+different question than the one asked — a two-dot comparison of two tips is not
+the three-dot diff against the merge base that GitHub renders, and it is not
+what a merge does either. Neither is a wrong number and neither is stale; the
+instrument was wrong. The defence is to read the thing rather than match a
+string in it, and to ask the system that will answer the question — one
+`gh pr view --json files` call would have settled the second, and did.
 
 The grouping is the proposal-4 session's, the three-way split and the general
 form are its sharpening of the tracking session's split, and all of it is better
