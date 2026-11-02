@@ -393,8 +393,11 @@ regression hard to attribute if several things move at once.
    | 59 | the keys differ **only in spacing**: the hand-rolled `gsub("[^A-Z0-9]", "")` deleted every separator, so `70-11 150TH STREET` agreed with `7011 150TH STREET`; `street_key` keeps a space where the hyphen was (`70 11 150TH ST` against `7011 150TH ST`) | **a loss**, and Queens files both spellings |
    | 22 | the keys differ by more than spacing — almost all a suite fused to the street word (`4550 WEST 77TH STREETSUITE 200`), which `.np_unit_pat`'s word boundary cannot split, so it survives inside `street_key` on one side only | npnormalize#7 §5, recorded upstream as intended |
 
-   **Measured over the whole BMF, 2026-11-02 — and the answer is: adopt
-   `street_key`, accept the 59, do not invent a third key.**
+   **Measured over the whole BMF, 2026-11-02 under npnormalize 0.1.6 — and the
+   answer is: adopt `street_key`, accept the 59, do not invent a third key.**
+   *Re-measured over the same reference under 0.1.8 the same day; the three
+   paragraphs after the table are superseded, and the replacement is below
+   them. The conclusion holds and the reason for it does not.*
    `dev/measure-addr-key-spellings.R`, logged in `dev/ADDR-KEY-SPELLINGS.log`,
    put all three spellings over `REF-augmented.rds`'s 3,880,431 rows with
    `street_key` recomputed under npnormalize 0.1.6, because that file's
@@ -439,37 +442,171 @@ regression hard to attribute if several things move at once.
    where the wrong merges live. So the 59 want a fix one layer down, not a
    third key: see the new `street_num` ask in §6.
 
+   **RE-MEASURED under npnormalize 0.1.8, same script, same reference, logged
+   in `dev/ADDR-KEY-SPELLINGS-20261102.log`. The local case against K3 is now
+   WEAKER, not stronger, and the rejection no longer rests on it.**
+
+   | | 0.1.6 | 0.1.8 |
+   |---|---:|---:|
+   | K1 keyed / groups | 2,627,588 / 2,110,592 | *identical* |
+   | K2 groups | 1,941,116 | 1,940,724 |
+   | K3 groups | 1,939,261 | 1,939,261 |
+   | K1 → K2 splits | 1,612 (0.08%) | 1,482 (0.07%) |
+   | K2 groups merging >1 K1 | 87,790 (4.53%) | 87,928 (4.54%) |
+   | K3 merges over K2 | 2,278 (0.12%) | **1,886 (0.10%)** |
+   | …of those, `street_num` disagrees | 972 (**42.67%**) | 322 (**17.07%**) |
+
+   Two internal checks before reading it. K1 is hand-rolled and
+   normalizer-independent, and its row is byte-identical across the two runs —
+   the control. K3 strips every space, so it cannot see whether a hyphen became
+   a space or nothing, and its group count is identical for that reason; a K3
+   row that had moved would have meant the run was measuring something else.
+
+   **The number that matters is the last one, and it cuts against this note's
+   own argument.** K3 was rejected here because 42.67% of the merges it added
+   joined rows whose house number disagreed — unreviewable at that volume. Under
+   0.1.8 that is **17.07%**, because the join has already absorbed the
+   hyphenated cases that made up most of the bad merges: 2,278 → 1,886 merges
+   and 972 → 322 suspect. 1,886 merges at 17% suspect is a materially better
+   trade than 2,278 at 43%, so *our* evidence against K3 has weakened.
+
+   **The rejection stands anyway, on evidence this file cannot produce.**
+   Upstream measured the *narrow* variant — a space allowed only where the join
+   wants a hyphen — over 22,026,817 rows: splits fall to 334 and merges rise to
+   10,232, but 92,797 further strings move and they are street names, 17,614 of
+   them a house number followed by a bare numeric or single-letter street name
+   that no rule can distinguish. That is the argument to cite. The 42.67% line
+   is superseded and should not be quoted again — including from npnormalize's
+   code comment, which quotes this repo's 0.1.6 log for it.
+
    The parity test pins all four counts from the pair corpus, and this log
    pins the BMF figures, so a move in either shows up.
 
-   **It showed up, 2026-11-02 — and the fix one layer down is the one that
-   arrived.** npnormalize moved 0.1.6 → 0.1.8 (`v1-d49b18cc81ab79fb` →
-   `v1-5e901add4a04a5d6`), the four pinned tests stopped abstaining, and three
-   of the counts above moved: **92 splits → 82, and the 59 → 49**. The 11 and
-   the 22 are unchanged. Every closed pair is the hyphenated house number: the
-   hyphen is now *deleted* rather than turned into a space, so `70-11 150TH
-   STREET` and `7011 150TH STREET` both key to `7011 150TH ST`, and all 24
-   hyphenated-house-number pairs in `pf_variants` now agree where 10 of them
-   split before.
+   **It showed up, 2026-11-02 — and the ask in §6 has been answered upstream,
+   partly granted and partly refused with better evidence than we had.**
+   npnormalize moved `v1-d49b18cc81ab79fb` (0.1.6) →
+   `v1-5e901add4a04a5d6` (0.1.8), the four pinned tests stopped abstaining, and
+   three of the counts above moved: **92 splits → 82, and the 59 → 49**. The 11
+   and the 22 are unchanged. Every closed pair is the hyphenated house number:
+   `70-11 150TH STREET` and `7011 150TH STREET` both key to `7011 150TH ST`,
+   and all 24 digits-hyphen-digits pairs in `pf_variants` now agree where 10 of
+   them split before.
 
-   That is the recommendation above being paid out rather than overturned. The
-   §6 `street_num` ask said the 59 wanted a fix one layer down and not a third
-   key spelling; K3 was rejected on the grounds that only 410 of its 2,278
-   merges touched the hyphenated case at all. The layer below fixed the
-   hyphenated case and left the other 1,864 spacing merges alone, which is
-   precisely the trade K3 could not make. **Do not revisit K3 on the strength
-   of the residual 49** — they are now spacing in the *filed* text that no
-   separator rule reaches (`2200 S W 10TH` against `2200 SW 10TH`,
-   `1147CENTRALAVE` against `1147 CENTRAL AVE`, `C/O` against `CO`), which is
-   the unreviewable half of K3's merges, not the reviewable half.
+   *Attribution, corrected the same day.* This block first credited both
+   changes to 0.1.8. Read off the installed `NEWS.md`: the house-number join is
+   **#16 in 0.1.7**, the eleven further spellings of `FOUNDATION` are **#17 in
+   0.1.7**, and **0.1.8 is only the compass-letter carve-out** below. The
+   signature this session saw in between, `v1-59c6e84c5f38e9f5`, was 0.1.7 —
+   which is why four tests abstained twice in one day under two different
+   installed normalizers. From a consumer's side 0.1.4–0.1.7 arrive as one
+   signature move, and the release notes are the only place the pieces are
+   separable.
+
+   **The granted part.** §6's `street_num` ask said the 59 wanted a fix one
+   layer down rather than a third key spelling, and K3 was rejected here
+   because only 410 of its 2,278 merges touched the hyphenated case. 0.1.7 made
+   that fix, and upstream then measured it over matchdb's **22,026,817-row**
+   address table rather than our 3.88M: the join **merges 7,583 EIN-level
+   address groups and splits 1,496**. That 1,496 is the join *isolated*, by
+   re-deriving with and without the house-number join, and is the figure to
+   cite for what the rule itself does. Two other counts are in circulation and
+   are not interchangeable with it: **1,499** is the 0.1.3 → 0.1.8 diff,
+   carrying four releases, and **1,490** was an artifact of a narrower
+   candidate set that missed 127 strings and six groups, now withdrawn.
+
+   **Cite the split verdict in its weaker form, which is the supported one.**
+   `NEWS.md` says every one of those splits is "a single address filed two
+   ways, with 0 of them two different streets". Asked what that rested on, the
+   author's answer was neither a reading of the addresses nor a check on
+   `street_num`: it is separator-insensitive string identity, in two tiers —
+   505 groups whose raw strings are identical once every non-alphanumeric is
+   removed, 994 whose 0.1.8 `street_key`s are identical once spaces are
+   removed, 0 neither. That classification was run over the **1,499** diff set,
+   not the isolated 1,496. Same characters in a different arrangement does not
+   establish one building, and a re-run for the shape where it cannot — a bare
+   number or letter plus a street type and nothing else — found **20 of the
+   1,499** are that shape (`1049 - 38 Street` against `1049 38 ST STE 400`,
+   `436-15 ST` against `436 15 Street`). So: **0 differ in anything beyond
+   separators, and for 20 of them that does not settle which street.**
+
+   *Status of the upstream text, 2026-11-02:* the stronger wording is corrected
+   on local branches in npnormalize and matchdb that **are not pushed**, so
+   github still shows "none of them two different streets". Cite the corrected
+   form as pending, not as published.
+
+   **The refused part, and it is the half we should stop asking for.** The
+   *narrow* version of K3 — allow a space only where the join wants a hyphen,
+   i.e. the leading house number alone, which is strictly safer than a blanket
+   space strip — was measured over the same table under the same compass
+   exclusion. It looks good in aggregate and is wrong in the particular: splits
+   fall to 334 and merges rise to 10,232, but it moves **92,797 further
+   strings, and those strings are street names** — `5001 11 MILE RD` →
+   `500111 MILE RD` (11 Mile Road, Michigan), `712 H STREET NE` → `712H ST NE`
+   (H Street NE, DC), `17398 M 86` → `17398M86` (M-86, a state highway),
+   `1801 C ST` → `1801C ST`. **17,614** of them are a house number followed by
+   a bare numeric or single-letter street name, which is the shape no rule can
+   tell from a hyphenated house number: `101 B FOREST DR` is house 101B and
+   `101 B ST` is house 101 on B Street, and nothing in either string says
+   which.
+
+   **So: do not revisit K3, blunt or narrow, and withdraw the §6 ask.** The
+   residual 49 here are spacing in the *filed* text — `2200 S W 10TH` against
+   `2200 SW 10TH`, `1147CENTRALAVE` against `1147 CENTRAL AVE`, `C/O` against
+   `CO` — and **47 of the 49 contain no hyphen anywhere**, so no separator rule
+   upstream can reach them by construction.
+
+   **And the 22M-row result is silent about those 47, necessarily.** Only the
+   hyphen join moved those keys, so a pair with no hyphen in either spelling
+   was never in the 1,496: **0** of the split groups are hyphen-free. Nothing
+   in that measurement bears on 47 of our 49, and this note should not borrow
+   its authority for them.
+
+   **Do not take `NEWS.md`'s `street_num` remedy at face value: measured here,
+   it does not work for the case it is offered for.** The note says a consumer
+   that would rather have the merges "can key on the house number itself —
+   `street_num` is now the whole number on both spellings." Probed against the
+   installed 0.1.8 in this repo:
+
+   | street | `street_key` | `street_num` |
+   |---|---|---|
+   | `70-11 150TH STREET` | `7011 150TH ST` | `7011` |
+   | `70 11 150TH STREET` | `70 11 150TH ST` | `70` |
+   | `1049 - 38 STREET` | `104938 ST` | `104938` |
+   | `1049 38 STREET` | `1049 38 ST` | `1049` |
+   | `875-A ISLAND DRIVE` | `875A ISLAND DR` | `875A` |
+   | `875 A ISLAND DRIVE` | `875 A ISLAND DR` | `875` |
+
+   `street_num` carries the whole house number on the **hyphenated** spelling
+   only; on the spaced spelling it carries the leading token, so it *disagrees
+   across every split the remedy is meant to close* — the author confirms it
+   disagrees in all ~1,500 by construction. Keying on `street_num` reproduces
+   the split rather than closing it. It does merge the hyphenated spelling with
+   the closed-up one, which `street_key` already merges, so it buys nothing we
+   do not have. **Nothing here should be built on that remedy without
+   measuring it first.**
 
    **One pair went the other way, and it is the same rule read backwards.**
-   Deleting a hyphen where a space in that position is kept splits the
-   letter-suffixed house number: `875-A ISLAND DRIVE` now keys to `875A ISLAND
-   DR` while the same address filed as `875 A ISLAND DRIVE` keeps its space.
-   Net 11 merged, 1 split. Both exemplars are pinned in the parity test, so the
-   next upstream move is readable in the same terms rather than as a count that
-   changed.
+   `875-A ISLAND DRIVE` now keys to `875A ISLAND DR` while the same address
+   filed as `875 A ISLAND DRIVE` keeps its space. Net 11 merged, 1 split. Both
+   exemplars are pinned in the parity test, so the next upstream move is
+   readable in the same terms rather than as a count that changed.
+
+   *Corrected the same day, and the rule is narrower than the sentence above
+   first said.* It read "a hyphen is now deleted where a space in that position
+   is kept", as a blanket rule. Probed against the installed 0.1.8: the hyphen
+   is deleted before digits (`70-11` → `7011`) and before a lone **non-compass**
+   letter (`875-A` → `875A`, `57-C` → `57C`, `1801-C` → `1801C`), but before a
+   lone **compass** letter it still becomes a space (`1002-E SENECA ST` →
+   `1002 E SENECA ST`, `100-N 6TH ST` → `100 N 6TH ST`) — which is what keeps
+   it agreeing with the spaced spelling of the same door instead of inventing
+   the house number `1002E`. The carve-out moves nothing in this corpus: it
+   holds **0** digits-hyphen-compass pairs and 4 digits-hyphen-letter pairs, 1
+   of which splits, so no count above changes. Recorded because the rule is
+   what a reader carries away from this block, and the count is not.
+
+   The 49 that remain contain **no hyphen at all in 47 of them**, which is the
+   substantive reason a separator rule upstream cannot reach them and K3's
+   space-blindness is the only thing that would — at the price measured below.
 
    The BMF figures in the K1/K2/K3 table above are **not** re-measured and
    still carry npnormalize 0.1.6. They are the reason to adopt K2, which has
