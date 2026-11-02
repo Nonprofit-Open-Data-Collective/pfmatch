@@ -1,109 +1,191 @@
-# The normalizer is moving to npnormalize
+# The normalizer lives in npnormalize
 
-**2026-10-28.** A pointer note. The plan and its current status are in
+**2026-11-01.** The move is done, pfmatch depends on npnormalize directly, and
+both of the things this note told a reader to do are now wrong. It is rewritten
+rather than annotated a fourth time; the superseded layers are listed at the
+bottom, because they were quoted into `dev/PLACES-SYNC.md` and into a commit
+message, and a reader may meet them there first.
+
+The plan and its history are in
 [npnormalize's `dev/EXTRACTION.md`](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/blob/main/dev/EXTRACTION.md).
 
-## What is happening
+## Where this stands
 
-npmatch's normalizer is moving, unchanged, into a new package,
-[npnormalize](https://github.com/Nonprofit-Open-Data-Collective/npnormalize).
-It covers:
-* the rule tables;
-* `np_normalize()` and `np_name_core()`;
-* the name and token statistics;
-* `np_normalize_signature()`.
+Read off this machine today with `packageVersion()`, `packageDescription()` and
+`np_normalize_signature()` — not predicted, and not quoted from a plan:
 
-npmatch then imports it and re-exports the public functions
-([npmatch#22](https://github.com/Nonprofit-Open-Data-Collective/npmatch/pull/22),
-npmatch 0.1.1.9000; the next release is 0.2.0), and matchdb follows. Every
-function name and body moves unedited, so the normalizer signature stays
-`v1-3e7b9f9d59bbb19e`.
+| | value |
+|---|---|
+| npmatch | **0.1.1.9000**, and its `Imports` names `npnormalize (>= 0.1.3)` |
+| npnormalize | **0.1.6** |
+| matchdb | not installed |
+| normalizer signature | `v1-d49b18cc81ab79fb`, the same value from both packages |
 
-> **2026-10-31: that is the future tense, and this note read as though it were
-> the present.** The installed build is npmatch **0.1.1**, which is
-> *pre-extraction*: its `Imports` does not list npnormalize and it carries its
-> own full copy of the normalizer, including its own `.np_addr_key`,
-> `.np_unit_id`, `.np_addr_class` and `.np_extract_unit` — all byte-identical
-> to npnormalize's. npnormalize 0.1.1 is installed *beside* it as an
-> independent duplicate, not as its dependency, which is why attaching
-> npnormalize prints *"Registered S3 methods overwritten by 'npnormalize':
-> `print.np_addr_freq`, `print.np_signature`"* (and the reverse when npmatch is
-> attached second).
->
-> So every normalizer call pfmatch makes today resolves to **npmatch's own
-> code, not a re-export**. Nothing is broken by this — both copies produce the
-> same signature and the same output — but the distinction matters for the
-> "Optional, later" section below, and the claim "npmatch re-exports all four"
-> is true of 0.1.1.9000 and not of what is installed.
+**There is no second copy of the normalizer any more.** `.np_addr_key`,
+`.np_unit_id`, `.np_extract_unit`, `.np_street_key` and `.np_addr_class` exist
+in npnormalize and *only* there: `npmatch:::.np_addr_key()` fails with
+*"object '.np_addr_key' not found"*. npmatch keeps the matching machinery and
+re-exports the normalizer's public surface, so every normalizer call pfmatch
+makes through `npmatch::` now resolves into npnormalize. The S3 overwrite
+warning that the previous version of this note treated as a cost was a symptom
+of the duplicate install, and it is gone with it.
 
-## What it means for pfmatch: nothing has to change
+Checked re-exported, so none of pfmatch's call sites change: `np_normalize()`,
+`np_normalize_signature()`, `np_name_freq()`, `np_token_idf()`, `np_cascade()`,
+`np_compare()`, `np_tier()`, `np_select()`, `np_addr_freq()`.
 
-* **pfmatch's normalizer calls keep working.** It calls four normalizer
-  functions through `npmatch::`: `np_normalize()`, `np_normalize_signature()`,
-  `np_name_freq()` and `np_token_idf()`. npmatch re-exports all four. Its
-  matching calls (`np_cascade()`, `np_compare()`, `np_score()`, `np_tier()`,
-  `np_select()`, `np_config()`, `np_ref_index()` and the column maps) stay in
-  npmatch.
+**Twelve npnormalize exports are not reachable through npmatch**, up from the
+five this note last recorded: `np_addr_key()`, `np_doc_freq()`,
+`np_extract_unit()`, `np_has_box()`, `np_is_mail_only()`, `np_is_po_box()`,
+`np_mail_freq()`, `np_mail_key()`, `np_pattern()`, `np_state_abb()`,
+`np_tokenize()`, `np_unit_id()`. pfmatch wants two of them: `np_has_box()`,
+which it now has, and `np_addr_key()` for `dev/PLACES-SYNC.md` §4 step 4.
+
+### Seven scripts reach for internals that moved
+
+Found while checking the above, and not yet fixed. The name-normalization
+internals went with the rest, so every `npmatch:::` call on them now errors:
+
+| name | now in |
+|---|---|
+| `.np_basic_clean`, `.np_replace_tokens`, `.np_abbrev` | npnormalize only |
+| `.np_strip_suffix`, `.np_strip_lead_the` | npnormalize only |
+| `.np_unit_pat`, `.np_street_types` | npnormalize only |
+| `.np_hier_score` | **still npmatch** — it is a scorer, not a normalizer |
+
+`dev/build-namesim-testset.R`, `dev/compare-name-metrics.R`,
+`dev/namesim-worked-examples.R`, `dev/probe-ref-truncation.R`,
+`dev/scan-agreement-risk.R`, `dev/spellcheck-diagnose.R` and
+`inst/probes/probe-ref-truncation.R` each rebuild a `name_key` out of the first
+five, through `npmatch:::`. All seven are broken on the installed build; the
+fix is one prefix per call, `npmatch:::` to `npnormalize:::`, and not a blanket
+substitution, because `dev/probe-variant-class-ab.R` uses
+`npmatch:::.np_hier_score` and must keep it. Nothing under `R/` is affected —
+the package itself uses no `:::`.
+
+## pfmatch Imports npnormalize directly, as of `99fdf70`
+
+`99fdf70` ("pf_street_unit(): the box question is npnormalize's, not a local
+regex", [pfmatch#17](https://github.com/Nonprofit-Open-Data-Collective/pfmatch/pull/17))
+deleted `.PF_BOX_RE`, called `npnormalize::np_has_box(street)` in its place,
+and added `npnormalize (>= 0.1.5)` to `Imports` beside `npmatch (>= 0.1.1)`.
+
+That answers the "Optional, later" question this note used to leave open, and
+answers it the other way: the direct dependency is declared. What made the case
+was not the address key this note expected but the box flag — a function that
+exists only in npnormalize, that npmatch does not re-export, and that was added
+upstream for this consumer.
+
+**Branch note.** `99fdf70` reached `main` through pfmatch#17 and is *not* on
+`maybe-tier-adjudication`. On this branch `DESCRIPTION` still has no
+npnormalize line and `R/unit.R` still carries `.PF_BOX_RE`, so the paragraph
+above describes `main`, not the working tree you are reading it in. It becomes
+true here when main is merged.
+
+## `np_addr_key()` takes a street key, not a street
+
+Worth stating plainly, because the natural way to use it is the wrong one, and
+`dev/PLACES-SYNC.md` §4 step 4 is the place that will reach for it. The
+signature is `np_addr_key(street_keys, zip5)`; the body pastes the two together
+and blanks the result for a PO-box or mail-only street. It normalizes nothing:
+
+| input | `np_addr_key(input, "12210")` |
+|---|---|
+| `100 MAIN STREET` | `100 MAIN STREET 12210` |
+| `100 MAIN ST` | `100 MAIN ST 12210` |
+
+Feed it `street_key` from `np_normalize()` instead and the renderings collapse,
+which is the whole point of the step:
+
+| raw street | `street_key` | `np_addr_key(street_key, zip5)` |
+|---|---|---|
+| `100 MAIN STREET` | `100 MAIN ST` | `100 MAIN ST 12210` |
+| `100 MAIN ST` | `100 MAIN ST` | `100 MAIN ST 12210` |
+| `100 MAIN STREET SUITE 3` | `100 MAIN ST` | `100 MAIN ST 12210` |
+
+So the unification pfmatch wants comes from `np_normalize()`, and
+`np_addr_key()` only joins the key to the zip and applies the box rule. Handing
+it a raw `ADDR_L1` reproduces exactly the defect step 4 exists to remove.
+
+## What has not changed
+
+* **pfmatch's normalizer calls keep working**, now five of them:
+  `np_normalize()`, `np_normalize_signature()`, `np_name_freq()` and
+  `np_token_idf()` through `npmatch::`, plus `np_normalize()` again inside
+  `pf_street_unit()` to parse the secondary-unit line. The matching calls
+  (`np_cascade()`, `np_compare()`, `np_score()`, `np_tier()`, `np_select()`,
+  `np_config()`, `np_ref_index()` and the column maps) are npmatch's own.
 * **The stamp checks keep working.** `pf_reference()` and the checks in
   `R/match.R` compare a stored reference's `normalize_signature` (a matchdb
-  stamp, or a bundle's `normalizer`) with `np_normalize_signature()`. The value
-  doesn't move, and matchdb keeps the `normalize_signature` field; it will add
-  `npnormalize_version` beside it.
-* **The fallback is unaffected.** `pf_reference(source = "matchdb")` still falls
-  back to pfmatch's own BMF reference when matchdb isn't installed or a tier
-  was built under a different normalizer.
-* **Checked:** pfmatch's 112 tests pass, with no edits, against npmatch#22
-  installed in a scratch library.
+  stamp, or a bundle's `normalizer`) with `np_normalize_signature()`. The
+  comparison is the point, not the value — and the value *has* moved, twice.
+* **The fallback is unaffected.** `pf_reference(source = "matchdb")` still
+  falls back to pfmatch's own BMF reference when matchdb isn't installed or a
+  tier was built under a different normalizer.
+* **The unit parse is normalizer-dependent** where the old local parser was
+  not, which is why `test-unit.R`'s fixture assertion is signature-gated.
 
-**2026-10-31, one function added to the list.** `pf_street_unit()` (which
-replaced `pf_parse_unit()`) calls `np_normalize()` to parse the secondary-unit
-line, so that is a fifth normalizer call — through `npmatch::`, which
-re-exports it, so nothing above changes. Noted because the unit parse is now
-normalizer-dependent where the old local parser was not: `test-unit.R`'s
-fixture assertion is signature-gated for that reason.
+## npnormalize#7 is closed, and two of its asks shipped
 
-## Optional, later
+[npnormalize#7](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/issues/7)
+was pfmatch's report of five unit-extraction defects. Measured again on 0.1.6:
 
-pfmatch could call `npnormalize::` directly for normalization and import
-npnormalize. It wouldn't drop its npmatch dependency, since it still matches
-with npmatch, so there is little gain. I'd leave it.
-
-One thing would change the calculation: npnormalize exports `np_unit_id()` and
-`np_addr_key()`, which npmatch does **not** re-export. `np_unit_id()` is not
-useful on a raw `ADDR_L2` (it strips a designator, it does not gate the field),
-but `np_addr_key()` is exactly what `dev/PLACES-SYNC.md` §4 step 4 needs for
-the triangulation group key.
-
-**2026-10-31, three corrections to the paragraph above.**
-
-1. **Five exports are not re-exported, not two.** The full set npmatch 0.1.1
-   leaves unreachable is `np_addr_key()`, `np_unit_id()`, `np_tokenize()`,
-   `np_doc_freq()` and `np_state_abb()`. pfmatch wants only the first; the
-   other three have no call site here and are listed so the next reader does
-   not re-derive the set.
-2. **The `np_unit_id()` example was wrong.** It returns `BOX1367` for
-   `PO BOX 1367`, not `1367` — it strips the leading `PO` as the designator and
-   then removes non-alphanumerics from what is left. The point stands and is
-   worse than stated: `114 HIGH ST` comes back as `114HIGHST`, `LAS VEGAS` as
-   `VEGAS`, `C/O JOHN SMITH` as `OJOHNSMITH`. Filed upstream as
-   [npnormalize#7](https://github.com/Nonprofit-Open-Data-Collective/npnormalize/issues/7)
-   together with a `BUILDING` gap in `.np_unit_pat`.
-3. **The recommendation reverses on the installed build.** Importing
-   npnormalize to reach the exported `np_addr_key()` would declare a dependency
-   on a *second, independent copy of the whole normalizer* (see the note at the
-   top) and bring the S3 collision with it. `npmatch:::.np_addr_key()` is
-   byte-identical and is the same lineage as the `street_key` it consumes, so on
-   npmatch 0.1.1 the `:::` with a parity test is the better route, not the
-   fallback. Switch to the exported function once pfmatch is on an npmatch that
-   actually imports npnormalize (0.2.0). Either way the parity test is what
-   makes the switch safe, so write it first.
+* **§1, the `BUILDING` split: fixed.** `BUILDING` is in `.np_unit_pat`, and
+  both spellings now agree — `100 CAMPUS CENTER BUILDING 86E` and
+  `100 CAMPUS CENTER BLDG 86E` both give `street_key` `100 CAMPUS CENTER`,
+  `street_unit` `BLDG 86E`, `street_unit_id` `86E`.
+* **§2, the ungated `np_unit_id()`: fixed, as asked.** It returns `NA` for
+  everything that is not a unit — `PO BOX 1367`, `BOX 19960`, `114 HIGH ST`,
+  `LAS VEGAS`, `C/O JOHN SMITH`, `NORTH TOWER`, `400891` — and `400` for
+  `STE 400`. `np_extract_unit()` is exported too, so the gate is reachable
+  without normalizing a frame. `pf_street_unit()` keeps the frame route
+  anyway, deliberately: it makes pfmatch read the suite exactly as the matcher
+  does.
+* **§3, `street_unit_id` drops the designator: unchanged, and there was no
+  ask.** `1 PLAZA FL 2` and `1 PLAZA STE 2` still both give `street_unit_id`
+  `2`. Right for a 0.97 rung in a `max()` ladder, wrong for a flag a human
+  reads, which is why `pf_unit_evidence()` compares the canonical
+  `street_unit` with only the room-level designators folded.
+* **§4, no flag for a box carried on line 2: answered by a new function.**
+  `np_has_box()` (npnormalize 0.1.5, from its own #9 and #12) is TRUE for
+  `211 EMMET STREET SOUTH PO BOX` and `4347 W NORTHWEST HWY STE 130 BOX` and
+  FALSE for `BOX ELDER ST` — anchored, which the local regex was not.
+  `99fdf70` adopted it.
+* **§5, a suite fused to the street word: unchanged, and recorded as
+  intended.** `4550 WEST 77TH STREETSUITE 200` still keys with the suite
+  inside it.
 
 ## To reproduce results from before the move
 
-Pin the two restore points, both with signature `v1-3e7b9f9d59bbb19e`:
+The signature has moved twice: the fixtures pin `v1-6dcb298522cc5118`, the
+first post-extraction reading was `v1-3e7b9f9d59bbb19e`, and the installed
+normalizer is now `v1-d49b18cc81ab79fb`. None of these is a value to quote
+forward — read it. The pre-move restore points, both at
+`v1-3e7b9f9d59bbb19e`:
 
 ```r
 renv::install("Nonprofit-Open-Data-Collective/npmatch@v0.1.1")
 renv::install("Nonprofit-Open-Data-Collective/matchdb@v0.1.1")
 renv::snapshot()
 ```
+
+## Superseded
+
+Three layers of this note are dead. Listed so that a reader who finds them
+quoted elsewhere does not act on them:
+
+1. **"npmatch's normalizer is moving" (2026-10-28), in the future tense.** It
+   has moved. The claim that the signature stays `v1-3e7b9f9d59bbb19e` was
+   true of the build in front of it and was never a property of the move.
+2. **"The installed build is pre-extraction" (2026-10-31).** True of npmatch
+   0.1.1, false of the 0.1.1.9000 that is installed. The duplicate copy, and
+   the S3 collision it caused, are gone.
+3. **"Use `npmatch:::.np_addr_key()`, not the export" (2026-10-31).** The
+   reasoning was that the export meant depending on a second copy of the whole
+   normalizer. There is no second copy, and the function that recommendation
+   pointed at does not exist any more. Use `npnormalize::np_addr_key()` — on a
+   `street_key`, per the section above. The same reversal is written into
+   `dev/PLACES-SYNC.md` §4 step 4 and §6, both corrected, and into the body of
+   commit `5f528b3`, which cannot be edited: its correction 3 is the one to
+   disregard. A parity test is still what makes the switch safe, so it is
+   still the first thing to write.
