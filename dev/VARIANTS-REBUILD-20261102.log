@@ -1,0 +1,48 @@
+# data-raw/make-pf-variants.R
+# run 2026-11-02 09:22, pfmatch at 3bf8ef5 (main through #42)
+# R 4.5.1, npnormalize 0.1.8, npmatch 0.1.1.9000, data.table 1.17.8
+# normalizer v1-5e901add4a04a5d6 -- the installed one. The fixture it replaces
+#   was built 2026-11-01 under v1-d49b18cc81ab79fb (npnormalize 0.1.6), which
+#   had re-armed the gate on four tests: they were abstaining, not passing.
+# source data-dev/TRI-V2-MATCH.rds, 651 MB, 2026-10-25, population cb3c78ff0f1a9546
+# matchdb is NOT read by this script and was not loaded; the only package calls
+#   are npmatch::np_query/np_normalize and pfmatch's own pure helpers, so an
+#   unrelated matchdb upload cannot reach it in either direction.
+#
+# RESULT: the same 5,410 pairs with the same pair_id set -- the corpus did not
+# move, only the keys over it. 22 a_street_key, 20 b_street_key, 8 a_name_key,
+# 10 b_name_key and 1 b_dba_key changed, flipping 12 street_key_equal (11 to
+# TRUE, 1 to FALSE) and 6 name_key_equal (all to TRUE). Two upstream changes:
+# the hyphen in a house number is deleted rather than spaced, closing all 24
+# hyphenated pairs (70-11 / 7011) at the cost of one letter-suffix pair
+# (875-A against 875 A); and misspelled FOUNDATION is now dropped as a generic
+# token, so FOUNDATON / FOUNDATI / FOUDATION / FOUNDAITON collapse with the
+# correct spelling. Parity decomposition: 92 splits -> 82, the 59-pair spacing
+# loss -> 49, the 11 box blanks and the 22 fused-suite splits unchanged.
+# Re-pinned in tests/testthat/test-addr-key.R; dev/PLACES-SYNC.md section 4
+# step 4 records what it means for the K3 rejection.
+==============================================================================
+make-pf-variants  2026-11-02 09:22:23
+==============================================================================
+eligible groups: 12,480
+anchors: 11,766   MAYBE identities: 5,797  (organizations only)
+pairs: 5,410 in 4,291 groups
+labelled TRUE: 20   left NA for adjudication: 5,390
+curated exemplars: 155 across 34 class combinations
+==============================================================================
+pf_variants: 5,410 rows, 58 columns
+             name_class pairs
+                 <char> <int>
+         different name  4080
+ token added or dropped   595
+             truncation   428
+  partial token overlap   274
+            leading THE    14
+                   typo     8
+           abbreviation     4
+ spacing or punctuation     4
+       corporate suffix     2
+   identical normalized     1
+wrote data/pf_variants.rda  (438.2 KB)
+==============================================================================
+done  2026-11-02 09:23:00

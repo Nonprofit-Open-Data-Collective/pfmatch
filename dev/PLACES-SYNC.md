@@ -377,11 +377,15 @@ regression hard to attribute if several things move at once.
    `place_key` and discriminating by `street_unit_id` is the clean split
    pfmatch's hand-rolled version was groping toward.
 
-   **Measured 2026-11-02, and the switch is not only a merge.** The parity test
-   is written — `tests/testthat/test-addr-key.R`, 23 assertions — and it says
-   this step costs something the 22.7% figure above does not show. Over all
-   5,410 shipped pairs, each of which sits at one hand-rolled key by
-   construction, `np_addr_key(street_key, zip5)` **splits 92**:
+   **Measured 2026-11-02 under `v1-d49b18cc81ab79fb` (npnormalize 0.1.6), and
+   the switch is not only a merge.** The parity test is written —
+   `tests/testthat/test-addr-key.R` — and it says this step costs something the
+   22.7% figure above does not show. Over all 5,410 shipped pairs, each of
+   which sits at one hand-rolled key by construction,
+   `np_addr_key(street_key, zip5)` **splits 92**. Two of these three rows moved
+   the same day under 0.1.8 — see the update below the table; the table is kept
+   as the 0.1.6 record because the BMF figures further down were measured
+   against it:
 
    | pairs | why | verdict |
    |---:|---|---|
@@ -437,6 +441,42 @@ regression hard to attribute if several things move at once.
 
    The parity test pins all four counts from the pair corpus, and this log
    pins the BMF figures, so a move in either shows up.
+
+   **It showed up, 2026-11-02 — and the fix one layer down is the one that
+   arrived.** npnormalize moved 0.1.6 → 0.1.8 (`v1-d49b18cc81ab79fb` →
+   `v1-5e901add4a04a5d6`), the four pinned tests stopped abstaining, and three
+   of the counts above moved: **92 splits → 82, and the 59 → 49**. The 11 and
+   the 22 are unchanged. Every closed pair is the hyphenated house number: the
+   hyphen is now *deleted* rather than turned into a space, so `70-11 150TH
+   STREET` and `7011 150TH STREET` both key to `7011 150TH ST`, and all 24
+   hyphenated-house-number pairs in `pf_variants` now agree where 10 of them
+   split before.
+
+   That is the recommendation above being paid out rather than overturned. The
+   §6 `street_num` ask said the 59 wanted a fix one layer down and not a third
+   key spelling; K3 was rejected on the grounds that only 410 of its 2,278
+   merges touched the hyphenated case at all. The layer below fixed the
+   hyphenated case and left the other 1,864 spacing merges alone, which is
+   precisely the trade K3 could not make. **Do not revisit K3 on the strength
+   of the residual 49** — they are now spacing in the *filed* text that no
+   separator rule reaches (`2200 S W 10TH` against `2200 SW 10TH`,
+   `1147CENTRALAVE` against `1147 CENTRAL AVE`, `C/O` against `CO`), which is
+   the unreviewable half of K3's merges, not the reviewable half.
+
+   **One pair went the other way, and it is the same rule read backwards.**
+   Deleting a hyphen where a space in that position is kept splits the
+   letter-suffixed house number: `875-A ISLAND DRIVE` now keys to `875A ISLAND
+   DR` while the same address filed as `875 A ISLAND DRIVE` keeps its space.
+   Net 11 merged, 1 split. Both exemplars are pinned in the parity test, so the
+   next upstream move is readable in the same terms rather than as a count that
+   changed.
+
+   The BMF figures in the K1/K2/K3 table above are **not** re-measured and
+   still carry npnormalize 0.1.6. They are the reason to adopt K2, which has
+   not changed; but the 0.08% split rate and the 410 hyphenated merges are
+   0.1.6 quantities, and the hyphen rule is exactly what moved. Re-running
+   `dev/measure-addr-key-spellings.R` under 0.1.8 would make the K3 rejection
+   current as well as correct. Not done.
 
    **Call npmatch's function; do not port it.** matchdb ported only because it
    needs SQL macros, and even then it pins the port with a parity test against

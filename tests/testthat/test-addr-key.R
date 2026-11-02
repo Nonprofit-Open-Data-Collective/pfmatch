@@ -16,12 +16,26 @@
 #                the zip joined by a space, blank for a box or mail-only
 #                street.
 #
-# THE HEADLINE, measured below on all 5,410 shipped pairs: adopting the
-# npnormalize key does NOT only merge renderings the hand-rolled key split --
-# which is what §4's 22.7% redundant-spelling figure led us to expect. It
-# SPLITS 92 pairs the hand-rolled key grouped, in three distinct ways, and 59
-# of those splits are a loss. Pinning the decomposition is the point of the
-# file: step 4 has to answer for the 59 before it ships.
+# THE HEADLINE, measured below on all 5,410 shipped pairs under
+# v1-5e901add4a04a5d6 (npnormalize 0.1.8): adopting the npnormalize key does
+# NOT only merge renderings the hand-rolled key split -- which is what §4's
+# 22.7% redundant-spelling figure led us to expect. It SPLITS 82 pairs the
+# hand-rolled key grouped, in three distinct ways, and 49 of those splits are a
+# loss. Pinning the decomposition is the point of the file: step 4 has to
+# answer for the 49 before it ships.
+#
+# 2026-11-02, npnormalize 0.1.6 -> 0.1.8. The headline was 92 splits of which
+# 59 were a loss, and the 10 that closed are all one class: the hyphenated
+# house number. Queens writes 70-11 and both spellings are filed. 0.1.6 turned
+# the hyphen into a space, so `70 11 150TH ST` and `7011 150TH ST` disagreed;
+# 0.1.8 deletes it, and all 24 hyphenated-house-number pairs in the corpus now
+# agree. The loss this file was written to hold step 4 to is being repaid
+# upstream, which is what a pinned decomposition is for -- and it cost one pair
+# in the mirror image, because a hyphen is now deleted where a space in the
+# same position is kept: `875-A ISLAND DRIVE` keys to `875A ISLAND DR` while
+# the same address filed as `875 A ISLAND DRIVE` keeps its space. Net 11 pairs
+# merged, 1 split, and both exemplars are pinned below so the next move is
+# readable in the same terms.
 
 # the hand-rolled recipe, lifted verbatim so the comparison is honest
 hand_key <- function(street, zip5) {
@@ -90,7 +104,7 @@ test_that("on the shipped corpus the key is paste(street_key, zip5), or blank", 
   expect_identical(k[!blank], paste(v$a_street_key[!blank], v$a_zip5[!blank]))
 })
 
-test_that("adopting the key splits 92 of 5,410 pairs, in three known ways", {
+test_that("adopting the key splits 82 of 5,410 pairs, in three known ways", {
   v <- pfmatch::pf_variants
   skip_if_normalizer_moved(v)
 
@@ -102,26 +116,47 @@ test_that("adopting the key splits 92 of 5,410 pairs, in three known ways", {
 
   ka <- np_key(v$a_street_key, v$a_zip5); kb <- np_key(v$b_street_key, v$b_zip5)
   split <- !(nzchar(ka) & nzchar(kb) & ka == kb)
-  expect_identical(sum(split), 92L)
-  expect_identical(sum(!split), 5318L)
+  expect_identical(sum(split), 82L)
+  expect_identical(sum(!split), 5328L)
 
   # (a) one side is a box or mail-only: 11 pairs that should never have been
   # grouped. npnormalize is right and the hand-rolled regex was wrong.
   blanked <- split & (!nzchar(ka) | !nzchar(kb))
   expect_identical(sum(blanked), 11L)
 
-  # (b) the keys differ only in spacing: 59 pairs, and these are the loss. The
-  # hand-rolled gsub() deleted every separator, so a hyphenated house number
-  # agreed with its unhyphenated spelling; street_key keeps a space where the
-  # hyphen was. Queens writes 70-11, and both spellings are filed.
+  # (b) the keys differ only in spacing: 49 pairs, and these are the loss. The
+  # hand-rolled gsub() deleted every separator, so any two spellings that
+  # differed only in where the spaces fell agreed; street_key keeps the filer's
+  # spacing. What remains after 0.1.8 is spacing in the FILED text that no
+  # separator rule reaches -- `2200 S W 10TH` against `2200 SW 10TH`,
+  # `100 N6TH ST` against `100 N 6TH ST`, `1147CENTRALAVE` against
+  # `1147 CENTRAL AVE`, `C/O` against `CO`.
   rest <- split & !blanked
   spacing <- rest & gsub(" ", "", v$a_street_key) == gsub(" ", "", v$b_street_key)
-  expect_identical(sum(spacing), 59L)
+  expect_identical(sum(spacing), 49L)
+
+  # the hyphenated house number is CLOSED, and this is the pin on that: the
+  # pair that was this section's exemplar of the loss now keys identically on
+  # both sides. If a later version reopens it, this is the assertion that says
+  # so rather than the count alone.
   i <- which(v$a_street == "70-11 150TH STREET" & v$b_street == "7011 150TH STREET")
   expect_length(i, 1L)
   expect_identical(c(v$a_street_key[i], v$b_street_key[i]),
-                   c("70 11 150TH ST", "7011 150TH ST"))
-  expect_true(spacing[i])
+                   c("7011 150TH ST", "7011 150TH ST"))
+  expect_false(split[i])
+  expect_identical(
+    sum(split & (grepl("^[0-9]+-[0-9]", v$a_street) |
+                 grepl("^[0-9]+-[0-9]", v$b_street))), 0L)
+
+  # and the one pair 0.1.8 introduced, which is the same rule run backwards: a
+  # hyphen is deleted where a space in that position is kept, so a letter-
+  # suffixed house number no longer agrees with its spaced spelling.
+  j <- which(v$a_street == "875-A ISLAND DRIVE SUITE 103" &
+             v$b_street == "875 A ISLAND DRIVE SUITE 103")
+  expect_length(j, 1L)
+  expect_identical(c(v$a_street_key[j], v$b_street_key[j]),
+                   c("875A ISLAND DR", "875 A ISLAND DR"))
+  expect_true(spacing[j])
 
   # (c) the keys differ by more than spacing: 22 pairs, almost all of them a
   # suite fused to the street word, which `\\b` in .np_unit_pat cannot split,
