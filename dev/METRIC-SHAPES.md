@@ -38,11 +38,12 @@ below before they were looked for.
 > lesson: nothing external moved here. A claim about a branch, written in a
 > commit to that branch, is only ever read after the commit lands, so it was
 > never true at any instant after being recorded. The paragraphs below went
-> stale because time passed; this was self-reference. A date fixes the first
-> and cannot touch the second.*
+> stale because time passed; this was self-reference. A date fixes the first and
+> cannot touch the second. The general form: an identifier that the act of
+> recording changes cannot be used to record it — which is why naming the branch
+> and the PR is the fix rather than a tidier style.*
 >
-> The
-> two paragraphs below are left exactly as written, because this file's own
+> The two paragraphs below are left exactly as written, because this file's own
 > standard is that a wrong claim is "worth recording rather than quietly
 > repairing" — but read them as a record, not as current fact. Three of their
 > statements are now false: that the branch "was never pushed to `origin`", that

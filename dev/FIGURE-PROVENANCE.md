@@ -1172,9 +1172,17 @@ description).
 
   `METRIC-SHAPES.md` is the **proposal-4 session's** file, created and
   maintained on its branches (`3d8e577`, `de4c27b`, `044b98d`, `e4197b9`,
-  `32b3d61`, `e2d5482`); `13f56d9` here is the only commit touching it from
+  `32b3d61`, `e2d5482`); the commits here are the only ones touching it from
   anywhere else. I twice told the wrong session it was theirs before checking
   `git log -- dev/METRIC-SHAPES.md`, which would have taken one command.
+
+  **Its owner was asked whether to drop the paragraph and said keep it**, for a
+  better reason than I had offered: the push that falsified the box and the
+  correction of it should land in **one diff**, so a reader who sees how the
+  claim became false sees it fixed in the same place. Splitting them across two
+  PRs would separate cause from correction, which is the failure this whole
+  sweep is about — practice 1's "print the figure at point of use", applied to a
+  provenance claim instead of a number.
 
   It is recorded at length because it is the cleanest instance in the repo of
   the pattern below: that note set out to document finding 6 reproducing itself,
@@ -1256,22 +1264,37 @@ a moving world, recorded once and never re-read:
   because the retraction kept the phrase it retracts
 
 None is a wrong number, and none would be caught by any of the eight practices,
-which all aim at arithmetic and denominators. But they are **two mechanisms, not
-one**, and conflating them was my error:
+which all aim at arithmetic and denominators. But they are **not one failure**,
+and collapsing them was my error. Three mechanisms, in increasing order of how
+little maintenance can help:
 
-* **Decay** — true when written, overtaken by events. The reachability box, the
-  `Rscript` caveat, the undated normalizer signatures. The defence is a date.
-* **Self-reference and false instruments** — never true once recorded, or a
-  check that cannot see what it claims to. My self-falsifying correction, and
-  the `grep` that matched inside its own repair. A date does nothing for these.
-  The defence is an identifier that does not move, and reading the thing rather
-  than matching a string in it.
+* **Time passed.** True when written, false later, with nothing scheduled to
+  re-read it. The `Rscript` caveats, the undated normalizer signatures.
+* **The world moved.** Also true when written, falsified by someone else's
+  action — `METRIC-SHAPES.md`'s reachability box, falsified by a push.
+* **Never true once recorded.** My self-falsifying paragraph. Nothing external
+  moved; *the act of committing it* falsified it.
 
-The first grouping is the proposal-4 session's, the split is the tracking
-session's, and both are better than what I had. Between them they also make the
-case for a ninth practice that is not about arithmetic at all: **a claim about
-what is true of this repository right now needs a date, a stable referent, or a
-re-read before it is relied on** — and the cheapest claims to check are exactly
-the ones asserting that something cannot be checked.
+The third is the one worth naming, because it is **a logic error rather than a
+maintenance gap**: it has no shelf life to manage and no re-reading schedule
+would catch it. Its rule is narrow and checkable — a claim about the state of a
+branch, made in a commit *to* that branch, is evaluated after the commit and must
+account for itself. The general form is sharper still:
+
+> **An identifier that the act of recording changes cannot be used to record
+> it.**
+
+Which is why "name the branch and the PR, not the SHA" is the fix and not merely
+a tidier style. The same test condemns my `grep` for a different reason — it is
+a **false instrument**, a check that cannot see what it claims to measure,
+and the defence there is reading the thing rather than matching a string in it.
+
+The grouping is the proposal-4 session's, the three-way split and the general
+form are its sharpening of the tracking session's split, and all of it is better
+than what I had. Between them they make the case for a ninth practice that is
+not about arithmetic at all: **a claim about what is true of this repository
+right now needs a date, a stable referent, or a re-read before it is relied
+on** — and the cheapest claims to check are exactly the ones asserting that
+something cannot be checked.
 
 `PLAUSIBLE-WRONG-NUMBERS.md` is not edited here, as instructed.
