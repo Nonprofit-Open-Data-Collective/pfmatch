@@ -521,20 +521,59 @@ Recorded because this file is one of four parallel passes on issue #15 and a
 reader needs to know which findings are already moving. **This audit changed
 nothing but this file**; everything below is other sessions' work.
 
-* **Findings 1 and 2 are being fixed in a parallel pass** on branch
-  `fix-retyped-figures`. `adjudicate-18-layer-costs.R` there reads both saved
-  frames via `assert-lib`'s `need_cols()` / `need_rows()` instead of holding
-  `FZ_SEC` as a literal, and prints 546 s / 9% / ~143 core-hours / margin
-  −0.004, with `DEVELOPMENT-PLAN.md` updated to match and to cite the script.
-  The "to settle" lines above are what that pass acted on. As of this writing
-  it is uncommitted work in another tree, so **this file does not claim it has
-  landed** — check that branch before quoting any of the four figures.
-* **Findings 3, 4, 4a, 5, 6, 7, 8 and 9 are open.** None of them is touched by
-  that pass.
-* **Finding 2 is an eighth catalogue instance** and finding 4a is a candidate
-  ninth. A tenth is sitting in `NO-TIER-EXPERIMENT.md` §7 (Haiku's two-tier
-  pricing, $0.46 reported against $1.308). `dev/PLAUSIBLE-WRONG-NUMBERS.md` is
-  deliberately not edited here — a sibling pass appends to it.
+* **Findings 1 and 2 are fixed in a parallel pass, on an unpushed branch.**
+  Commit `ca82a0b` on local branch `fix-retyped-figures`, "Derive the layer-0
+  figures instead of retyping them; two were wrong", touches
+  `adjudicate-18-layer-costs.R` and `DEVELOPMENT-PLAN.md`. The script there
+  reads both saved frames via `assert-lib`'s `need_cols()` / `need_rows()`
+  instead of holding `FZ_SEC` as a literal, and prints 546 s / 9% / ~143
+  core-hours / margin −0.004. The "to settle" lines above are what that pass
+  acted on.
+
+  **The defect is still live on `origin/main`.** `ca82a0b` is on no remote
+  branch and has no PR, and `origin/main:dev/DEVELOPMENT-PLAN.md:564` still
+  reads "a personal-name margin that falls to 0.002". So anyone quoting that
+  passage from `main` today is quoting the wrong figure, fix or no fix.
+
+  > **A warning for whoever lands the fix.** `0.002` occurs twice in `dev/`.
+  > The second, `PLAUSIBLE-WRONG-NUMBERS.md:20`, is the catalogue's own
+  > reported-vs-true record of defect 3 — "margin **+0.002**" against
+  > "**−0.004**" — and is *correct as written*. It must not be "fixed". A
+  > repo-wide replace acting on finding 1 would destroy the record of the
+  > defect that finding 1 is about.
+* **Findings 3, 4, 4a, 5, 6, 7, 8 and 9 are open.** None is touched by that
+  pass, nor by PR #25 (`claude/vigilant-franklin-8b512d`, "Apply practice 7:
+  redefine the metrics that could not come out wrong"), which is proposal 4 and
+  was scoped away from the margin and `FZ_SEC` deliberately.
+* **Finding 2 is an eighth catalogue instance.** Finding 4a is **not** a ninth —
+  see below. `dev/PLAUSIBLE-WRONG-NUMBERS.md` is deliberately not edited here;
+  a sibling pass appends to it.
+
+## Two catalogue candidates this audit withdraws
+
+Recorded because withdrawing a finding is part of the job, and because the first
+one is this audit making the exact error it was written to catch.
+
+**Withdrawn: Haiku's two-tier pricing as a catalogue instance.** An earlier
+version of this file called `NO-TIER-EXPERIMENT.md` §7's "$0.46 against $1.308"
+an eighth (later tenth) instance. **It is not one.** The catalogue's seven are
+numbers that *were* wrong and *would have shipped*. §7 published **$1.308**, the
+correct figure, computed by `adj_cost_tiered()`, which was added for this; it
+states the 22-of-100 step crossings and names the counterfactual in the
+conditional — banking against the cheap rate *would have* reported $0.46. So
+nothing wrong was published: the hazard was caught, priced correctly, and
+documented at the point of use. It belongs with **practice 1 as a near-miss the
+compute-don't-retype habit caught**, not in the defect table. Counting a
+near-miss as a defect inflates the catalogue, which is the same failure as
+deflating it.
+
+**Reclassified, not withdrawn: finding 4a.** It is not a wrong number, so it is
+not an eighth-or-ninth instance of the catalogued class. It is an **unenforced
+invariant** — the script states the expectation, measures a violation, prints it
+and carries on. That is practice 6 from the other side (a guard that reports
+rather than stops) and practice 8's gap (output produced, not read). If it goes
+anywhere, it is a class of its own and should be named separately rather than
+numbered.
 
 ---
 
@@ -645,10 +684,12 @@ publishes the corrected **−0.004**.
   class (b) ✓. The "**5.1x cheaper, not 40x**" framing is labelled a token ratio
   at point of use, and Phase 4b's correction of it to 1.73x on the full bill
   credits it as "the honest number for what it measured". Correct on both sides.
-* §7's **22 of 100 crossed the 100K step** and "would have reported about $0.46,
-  understating by a factor of nearly three" — class (b), supports the tiered
-  pricing fix. An eighth catalogue instance in substance, recorded there rather
-  than in `PLAUSIBLE-WRONG-NUMBERS.md`.
+* §7's **22 of 100 crossed the 100K step**, and the counterfactual that banking
+  against the cheap rate would have understated by nearly three — class (b),
+  supports the tiered-pricing fix. **A near-miss, not a defect**: the published
+  figure is the correct $1.308, computed by `adj_cost_tiered()`, and the wrong
+  figure appears only in the conditional. This audit first miscounted it as a
+  catalogue instance; see "Two catalogue candidates this audit withdraws".
 * §6b **$56.50 over 845** — class (a−) ✓, 845 × 0.0669 = $56.53. §6b also
   explicitly *declines* to quote a cross-experiment cost ratio, "exactly the
   arithmetic that produced two wrong projections already". That refusal is the
@@ -1009,8 +1050,12 @@ once. `adjudicate-18-layer-costs.R` is the right instrument and it already
 exists — findings 1, 2 and 9 are all figures that *could* be printed by it and
 are not.
 
-A ninth catalogue entry is also sitting in `NO-TIER-EXPERIMENT.md` §7 unrecorded:
-Haiku 5.5's two-tier pricing, where banking the run against the cheap rate would
-have reported $0.46 instead of $1.308 — understating by a factor of nearly three,
-with 22 of 100 cases crossing the 100K step. Same class, same shape, flattering.
+One eighth catalogue entry comes out of this sweep — finding 2, `FZ_SEC = 521`.
+An earlier version of this file proposed two more and **both were overstated**;
+they are withdrawn and reclassified above. That the longest-standing finding in
+this audit is one of its own is the honest note to end on: the practice that
+catches a plausible wrong number is the same whether the number is in a research
+note or in the audit of one, and reading output — a peer's as well as my own —
+is what caught it both times.
+
 `PLAUSIBLE-WRONG-NUMBERS.md` is not edited here, as instructed.
