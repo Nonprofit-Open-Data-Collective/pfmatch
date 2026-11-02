@@ -56,8 +56,11 @@ say("loaded %s rows x %s cols in %.0fs", nf(nrow(r)), ncol(r),
     proc.time()[["elapsed"]] - t0)
 
 # ---- is the recorded street_key current, or does it predate the normalizer? --
-# Recompute on a sample rather than trusting the column: this file is the one
-# dev/PLACES-SYNC.md §4.1 flags as unstamped.
+# Recompute on a sample rather than trusting the column. This bundle IS stamped
+# -- v1-3e7b9f9d59bbb19e, which is why pf_check_reference() can stop a match
+# run against it -- and the stamp predates the installed normalizer, so its
+# recorded keys are stale. (An earlier version of this comment called the file
+# unstamped, repeating §3a's old heading; see §3a.)
 set.seed(20261102L)
 i <- sample.int(nrow(r), min(50000L, nrow(r)))
 s <- r[i]
