@@ -148,6 +148,10 @@ reference:
   contents:
   - pf_adjudicate
   - pf_candidate_frame
+  - pf_verdicts
+  - pf_read_verdicts
+  - pf_apply_verdicts
+  - pf_review_queue
   - pf_enrich
   - pf_purpose
   - pf_purpose_tiebreak
