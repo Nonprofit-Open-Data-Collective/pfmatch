@@ -125,7 +125,17 @@ pf_status <- function(x) {
 #' moved   <- names(tier)[tier != pf_result_tiers(y)[names(tier)]]
 #' ```
 #'
-#' @param x A `pf_match` from [pf_match_grants()].
+#' Both sides of a before/after comparison have to come through here for that
+#' to hold, so this takes the `pf_fuzzy_recover()` return as well as a
+#' `pf_match`. The recovery pass hands back a plain list carrying the same
+#' result frame, and a version of this that accepted only a `pf_match` would
+#' send the after side -- in the one comparison the accessor exists for -- back
+#' to reading `$result$tier` by hand, which is where the 159-for-28 defect came
+#' from.
+#'
+#' @param x A `pf_match` from [pf_match_grants()], or the list
+#'   [pf_fuzzy_recover()] returns, which carries the post-recovery result frame
+#'   in the same shape.
 #' @return A named character vector of tiers (`YES`, `MAYBE`, `NO`), one
 #'   element per row of the result frame, named by grant identity. Identities
 #'   the result frame does not hold are absent, not `NO`.
@@ -133,8 +143,11 @@ pf_status <- function(x) {
 #'   a row and absence is reported as `NO` or `OOS`.
 #' @export
 pf_result_tiers <- function(x) {
-  stopifnot(inherits(x, "pf_match"))
-  res <- as.data.frame(x$result)
+  res <- if (inherits(x, "pf_match") || (is.list(x) && !is.null(x$result)))
+    as.data.frame(x$result)
+  else
+    stop("`x` must be a pf_match or a pf_fuzzy_recover() result; this is ",
+         paste(class(x), collapse = "/"), call. = FALSE)
   # read the columns, do not assume them: a missing `tier` would otherwise come
   # back as a zero-length vector and read as "nothing matched"
   stopifnot(!is.null(res$.id), !is.null(res$tier))

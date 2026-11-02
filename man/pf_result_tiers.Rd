@@ -7,7 +7,9 @@
 pf_result_tiers(x)
 }
 \arguments{
-\item{x}{A \code{pf_match} from \code{\link[=pf_match_grants]{pf_match_grants()}}.}
+\item{x}{A \code{pf_match} from \code{\link[=pf_match_grants]{pf_match_grants()}}, or the list
+\code{\link[=pf_fuzzy_recover]{pf_fuzzy_recover()}} returns, which carries the post-recovery result frame
+in the same shape.}
 }
 \value{
 A named character vector of tiers (\code{YES}, \code{MAYBE}, \code{NO}), one
@@ -38,6 +40,14 @@ rely on it:
 no_pair <- setdiff(x$in_scope, names(tier))   # no candidate surfaced at all
 moved   <- names(tier)[tier != pf_result_tiers(y)[names(tier)]]
 }\if{html}{\out{</div>}}
+
+Both sides of a before/after comparison have to come through here for that
+to hold, so this takes the \code{pf_fuzzy_recover()} return as well as a
+\code{pf_match}. The recovery pass hands back a plain list carrying the same
+result frame, and a version of this that accepted only a \code{pf_match} would
+send the after side -- in the one comparison the accessor exists for -- back
+to reading \verb{$result$tier} by hand, which is where the 159-for-28 defect came
+from.
 }
 \seealso{
 \code{\link[=pf_status]{pf_status()}} for the per-grant convention, where every grant gets

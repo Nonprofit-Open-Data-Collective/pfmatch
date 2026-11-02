@@ -49,6 +49,7 @@
 suppressWarnings(suppressMessages(library(data.table)))
 PF  <- Sys.getenv("PFMATCH_DIR", ".")
 DD  <- file.path(PF, "data-dev")
+source(file.path(PF, "dev", "assert-lib.R"))
 TAG <- Sys.getenv("PF_ADJ_TAG", "")
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
@@ -179,8 +180,11 @@ grade <- function(verdict, ein, target, correct) {
 d[, l_grade := grade(l_verdict, l_ein, target, correct_ein)]
 d[, d_grade := grade(d_verdict, d_ein, target, correct_ein)]
 
+need_levels(d$stratum, c("A-estimation", "B-calibration"), what = "the two strata")
 A <- d[stratum == "A-estimation"]
 B <- d[stratum == "B-calibration" & !is.na(target)]
+need_rows(A, min = 1L, what = "stratum A, which every rate below is computed over")
+need_rows(B, min = 1L, what = "stratum B")
 
 ## ============================================================================
 h2("(a) ABSOLUTE ACCURACY on the hand-adjudicated cases -- the gate")
