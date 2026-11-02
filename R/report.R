@@ -12,6 +12,28 @@
 #'   contains (a natural person, a government unit, a foreign organization), so
 #'   there is nothing to find and the grant is not counted as a miss
 #'
+#' @section Two conventions for "no candidate":
+#' `NO` is the one level that covers two populations at once: an identity no
+#' candidate ever surfaced for, and an identity whose best candidate scored
+#' below the review floor. Both are reported as `NO` because a per-grant
+#' outcome frame has to account for every grant, and from a reader's position
+#' the distinction is not the point — nothing was accepted either way.
+#'
+#' The result frame underneath (`x$result`) does not work that way. It holds a
+#' row only for identities a scored pair was found for, so an identity with no
+#' pair anywhere is `NO` here and simply absent there; an out-of-scope grant is
+#' `OOS` here and, never having entered the cascade, absent there too. Neither
+#' convention is wrong. Each is the right shape for what it is for.
+#'
+#' The hazard is in comparing across them. A count of `NO` from [pf_status()]
+#' and a count of absences from the result frame are not the same quantity, and
+#' a before/after comparison that reads one side from each will charge the
+#' difference between the conventions to whatever it is measuring — a
+#' regression check written that way once reported 159 identities moved where
+#' 28 had. So a comparison has to read one convention on both sides, and say
+#' which. [pf_result_tiers()] exists so that choosing the result-frame
+#' convention can be done on purpose and read at the call site.
+#'
 #' @name pf_report
 NULL
 #' @rdname pf_report
@@ -76,6 +98,47 @@ pf_status <- function(x) {
   out$state_agree <- ifelse(is.na(out$ein) | is.na(out$recip_state) | is.na(out$bmf_state),
                             NA, out$recip_state == out$bmf_state)
   out
+}
+#' Tiers in the result-frame convention
+#'
+#' The tier of every identity the cascade found a scored pair for, keyed by
+#' grant identity. This is the same information [pf_status()]`$status` carries,
+#' read off the other side of the seam that [pf_report] describes under its
+#' two-conventions section: an identity with no pair anywhere is absent from
+#' this vector rather than labelled `NO`, and an out-of-scope identity is
+#' absent rather than labelled `OOS`.
+#'
+#' It exists to be called deliberately. Both conventions are correct, and the
+#' defect they produce comes from mixing them, so a comparison that wants the
+#' result-frame one should say so at the call site instead of reaching into
+#' `x$result` and arriving there by accident. A reader of
+#' `pf_result_tiers(before)` against `pf_result_tiers(after)` can see from the
+#' two calls alone that both sides agree on what absence means; a reader of
+#' `pf_status(before)` against `as.data.frame(after$result)` cannot.
+#'
+#' Absence is the thing this convention is for, so it is worth naming where you
+#' rely on it:
+#'
+#' ```
+#' tier    <- pf_result_tiers(x)
+#' no_pair <- setdiff(x$in_scope, names(tier))   # no candidate surfaced at all
+#' moved   <- names(tier)[tier != pf_result_tiers(y)[names(tier)]]
+#' ```
+#'
+#' @param x A `pf_match` from [pf_match_grants()].
+#' @return A named character vector of tiers (`YES`, `MAYBE`, `NO`), one
+#'   element per row of the result frame, named by grant identity. Identities
+#'   the result frame does not hold are absent, not `NO`.
+#' @seealso [pf_status()] for the per-grant convention, where every grant gets
+#'   a row and absence is reported as `NO` or `OOS`.
+#' @export
+pf_result_tiers <- function(x) {
+  stopifnot(inherits(x, "pf_match"))
+  res <- as.data.frame(x$result)
+  # read the columns, do not assume them: a missing `tier` would otherwise come
+  # back as a zero-length vector and read as "nothing matched"
+  stopifnot(!is.null(res$.id), !is.null(res$tier))
+  stats::setNames(as.character(res$tier), as.character(res$.id))
 }
 #' Outcome x recipient-type crosstab
 #'

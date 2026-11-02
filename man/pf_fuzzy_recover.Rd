@@ -12,6 +12,7 @@ pf_fuzzy_recover(
   block = c("zip5", "city_state"),
   skip_personal = TRUE,
   max_pool = 20000L,
+  method = "hier",
   verbose = TRUE
 )
 }
@@ -23,6 +24,12 @@ attribute intact.}
 
 \item{cutoff, top_k, block, skip_personal, max_pool}{Passed to
 \code{\link[=pf_fuzzy_candidates]{pf_fuzzy_candidates()}}.}
+
+\item{method}{Scoring method, which must be the one the run used --
+\code{\link[=pf_match_grants]{pf_match_grants()}} does not record it on the object, so it cannot be read
+back off \code{m}. Scoring the fuzzy pairs under a different method than the
+pairs they are unioned with would make the comparison meaningless, and
+nothing would report it.}
 
 \item{verbose}{Report the residual size, pairs added and tier movement.}
 }

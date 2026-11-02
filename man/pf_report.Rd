@@ -37,4 +37,28 @@ there is nothing to find and the grant is not counted as a miss
 }
 }
 
+\section{Two conventions for "no candidate"}{
+
+\code{NO} is the one level that covers two populations at once: an identity no
+candidate ever surfaced for, and an identity whose best candidate scored
+below the review floor. Both are reported as \code{NO} because a per-grant
+outcome frame has to account for every grant, and from a reader's position
+the distinction is not the point — nothing was accepted either way.
+
+The result frame underneath (\code{x$result}) does not work that way. It holds a
+row only for identities a scored pair was found for, so an identity with no
+pair anywhere is \code{NO} here and simply absent there; an out-of-scope grant is
+\code{OOS} here and, never having entered the cascade, absent there too. Neither
+convention is wrong. Each is the right shape for what it is for.
+
+The hazard is in comparing across them. A count of \code{NO} from \code{\link[=pf_status]{pf_status()}}
+and a count of absences from the result frame are not the same quantity, and
+a before/after comparison that reads one side from each will charge the
+difference between the conventions to whatever it is measuring — a
+regression check written that way once reported 159 identities moved where
+28 had. So a comparison has to read one convention on both sides, and say
+which. \code{\link[=pf_result_tiers]{pf_result_tiers()}} exists so that choosing the result-frame
+convention can be done on purpose and read at the call site.
+}
+
 \keyword{internal}
