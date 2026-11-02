@@ -1294,6 +1294,9 @@ a moving world, recorded once and never re-read:
   **two-dot** comparison of two tips standing in for the **three-dot** diff
   against the merge base that GitHub actually renders. It reported 2,770
   deletions where the PR has none
+* `git diff … | grep "^-" | grep -v "^---"`, used here to check that an edit
+  deleted nothing, which silently ignores deleted `---` dividers — of which the
+  file being checked has four
 
 None is a wrong number, and none would be caught by any of the eight practices,
 which all aim at arithmetic and denominators. But they are **not one failure**,
@@ -1319,16 +1322,47 @@ account for itself. The general form is sharper still:
 Which is why "name the branch and the PR, not the SHA" is the fix and not merely
 a tidier style.
 
-**False instruments are the fourth mechanism**, and two of this sweep's errors
-are that rather than any kind of staleness: the `grep` that matched a phrase
-inside its own retraction, and `git diff main..branch` read as the diff a pull
-request shows. Both ran clean, returned a well-formed answer, and answered a
-different question than the one asked — a two-dot comparison of two tips is not
-the three-dot diff against the merge base that GitHub renders, and it is not
-what a merge does either. Neither is a wrong number and neither is stale; the
-instrument was wrong. The defence is to read the thing rather than match a
-string in it, and to ask the system that will answer the question — one
-`gh pr view --json files` call would have settled the second, and did.
+**False instruments are the fourth mechanism**, and three of this sweep's errors
+are that rather than any kind of staleness. Keep it separate from
+self-reference: **self-reference is a logic error in the claim, a false
+instrument is a measurement error in the check.**
+
+1. The `grep` that matched a phrase inside its own retraction.
+2. `git diff main..branch` read as the diff a pull request shows — a two-dot
+   comparison of two tips, where GitHub renders three-dot against the merge
+   base and a merge combines histories rather than applying a diff.
+3. **`git diff … | grep "^-" | grep -v "^---"`**, which I used to verify that my
+   edit to `METRIC-SHAPES.md` deleted none of its text. The second `grep` is
+   there to drop the `--- a/…` diff header, and it also drops **any deleted line
+   whose content starts with `---`**. That file has **four `---` section
+   dividers**, and dividers are exactly what an inserted block lands between —
+   so the instrument is blind precisely where a careless insert would do
+   damage. Demonstrated rather than reasoned: delete a divider and the check
+   still reports clean. My first attempt at a better instrument, `grep -c
+   "^-[^-]"`, was blind the same way.
+
+   The published claim survives, because it rested on `git diff --numstat`,
+   which returns `37  0` as integers from git with no pattern to defeat. But
+   the check I *advertised* was the blind one, in a file arguing for this
+   exact class.
+
+Both failures share a consequence, and it is why they belong beside
+self-reference rather than inside it: **they produce a confident negative.**
+"Nothing was deleted" and "nothing could be verified" are the same kind of
+answer. That thread runs through the entire sweep — `sum(NULL %in% TRUE)` is
+`0` in the catalogue's defect 5, `which Rscript` finds nothing, the `grep`
+finds nothing, the diff finds no additions on main's files. Every one is an
+absence reported by an instrument nobody had audited.
+
+> **A check that cannot fail is not evidence.**
+
+That line, the four-way split and the logic-error/measurement-error distinction
+are the proposal-4 and tracking sessions'. The defence follows from it: prefer
+an instrument that counts to one that matches, ask the system that will answer
+the question (`gh pr view --json files`, `git diff --numstat`, `np_config()`
+itself), and treat any negative result as the claim most in need of a second
+instrument — because a negative is what both a working check and a broken one
+return when there is nothing to find.
 
 The grouping is the proposal-4 session's, the three-way split and the general
 form are its sharpening of the tracking session's split, and all of it is better
@@ -1337,5 +1371,11 @@ not about arithmetic at all: **a claim about what is true of this repository
 right now needs a date, a stable referent, or a re-read before it is relied
 on** — and the cheapest claims to check are exactly the ones asserting that
 something cannot be checked.
+
+Stated once, for the whole sweep: **the defects this project catalogues are
+wrong numbers, and the defects this audit kept making are confident negatives.**
+Both are plausible, both are well-formed, and the second kind is worse to find
+late, because a wrong number can be recomputed while an absence that was never
+really measured leaves nothing behind to recompute.
 
 `PLAUSIBLE-WRONG-NUMBERS.md` is not edited here, as instructed.
