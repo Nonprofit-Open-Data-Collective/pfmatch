@@ -114,8 +114,9 @@ pf_shard_schema <- function()
 #' @param verbose Print the allocation.
 #' @return A data frame of one row per (case, shard) -- so an overlap case has
 #'   two -- carrying `grant_id`, `stratum`, `shard`, `labeler`, `overlap` and
-#'   `primary`, classed `pf_shards`. Attributes: `population`, `seed`, `k`,
-#'   `overlap_n`, `sizes`.
+#'   `primary`, classed `pf_shards`. Attributes: `population`, `frame_id` and
+#'   `normalizer` (all carried from the draw, `NA` where it did not record
+#'   one), `seed`, `k`, `overlap_n`, `sizes`.
 #' @seealso [pf_write_shards()] to put it on disk blinded,
 #'   [pf_labeler_agreement()] for what the overlap buys.
 #' @examples
@@ -227,6 +228,19 @@ pf_truth_shards <- function(draw, k = 8L, overlap = 0.1, seed = NULL,
   rownames(a) <- NULL
 
   attr(a, "population") <- pop
+  # Carried, not re-derived: the signature belongs to the run that produced the
+  # draw's tiers, and the deal happens later -- possibly under a different
+  # installed stack. NA where the draw did not carry one, including every draw
+  # read back from a CSV.
+  carry <- function(nm) {
+    v <- attr(draw, nm)
+    if (is.null(v) || !length(v)) NA_character_ else as.character(v)[1L]
+  }
+  attr(a, "normalizer") <- carry("normalizer")
+  # The identity numbering the dealt ids are positions in. Without it a shard
+  # re-read against a rebuilt frame passes the population check and attaches to
+  # different organisations; see pf_frame_id().
+  attr(a, "frame_id")   <- carry("frame_id")
   attr(a, "seed")       <- seed
   attr(a, "k")          <- k
   attr(a, "overlap_n")  <- n_ov

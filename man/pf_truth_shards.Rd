@@ -44,8 +44,9 @@ be thrown away.}
 \value{
 A data frame of one row per (case, shard) -- so an overlap case has
 two -- carrying \code{grant_id}, \code{stratum}, \code{shard}, \code{labeler}, \code{overlap} and
-\code{primary}, classed \code{pf_shards}. Attributes: \code{population}, \code{seed}, \code{k},
-\code{overlap_n}, \code{sizes}.
+\code{primary}, classed \code{pf_shards}. Attributes: \code{population}, \code{frame_id} and
+\code{normalizer} (all carried from the draw, \code{NA} where it did not record
+one), \code{seed}, \code{k}, \code{overlap_n}, \code{sizes}.
 }
 \description{
 Takes the frame \code{\link[=pf_round_sample]{pf_round_sample()}} drew and assigns every case to a shard,

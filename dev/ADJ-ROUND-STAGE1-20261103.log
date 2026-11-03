@@ -1,0 +1,144 @@
+draw-round-stage1  rerun  2026-11-03 02:26:51
+npnormalize 0.1.9 / npmatch 0.1.1.9000 / signature v1-5e901add4a04a5d6
+
+run data-dev/TRI-V2-MATCH.rds: 91,008 identities, 596,539 grants
+frame matched under v1-5e901add4a04a5d6 (built 2026-11-03 02:14:08)
+installed now    v1-5e901add4a04a5d6
+join check on 500 sampled identities: name 500/500, tier 500/500
+MAYBE dollar quartiles:  1,170 /  7,000 / 40,000
+
+MAYBE frame: 23,340 identities
+design                         cells    n<20   share<1   share<2
+tier.pass                          9       2         2         2
+tier.pass.purpose                 18       4         4         4
+tier.pass.purpose.margin          51       9        14        22
+6b.3 full (plus dollar)          184      49        93       138
+---------------------------------------------------------------------- 
+drew 400 of 23,340 MAYBE identities into 14 strata (seed 20261102) 
+  population cb3c78ff0f1a9546 -- pf_grade_verdicts() will enforce it 
+  normalizer v1-5e901add4a04a5d6 -- the signature the frame was matched under 
+  frame 72edafa8f2114af9 -- the identity numbering these ids are positions in 
+  confidence and evidence class are NOT stratifiable: the reviewer 
+  assigns them, so stage this round (PREREQS 6b.1c) 
+
+population cb3c78ff0f1a9546  frame_id 72edafa8f2114af9  normalizer v1-5e901add4a04a5d6
+frame 23,340 identities  drawn 400
+
+      MAYBE | A1-name-zip5 | bare    MAYBE | A1-name-zip5 | purpose 
+                               21                                29 
+     MAYBE | A2-name-state | bare   MAYBE | A2-name-state | purpose 
+                               14                                18 
+       MAYBE | A3-name-dba | bare     MAYBE | A3-name-dba | purpose 
+                                2                                 3 
+    MAYBE | B1-token-state | bare  MAYBE | B1-token-state | purpose 
+                               94                               131 
+   MAYBE | B2-token-concat | bare MAYBE | B2-token-concat | purpose 
+                               11                                15 
+       MAYBE | C1-name-any | bare     MAYBE | C1-name-any | purpose 
+                               26                                28 
+        MAYBE | D1-acronym | bare      MAYBE | D1-acronym | purpose 
+                                4                                 4 
+
+margin band (recorded, not stratified):
+
+   tie narrow  clear 
+   143    117    140 
+dollar band (recorded, not stratified):
+
+ q1  q2  q3  q4 
+123  95  95  87 
+dollars drawn: 146,301,632 (median identity 5,000)
+
+wrote data-dev/ADJ-ROUND-STAGE1.rds and data-dev/ADJ-ROUND-STAGE1.csv
+reproduce with: seed 20261102, n 400, run data-dev/TRI-V2-MATCH.rds
+  normalizer v1-5e901add4a04a5d6 | frame_id 72edafa8f2114af9
+  the frame_id is the one to check: grant_id is a POSITION in this run's
+  identity numbering, and the population cannot see that numbering move.
+
+finished 2026-11-03 02:27:08 OK
+
+================================================================================
+WHAT THIS REDRAW FOUND
+================================================================================
+
+1. THE FRAME MOVED LESS THAN THE DRAW DID
+--------------------------------------------------------------------------------
+Rebuilt under npnormalize 0.1.9 against the same grant corpus and the same
+seeded group draw (SEED 20261024), so only the match differs:
+
+  identities   91,690 -> 91,008   (-682, duplicate identities merged)
+  YES          41,256 -> 41,341   45.00% -> 45.43%   +0.43 pts
+  MAYBE        24,107 -> 23,340   26.29% -> 25.65%   -0.64 pts
+  NO           26,327 -> 26,327   28.71% -> 28.93%   +0.22 pts
+
+Joined on the normalized recipient name -- see point 2 for why not on the id --
+85,350 identities are in both runs and the tier is unchanged on 97.5%:
+
+              new MAYBE     new NO    new YES
+  old MAYBE       20,177        591        290
+  old NO             418     24,440        415
+  old YES            346         37     38,636
+
+NO -> YES is 415 against 37 the other way, about 11:1, which is the real gain.
+The NO total is unchanged to the identity, and that is consistent with the
+residual being a blocking/scoring failure rather than a normalization one.
+
+The pass mix moved more than the tiers. B1-token-state -- the weakest evidence
+of the lot -- fell 40,504 -> 38,035 while A1-name-zip5 rose 26,289 -> 26,968,
+A2-name-state 8,901 -> 9,636, D1-acronym 2,156 -> 2,792 and C1-name-any
+3,515 -> 4,046. Work moving from the token pass to the name passes is the
+direction a better normalizer should push it.
+
+C2-dba-any is the exception and is worth a look of its own: 1,457 -> 458
+overall, and 1,384 MAYBE -> 0. A pass that produced 1,384 ambiguous verdicts
+and now produces none, while still firing 458 times, is either a real
+improvement or a pass that stopped reaching its candidates. It took 23 of the
+400 cases in the Nov-2 draw and takes none now, so the round no longer covers
+it at all. NOT DIAGNOSED HERE.
+
+2. grant_id IS POSITIONAL IN THE RUN, AND THE POPULATION CANNOT SEE IT
+--------------------------------------------------------------------------------
+The serious finding, and it nearly produced a false one.
+
+Identity ids are R<k>, where k is the recipient's position among the
+DEDUPLICATED recipients. Merging 682 duplicates renumbered everything after the
+first merge. Joined on grant_id across the two runs the recipient names do not
+agree at all:
+
+  R10000   Childrens Guardian                   CONGREGATION ATERES YESHAYA
+  R10001   Thoughts of Grace                    SPRINGFIELD YESHIVA
+  R10002   Zion Lutheran Church                 YESHIVAH ATERES SHMUEL OF ...
+
+Every id-joined comparison is therefore a comparison of unrelated rows, and it
+does not look like noise -- it looks like a finding. Three false ones were drawn
+and discarded before the names were checked:
+
+  "6 of 400 cases in common" -- 400/23,340 = 1.7%, i.e. chance.
+  "182 of the old 400 are now YES, 112 NO, 103 MAYBE" -- the new frame's base
+    rates (45.4/28.9/25.7%) on 400 random ids, to within four cases.
+  "the old C2-dba-any MAYBEs went to A1 and B1" -- base rates again.
+
+And the population fingerprint does not catch it: it is cb3c78ff0f1a9546 for
+BOTH runs, correctly, because the grant file really is the same. So a label
+drawn from the Oct-25 frame carries a population that validates against the
+Nov-3 frame and attaches to a different organisation. That is the one failure
+dev/TRUTH-LABELING-PROTOCOL.md section 4 tells labelers is impossible
+("population is a 16-character fingerprint that makes these labels
+re-attachable"), arriving on the axis nobody fingerprinted.
+
+pf_frame_id() now fingerprints the id-to-name pairing, and pf_round_sample()
+records it beside the population:
+
+  Oct-25 frame   population cb3c78ff0f1a9546   frame_id 32563729181651de
+  Nov-03 frame   population cb3c78ff0f1a9546   frame_id 72edafa8f2114af9
+
+3. WHAT IS STILL OPEN
+--------------------------------------------------------------------------------
+pf_shard_schema() has no frame_id column, so a labeler's returned truth rows
+carry the population and not the numbering. pf_read_truth() can therefore
+enforce the fingerprint that does not catch this and not the one that does.
+Dealing the shards before that is settled writes labeler-facing files that
+would have to be re-dealt with overwrite = TRUE, so stage 1 is drawn and NOT
+dealt.
+
+Also undiagnosed: C2-dba-any (point 1).

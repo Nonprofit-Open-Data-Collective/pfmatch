@@ -148,7 +148,18 @@ gg <- as.data.table(pf_propagate_matches(prep$grants, st))
 gg[, key := keyv]
 POP <- pf_population_id(gg)
 say("population id: %s", POP)
-saveRDS(list(status = st, grants = gg), MATCH_RDS, compress = FALSE)
+# The frame says what matched it. `st` carries pf_run_batches()'s run stamp as
+# an attribute, which is the authoritative record; `normalizer` and `built`
+# repeat the two fields a later reader actually looks for, at the top level
+# where pf_round_sample() finds them without unpacking a stamp.
+SIG <- attr(st, "pf_stamp")$normalizer
+if (is.null(SIG))
+  SIG <- tryCatch(npmatch::np_normalize_signature(),
+                  error = function(e) NA_character_)
+say("normalizer: %s", SIG)
+saveRDS(list(status = st, grants = gg, normalizer = SIG,
+             built = format(Sys.time(), "%Y-%m-%d %H:%M:%S")),
+        MATCH_RDS, compress = FALSE)
 
 }  # end of the match branch
 

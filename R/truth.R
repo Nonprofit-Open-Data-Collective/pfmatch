@@ -69,6 +69,57 @@ pf_population_id <- function(grants) {
   substr(digest::digest(sort(unique(oid)), algo = "md5"), 1, 16)
 }
 
+#' Fingerprint the identity numbering of a run
+#'
+#' [pf_population_id()] fingerprints the grant *file*. This fingerprints the
+#' *run*, and the two are not substitutes.
+#'
+#' @section The gap this closes:
+#' A production run's identity ids are `R<k>` where `k` is the recipient's
+#' position among the deduplicated recipients, so the numbering is local to the
+#' run. Rebuilding the same grant population under npnormalize 0.1.9 merged 682
+#' duplicate identities, which renumbered everything after the first merge:
+#' joined on `grant_id` across the two runs, the recipient names do not agree at
+#' all (`Childrens Guardian` against `CONGREGATION ATERES YESHAYA`), while
+#' joined on the recipient name the tier is unchanged on 97.5% of identities.
+#'
+#' The population fingerprint is **identical** across those two runs —
+#' `cb3c78ff0f1a9546` both times — because the grants really are the same file.
+#' So a label drawn from the first run carries a population that a reader can
+#' check, passes that check against the second, and attaches to a different
+#' organisation. That is the one failure mode the round's own protocol promises
+#' is impossible, arriving on the axis nobody fingerprinted.
+#'
+#' @param status A [pf_status()]-shaped frame, or a list with a `status`
+#'   component holding one.
+#' @return A 16-character hash of the `grant_id`-to-recipient-name pairing,
+#'   lightly normalized so that case and spacing do not move it.
+#' @seealso [pf_population_id()] for the grant file, [pf_round_sample()] which
+#'   records both on a draw.
+#' @examples
+#' st <- data.frame(grant_id = c("R1", "R2"), recip_name = c("A ORG", "B ORG"))
+#' pf_frame_id(st)
+#' @export
+pf_frame_id <- function(status) {
+  if (is.list(status) && !is.data.frame(status) && !is.null(status$status))
+    status <- status$status
+  id <- as.character(status$grant_id)
+  nm <- as.character(status$recip_name)
+  if (!length(id) || all(is.na(id)))
+    stop("no grant_id column: cannot fingerprint this run's identity numbering.",
+         call. = FALSE)
+  if (is.null(nm) || !length(nm))
+    stop(paste0(
+      "no recip_name column, so there is nothing to pair the ids against.\n",
+      "  An id hashed alone would agree between two runs that number the same\n",
+      "  count of different identities, which is exactly this case."),
+      call. = FALSE)
+  nm <- toupper(trimws(gsub(" +", " ", gsub("[^A-Za-z0-9 ]", " ", nm))))
+  nm[is.na(nm)] <- ""
+  id[is.na(id)] <- ""
+  substr(digest::digest(sort(paste(id, nm, sep = "|")), algo = "md5"), 1, 16)
+}
+
 .pf_e9 <- function(v) {
   v <- gsub("[^0-9]", "", as.character(v))
   ifelse(nchar(v) == 9L, v, NA_character_)

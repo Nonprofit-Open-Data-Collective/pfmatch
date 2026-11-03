@@ -393,3 +393,34 @@ test_that("truth levels and verdict levels are deliberately different sets", {
   expect_false(any(pf_verdict_levels()$verdict %in% pf_truth_levels()$verdict))
   expect_true("UNRESOLVED" %in% pf_truth_levels()$verdict)
 })
+
+## ---- the normalizer stamp ---------------------------------------------------
+
+test_that("the deal carries the draw's normalizer rather than re-reading it", {
+  # the deal can happen days after the draw, under a different installed stack,
+  # and the signature belongs to the run that produced the draw's tiers
+  d <- shard_draw(n = 60L)
+  attr(d, "normalizer") <- "v1-deadbeefdeadbeef"
+  s <- pf_truth_shards(d, k = 4, seed = 1, verbose = FALSE)
+  expect_equal(attr(s, "normalizer"), "v1-deadbeefdeadbeef")
+})
+
+test_that("a draw with no normalizer deals anyway, reporting NA", {
+  # every draw read back from a CSV is this case: the attribute is gone
+  s <- pf_truth_shards(shard_draw(n = 60L), k = 4, seed = 1, verbose = FALSE)
+  expect_true(is.na(attr(s, "normalizer")))
+  expect_equal(nrow(s[s$primary, ]), 60L)
+})
+
+test_that("the deal carries the frame id alongside the population", {
+  d <- shard_draw(n = 60L)
+  attr(d, "frame_id") <- "0123456789abcdef"
+  s <- pf_truth_shards(d, k = 4, seed = 1, verbose = FALSE)
+  expect_equal(attr(s, "frame_id"), "0123456789abcdef")
+  expect_equal(attr(s, "population"), "cb3c78ff0f1a9546")
+})
+
+test_that("a draw with no frame id deals anyway, reporting NA", {
+  s <- pf_truth_shards(shard_draw(n = 60L), k = 4, seed = 1, verbose = FALSE)
+  expect_true(is.na(attr(s, "frame_id")))
+})

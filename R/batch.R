@@ -149,6 +149,14 @@ pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
   attr(res, "timing") <- timing
   attr(res, "n_batches") <- length(idx)
   attr(res, "n_failed") <- sum(!done)
+  # The stamp travels with the RESULT, not only with the checkpoints. The
+  # checkpoint directory is emptied or moved once a run finishes; what survives
+  # is the status frame, and that is what a draw, a grade or a benchmark reads
+  # months later, when the installed normalizer is no longer the one that
+  # produced it. Without this the normalizer is recoverable only from a
+  # checkpoint that may no longer exist, so a frame could not say what matched
+  # it -- the gap dev/ADJ-ROUND-STAGE1-20261103.log was written about.
+  attr(res, "pf_stamp") <- stamp
   res
 }
 #' Summarize a batched run

@@ -29,6 +29,19 @@ g <- as.data.table(m$grants)
 say("run %s: %s identities, %s grants", RUN,
     format(nrow(s), big.mark = ","), format(nrow(g), big.mark = ","))
 
+# What matched the frame, and what is installed now. These are two different
+# facts and the draw records the first: a frame matched under one normalizer and
+# drawn under another is still a valid draw of that frame, but a reader months
+# from now needs to know which produced the tiers being stratified on.
+FSIG <- attr(s, "pf_stamp")$normalizer
+if (is.null(FSIG)) FSIG <- m$normalizer
+LIVE <- tryCatch(npmatch::np_normalize_signature(), error = function(e) NA_character_)
+say("frame matched under %s (built %s)",
+    if (is.null(FSIG)) "UNSTAMPED" else FSIG,
+    if (is.null(m$built)) "unrecorded" else m$built)
+say("installed now    %s%s", LIVE,
+    if (!is.null(FSIG) && identical(FSIG, LIVE)) "" else "   <- DIFFERS from the frame")
+
 # --- the identity-to-grant join, verified before it is used -------------------
 s[, uid := suppressWarnings(as.integer(sub("^R", "", grant_id)))]
 g[, uid := suppressWarnings(as.integer(recipient_uid))]
@@ -87,8 +100,10 @@ d <- pf_round_sample(m, n = N, tiers = "MAYBE",
                      by = c("tier", "pass", "purpose_band"),
                      extra = as.data.frame(extra), stage = "stage1",
                      seed = SEED)
-say("\npopulation %s  frame %s  drawn %d",
-    attr(d, "population"), format(attr(d, "frame_size"), big.mark = ","), nrow(d))
+say("\npopulation %s  frame_id %s  normalizer %s", attr(d, "population"),
+    attr(d, "frame_id"), attr(d, "normalizer"))
+say("frame %s identities  drawn %d",
+    format(attr(d, "frame_size"), big.mark = ","), nrow(d))
 print(attr(d, "allocation"))
 say("\nmargin band (recorded, not stratified):")
 print(table(cut(d$margin, breaks = c(-Inf, 0.01, 0.20, Inf),
@@ -103,3 +118,6 @@ saveRDS(d, OUT)
 utils::write.csv(as.data.frame(d), OUTC, row.names = FALSE, na = "")
 say("\nwrote %s and %s", OUT, OUTC)
 say("reproduce with: seed %d, n %d, run %s", SEED, N, RUN)
+say("  normalizer %s | frame_id %s", attr(d, "normalizer"), attr(d, "frame_id"))
+say("  the frame_id is the one to check: grant_id is a POSITION in this run's")
+say("  identity numbering, and the population cannot see that numbering move.")
