@@ -192,6 +192,15 @@ reference:
   - pf_grade_levels
   - pf_wilson
 
+- title: Comparing two runs
+  desc: >
+    What one modification did, read from the two runs rather than claimed about
+    them: the population accounting first, because a tier rate moves when the
+    cases change and nothing about the pipeline does.
+  contents:
+  - pf_compare_runs
+  - pf_stamp_diff
+
 - title: Dealing a labelling round out to several labelers
   desc: >
     Split a draw into shards with a blinded overlap, so two labelers' agreement
