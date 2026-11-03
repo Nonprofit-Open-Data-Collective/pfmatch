@@ -1,0 +1,50 @@
+﻿============================================================================== 
+TRUTH LABELER  shard 01 
+============================================================================== 
+model=claude-haiku-5-5  effort=high  search=max 12  workers=4 
+labeler=claude-haiku-5-5/shadow-01   <- SHADOW: not the key's roster for this shard 
+92 cases, population cb3c78ff0f1a9546 
+truth_id: left blank, deliberately -- see the note above. 
+system prompt: 18,256 characters 
+
+round 1: 92 requests ... 
+  92 finished, 0 paused mid-turn 
+
+355.6 s elapsed (3.9 s/case wall) 
+============================================================================== 
+verdicts returned: 92 of 92  (tool call used on 92) 
+ 
+verdict
+NO_ORG_INDIVIDUAL NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE         ORG_FOUND 
+                4                 9                10                61 
+       UNRESOLVED 
+                8 
+ 
+           confidence
+basis       high low medium
+  inference    0  13      4
+  web         38   8     29
+
+source_url given on 75 of 92 rows 
+wrong_ein recorded on 50 
+
+searches: 313 total, 3.4/case, 0 case(s) with none 
+
+tokens: 484,574 in, 197,389 out   cache: 5,285,661 read, 1,853,603 WRITTEN 
+requests: 70 short-prompt, 22 long-prompt (haiku prices by whole prompt) 
+token cost: $1.1669 over 92 cases ($0.012684/case) 
+  projected for all 92 cases of this shard: $1.17 
+  PLUS 313 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/round-stage1-labelled/shard-01-truth-claude-haiku-5-5-shadow-01.csv 
+      ./data-dev/round-stage1-labelled/shard-01-truth-claude-haiku-5-5-shadow-01.rds   (with usage and api columns) 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5/shadow-01 92 
+  basis: inference 17 | web 75 
+  0 cases carry two labelers (the overlap) 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+read without the key: a shadow labeler is not on the key's roster. 
+============================================================================== 

@@ -1,0 +1,50 @@
+﻿============================================================================== 
+TRUTH LABELER  shard 01 
+============================================================================== 
+model=claude-fable-5-1  effort=high  search=max 12  workers=4 
+labeler=claude-fable-5-1/truth-01 
+92 cases, population cb3c78ff0f1a9546 
+truth_id: left blank, deliberately -- see the note above. 
+system prompt: 18,256 characters 
+
+round 1: 92 requests ... 
+  92 finished, 0 paused mid-turn 
+
+517.2 s elapsed (5.6 s/case wall) 
+============================================================================== 
+verdicts returned: 92 of 92  (tool call used on 92) 
+ 
+verdict
+NO_ORG_INDIVIDUAL NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE         ORG_FOUND 
+                4                 7                 6                73 
+       UNRESOLVED 
+                2 
+ 
+           confidence
+basis       high low medium
+  inference    1   1      1
+  web         63   5     21
+
+source_url given on 90 of 92 rows 
+wrong_ein recorded on 47 
+
+searches: 378 total, 4.1/case, 0 case(s) with none 
+
+tokens: 36,436 in, 127,042 out   cache: 5,751,870 read, 476,184 WRITTEN 
+requests: 76 short-prompt, 16 long-prompt (haiku prices by whole prompt) 
+token cost: $14.1067 over 92 cases ($0.153334/case) 
+  projected for all 92 cases of this shard: $14.11 
+  PLUS 378 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/round-stage1-labelled/shard-01-truth-claude-fable-5-1-truth-01.csv 
+      ./data-dev/round-stage1-labelled/shard-01-truth-claude-fable-5-1-truth-01.rds   (with usage and api columns) 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-fable-5-1/truth-01 92 
+  basis: inference 3 | web 89 
+  0 cases carry two labelers (the overlap) 
+  308 dealt cases came back unlabelled, reported not counted wrong 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+============================================================================== 

@@ -65,6 +65,20 @@ data-dev/round-stage1-k8-superseded/*
 !data-dev/round-stage1-k8-superseded/SHARD-KEY.csv
 !data-dev/round-stage1-k8-superseded/README.md
 
+# ... and the labels that come BACK from a labeler. The dealt templates above
+# are tracked because a filled one is adjudication that cannot be regenerated
+# at any price; these are those templates filled in. They are model-produced
+# rather than hand-produced, so "any price" is really ~$15 and ~700 web
+# searches per shard -- but they are still the round's truth, every figure the
+# round reports is measured against them, and a web search is not reproducible
+# in the way a seed is: re-running the labeler next month queries a different
+# web. Same re-include-the-directory-first dance as above. The -limitN files
+# are smoke-test output over the first few cases and are deliberately left out.
+!data-dev/round-stage1-labelled
+data-dev/round-stage1-labelled/*
+!data-dev/round-stage1-labelled/*.csv
+data-dev/round-stage1-labelled/*-limit[0-9]*.csv
+
 !data-dev/TRIANGULATION-GROUPS.csv
 !data-dev/TRIANGULATION-SAMPLE.csv
 !data-dev/TRIANGULATION-CANDIDATES.csv
