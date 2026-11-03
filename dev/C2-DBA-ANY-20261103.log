@@ -1,0 +1,220 @@
+================================================================================
+C2-dba-any: why it has no MAYBE population, and what it is actually matching
+2026-11-03
+================================================================================
+
+The observation (dev/ADJ-ROUND-STAGE1-20261103.log point 1): between the Oct-25
+and Nov-3 builds of the same grant population, C2-dba-any went from 1,457
+firings with 1,384 MAYBE to 458 firings with 0 MAYBE, while still firing.
+
+This file is written after three wrong turns, two of them mine and recorded
+here because each looked like an answer: see WHAT I GOT WRONG at the end.
+
+--------------------------------------------------------------------------------
+1. FIRST, A CORRECTION TO HOW THE REBUILD WAS FRAMED
+--------------------------------------------------------------------------------
+dev/ADJ-ROUND-STAGE1-20261103.log says the rebuild ran "under npnormalize 0.1.9
+... so only the match differs". True but misleading: the two runs differ in
+npnormalize AND npmatch AND the reference layout. The Oct-25 build log has no
+"built stage-4 reference keys once" line, and the Oct-25 reference carried 41
+columns against the current 38 (recovery keys pre-baked vs built at run time).
+Nothing here is attributable to the normalizer, and nothing below is.
+
+--------------------------------------------------------------------------------
+2. THE CURRENT STATE, MEASURED
+--------------------------------------------------------------------------------
+Frame-wide, over all 458 identities whose best candidate comes from C2:
+
+  score 0.600  x457
+  score 0.980  x1
+  review floor 0.650   auto-accept 0.780   (npmatch::np_config()$thresholds)
+
+So C2-dba-any currently yields ONE usable match in 458. Everything else sits
+0.05 below the review floor, at a single constant value.
+
+300 of those identities were rematched with the pairs retained, 1,272 C2 pairs:
+
+  score      min 0.600, max 0.600 -- one distinct value
+  zip5       zero on 100.0% of pairs
+  geo_state  zero on 100.0%
+  geo_zip5   zero on 100.0%
+  city       zero on  99.8%
+
+The geo columns are zero because the pass crosses state lines on purpose. That
+is what it is for, not a defect. The consequence is that it earns no geographic
+credit, so its score is name credit alone.
+
+The one that clears: CANOE CREEK K8 PTA, ST CLOUD -> "Canoe Creek K8 Pta",
+EIN 86-3264768, score 0.980, margin 0.900, n_close 1. The grant's state is
+recorded MO and Canoe Creek K-8 is in St. Cloud, Florida -- a distinctive name
+with unusable geography, which is precisely the case an unblocked pass exists
+for, and it resolved. The pass is not worthless. It is badly targeted.
+
+--------------------------------------------------------------------------------
+3. WHAT IT IS ACTUALLY MATCHING
+--------------------------------------------------------------------------------
+npmatch's name_key over the 458 identities -- the key C2 joins to the
+reference's dba_key:
+
+  YMCA                        54      JCC                          4
+  SALVATION ARMY              29      NCJW                         4
+  YOUNG LIFE                  13      SUSAN G KOMEN FOR THE CURE   4
+  SPCA                         9      COUNCIL ON AGING             3
+
+  top 10 keys account for 126 of 458 (27.5%)
+  name_key is 1-4 characters on 212 of 458 (46.3%); median 5
+  digits-only on 4 (0.87%); any digit at all on 10 (2.18%)
+
+That is the finding. C2-dba-any is a pass whose population is short generic
+names and national brands -- acronyms (YMCA, SPCA, JCC, MDA, NCJW) and
+federated names (SALVATION ARMY, YOUNG LIFE) -- matched to some organisation's
+trade name somewhere in the country with no geography to choose between the
+hundreds of local entities carrying it. Nearly half its queries are four
+characters or fewer. Those cases are not nearly-resolvable; they are
+unresolvable, and 0.600 is the right answer for them.
+
+npmatch's own comment at R/score.R:106 says this about the DBA side, having
+found it independently:
+
+  "A DBA is frequently a short generic trade name whose rarity says nothing"
+
+with the worked example of a recipient "literally named 1" whose legal name is
+SLOVAK GYMNASTIC UNION SOKOL -- the same shape as THE 1421 FOUNDATION, which
+appeared in the sampled pairs matching six unrelated EINs that each carry
+dba "1421".
+
+--------------------------------------------------------------------------------
+4. HOW THE OLD 1,384 REACHED REVIEW
+--------------------------------------------------------------------------------
+Every one of them scored exactly 0.720. That is not a coincidence and not a
+name similarity:
+
+  npmatch::np_config()$distinct_name_floor_xstate == 0.72
+
+They were not clearing the review floor on their merits. They were being
+FLOORED UP to it by the distinctive-name cross-state promotion
+(npmatch R/score.R: `score[promote] <- pmax(score[promote], floor_val[promote])`,
+where floor_val is distinct_name_floor_xstate when geo_state != 1).
+
+The promotion's premise is "this exact legal name is rare in the reference, so
+an exact match on it is trustworthy". For a C2 match that premise is read off
+the wrong string: name_freq describes the reference row's PRIMARY name, which
+is rare (YOUNG MENS CHRISTIAN ASSOCIATION OF GREATER <CITY> appears once),
+while the match was made on its DBA, which is "YMCA" and says nothing. So
+1,384 nationwide acronym matches were promoted into review on the rarity of
+names that had no part in making them.
+
+The promotion is now withheld and the raw 0.600 stands, which is correct.
+
+WHICH CONDITION STOPPED HOLDING IS NOT ESTABLISHED. `promote` requires
+name_score >= 0.95, name_freq <= distinct_name_maxfreq (3), `informative`
+(disabled by default, min_idf 0), and `on_primary`. `on_primary` is the one
+that should block a DBA match, and it is the likeliest answer -- but
+distinct_name_main_only and the name_ver columns it reads both date from
+5e23269, 2026-08-20, so both were already present for the Oct-25 run, and that
+alone does not explain a change in late October. Settling it needs the pairs
+rescored with distinct_name_main_only = FALSE, which was not done.
+
+Not knowing the trigger does not weaken sections 2 and 3: what the pass finds,
+and that it cannot clear the floor on 457 of 458, are measured directly.
+
+--------------------------------------------------------------------------------
+5. WHERE THE AFFECTED ORGANISATIONS WENT
+--------------------------------------------------------------------------------
+1,354 of the 1,384 traced into the new run by name + city + state (NOT by id --
+see pfmatch-identity-ids; an id join across two runs returns base rates):
+
+  new pass            MAYBE    NO
+  A2-name-state         383     0
+  A3-name-dba            17     0
+  C1-name-any             1   388
+  C2-dba-any              0   367
+  B1-token-state          1   133
+  B2-token-concat         2    49
+  D1-acronym              4     7
+  (none)                  0     2
+
+400 moved onto STATE-BLOCKED EXACT passes and stayed in review -- strictly
+better evidence than the unblocked join they had. The remaining ~950 have
+nothing above the floor from any pass, so C2's 0.600 is the best on offer and
+nothing better was displaced.
+
+Same EIN picked before and after: 332 of 1,352 (24.6%).
+Median best-candidate score 0.720 -> 0.600.
+
+--------------------------------------------------------------------------------
+6. THE ONLY DIRECT EVIDENCE ON WHETHER THESE WERE WORTH REVIEWING
+--------------------------------------------------------------------------------
+data-dev/AUDIT-MAYBE-100.csv against dev/maybe-verdicts.csv, older pass naming,
+top picks from the dba pass:
+
+  exact-name-dba  n=6  CORRECT_TOP 0  CORRECT_DEEPER 1  AMBIGUOUS 4  NO_CORRECT 1
+
+Zero of six had the right answer as the top pick. n=6 carries no precision
+claim, and that naming does not separate the blocked dba pass from the
+unblocked one. Consistent with the above; not proof of it.
+
+--------------------------------------------------------------------------------
+7. CONCLUSION
+--------------------------------------------------------------------------------
+Not a regression. 1,384 nationwide acronym matches were being floored into
+review by a rarity argument computed on a string that played no part in the
+match. They stopped being, and 400 of the underlying organisations were picked
+up by stronger state-blocked passes in the process.
+
+What remains is a pass that pays for itself once in 458 and, the other 457
+times, supplies the near-miss a reviewer sees on a NO row -- a nationwide
+acronym match to an unrelated organisation.
+
+Dropping it would cost the one real catch (CANOE CREEK K8 PTA: distinctive
+name, unusable geography). Keeping it as-is costs 457 misleading near-misses.
+The lever that separates those two is name distinctiveness, which the one catch
+has and all 457 lack -- 46.3% of them are four characters or fewer. npmatch
+already carries the parameter for it, distinct_name_min_idf, currently 0 and
+disabled; its own note says it was measured at "only 2 matches, net zero" on
+990-PF grants, but that was measured as a gate on the PROMOTION, not as a gate
+on admitting a query to an unblocked pass at all. Those are different tests and
+only the first has been run. See pfmatch-truncation-negative, which already
+names the distinctive-name floor as the real unexamined lever.
+
+OPEN, in order of value:
+  1. Gate C2-dba-any's QUERY side on name distinctiveness (token IDF or
+     character length) rather than dropping the pass. Expected: keeps the
+     CANOE CREEK class, drops the YMCA class. Measure the tier mix either side.
+  2. Establish which `promote` condition stopped holding (section 4), by
+     rescoring retained pairs with distinct_name_main_only = FALSE. Until then
+     the same promotion may still be firing on other DBA passes.
+  3. A3-name-dba / A4-dba-name / A5-dba-dba join on the same dba_key but are
+     state-blocked, so they DO earn geographic credit and are not stuck at
+     0.600. A spurious promotion there is worse, not better. Unexamined.
+  4. C1-name-any is also unblocked and carries 388 NO near-misses on the traced
+     set. Its scores were not examined.
+
+Reference-side note, measured but not load-bearing: dba_key is digits-only on
+39,746 of 948,422 non-empty rows (4.2%, 12,848 distinct values, one reaching
+126 reference rows) and digit-leading on 32.6% ("2200804 FRUITLAND LITTLE
+LEAGUE", "64 HURON COUNTY POMONA" -- BMF group/subordinate codes). Real
+pollution, but it is NOT what C2 is matching on: only 4 of its 458 queries have
+a digits-only name_key.
+
+--------------------------------------------------------------------------------
+WHAT I GOT WRONG, since each wrong turn looked like the answer
+--------------------------------------------------------------------------------
+a) "The reference's dba_key collapsed." Measured: 948,422 non-empty in both
+   bundles, 782,996 -> 782,986 distinct. The reference side did not move.
+
+b) "The 0.720 came from npmatch a5726e7, where empty fields scored 1.0 against
+   each other." That commit is real and its own message says exactly that, and
+   the arithmetic looked right. But 0.720 is distinct_name_floor_xstate to the
+   digit, which is a floor and not a weighted sum, so the empty-field story is
+   not what put those pairs at 0.720. Reported before it was checked.
+
+c) "C2 is matching BMF group-exemption numbers." Drawn from THE 1421 FOUNDATION
+   matching six EINs with dba "1421" -- a real pair, and 1 of only 4 such
+   queries in 458 (0.87%). The population is acronyms, not numbers. A vivid
+   single case was generalised without counting first.
+
+d) A first attempt at section 5 joined the two runs on grant_id and produced
+   "6 of 400 cases in common" and "182 of the old 400 are now YES" -- both base
+   rates, because the ids are positions in two different runs. See
+   pfmatch-identity-ids.
