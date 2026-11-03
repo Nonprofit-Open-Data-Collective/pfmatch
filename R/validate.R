@@ -229,15 +229,43 @@ pf_validate_grants <- function(grants, strict = FALSE, verbose = TRUE) {
 # Name the release a signature belongs to rather than printing a bare hash. A
 # hash is a good fingerprint and a poor label, and npnormalize 0.1.9 can date
 # one. Degrades to the hash alone wherever it cannot.
-.pf_sig_label <- function(sig) {
+#
+# "introduced by", not "is": a signature does not determine a release. A
+# release that changes no rule reports its predecessor's value, so 0.1.9
+# reports 0.1.8's and np_signature_history() answers which release PRODUCED a
+# value -- the earliest that could have -- not which one is installed.
+# npnormalize documents this and says what a consumer should do about it:
+# record the signature AND packageVersion(), because neither determines the
+# other. A previous consumer of that table read it as a one-to-one map and had
+# to correct a caption.
+#
+# So `installed` is named alongside wherever the caller knows it, which is
+# wherever the signature being labelled is the live one. For a signature read
+# off an artifact it is left out: which release wrote that bundle is not
+# something the installed version can answer.
+.pf_sig_label <- function(sig, installed = NULL) {
   sig <- as.character(sig)[1]
   if (is.na(sig) || !nzchar(sig)) return("(none recorded)")
+  also <- ""
+  if (!is.null(installed)) {
+    iv <- as.character(installed)[1]
+    if (!is.na(iv) && nzchar(iv)) also <- sprintf("; installed %s", iv)
+  }
   h <- tryCatch(npnormalize::np_signature_history(sig), error = function(e) NULL)
-  if (!is.data.frame(h) || !nrow(h)) return(sig)
+  if (!is.data.frame(h) || !nrow(h))
+    return(if (nzchar(also)) sprintf("%s (unrecognized%s)", sig, also) else sig)
   v <- as.character(h$version[1])
+  pkg <- as.character(h$package[1])
   if (is.na(v) || !nzchar(v))
-    sprintf("%s (%s, version not recorded)", sig, as.character(h$package[1]))
-  else sprintf("%s (%s %s)", sig, as.character(h$package[1]), v)
+    sprintf("%s (introduced by %s, version not recorded%s)", sig, pkg, also)
+  else sprintf("%s (introduced by %s %s%s)", sig, pkg, v, also)
+}
+
+# The installed normalizer's own version, for the `installed` argument above.
+# npnormalize is the normalizer; npmatch re-exports its signature function.
+.pf_installed_normalizer <- function() {
+  tryCatch(as.character(utils::packageVersion("npnormalize")),
+           error = function(e) NULL)
 }
 
 #' Check a frame against the columns its passes block on
@@ -317,9 +345,12 @@ pf_check_schema <- function(x, passes = c(pf_staged_passes("lean"),
         else if (identical(as.character(sig)[1], live)) "PASS" else "FAIL",
         if (is.null(sig))
           "absent -- the bundle cannot be shown to match the installed normalizer"
-        else if (identical(as.character(sig)[1], live)) .pf_sig_label(sig)
+        else if (identical(as.character(sig)[1], live))
+          .pf_sig_label(sig, .pf_installed_normalizer())
+        # The bundle's own signature gets no `installed`: which release wrote
+        # it is not something this machine's library can answer.
         else paste0("bundle ", .pf_sig_label(sig), ", installed ",
-                    .pf_sig_label(live)))
+                    .pf_sig_label(live, .pf_installed_normalizer())))
     # Absent, each of these is recomputed by np_cascade() on EVERY call -- the
     # reason a bundle carries them at all is that the whole reference has to be
     # read to build one.
