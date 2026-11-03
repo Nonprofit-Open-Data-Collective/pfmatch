@@ -69,26 +69,71 @@ pf_population_id <- function(grants) {
   substr(digest::digest(sort(unique(oid)), algo = "md5"), 1, 16)
 }
 
+#' The stable id of a recipient identity
+#'
+#' Hashes an identity's canonical dedup key into the id the cascade, the round
+#' and every label are keyed on. [pf_dedup()] calls this; it is exported so
+#' that an id can be recomputed from a key without re-running a match.
+#'
+#' @section Why an identity is not numbered:
+#' It used to be. `R<k>` was `k = match(key, unique(key))` — a position among
+#' the deduplicated recipients — and the fuzzy pass renumbered again by taking
+#' each component's smallest `k`. Both depend on which rows are present, so
+#' merging one pair of duplicates renumbers every identity after it.
+#'
+#' Two builds of the same grant population, the second after a normalizer
+#' change merged 682 duplicates, measured that: joined on `R<k>` the recipient
+#' names did not agree at all, while [pf_population_id()] was identical both
+#' times — correctly, the grant file was the same. A label keyed on a position
+#' passed every check that existed and attached to a different organisation.
+#'
+#' A content hash cannot do that. If the id matches, the key matches, so the
+#' organisation matches by construction. If the identity's key set changed, the
+#' id changed and the old label is **visibly absent** rather than silently
+#' re-attached — which is the property worth having, and the reason this is
+#' preferred over trying to keep a number stable across rebuilds.
+#'
+#' @param key Canonical dedup key(s) — for an identity, the lexicographically
+#'   smallest exact key in its cluster, which is what [pf_dedup()] records as
+#'   `recipient_key`.
+#' @param prefix Id prefix. `"PFI-"` for a content-identified identity;
+#'   [pf_dedup()] uses `"PFX-"` for a row with neither name nor address, which
+#'   has no content to hash and is keyed on `OBJECTID` instead.
+#' @return A character vector of ids, one per `key`.
+#' @seealso [pf_frame_id()] for the numbering a run used,
+#'   [pf_population_id()] for the grant file.
+#' @examples
+#' pf_identity_id(c("SMITH FAMILY\r100 MAIN ST\r59715", "OTHER\r\r"))
+#' @export
+pf_identity_id <- function(key, prefix = "PFI-") {
+  k <- as.character(key)
+  k[is.na(k)] <- ""
+  vd <- digest::getVDigest(algo = "md5")
+  paste0(prefix, substr(vd(k, serialize = FALSE), 1L, 16L))
+}
+
 #' Fingerprint the identity numbering of a run
 #'
 #' [pf_population_id()] fingerprints the grant *file*. This fingerprints the
 #' *run*, and the two are not substitutes.
 #'
-#' @section The gap this closes:
-#' A production run's identity ids are `R<k>` where `k` is the recipient's
-#' position among the deduplicated recipients, so the numbering is local to the
-#' run. Rebuilding the same grant population under npnormalize 0.1.9 merged 682
-#' duplicate identities, which renumbered everything after the first merge:
-#' joined on `grant_id` across the two runs, the recipient names do not agree at
-#' all (`Childrens Guardian` against `CONGREGATION ATERES YESHAYA`), while
-#' joined on the recipient name the tier is unchanged on 97.5% of identities.
+#' @section What it is for:
+#' Identity ids used to be `R<k>`, a position among the deduplicated
+#' recipients, so the numbering was local to the run. Rebuilding the same grant
+#' population under npnormalize 0.1.9 merged 682 duplicate identities and
+#' renumbered everything after the first merge: joined on `grant_id` across the
+#' two runs the recipient names did not agree at all (`Childrens Guardian`
+#' against `CONGREGATION ATERES YESHAYA`), while joined on the recipient name
+#' the tier was unchanged on 97.5% of identities. The population fingerprint
+#' was **identical** across both — `cb3c78ff0f1a9546` — because the grants
+#' really were the same file, so a label from the first run passed every check
+#' available and attached to a different organisation.
 #'
-#' The population fingerprint is **identical** across those two runs —
-#' `cb3c78ff0f1a9546` both times — because the grants really are the same file.
-#' So a label drawn from the first run carries a population that a reader can
-#' check, passes that check against the second, and attaches to a different
-#' organisation. That is the one failure mode the round's own protocol promises
-#' is impossible, arriving on the axis nobody fingerprinted.
+#' [pf_identity_id()] fixed that at the source, and this remains for the two
+#' jobs it still does: telling cheaply whether two artifacts are the same run,
+#' and catching a frame or draw built **before** the ids were content-derived,
+#' whose `R<k>` ids will re-attach silently and wrongly. A frame whose ids are
+#' not `PFI-`/`PFX-` shaped is that case.
 #'
 #' @param status A [pf_status()]-shaped frame, or a list with a `status`
 #'   component holding one.

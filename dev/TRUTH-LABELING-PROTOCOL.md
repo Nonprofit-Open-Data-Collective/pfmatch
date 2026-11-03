@@ -92,8 +92,17 @@ Two files, named for your shard:
   features from the draw.
 * `shard-NN-truth.csv` — the template you fill. `grant_id`, `population` and
   `shard` are **already filled in. Do not change them.** `population` is a
-  16-character fingerprint that makes these labels re-attachable to the grant
-  file; `grant_id` is positional and means nothing without it.
+  16-character fingerprint of the grant file these labels belong to.
+  `grant_id` is a `PFI-` id derived from the recipient's own normalized name
+  and address, so it names the organisation rather than its position in a
+  file — see `pf_identity_id()`.
+
+  Until 2026-11-03 it was `R<k>`, a position among the deduplicated
+  recipients, and that was a real hazard rather than a pedantic one: a rebuild
+  that merged duplicate identities renumbered everything after the first merge,
+  so a label would re-attach to a *different* organisation while still passing
+  the `population` check. Any label file carrying `R<k>` ids predates the fix
+  and must not be re-attached to a current frame.
 
 Fill one row per case: `truth_id`, `verdict`, `correct_ein` (9 digits, required
 when `ORG_FOUND`), `wrong_ein` (an EIN you ruled *out* — a negative constraint

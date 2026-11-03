@@ -18,22 +18,24 @@ lightly normalized so that case and spacing do not move it.
 \code{\link[=pf_population_id]{pf_population_id()}} fingerprints the grant \emph{file}. This fingerprints the
 \emph{run}, and the two are not substitutes.
 }
-\section{The gap this closes}{
+\section{What it is for}{
 
-A production run's identity ids are \verb{R<k>} where \code{k} is the recipient's
-position among the deduplicated recipients, so the numbering is local to the
-run. Rebuilding the same grant population under npnormalize 0.1.9 merged 682
-duplicate identities, which renumbered everything after the first merge:
-joined on \code{grant_id} across the two runs, the recipient names do not agree at
-all (\verb{Childrens Guardian} against \verb{CONGREGATION ATERES YESHAYA}), while
-joined on the recipient name the tier is unchanged on 97.5\% of identities.
+Identity ids used to be \verb{R<k>}, a position among the deduplicated
+recipients, so the numbering was local to the run. Rebuilding the same grant
+population under npnormalize 0.1.9 merged 682 duplicate identities and
+renumbered everything after the first merge: joined on \code{grant_id} across the
+two runs the recipient names did not agree at all (\verb{Childrens Guardian}
+against \verb{CONGREGATION ATERES YESHAYA}), while joined on the recipient name
+the tier was unchanged on 97.5\% of identities. The population fingerprint
+was \strong{identical} across both — \code{cb3c78ff0f1a9546} — because the grants
+really were the same file, so a label from the first run passed every check
+available and attached to a different organisation.
 
-The population fingerprint is \strong{identical} across those two runs —
-\code{cb3c78ff0f1a9546} both times — because the grants really are the same file.
-So a label drawn from the first run carries a population that a reader can
-check, passes that check against the second, and attaches to a different
-organisation. That is the one failure mode the round's own protocol promises
-is impossible, arriving on the axis nobody fingerprinted.
+\code{\link[=pf_identity_id]{pf_identity_id()}} fixed that at the source, and this remains for the two
+jobs it still does: telling cheaply whether two artifacts are the same run,
+and catching a frame or draw built \strong{before} the ids were content-derived,
+whose \verb{R<k>} ids will re-attach silently and wrongly. A frame whose ids are
+not \verb{PFI-}/\verb{PFX-} shaped is that case.
 }
 
 \examples{

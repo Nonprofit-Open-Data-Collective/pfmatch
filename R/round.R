@@ -77,16 +77,22 @@
 #' `OBJECTID` and are the case it exists for.
 #'
 #' @section Why a population is not enough on its own:
-#' The population fingerprints the grant *file*. A production run's ids are
-#' `R<k>`, positions among the deduplicated recipients, so they are local to the
-#' *run*: rebuilding one population after a normalizer change merged 682
-#' duplicate identities and renumbered everything downstream, leaving the
-#' population identical (`cb3c78ff0f1a9546` both times) while `R10000` moved
-#' from `Childrens Guardian` to `CONGREGATION ATERES YESHAYA`. A label from the
-#' first run would pass the population check against the second and attach to
-#' the wrong organisation. [pf_frame_id()] fingerprints that numbering, and it
-#' is recorded as `attr(, "frame_id")` so the mismatch is detectable instead of
-#' silent.
+#' The population fingerprints the grant *file*, and a label also has to name
+#' an organisation within it. Identity ids used to be `R<k>` — positions among
+#' the deduplicated recipients — so they were local to the run: rebuilding one
+#' population after a normalizer change merged 682 duplicates and renumbered
+#' everything downstream, leaving the population identical
+#' (`cb3c78ff0f1a9546` both times) while `R10000` moved from `Childrens
+#' Guardian` to `CONGREGATION ATERES YESHAYA`. A label from the first run
+#' passed the population check against the second and attached to the wrong
+#' organisation.
+#'
+#' [pf_identity_id()] replaced that: an id is now a hash of the identity's own
+#' dedup key, so an id that matches names the same organisation by construction
+#' and one whose identity changed is **absent** rather than wrong. A frame still
+#' carries [pf_frame_id()] as `attr(, "frame_id")`, which fingerprints the whole
+#' id-to-name pairing — a cheap check that two artifacts are the same run, and
+#' the thing that catches a frame built before the ids were content-derived.
 #'
 #' @section Why the normalizer is recorded but not required:
 #' The population says which grant file these ids mean something in. It does
@@ -381,7 +387,7 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
     else
       .pf_say(verbose, "  normalizer %s -- the signature the frame was matched under", nrm)
     if (!is.na(frm))
-      .pf_say(verbose, "  frame %s -- the identity numbering these ids are positions in", frm)
+      .pf_say(verbose, "  frame %s -- fingerprints this run's id-to-name pairing", frm)
     .pf_say(verbose, "  confidence and evidence class are NOT stratifiable: the reviewer")
     .pf_say(verbose, "  assigns them, so stage this round (PREREQS 6b.1c)")
   }

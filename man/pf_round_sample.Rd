@@ -96,16 +96,21 @@ run whose labels will be thrown away — the archived GT extracts have no
 
 \section{Why a population is not enough on its own}{
 
-The population fingerprints the grant \emph{file}. A production run's ids are
-\verb{R<k>}, positions among the deduplicated recipients, so they are local to the
-\emph{run}: rebuilding one population after a normalizer change merged 682
-duplicate identities and renumbered everything downstream, leaving the
-population identical (\code{cb3c78ff0f1a9546} both times) while \code{R10000} moved
-from \verb{Childrens Guardian} to \verb{CONGREGATION ATERES YESHAYA}. A label from the
-first run would pass the population check against the second and attach to
-the wrong organisation. \code{\link[=pf_frame_id]{pf_frame_id()}} fingerprints that numbering, and it
-is recorded as \code{attr(, "frame_id")} so the mismatch is detectable instead of
-silent.
+The population fingerprints the grant \emph{file}, and a label also has to name
+an organisation within it. Identity ids used to be \verb{R<k>} — positions among
+the deduplicated recipients — so they were local to the run: rebuilding one
+population after a normalizer change merged 682 duplicates and renumbered
+everything downstream, leaving the population identical
+(\code{cb3c78ff0f1a9546} both times) while \code{R10000} moved from \verb{Childrens Guardian} to \verb{CONGREGATION ATERES YESHAYA}. A label from the first run
+passed the population check against the second and attached to the wrong
+organisation.
+
+\code{\link[=pf_identity_id]{pf_identity_id()}} replaced that: an id is now a hash of the identity's own
+dedup key, so an id that matches names the same organisation by construction
+and one whose identity changed is \strong{absent} rather than wrong. A frame still
+carries \code{\link[=pf_frame_id]{pf_frame_id()}} as \code{attr(, "frame_id")}, which fingerprints the whole
+id-to-name pairing — a cheap check that two artifacts are the same run, and
+the thing that catches a frame built before the ids were content-derived.
 }
 
 \section{Why the normalizer is recorded but not required}{

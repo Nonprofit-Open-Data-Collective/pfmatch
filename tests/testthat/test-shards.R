@@ -17,8 +17,12 @@
 # consolidation neither tie-breaks a disagreement nor strengthens the evidence
 # behind a concurrence.
 
+# Ids shaped as pf_identity_id() makes them. pf_read_truth() refuses R<k>,
+# which predates content-derived ids, so the fixtures use the real shape.
+sid <- function(i) sprintf("PFI-%016x", as.integer(i))
+
 shard_draw <- function(n = 60L, strata = c("a", "b", "c")) {
-  d <- data.frame(grant_id = sprintf("R%03d", seq_len(n)),
+  d <- data.frame(grant_id = sid(seq_len(n)),
                   stratum = rep(strata, length.out = n),
                   stringsAsFactors = FALSE)
   attr(d, "population") <- "cb3c78ff0f1a9546"
@@ -171,7 +175,7 @@ test_that("writing over a labeler's part-written file is refused", {
 ## ---- the refusals, reading -------------------------------------------------
 
 test_that("a missing schema column is a stop, naming what is present", {
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   r$basis <- NULL
   expect_error(pf_read_truth(r, verbose = FALSE), "missing these columns: basis")
 })
@@ -179,46 +183,46 @@ test_that("a missing schema column is a stop, naming what is present", {
 test_that("a web basis with no source_url is refused", {
   # an asserted web basis is an inference wearing a web label, and basis is
   # what decides which rows may grade a model arm
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1", basis = "web")
+  r <- shard_rows(sid(1:5), "lab1", basis = "web")
   expect_error(pf_read_truth(r, verbose = FALSE), "name no source_url")
   r$source_url <- "https://example.org/about"
   expect_equal(nrow(pf_read_truth(r, verbose = FALSE)), 5L)
 })
 
 test_that("a missing basis or confidence is refused", {
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   r$confidence[2] <- ""
   expect_error(pf_read_truth(r, verbose = FALSE), "no basis or no confidence")
 })
 
 test_that("ORG_FOUND with no EIN, and a blank labeler, are both stops", {
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   r$correct_ein[3] <- ""
   expect_error(pf_read_truth(r, verbose = FALSE), "name no 9-digit EIN")
 
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   r$labeler[2] <- ""
   expect_error(pf_read_truth(r, verbose = FALSE), "carry no labeler")
 })
 
 test_that("an unknown level is a stop", {
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   r$verdict[1] <- "MATCH"     # a pf_verdict_levels() value, not a truth one
   expect_error(pf_read_truth(r, verbose = FALSE), "outside the permitted set")
 })
 
 test_that("one labeler answering a case twice is a stop", {
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   r <- rbind(r, r[1, ])
   expect_error(pf_read_truth(r, verbose = FALSE), "appear twice")
 })
 
 test_that("mixed populations are refused, and so is a mismatch", {
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   r$population[3] <- "0b5126ef02f2a8b0"
   expect_error(pf_read_truth(r, verbose = FALSE), "mix populations")
 
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   expect_error(pf_read_truth(r, population = "0b5126ef02f2a8b0", verbose = FALSE),
                "population mismatch")
 })
@@ -226,11 +230,11 @@ test_that("mixed populations are refused, and so is a mismatch", {
 test_that("blank template rows are reported as missing, not counted wrong", {
   # a round comes back incomplete far more often than malformed, and a stop
   # here would block the agreement read the returned rows already support
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   r[4:5, setdiff(names(r), c("grant_id", "population", "shard", "labeler"))] <- ""
   out <- pf_read_truth(r, verbose = FALSE)
   expect_equal(nrow(out), 3L)
-  expect_equal(attr(out, "missing"), c("R004", "R005"))
+  expect_equal(attr(out, "missing"), sid(4:5))
 })
 
 test_that("two labelers on a case the key dealt once is a stop", {
@@ -283,7 +287,7 @@ test_that("a full round trips through disk", {
 ## ---- agreement -------------------------------------------------------------
 
 test_that("agreement is unmeasurable without an overlap, and says so", {
-  r <- shard_rows(sprintf("R%03d", 1:5), "lab1")
+  r <- shard_rows(sid(1:5), "lab1")
   out <- pf_read_truth(r, verbose = FALSE)
   expect_error(pf_labeler_agreement(out), "agreement is not\\s+measurable")
 })
@@ -291,7 +295,7 @@ test_that("agreement is unmeasurable without an overlap, and says so", {
 test_that("strict and effective agreement differ on the NO_ORG reasons", {
   # pf_evaluate() keys on ^NO_ORG and does not distinguish them, so two
   # labelers differing only on WHY no org exists change no downstream figure
-  ids <- sprintf("R%03d", 1:4)
+  ids <- sid(1:4)
   a <- shard_rows(ids, "lab1", shard = 1L, verdict = "NO_ORG_INDIVIDUAL",
                   ein = NA_character_)
   b <- shard_rows(ids, "lab2", shard = 2L, verdict = "NO_ORG_UNFINDABLE",
@@ -303,7 +307,7 @@ test_that("strict and effective agreement differ on the NO_ORG reasons", {
 })
 
 test_that("a single bad labeler shows up per labeler, not in the pooled rate", {
-  ids <- sprintf("R%03d", 1:6)
+  ids <- sid(1:6)
   a <- shard_rows(ids, "good1", shard = 1L)
   b <- shard_rows(ids, "good2", shard = 2L)
   # bad3 agrees on nothing: a different EIN on every case
@@ -318,7 +322,7 @@ test_that("a single bad labeler shows up per labeler, not in the pooled rate", {
 })
 
 test_that("a thin overlap is marked unusable rather than read as a rate", {
-  ids <- sprintf("R%03d", 1:3)
+  ids <- sid(1:3)
   r <- rbind(shard_rows(ids, "lab1", shard = 1L),
              shard_rows(ids, "lab2", shard = 2L))
   g <- pf_labeler_agreement(pf_read_truth(r, verbose = FALSE), min_n = 20L)
@@ -332,7 +336,7 @@ test_that("a thin overlap is marked unusable rather than read as a rate", {
 test_that("two labelers who agree keep the WEAKER basis and confidence", {
   # concurrence is not corroboration: agreeing does not strengthen the
   # evidence either labeler actually had
-  ids <- sprintf("R%03d", 1:4)
+  ids <- sid(1:4)
   a <- shard_rows(ids, "lab1", shard = 1L, basis = "web", confidence = "high",
                   url = "https://example.org")
   b <- shard_rows(ids, "lab2", shard = 2L, basis = "inference",
@@ -350,7 +354,7 @@ test_that("two labelers who agree keep the WEAKER basis and confidence", {
 test_that("a contested case becomes UNRESOLVED and is not tie-broken", {
   # the alternative keeps an answer whose whole authority is that one labeler
   # sounded surer, and self-reported confidence is what T3 exists to test
-  ids <- sprintf("R%03d", 1:3)
+  ids <- sid(1:3)
   a <- shard_rows(ids, "lab1", shard = 1L, ein = "111111111",
                   confidence = "high")
   b <- shard_rows(ids, "lab2", shard = 2L, ein = "222222222",
@@ -368,7 +372,7 @@ test_that("a contested case becomes UNRESOLVED and is not tie-broken", {
 
 test_that("consolidated output satisfies the grading schema", {
   # the whole point: pf_evaluate() and pf_grade_verdicts() read this untouched
-  ids <- sprintf("R%03d", 1:6)
+  ids <- sid(1:6)
   r <- rbind(shard_rows(ids[1:4], "lab1", shard = 1L),
              shard_rows(ids[5:6], "lab2", shard = 2L))
   out <- pf_consolidate_truth(pf_read_truth(r, verbose = FALSE),
@@ -423,4 +427,42 @@ test_that("the deal carries the frame id alongside the population", {
 test_that("a draw with no frame id deals anyway, reporting NA", {
   s <- pf_truth_shards(shard_draw(n = 60L), k = 4, seed = 1, verbose = FALSE)
   expect_true(is.na(attr(s, "frame_id")))
+})
+
+test_that("a label carrying a pre-fix positional id is refused", {
+  # R<k> was a position among the deduplicated recipients. Re-attaching one to a
+  # frame rebuilt since does not miss -- it lands on an unrelated organisation
+  # while the population fingerprint still agrees, which nothing downstream can
+  # see. The id's shape is the last place it is visible.
+  d <- data.frame(grant_id = sprintf("R%03d", 1:8),
+                  stratum = rep(c("a", "b"), 4), stringsAsFactors = FALSE)
+  attr(d, "population") <- "cb3c78ff0f1a9546"
+  s <- pf_truth_shards(d, k = 2, overlap = 0, seed = 1, verbose = FALSE)
+  dir <- withr::local_tempdir()
+  pf_write_shards(s, dir, verbose = FALSE)
+  p <- file.path(dir, "shard-01-truth.csv")
+  tf <- utils::read.csv(p, colClasses = "character")
+  tf$verdict <- "NO_ORG_INDIVIDUAL"; tf$basis <- "reference"
+  tf$confidence <- "high"; tf$labeler <- "someone"
+  tf$truth_id <- sprintf("T%d", seq_len(nrow(tf)))
+  utils::write.csv(tf, p, row.names = FALSE, na = "")
+  expect_error(pf_read_truth(dir, verbose = FALSE), "predate pf_identity_id")
+})
+
+test_that("content ids pass the same reader", {
+  d <- data.frame(grant_id = pf_identity_id(sprintf("ORG %d\r\r", 1:8)),
+                  stratum = rep(c("a", "b"), 4), stringsAsFactors = FALSE)
+  attr(d, "population") <- "cb3c78ff0f1a9546"
+  s <- pf_truth_shards(d, k = 2, overlap = 0, seed = 1, verbose = FALSE)
+  dir <- withr::local_tempdir()
+  pf_write_shards(s, dir, verbose = FALSE)
+  for (f in list.files(dir, pattern = "truth", full.names = TRUE)) {
+    tf <- utils::read.csv(f, colClasses = "character")
+    tf$verdict <- "NO_ORG_INDIVIDUAL"; tf$basis <- "reference"
+    tf$confidence <- "high"; tf$labeler <- "someone"
+    tf$truth_id <- sprintf("T%s%d", basename(f), seq_len(nrow(tf)))
+    utils::write.csv(tf, f, row.names = FALSE, na = "")
+  }
+  v <- pf_read_truth(dir, verbose = FALSE)
+  expect_equal(nrow(v), 8L)
 })

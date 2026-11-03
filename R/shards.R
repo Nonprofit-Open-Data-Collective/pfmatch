@@ -531,11 +531,30 @@ pf_read_truth <- function(x, key = NULL, population = NULL, verbose = TRUE) {
       sum(dup), paste(utils::head(unique(v$grant_id[dup]), 5), collapse = ", ")),
       call. = FALSE)
 
+  # An id from before ids were content-derived. `R<k>` was a position among the
+  # deduplicated recipients, so re-attaching one to a frame rebuilt since is
+  # not a near miss -- it lands on an unrelated organisation while the
+  # population fingerprint still agrees, because the grant file really is the
+  # same (dev/ADJ-ROUND-STAGE1-20261103.log). Nothing downstream can detect
+  # that, so it is refused here, where the shape of the id still shows it.
+  pos <- grepl("^R[0-9]+$", as.character(v$grant_id))
+  if (any(pos))
+    stop(sprintf(paste0(
+      "%d labelled rows carry positional ids (%s), which predate",
+      " pf_identity_id().\n",
+      "  R<k> was a position among the deduplicated recipients: a rebuild that",
+      " merged\n  duplicates renumbered everything after it, so these ids now",
+      " name DIFFERENT\n  organisations while still matching the population.",
+      " They cannot be repaired\n  from the file -- relabel them, or map them",
+      " through the frame they were drawn\n  from if it is still on disk."),
+      sum(pos), paste(utils::head(unique(v$grant_id[pos]), 3), collapse = ", ")),
+      call. = FALSE)
+
   vpop <- unique(stats::na.omit(v$population))
   if (length(vpop) > 1L)
     stop(sprintf(paste0(
-      "these shard files mix populations (%s); grant_id is positional, so\n",
-      "  grading across them would be meaningless."),
+      "these shard files mix populations (%s); an id means something only\n",
+      "  within one, so grading across them would be meaningless."),
       paste(vpop, collapse = ", ")), call. = FALSE)
   if (!length(vpop))
     stop(paste0(
@@ -544,7 +563,7 @@ pf_read_truth <- function(x, key = NULL, population = NULL, verbose = TRUE) {
   if (!is.null(population) && !identical(as.character(population), vpop))
     stop(sprintf(paste0(
       "population mismatch: the round is %s, the shard files say %s.\n",
-      "  grant_id is positional, so these ids are not comparable."),
+      "  These ids belong to a different grant file and are not comparable."),
       population, vpop), call. = FALSE)
 
   missing_ids <- unique(blank_ids)

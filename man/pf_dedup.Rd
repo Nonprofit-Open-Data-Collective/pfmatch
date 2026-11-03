@@ -26,8 +26,12 @@ fuzzily — a guard against a quadratic blow-up on a huge shared ZIP.}
 \item{verbose}{Print the collapse ratio.}
 }
 \value{
-\code{grants} with two columns added: \code{recipient_uid} (the identity a match
-is computed for) and \code{recipient_n} (how many grant rows share it).
+\code{grants} with four columns added: \code{recipient_id} (the identity's
+stable, content-derived id — the key the cascade and every label use; see
+\code{\link[=pf_identity_id]{pf_identity_id()}}), \code{recipient_key} (the canonical dedup key it hashes),
+\code{recipient_uid} (an integer position, kept for cheap within-run grouping
+and \strong{not} safe to key a label on) and \code{recipient_n} (how many grant rows
+share the identity).
 }
 \description{
 Deduplicate grant recipients
