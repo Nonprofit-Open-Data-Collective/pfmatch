@@ -77,8 +77,55 @@ test_that("the report names the release beside the signature", {
   skip_if_not(is.data.frame(tryCatch(npnormalize::np_signature_history(),
                                      error = function(e) NULL)))
   out <- pf_check_schema(fake_ref(), passes = lean(), verbose = FALSE)
+  d <- out$detail[out$check == "normalizer stamp"]
   # not a bare hash: the release that introduced it is named
-  expect_match(out$detail[out$check == "normalizer stamp"], "npnormalize")
+  expect_match(d, "npnormalize")
+  # ... and named as the release that INTRODUCED the value, not as the one
+  # installed. A release changing no rule reports its predecessor's signature,
+  # so the two are different questions and the label must not conflate them.
+  expect_match(d, "introduced by")
+  expect_match(d, sprintf("installed %s",
+                          as.character(utils::packageVersion("npnormalize"))),
+               fixed = TRUE)
+})
+
+test_that("a signature is labelled by what introduced it, plus what is installed", {
+  skip_if_not(is.data.frame(tryCatch(npnormalize::np_signature_history(),
+                                     error = function(e) NULL)))
+  sig <- npmatch::np_normalize_signature()
+
+  # with no `installed`, the label answers one question only
+  bare <- pfmatch:::.pf_sig_label(sig)
+  expect_match(bare, "introduced by npnormalize")
+  expect_false(grepl("installed", bare))
+
+  # with it, both -- which is what npnormalize's own documentation tells a
+  # consumer to record, since neither value determines the other
+  both <- pfmatch:::.pf_sig_label(sig, "9.9.9")
+  expect_match(both, "introduced by npnormalize")
+  expect_match(both, "installed 9.9.9", fixed = TRUE)
+
+  # an unknown hash is still reported, and still separates the two
+  expect_match(pfmatch:::.pf_sig_label("v1-0000000000000000"),
+               "^v1-0000000000000000$")
+  expect_match(pfmatch:::.pf_sig_label("v1-0000000000000000", "9.9.9"),
+               "unrecognized; installed 9.9.9", fixed = TRUE)
+
+  # and an absent one says so rather than printing NA
+  expect_equal(pfmatch:::.pf_sig_label(NA_character_), "(none recorded)")
+  expect_equal(pfmatch:::.pf_sig_label(""), "(none recorded)")
+})
+
+test_that("a bundle's own signature is not labelled with the installed version", {
+  # Which release wrote a bundle is not something this machine's library can
+  # answer, so the mismatch message names `installed` only on the live value.
+  out <- pf_check_schema(fake_ref(stamp = "v1-0000000000000000"),
+                         passes = lean(), verbose = FALSE)
+  d <- out$detail[out$check == "normalizer stamp"]
+  expect_equal(status_of(out, "normalizer stamp"), "FAIL")
+  expect_match(d, "^bundle v1-0000000000000000, installed ")
+  # exactly one "installed", on the live side
+  expect_equal(lengths(regmatches(d, gregexpr("installed", d)))[[1]], 2L)
 })
 
 # ---------------------------------------------------------------------------
