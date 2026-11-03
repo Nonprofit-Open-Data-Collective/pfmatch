@@ -8,6 +8,19 @@
 # declared floor does not actually provide fails here instead of failing for
 # whoever installs the package as written.
 #
+# `Remotes:` must name EVERY GitHub dependency, Suggests included. pak resolves
+# the whole dependency set before it installs anything, so one unresolvable
+# name fails the job in under 90 seconds with nothing checked: the first run of
+# this workflow died on `Can't find package called panel990, concordance990`,
+# both Suggested, both NODC repositories, neither listed. To reproduce that
+# step without waiting for CI:
+#
+#   pak::lockfile_create(c("deps::.", "any::rcmdcheck", "any::pkgdown"),
+#                        lockfile = tempfile(), dependencies = "all")
+#
+# It reaches the repositories and installs nothing, so it is cheap, and it is
+# the one part of this job a Windows machine can genuinely verify.
+#
 # That is the live risk in this package rather than a theoretical one. pfmatch
 # calls into npmatch and npnormalize constantly, the normalizer signature moved
 # eight times in the fortnight before this workflow was added, and pfmatch's
