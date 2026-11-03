@@ -31,6 +31,23 @@ pf_truth_schema <- function() {
     "confidence")  # high | medium | low
 }
 
+#' @rdname pf_truth_schema
+#' @section The levels, and why they are not the verdict levels:
+#' A truth row answers "what is the right answer for this grant", so its
+#' verdicts are states of the world: `ORG_FOUND`, three distinct reasons no
+#' organisation exists, and `UNRESOLVED`. [pf_verdict_levels()] answers a
+#' different question — what a reviewer concluded from a five-candidate packet
+#' — so its `MATCH` / `NONE` / `AMBIGUOUS` are deliberately not these. Mapping
+#' one onto the other is [pf_grade_verdicts()]'s job and nothing else's: a
+#' round that conflates them scores `NONE` as wrong wherever the organisation
+#' exists and is simply not among the candidates, which was 24 of 82 hard cases.
+#' @export
+pf_truth_levels <- function()
+  list(verdict    = c("ORG_FOUND", "NO_ORG_INDIVIDUAL", "NO_ORG_NOT_EXEMPT",
+                      "NO_ORG_UNFINDABLE", "UNRESOLVED"),
+       basis      = c("web", "reference", "inference"),
+       confidence = c("high", "medium", "low"))
+
 #' Fingerprint a grant population
 #'
 #' Labels are not portable between grant vintages: `grant_id` is positional, so
