@@ -1,6 +1,6 @@
 # Drawing the labelling round.
 #
-# dev/ADJUDICATION-PREREQS.md §6b is the design this implements. Two of its
+# dev/ADJUDICATION-PREREQS.md §6b is the design this implements. Three of its
 # findings are constraints on the code rather than on the prose:
 #
 # ONE CASE SET, ALL ARMS. §3's failure mode is two packets producing two
@@ -12,6 +12,15 @@
 # to is how the NTEE rung ended up at n=1 in one arm of the round on disk. This
 # function therefore refuses a `by` column it cannot see at draw time, and the
 # design compensates by staging the round instead.
+#
+# THE FRAME IS NOT ALWAYS A pf_match. Drawing §6b.3's frame against the runs on
+# disk (dev/ADJ-ROUND-STAGE1-20261102.log) found that the current production run
+# is serialized as `list(status, grants)` -- the identity-grain status frame and
+# the grant-grain source, with no `$result` and no `pairs` attribute. It holds
+# every case feature the design stratifies on, and it is the only run on disk
+# that can be fingerprinted. Requiring a `pf_match` here would have sent the
+# round to a frame whose labels cannot be re-attached, so a status frame is a
+# first-class input.
 
 #' Draw a stratified labelling round
 #'
@@ -21,88 +30,146 @@
 #' @section What it refuses, and why each is a stop:
 #' * **No `seed`.** A round that cannot be redrawn cannot be audited, and the
 #'   labels outlive the session that drew them.
-#' * **A `by` column that is not in the frame.** Reading an absent column gives
-#'   `NULL`, and a stratified draw over `NULL` is an unstratified draw that
-#'   reports strata.
+#' * **A frame that cannot be fingerprinted**, unless `require_population =
+#'   FALSE`. See below.
+#' * **A `by` column that is not in the frame**, or that is present but
+#'   entirely `NA`. Reading an absent column gives `NULL`, and either way every
+#'   case lands in one cell: an unstratified draw that reports strata.
 #' * **`n` larger than the population**, or an `oversample` floor larger than
 #'   the population it names. Silently returning fewer cases turns a power
 #'   calculation into a wish — §6b.2 sizes the round from the cell that has to
 #'   separate, so a short cell is the one thing that must not pass unnoticed.
 #'
-#' @section Why the fingerprint travels with the draw:
+#' @section Why the fingerprint is required rather than recorded:
 #' `grant_id` is positional. The same id denotes a different grant in another
 #' grant vintage, and names agree on **0%** of ids joined across the two known
-#' vintages ([pf_population_id()]). Labels are expensive and long-lived, so the
-#' population is recorded on the draw itself and [pf_grade_verdicts()] enforces
-#' it later.
+#' vintages ([pf_population_id()]). Labels are the expensive part and they
+#' outlive the frame, so an unfingerprintable frame is a stop: its labels could
+#' never be re-attached to a grant. `require_population = FALSE` is for a dry
+#' run whose labels will be thrown away — the archived GT extracts have no
+#' `OBJECTID` and are the case it exists for.
 #'
-#' @param x A `pf_match`.
+#' @param x A `pf_match`, or a [pf_status()]-shaped data frame, or a list with
+#'   a `status` component holding one (how the production runs on disk are
+#'   serialized). From a status frame the case features are read off its own
+#'   `match_pass`, `margin` and `n_close` columns; note that [pf_status()]
+#'   rounds `margin` to three decimals, so a `pf_match` gives the unrounded
+#'   value and a status frame the rounded one.
 #' @param n Target size. §6b.2: 250–300 per arm is what a "high-confidence
 #'   precision ≥ 95%, lower bound ≥ 90%" claim costs, so 1,000 over four arms.
 #' @param tiers Which tiers to draw from. Default `"MAYBE"`.
 #' @param by Case-feature columns to stratify on. Must exist in the frame.
+#'   Measured on the real frame (§6b.5), `tier · pass · purpose` is as fine as
+#'   a 400-case stage 1 can carry; §6b.3's full five-way cross leaves 54 of 141
+#'   cells with less than one case.
 #' @param oversample Named list of `column = floor`: logical columns whose
 #'   `TRUE` population is drawn up to at least `floor` cases. For the T8 flags
-#'   and T7 shapes, which do not arrive by chance.
+#'   and T7 shapes, which do not arrive by chance. Both flags compare the pick
+#'   to the runner-up, so they can only be supplied from a pair-complete run.
 #' @param extra Optional frame keyed by `grant_id` with further case features
-#'   (the flags, a dollar band) to join before drawing.
+#'   (the flags, a purpose band, a dollar band) to join before drawing.
 #' @param stage Label recorded on every row, for the staged design.
 #' @param seed Required. Recorded on the result.
+#' @param grants Grant frame to fingerprint, when `x` does not carry one.
+#' @param require_population Stop when the frame cannot be fingerprinted.
 #' @param verbose Print the allocation.
 #' @return A data frame of one row per drawn case: `grant_id`, `stratum`,
 #'   `stage`, plus the `by` columns and anything from `extra`. Carries
-#'   `attr(, "population")`, `attr(, "seed")`, `attr(, "allocation")` and
-#'   `attr(, "frame_size")`.
+#'   `attr(, "population")`, `attr(, "seed")`, `attr(, "allocation")`,
+#'   `attr(, "frame_size")` and `attr(, "oversample")` — the last a frame of
+#'   `column`, `floor` and `realized`, which differ whenever one floor's draw
+#'   already satisfied another's.
 #' @seealso [pf_grade_verdicts()] for scoring the round once it comes back.
 #' @examples
 #' \dontrun{
-#' r <- pf_round_sample(m, n = 400, by = c("tier", "pass"),
-#'                      oversample = list(flag_arm_shape = 100),
-#'                      extra = flags, stage = "stage1", seed = 20261102)
+#' r <- pf_round_sample(m, n = 400, by = c("tier", "pass", "purpose_band"),
+#'                      extra = features, stage = "stage1", seed = 20261102)
 #' attr(r, "allocation")
 #' }
 #' @export
 pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
                             by = c("tier", "pass"), oversample = NULL,
                             extra = NULL, stage = "stage1", seed = NULL,
+                            grants = NULL, require_population = TRUE,
                             verbose = TRUE) {
-  stopifnot(inherits(x, "pf_match"))
   if (is.null(seed))
     stop(paste0(
       "`seed` is required: a round that cannot be redrawn cannot be audited,\n",
       "  and these labels will outlive the session that drew them."),
       call. = FALSE)
 
-  st <- pf_status(x)
+  # --- where the frame comes from --------------------------------------------
+  res <- NULL
+  if (inherits(x, "pf_match")) {
+    st  <- pf_status(x)
+    gr  <- if (!is.null(grants)) grants else x$grants
+    res <- as.data.frame(x$result, stringsAsFactors = FALSE)
+  } else if (is.data.frame(x)) {
+    st <- as.data.frame(x, stringsAsFactors = FALSE)
+    gr <- grants
+  } else if (is.list(x) && !is.null(x$status) && is.data.frame(x$status)) {
+    st <- as.data.frame(x$status, stringsAsFactors = FALSE)
+    gr <- if (!is.null(grants)) grants else x$grants
+  } else {
+    stop(paste0(
+      "`x` must be a pf_match, a pf_status() frame, or a list with a `status`\n",
+      "  component holding one. Got: ", paste(class(x), collapse = "/")),
+      call. = FALSE)
+  }
+  if (is.null(st$grant_id) || is.null(st$status))
+    stop("the status frame needs `grant_id` and `status` columns.", call. = FALSE)
+
+  # --- the fingerprint, before anything is drawn -----------------------------
+  pop <- if (is.null(gr)) NA_character_
+         else tryCatch(pf_population_id(gr), error = function(e) NA_character_)
+  if (is.na(pop) && require_population)
+    stop(paste0(
+      "this frame cannot be fingerprinted, so its labels could never be\n",
+      "  re-attached to a grant: `grant_id` is positional and names agree on 0%\n",
+      "  of ids joined across the two known grant vintages. Pass `grants =` a\n",
+      "  frame carrying OBJECTID, or `require_population = FALSE` for a dry run\n",
+      "  whose labels will be thrown away."), call. = FALSE)
+
   st <- st[as.character(st$status) %in% tiers, , drop = FALSE]
   if (!nrow(st))
     stop(sprintf("no identities in %s, so there is nothing to draw.",
                  paste(tiers, collapse = "/")), call. = FALSE)
 
-  fr <- data.frame(grant_id = as.character(st$grant_id),
-                   tier = as.character(st$status), stringsAsFactors = FALSE)
-
-  # The pair-level case features: which pass produced the pick, and how close
-  # the runner-up was. Absent for an identity no pass produced a pair for --
-  # most of the NO tier -- which is why these are NA rather than dropped.
-  res <- as.data.frame(x$result, stringsAsFactors = FALSE)
-  if (!is.null(res$.id)) {
+  # The case features. pf_status() already carries all three -- which pass
+  # produced the pick, how close the runner-up was, how many were close -- and
+  # they agree with the pair-level values on all 5,000 rows of the 1k run,
+  # every tier (dev/ADJ-ROUND-STAGE1-20261102.log §2). Absent for an identity
+  # no pass produced a pair for, which is why these are NA rather than dropped.
+  col <- function(nm, cast)
+    if (is.null(st[[nm]])) cast(rep(NA, nrow(st)))
+    else suppressWarnings(cast(st[[nm]]))
+  fr <- data.frame(
+    grant_id = as.character(st$grant_id),
+    tier     = as.character(st$status),
+    pass     = col("match_pass", as.character),
+    margin   = col("margin", as.numeric),
+    n_close  = col("n_close", as.integer),
+    stringsAsFactors = FALSE)
+  if (!is.null(res) && !is.null(res$overall_margin) && !is.null(res$.id)) {
     i <- match(fr$grant_id, as.character(res$.id))
+    fr$margin <- suppressWarnings(as.numeric(res$overall_margin[i]))
+  }
+  # pf_status() reads the pass off the result frame, which is where a run that
+  # has one keeps it. Where it does not, the pairs still do, and taking NA
+  # instead would collapse every pass stratum into one -- a silent
+  # de-stratification, which is the failure this function exists to refuse.
+  if (!is.null(res) && all(is.na(fr$pass)) && !is.null(res$.id) &&
+      !is.null(res$overall_ein)) {
     pr <- attr(x$result, "pairs")
-    pick_pass <- rep(NA_character_, nrow(fr))
     if (!is.null(pr)) {
       pr <- as.data.frame(pr, stringsAsFactors = FALSE)
-      if (!is.null(pr$pass) && !is.null(res$overall_ein)) {
+      if (!is.null(pr$pass)) {
+        i <- match(fr$grant_id, as.character(res$.id))
         k <- match(paste(fr$grant_id, res$overall_ein[i]),
                    paste(as.character(pr$.id), as.character(pr$.ein)))
-        pick_pass <- as.character(pr$pass)[k]
+        fr$pass <- as.character(pr$pass)[k]
       }
     }
-    fr$pass <- pick_pass
-    fr$margin <- suppressWarnings(as.numeric(res$overall_margin[i]))
-    fr$n_close <- suppressWarnings(as.integer(res$n_close[i]))
-  } else {
-    fr$pass <- NA_character_; fr$margin <- NA_real_; fr$n_close <- NA_integer_
   }
 
   if (!is.null(extra)) {
@@ -122,6 +189,19 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
       paste(miss, collapse = ", "), paste(names(fr), collapse = ", ")),
       call. = FALSE)
 
+  # A column that is present but entirely NA stratifies no better than an
+  # absent one: every case lands in the same cell and the draw reports strata
+  # it did not have. The pass is the one that does this in practice, when a run
+  # records it in neither the result frame nor the pairs.
+  dead <- by[vapply(by, function(nm) all(is.na(fr[[nm]])), logical(1L))]
+  if (length(dead))
+    stop(sprintf(paste0(
+      "these stratifying columns are entirely NA in the frame: %s\n",
+      "  Every case would land in one cell, so this is an unstratified draw",
+      " that reports strata.\n  Drop them from `by`, or draw from a run that",
+      " records them."),
+      paste(dead, collapse = ", ")), call. = FALSE)
+
   if (n > nrow(fr))
     stop(sprintf(paste0(
       "asked for %s cases but the frame holds %s.\n",
@@ -138,7 +218,7 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
 
   # Oversample floors first: these populations are small and would be rounded
   # away by proportional allocation (PREREQS T8's flags are the instance).
-  os <- list()
+  floors <- list()
   if (!is.null(oversample)) {
     if (is.null(names(oversample)) || any(!nzchar(names(oversample))))
       stop("`oversample` must be a NAMED list of column = floor.", call. = FALSE)
@@ -158,7 +238,7 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
                                max(1L, length(pool)))[1, ])), call. = FALSE)
       pick <- sample(setdiff(pool, taken), min(floor_n, length(setdiff(pool, taken))))
       taken <- c(taken, pick)
-      os[[nm]] <- length(pick)
+      floors[[nm]] <- floor_n
     }
   }
 
@@ -189,7 +269,20 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
   out <- fr[match(taken, fr$grant_id), , drop = FALSE]
   out$stage <- stage
   rownames(out) <- NULL
-  pop <- tryCatch(pf_population_id(x$grants), error = function(e) NA_character_)
+
+  # Realized, not just asked for: one floor's draw can already satisfy another's
+  # where the two populations overlap, and reporting only the floor understates
+  # what the round actually holds.
+  os <- data.frame(column = character(0), floor = integer(0),
+                   realized = integer(0), stringsAsFactors = FALSE)
+  if (length(floors))
+    os <- data.frame(
+      column   = names(floors),
+      floor    = as.integer(unlist(floors)),
+      realized = vapply(names(floors),
+                        function(nm) sum(out[[nm]] %in% TRUE), integer(1L)),
+      row.names = NULL, stringsAsFactors = FALSE)
+
   attr(out, "population") <- pop
   attr(out, "seed")       <- seed
   attr(out, "frame_size") <- nrow(fr)
@@ -201,11 +294,12 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
     .pf_say(verbose, "drew %s of %s %s identities into %d strata (seed %s)",
             format(nrow(out), big.mark = ","), format(nrow(fr), big.mark = ","),
             paste(tiers, collapse = "/"), length(attr(out, "allocation")), seed)
-    if (length(os))
+    if (nrow(os))
       .pf_say(verbose, "  oversampled: %s",
-              paste(sprintf("%s %d", names(os), unlist(os)), collapse = " | "))
+              paste(sprintf("%s floor %d, realized %d", os$column, os$floor,
+                            os$realized), collapse = " | "))
     if (is.na(pop))
-      .pf_say(verbose, "  population UNFINGERPRINTED (no OBJECTID): these labels cannot be re-attached")
+      .pf_say(verbose, "  population UNFINGERPRINTED: a dry run, these labels cannot be re-attached")
     else
       .pf_say(verbose, "  population %s -- pf_grade_verdicts() will enforce it", pop)
     .pf_say(verbose, "  confidence and evidence class are NOT stratifiable: the reviewer")

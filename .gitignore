@@ -33,6 +33,13 @@ data-dev/*
 # trusting -- it carries no labels, only (grant_id, group_id), and feeds
 # pf_consistency(). SAMPLE is an adjudication queue at ~50-60% precision, not
 # an answer key. See dev/build-triangulation-sample.R for which is which.
+# ... and the adjudication round's drawn frame. 400 rows, and in principle
+# regenerable -- dev/draw-round-stage1.R plus seed 20261102 -- but only against
+# data-dev/TRI-V2-MATCH.rds, which is 651 MB and not tracked. The labels will
+# key to these grant_ids, so losing the draw would orphan them, which puts it
+# in the same class as the audit samples above.
+!data-dev/ADJ-ROUND-STAGE1.csv
+
 !data-dev/TRIANGULATION-GROUPS.csv
 !data-dev/TRIANGULATION-SAMPLE.csv
 !data-dev/TRIANGULATION-CANDIDATES.csv
