@@ -247,6 +247,24 @@ pf_batch_report <- function(status) {
     dyad_config = if (is.null(dyads)) NULL else dyad_config)
 }
 
+# Does a stamped setting still mean the same thing? identical() is the fast
+# path, but it is the wrong final answer here: a cached stamp has been through
+# saveRDS()/readRDS() while the one it is compared against is live, and
+# identical() distinguishes objects that differ only in internal
+# representation. The stamp exists to answer "would this call produce the same
+# output", which is a question about VALUES, so a difference identical() sees
+# and all.equal() does not is not a difference in settings.
+#
+# That is not hypothetical. R CMD check on ubuntu / R 4.6.2 refused a checkpoint
+# written seconds earlier in the same session, reporting `differs in: config`
+# over two np_config() lists whose printed heads were the same; on Windows /
+# R 4.5.3 the two serialize to identical bytes. all.equal() is value-based and
+# reports which component moved, so a real change in a threshold or a weight
+# still stops the resume and now says what it was.
+.pf_same_setting <- function(a, b) {
+  identical(a, b) || isTRUE(all.equal(a, b))
+}
+
 # Refuse a checkpoint that cannot be shown to belong to this run. Erring on the
 # side of stopping is deliberate: recomputing wastes time, reusing wrong output
 # produces a result that looks correct and is not.
@@ -258,9 +276,12 @@ pf_batch_report <- function(status) {
       "overwrite, or delete the directory."), basename(f)), call. = FALSE)
   if (identical(have, want)) return(invisible(TRUE))
   keys <- union(names(want), names(have))
-  bad  <- keys[!vapply(keys, function(k) identical(have[[k]], want[[k]]), logical(1))]
-  # name the offending setting AND its two values where they are small enough to
-  # print, because "the config changed" sends the reader back to guessing.
+  bad  <- keys[!vapply(keys, function(k) .pf_same_setting(have[[k]], want[[k]]),
+                       logical(1))]
+  if (!length(bad)) return(invisible(TRUE))
+  # name the offending setting AND what moved inside it, because "the config
+  # changed" sends the reader back to guessing. all.equal() reports the
+  # component; str() is the fallback for the keys it cannot summarise.
   detail <- vapply(bad, function(k) {
     one <- function(v) {
       if (is.null(v)) return("NULL")
@@ -270,7 +291,13 @@ pf_batch_report <- function(status) {
       s <- gsub("\\s+", " ", s)
       if (nchar(s) > 90) paste0(substr(s, 1, 87), "...") else s
     }
-    sprintf("    %-12s cached: %s\n    %-12s now:    %s", k, one(have[[k]]), "", one(want[[k]]))
+    ae <- tryCatch(all.equal(have[[k]], want[[k]]), error = function(e) NULL)
+    if (is.character(ae) && length(ae))
+      sprintf("    %-12s %s", k,
+              paste(utils::head(ae, 4L), collapse = sprintf("\n    %-12s ", "")))
+    else
+      sprintf("    %-12s cached: %s\n    %-12s now:    %s", k, one(have[[k]]),
+              "", one(want[[k]]))
   }, character(1))
   stop(sprintf(paste0(
     "%s was written under different settings and cannot be resumed.\n",

@@ -201,3 +201,42 @@ test_that("a missing key column is an error, not a silent no-op", {
                                      rebuild = FALSE, verbose = FALSE),
                "no column")
 })
+
+## Settings compared by value, not by representation -------------------------
+# A cached stamp has been through saveRDS()/readRDS(); the one it is checked
+# against is live. identical() separates objects that differ only in internal
+# representation, and R CMD check on ubuntu / R 4.6.2 refused a checkpoint
+# written seconds earlier in the same session over exactly that.
+
+test_that("a setting equal in value but not identical is accepted", {
+  expect_false(identical(1L, 1))
+  expect_true(pfmatch:::.pf_same_setting(1L, 1))
+  expect_true(pfmatch:::.pf_same_setting(npmatch::np_config(),
+                                         npmatch::np_config()))
+})
+
+test_that("a setting that really moved is still refused, and named", {
+  expect_false(pfmatch:::.pf_same_setting(
+    npmatch::np_config(),
+    npmatch::np_config(thresholds = c(yes = 0.80, maybe = 0.60))))
+  # names are part of the value, not representation
+  expect_false(pfmatch:::.pf_same_setting(c(yes = 0.78), c(0.78)))
+  expect_false(pfmatch:::.pf_same_setting("name", "score"))
+})
+
+test_that("a changed threshold stops a resume and says which component moved", {
+  dir <- file.path(tempdir(), "pf-config-moved")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  write_ckpt(dir, mk())
+  err <- tryCatch(
+    pf_run_batches(data.frame(x = 1), fake_ref(), dir = dir, batch_size = 10L,
+                   passes = pf_staged_passes("lean"),
+                   config = npmatch::np_config(thresholds = c(yes = 0.80,
+                                                              maybe = 0.60)),
+                   verbose = FALSE),
+    error = function(e) conditionMessage(e))
+  expect_match(err, "different settings")
+  expect_match(err, "differs in: config")
+  # all.equal names the component rather than printing two truncated str()s
+  expect_match(err, "thresholds")
+})
