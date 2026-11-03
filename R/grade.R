@@ -29,7 +29,8 @@
 #' inside it, which is what makes the smallness of the sample visible in the
 #' figure instead of in a footnote.
 #'
-#' @param k Successes. @param n Trials.
+#' @param k Successes.
+#' @param n Trials.
 #' @param conf Confidence level.
 #' @return A two-column matrix of `lo` and `hi`, one row per element of `k`.
 #'   `n == 0` gives `NA`, not an interval over nothing.

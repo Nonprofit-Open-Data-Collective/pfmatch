@@ -397,6 +397,14 @@ pf_collapse_reference <- function(ref, by = c("name_key", "state", "zip5"),
 #'   before matching. Required by [pf_recovery_passes()]; harmless otherwise, but
 #'   it costs a pass over both frames, so it is `FALSE` by default.
 #' @param verbose Print the per-stage cascade report.
+#' @param check_reference How hard to insist that the reference is usable, from
+#'   [pf_check_reference()] and [pf_check_schema()]. `"auto"` (the default)
+#'   stops on a bundle stamped by a different normalizer and warns on an
+#'   unstamped one, and in every mode but `"ignore"` refuses the call when a
+#'   pass blocks on a column the reference does not have. Note that `recover`
+#'   is `FALSE` here by default, so the stage-4 keys are not repaired in
+#'   flight: with recovery passes in `passes` their absence is fatal rather
+#'   than a warning.
 #' @return A `pf_match` object: the `np_tiered` result plus the in-scope /
 #'   out-of-scope split, the per-stage table, and timings.
 #' @export

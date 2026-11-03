@@ -37,6 +37,14 @@ NULL
 #'   run stamp matches this call**. A checkpoint written under different
 #'   settings is an error, not a cache hit; see *Checkpoints are stamped*.
 #' @param verbose Per-batch progress.
+#' @param check_reference How hard to insist that the reference is usable, from
+#'   [pf_check_reference()] and [pf_check_schema()]. `"auto"` (the default)
+#'   stops on a bundle stamped by a different normalizer, warns on an unstamped
+#'   one, and refuses the run outright when a pass blocks on a column the
+#'   reference does not have. `"stop"` and `"warn"` force the severity of the
+#'   stamp check; `"ignore"` skips both checks, which is what the per-batch
+#'   calls to [pf_match_grants()] pass, since this function has already run
+#'   them once for the whole run.
 #' @return A data frame: the concatenated per-identity [pf_status()] frames, with
 #'   a `batch` column. Timings are attached as `attr(, "timing")`.
 #'

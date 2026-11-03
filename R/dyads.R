@@ -365,26 +365,32 @@ pf_dyad_lookup <- function(dyads, a, b, what = c("class", "id")) {
 #' @param use Which dyad classes may be collapsed. The default is
 #'   `"substitutable"` only; `c("substitutable", "related")` is available for
 #'   measurement but see [pf_dyads] for why it should not be shipped.
-#' @param policy Which member to report when a dyad is collapsed.
-#'   \describe{
-#'     \item{`"query"`}{**Default.** Follow the grant record's own name: report
-#'       the arm when the recorded recipient name carries a support marker, the
-#'       operating entity when it does not. The funder wrote a name down, and it
-#'       is evidence on *every* case rather than on the 15 that were adjudicated.}
-#'     \item{`"operating"`}{Always the non-arm member. This was the previous
-#'       default and it **contradicts the source document on 134 of the 155**
-#'       collapsed grants whose recorded name carries a support marker (86%) —
-#'       reporting `CRAIG HOSPITAL` for a grant written as `CRAIG HOSPITAL
-#'       FOUNDATION`.}
-#'     \item{`"arm"`}{Always the support arm. The mirror error: it reports an arm
-#'       on 41% of grants whose recorded name has no marker at all.}
-#'     \item{`"top"`}{Whatever the cascade ranked first. Promotes least, because
-#'       it keeps the arm and inherits the `affiliate_suffix` soft veto — see
-#'       *Why the policies differ*.}
-#'   }
-#'   On 15 adjudicated arm pairs the flat operating rule scored 60% against the
-#'   cascade's 27%; that 60% has a 32-84% interval and is not settled.
-#'   `pf_arm_order()` implements the purpose-conditional alternative.
+#' @param policy Which member to report when a dyad is collapsed: one of
+#'   `"query"` (the default), `"operating"`, `"arm"` or `"top"`. See
+#'   *Which member a policy reports* below for what each one does and what it
+#'   costs.
+#'
+#' @section Which member a policy reports:
+#' \describe{
+#'   \item{`"query"`}{**Default.** Follow the grant record's own name: report
+#'     the arm when the recorded recipient name carries a support marker, the
+#'     operating entity when it does not. The funder wrote a name down, and it
+#'     is evidence on *every* case rather than on the 15 that were adjudicated.}
+#'   \item{`"operating"`}{Always the non-arm member. This was the previous
+#'     default and it **contradicts the source document on 134 of the 155**
+#'     collapsed grants whose recorded name carries a support marker (86%) --
+#'     reporting `CRAIG HOSPITAL` for a grant written as `CRAIG HOSPITAL
+#'     FOUNDATION`.}
+#'   \item{`"arm"`}{Always the support arm. The mirror error: it reports an arm
+#'     on 41% of grants whose recorded name has no marker at all.}
+#'   \item{`"top"`}{Whatever the cascade ranked first. Promotes least, because
+#'     it keeps the arm and inherits the `affiliate_suffix` soft veto -- see
+#'     *Why the policies differ*.}
+#' }
+#'
+#' On 15 adjudicated arm pairs the flat operating rule scored 60% against the
+#' cascade's 27%; that 60% has a 32-84% interval and is not settled.
+#' `pf_arm_order()` implements the purpose-conditional alternative.
 #'
 #' @section Why the policies differ:
 #' On the 50k run, `operating` promotes 629 MAYBE grants to YES, `top` 388 and

@@ -1,0 +1,108 @@
+# R CMD check on every PR to main and every push to main.
+#
+# What this covers that nothing else did: the package is installed from a
+# source tarball into a clean library, so DESCRIPTION is the only thing that
+# decides which versions of the siblings show up. setup-r-dependencies honors
+# the `Remotes:` field, so npmatch, npnormalize and matchdb come from GitHub at
+# the versions the `Imports:` floors ask for. A call into a sibling that the
+# declared floor does not actually provide fails here instead of failing for
+# whoever installs the package as written.
+#
+# That is the live risk in this package rather than a theoretical one. pfmatch
+# calls into npmatch and npnormalize constantly, the normalizer signature moved
+# eight times in the fortnight before this workflow was added, and pfmatch's
+# floors were raised by hand each time somebody noticed.
+#
+# It also catches what a local test run cannot, and it caught two things on the
+# day it was added. R CMD check runs the suite from <pkg>.Rcheck/tests against
+# the INSTALLED package rather than from the source tree under
+# devtools::load_all(), and `--as-cran` restricts the library to what
+# DESCRIPTION actually declares:
+#
+#   * one test read the package's DESCRIPTION through test_path("..", "..") --
+#     correct in a checkout, a directory with no DESCRIPTION in it under check
+#     -- and took its whole file down
+#   * four tests in test-fuzzy.R called np_compare(), which needs reclin2.
+#     reclin2 is declared by npmatch, not by pfmatch, so it was present on this
+#     machine and invisible under --as-cran. It is now in Suggests, which is
+#     both the fix and the honest statement: pfmatch's own tests need it.
+#
+# The local suite had been green on all five for weeks.
+#
+# To reproduce this job locally, set the two variables the action sets before
+# calling rcmdcheck, or the result will not match:
+#
+#   _R_CHECK_CRAN_INCOMING_ = "false"   # else an unclearable WARNING about
+#                                       # Remotes: and GitHub-only deps
+#   _R_CHECK_FORCE_SUGGESTS_ = "false"
+#
+# Adapted from npmatch's workflow of the same name, minus its quarto setup:
+# pfmatch's vignettes are .Rmd under `VignetteBuilder: knitr`, so pandoc alone
+# is enough and the quarto CLI is not needed.
+name: R-CMD-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: R-CMD-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  R-CMD-check:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          http-user-agent: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      # error-on is "warning", the strict setting, because the warnings were
+      # cleared first rather than gated around. The check reported three on
+      # arrival and all three are fixed in the same change as this file:
+      #
+      #   * a data codoc mismatch in pf_variants.Rd -- six columns in the frame
+      #     and not in the docs, which also turned up a stale column count and
+      #     a pass-rank range that omitted 0
+      #   * five undocumented arguments, one of which (pf_dyad_config's
+      #     `policy`) was written and then silently dropped by roxygen, whose
+      #     warning had been swallowed by a suppressMessages() around
+      #     document()
+      #   * withr used in the tests via :: without being declared
+      #
+      # Two NOTEs remain and neither gates at this level: data.table's familiar
+      # "no visible binding for global variable" over its NSE column names, and
+      # "unable to verify current time", which is a machine artifact.
+      #
+      # Verified before this file was committed: 0 ERRORs, 0 WARNINGs, 2 NOTEs,
+      # run with --as-cran and the two environment variables above.
+      #
+      # npmatch tightened its own gate to "warning" the same day, in its PR #37,
+      # after clearing six findings it had first chosen to gate around. Starting
+      # strict is cheaper than arriving red and teaching everyone to ignore it.
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual")'
+          error-on: '"warning"'
