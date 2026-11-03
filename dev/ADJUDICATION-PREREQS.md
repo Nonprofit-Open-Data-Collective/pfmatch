@@ -241,6 +241,118 @@ every verdict, the layer identity, the flag populations, and one case set shared
 by all layers. Running T1 without those is what makes T3–T8 unanswerable, and
 the function signatures are now the checklist.
 
+## 6b. The round, designed — 2026-11-02
+
+Measured from the two MAYBE-tier rounds already on disk
+(`data-dev/ADJ-CAL-SCORED.rds` + `ADJ-CAL-TRUTH.rds`, 200 cases, three arms;
+`ADJ-EXP-*`, 100 cases, two arms) rather than assumed. These are the
+**unenriched** packet, so the accuracy *levels* do not transfer (§4) — the
+**distributions and the directions** are what the design needs, and they do.
+
+### 6b.1 Three findings that change what the round can and cannot ask
+
+**(a) Confidence is monotone, in 5 of 5 arms, steeply — and T3's premise is
+not supported by any data in this repository.** Accuracy by self-reported
+confidence, scoreable cases, Wilson 95%:
+
+| round / arm | high | medium | low |
+|---|---|---|---|
+| CAL light | 100% (n=98) | 81% (n=74) | **25%** (n=28) |
+| CAL deep | 100% (n=136) | 87% (n=54) | 60% (n=10) |
+| CAL search | 98% (n=166) | 64% (n=28) | **17%** (n=6) |
+| EXP light | 92% (n=13) | 33% (n=12) | 14% (n=7) |
+| EXP deep | 64% (n=25) | 25% (n=4) | 0% (n=3) |
+
+In CAL light the three intervals are **disjoint** ([96,100], [71,88],
+[13,43]). T3 above says "do not assume it" and cites
+`dev/adjudicate-15-no-arms.R:176` for the MAYBE search arm's confidence having
+*risen as accuracy fell*. That line is **prose in a NO-tier script**, not a
+measurement in it, and the MAYBE search arm on disk is the steepest monotone
+one of the five. Nothing here argues the sentence was never true of something;
+it argues that it is unsupported for the MAYBE tier, and that **this note, the
+roxygen for `pf_grade_by()` and `pf_verdict_levels()` all relayed it as
+established fact.** Corrected in all three.
+
+*Consequence:* the policy worth testing is **not** blanket auto-acceptance
+(settled, 72%, §7) but **acceptance gated on high confidence**, which the prior
+rounds put at 98–100% over 49–83% of cases. That is the round's primary
+question, and it was being treated as an open design space rather than a
+hypothesis with four supporting arms.
+
+**(b) T4 cannot be answered as `QUOTE > NTEE > INFER`. The NTEE rung is
+empty by construction.** Evidence class assigned, per arm: CAL light
+QUOTE 65 / NTEE **16** / INFER 87; CAL deep 102 / **2** / 95; CAL search
+98 / **1** / 95. Scaled to a 1,000-case round the NTEE cell holds ~5–80 cases
+depending on arm, and at n=10 a Wilson interval is ~60 points wide. Reaching
+300 NTEE verdicts in the search arm would take ~30,000 cases.
+
+What *is* answerable is **QUOTE vs INFER**, and it is already arm-dependent:
+95% vs 66% in CAL light (**disjoint**, so discrimination is real there), 96% vs
+93% in CAL deep (not separable), 95% vs 85% in CAL search (marginal). So the
+evidence class discriminates *on the weak arm* and not on the strong one, which
+is the opposite of how an acceptance gate would be used.
+
+*Consequence:* either drop NTEE from the schema, or **force** it — ask the
+reviewer for the best class *and* whether NTEE alone would have sufficed,
+turning an unbalanced free cut into a designed comparison. Do not plan a
+three-way ordering.
+
+**(c) The reviewer-assigned cells cannot be stratified in advance.** §3 says
+eight tests are "free cuts of one labelling round". True for the cuts keyed on
+*case* features (tier, arm pair, purpose, flags, shapes); **false for
+`confidence` and `evidence_class`**, which the reviewer assigns during review.
+No sampling design controls them, which is why (a) and (b) are distribution
+problems rather than sample-size problems.
+
+### 6b.2 What size buys what, computed with `pf_wilson()`
+
+| | n=25 | n=50 | n=100 | n=150 | n=300 | n=500 |
+|---|---|---|---|---|---|---|
+| CI width at p=.72 | 33pt | 24pt | 17pt | 14pt | 10pt | 8pt |
+| CI width at p=.95 | 19pt | 12pt | 9pt | 7pt | 5pt | 4pt |
+
+Separating two cells (disjoint intervals, against a 0.80 reference) needs
+**n ≥ 75** for a 25-point gap, **100** for 20, **150** for 15, **300** for 10.
+
+So: a high-confidence precision claim of "≥ 95%, lower bound ≥ 90%" needs
+**~150 high-confidence verdicts per arm**. At the observed 49–83% high share,
+that is **250–300 cases per arm**.
+
+### 6b.3 The design
+
+**One round, one case set, all arms — because §3's incomparable-denominator
+failure is the one this must not reproduce.** `pf_grade_layers()` now refuses a
+comparison whose arms cover different cases, so the design is enforced in code.
+
+* **Frame:** in-scope MAYBE identities from one match run, population
+  fingerprinted with [pf_population_id()]. **Use the 845-identity NO tier, not
+  725** (§8) if the NO tier is included.
+* **Size:** 1,000 — 250–300 per arm over 4 arms, which §6b.2 says is what the
+  primary question costs. Not a round number chosen first.
+* **Stage it.** Stage 1 of ~400 reads the realized confidence and class
+  distribution; stage 2 of ~600 tops up thin cells. Without this, (a) and (b)
+  are discovered after the budget is spent.
+* **Strata, all on case features so they are controllable:**
+  tier · arm pair (`pass`) · restricted-gift purpose ([pf_purpose()]) ·
+  margin band (`overall_margin`, `n_close`) · dollar band.
+* **Oversample deliberately, because these do not arrive by chance:**
+  the two T8 flags (NTEE support code on the pick with a non-support runner-up;
+  the `X FOUNDATION` / `X` shape — [pf_is_arm()] and [pf_arm_core()] detect the
+  second on pick vs runner-up) to **≥100 each**, and the T7
+  entity-vs-fundraising shapes, which are the same population as the second
+  flag.
+* **Record per verdict:** [pf_verdict_cols()], plus arm, stratum, reviewer
+  identity (T7 needs two reviewers and a model against itself), and the stage.
+* **T2:** re-review a stratified subsample independently, reporting accuracy
+  per evidence class. ~5 of 12 checks survived last time (§4), so this is a
+  gate, not a formality.
+
+### 6b.4 Status
+
+Built and merged: the grading harness (§6a), which makes every cut above a
+function call. Designed here. **Not run** — the round is the data-collection
+step, and `pf_round_sample()` draws the frame but cannot label it.
+
 ## 7. What needs no further test
 
 * **Auto-accepting MAYBE.** Settled at 72% precision (95% CI 65–78%) on 200
