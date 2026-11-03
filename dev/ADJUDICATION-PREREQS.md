@@ -142,7 +142,10 @@ have improved anything.
 
 **T8. Flag precision at usable n.** The two structural flags are **60% on n=15**
 and **71% on n=7** (§7 step 4). Neither can carry a shipping decision, and both
-are cheap to re-measure inside T1.
+are cheap to re-measure inside T1 — *once there is a run to measure them on*.
+Both compare the pick to the runner-up, so both need the `pairs` the production
+run does not serialize; §6b.5(c) has the populations, the floor they miss, and
+the one-line unblocker.
 
 ## 6. Tier 2 — independent of labelling, runnable now
 
@@ -350,8 +353,52 @@ comparison whose arms cover different cases, so the design is enforced in code.
 ### 6b.4 Status
 
 Built and merged: the grading harness (§6a), which makes every cut above a
-function call. Designed here. **Not run** — the round is the data-collection
-step, and `pf_round_sample()` draws the frame but cannot label it.
+function call. Designed here. **Stage 1 is drawn** — §6b.5 — and **not
+labelled**, which is the step no code performs.
+
+### 6b.5 Drawn, 2026-11-02 — and what the real frame changed
+
+`dev/ADJ-ROUND-STAGE1-20261102.log` is the full record; this is what it changes
+about the design above. Stage 1 is
+`data-dev/ADJ-ROUND-STAGE1.csv`: **400 cases** of the 24,107-identity MAYBE
+tier of `data-dev/TRI-V2-MATCH.rds`, population **`cb3c78ff0f1a9546`**, seed
+`20261102`, redrawable with `dev/draw-round-stage1.R`. $66.7M of grant dollars,
+median identity $6,010.
+
+**(a) §6b.3's strata over-partition the frame, at every scale.** The full
+`tier · pass · purpose · margin · dollar` cross gives 141 cells on a
+1,006-case frame and **206 on the production frame**, of which 120 would
+receive less than one case at n=400. A larger frame makes it worse, not better,
+because more passes exist to cross against. Stage 1 stratifies on
+**`tier · pass · purpose`** — 20 cells, 16 non-empty — and the margin and
+dollar bands are **recorded on every case** rather than stratified on, which is
+what reading a realized distribution and topping up stage 2 actually needs.
+
+**(b) The frame is not a `pf_match`, and the one that is cannot be
+fingerprinted.** The production run is serialized as `list(status, grants)`
+with no `pairs`; the only two pair-complete runs on disk carry the archived GT
+schema, have no `OBJECTID`, and so draw labels that §8's 0% id agreement says
+could never be re-attached. `pf_round_sample()` therefore takes a status frame
+as a first-class input and **requires** the fingerprint, `require_population =
+FALSE` being reserved for a dry run whose labels are thrown away.
+
+**(c) T8's floor of 100 is right and currently unreachable.** Measured on the
+1,006-case dry-run frame, `flag_arm_shape` holds **156** cases and
+`flag_ntee_support` **60** — against §6b.3's floor of 100, which
+`pf_round_sample()` refuses, correctly: at n=60, p=.60 the Wilson interval is
+0.47–0.71. Both flags compare the **pick to the runner-up** and nothing else in
+the design does, so both need a pair-complete run. **The unblocker is one
+serialization** — re-save the production cascade keeping `$result` and its
+`pairs` — not a change to the design. Until then T8 is stage 2's.
+
+**(d) Stage 1 is not sized to compare passes, and two passes cannot be
+compared at any size.** Proportional allocation gives `B1-token-state` 219 of
+the 400 and the next pass 50, against §6b.2's 250–300 per arm. That is right
+for the tier estimate and for reading the confidence and class distribution —
+§6b.1c's purpose for staging — and the per-arm comparison belongs to stage 2,
+with floors set from what stage 1 shows. Separately, the MAYBE tier holds
+**11** `A4-dba-name` identities and **3** `D2-prefix` identities in total: no
+round size buys a per-pass claim for either.
 
 ## 7. What needs no further test
 
@@ -404,6 +451,10 @@ can start today, and the rest are free if T1 is designed for them.**
 | `GRANT-DOLLARS-FINDINGS.md` absent, cited twice | `ADJUDICATION-PLAN.md:127`, `PACKAGE-PLAN.md:375` |
 | YES precision unmeasured | `dev/BASELINE-2026-10C/MANIFEST.md` |
 | no tests reference the three sheet functions | `tests/`, by inspection |
+| 24,107 MAYBE identities; `cb3c78ff0f1a9546` | `dev/ADJ-ROUND-STAGE1-20261102.log` §1, §6 |
+| 206 cells, 120 starved at n=400 | `dev/ADJ-ROUND-STAGE1-20261102.log` §3 |
+| flags at 156 and 60 on the dry-run frame | `dev/ADJ-ROUND-STAGE1-20261102.log` §4 |
+| `A4-dba-name` 11, `D2-prefix` 3 | `dev/ADJ-ROUND-STAGE1-20261102.log` §6 |
 
 See also `dev/PLAUSIBLE-WRONG-NUMBERS.md` for the defect class §3 refers to,
 and `dev/METRIC-SHAPES.md` for the practice that a metric which cannot come out

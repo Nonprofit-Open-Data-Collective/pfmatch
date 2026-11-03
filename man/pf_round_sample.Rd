@@ -13,37 +13,54 @@ pf_round_sample(
   extra = NULL,
   stage = "stage1",
   seed = NULL,
+  grants = NULL,
+  require_population = TRUE,
   verbose = TRUE
 )
 }
 \arguments{
-\item{x}{A \code{pf_match}.}
+\item{x}{A \code{pf_match}, or a \code{\link[=pf_status]{pf_status()}}-shaped data frame, or a list with
+a \code{status} component holding one (how the production runs on disk are
+serialized). From a status frame the case features are read off its own
+\code{match_pass}, \code{margin} and \code{n_close} columns; note that \code{\link[=pf_status]{pf_status()}}
+rounds \code{margin} to three decimals, so a \code{pf_match} gives the unrounded
+value and a status frame the rounded one.}
 
 \item{n}{Target size. §6b.2: 250–300 per arm is what a "high-confidence
 precision ≥ 95\%, lower bound ≥ 90\%" claim costs, so 1,000 over four arms.}
 
 \item{tiers}{Which tiers to draw from. Default \code{"MAYBE"}.}
 
-\item{by}{Case-feature columns to stratify on. Must exist in the frame.}
+\item{by}{Case-feature columns to stratify on. Must exist in the frame.
+Measured on the real frame (§6b.5), \verb{tier · pass · purpose} is as fine as
+a 400-case stage 1 can carry; §6b.3's full five-way cross leaves 54 of 141
+cells with less than one case.}
 
 \item{oversample}{Named list of \code{column = floor}: logical columns whose
 \code{TRUE} population is drawn up to at least \code{floor} cases. For the T8 flags
-and T7 shapes, which do not arrive by chance.}
+and T7 shapes, which do not arrive by chance. Both flags compare the pick
+to the runner-up, so they can only be supplied from a pair-complete run.}
 
 \item{extra}{Optional frame keyed by \code{grant_id} with further case features
-(the flags, a dollar band) to join before drawing.}
+(the flags, a purpose band, a dollar band) to join before drawing.}
 
 \item{stage}{Label recorded on every row, for the staged design.}
 
 \item{seed}{Required. Recorded on the result.}
+
+\item{grants}{Grant frame to fingerprint, when \code{x} does not carry one.}
+
+\item{require_population}{Stop when the frame cannot be fingerprinted.}
 
 \item{verbose}{Print the allocation.}
 }
 \value{
 A data frame of one row per drawn case: \code{grant_id}, \code{stratum},
 \code{stage}, plus the \code{by} columns and anything from \code{extra}. Carries
-\code{attr(, "population")}, \code{attr(, "seed")}, \code{attr(, "allocation")} and
-\code{attr(, "frame_size")}.
+\code{attr(, "population")}, \code{attr(, "seed")}, \code{attr(, "allocation")},
+\code{attr(, "frame_size")} and \code{attr(, "oversample")} — the last a frame of
+\code{column}, \code{floor} and \code{realized}, which differ whenever one floor's draw
+already satisfied another's.
 }
 \description{
 Builds the case frame for \code{ADJUDICATION-PREREQS.md} T1 and draws a
@@ -54,9 +71,10 @@ reproducible stratified sample from it.
 \itemize{
 \item \strong{No \code{seed}.} A round that cannot be redrawn cannot be audited, and the
 labels outlive the session that drew them.
-\item \strong{A \code{by} column that is not in the frame.} Reading an absent column gives
-\code{NULL}, and a stratified draw over \code{NULL} is an unstratified draw that
-reports strata.
+\item \strong{A frame that cannot be fingerprinted}, unless \code{require_population = FALSE}. See below.
+\item \strong{A \code{by} column that is not in the frame}, or that is present but
+entirely \code{NA}. Reading an absent column gives \code{NULL}, and either way every
+case lands in one cell: an unstratified draw that reports strata.
 \item \strong{\code{n} larger than the population}, or an \code{oversample} floor larger than
 the population it names. Silently returning fewer cases turns a power
 calculation into a wish — §6b.2 sizes the round from the cell that has to
@@ -64,20 +82,21 @@ separate, so a short cell is the one thing that must not pass unnoticed.
 }
 }
 
-\section{Why the fingerprint travels with the draw}{
+\section{Why the fingerprint is required rather than recorded}{
 
 \code{grant_id} is positional. The same id denotes a different grant in another
 grant vintage, and names agree on \strong{0\%} of ids joined across the two known
-vintages (\code{\link[=pf_population_id]{pf_population_id()}}). Labels are expensive and long-lived, so the
-population is recorded on the draw itself and \code{\link[=pf_grade_verdicts]{pf_grade_verdicts()}} enforces
-it later.
+vintages (\code{\link[=pf_population_id]{pf_population_id()}}). Labels are the expensive part and they
+outlive the frame, so an unfingerprintable frame is a stop: its labels could
+never be re-attached to a grant. \code{require_population = FALSE} is for a dry
+run whose labels will be thrown away — the archived GT extracts have no
+\code{OBJECTID} and are the case it exists for.
 }
 
 \examples{
 \dontrun{
-r <- pf_round_sample(m, n = 400, by = c("tier", "pass"),
-                     oversample = list(flag_arm_shape = 100),
-                     extra = flags, stage = "stage1", seed = 20261102)
+r <- pf_round_sample(m, n = 400, by = c("tier", "pass", "purpose_band"),
+                     extra = features, stage = "stage1", seed = 20261102)
 attr(r, "allocation")
 }
 }

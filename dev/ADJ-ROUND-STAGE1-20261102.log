@@ -1,0 +1,214 @@
+# Drawing stage 1 of the adjudication round
+
+    date          2026-11-02
+    script        dev/draw-round-stage1.R
+    frame         data-dev/TRI-V2-MATCH.rds (2026-10-25)
+    population    cb3c78ff0f1a9546
+    drawn         data-dev/ADJ-ROUND-STAGE1.{rds,csv}  (400 rows, tracked)
+    seed          20261102
+    R             4.5.1
+    npnormalize   0.1.9 installed; the draw reads no normalizer
+    pfmatch       e7b4063 plus this branch
+
+`dev/ADJUDICATION-PREREQS.md` §6b designed this round from the two rounds
+already on disk. This is what happened when the design met the runs it would
+have to be drawn from. Three things changed, one of them a refusal in
+`pf_round_sample()` firing on real data exactly as intended, and one of them a
+regression this work put in and the tests took out again.
+
+## 1. What is on disk, and what each run can support
+
+Every run was opened and its shape read rather than inferred from its name.
+
+| run | built | shape | identities / grants | MAYBE | pairs | OBJECTID |
+|---|---|---|---|---|---|---|
+| `TRI-V2-MATCH.rds` | 10-25 | `list(status, grants)` | 91,690 / 596,539 | **24,107** idents | **none** | **yes** |
+| `PF-MATCH-RESULT-50k.rds` | 08-19 | `pf_match` | — / 50,000 | 10,898 | 3,372,855 | no |
+| `PF-MATCH-RESULT-1k.rds` | 08-20 | `pf_match` | — / 5,000 | 1,006 | 312,468 | no |
+| `TRI-PILOT-MATCH.rds` | 10-23 | `list(status, grants)` | — | — | none | — |
+| `FILER-SAMPLE-MATCH.rds` | 10-21 | `list(status, grants)` | — | — | none | — |
+
+Two facts fall out of that table and they pull in opposite directions.
+
+**The two pair-complete runs are the wrong grant vintage.** Both carry the
+archived GT extract schema — `SIGOCPYAMOUN`, `FILEREIN`, `TAXPEREND` — and no
+`OBJECTID`, so neither can be fingerprinted. §8 of the prereqs records that
+names agree on **0%** of `grant_id`s joined across the two known vintages, so
+labels drawn against them could never be re-attached to a production grant.
+They are dry-run frames, nothing more.
+
+**The production run is the right vintage and has no pairs.** `TRI-V2` is
+serialized as the identity-grain status frame beside the grant-grain source,
+with no `$result` and no `pairs` attribute. It fingerprints to
+`cb3c78ff0f1a9546`.
+
+The two elements are keyed differently — `R<k>` in the status frame against
+`recipient_uid == k` in the grants — and share no id, which at first reading
+looks like the cross-vintage disagreement again. It is not: it is one
+population at two grains. Verified on 500 sampled identities, the identity's
+`recip_name` appears among that `uid`'s grant names **500/500** and the tier
+agrees **500/500**. `dev/draw-round-stage1.R` asserts both before it draws.
+
+## 2. `pf_status()` already carries the case features
+
+The draw needs the pass that produced the pick, the margin to the runner-up and
+`n_close`. `pf_round_sample()` dug all three out of the pairs. `pf_status()`
+returns all three as columns. On all **5,000** rows of the 1k run, every tier:
+
+| column | agreement |
+|---|---|
+| `match_pass` | 0 disagreements, 0 NA mismatches |
+| `n_close` | 0 disagreements, 0 NA mismatches |
+| `margin` | max absolute difference **5e-04** |
+
+The margin gap is `pf_status()` rounding to three decimals. Immaterial to a
+band, not to a threshold, so a `pf_match` keeps the result frame's unrounded
+value and a status frame gets the rounded one. Documented on the parameter.
+
+Reading the features off the status frame instead of the pairs is what lets the
+production run be drawn from at all. It also **put a regression in**: the
+fixture's result frame has no `pass` column, the pass lives only in its pairs,
+and the simplified code took `NA` for all 60 cases — one stratum reported as
+several. `test-round.R` failed on it. The pairs fallback is back, and the
+missing refusal it exposed is now a stop: **a `by` column that is present but
+entirely `NA`** is an unstratified draw that reports strata, same as an absent
+one.
+
+## 3. §6b.3's strata are too fine, at both scales
+
+§6b.3 asks for `tier · pass · purpose · margin band · dollar band`. Measured:
+
+**The 1,006-case dry-run frame**, cells and how many are starved at n=400:
+
+| design | cells | n<5 | n<20 | share<1 | share<2 |
+|---|---|---|---|---|---|
+| `tier · pass` | 7 | 0 | 0 | 0 | 0 |
+| `tier · pass · purpose` | 14 | 0 | 5 | 0 | 0 |
+| `tier · pass · margin` | 21 | 2 | 10 | 0 | 2 |
+| `tier · pass · purpose · margin` | 42 | 11 | 25 | 5 | 15 |
+| **§6b.3 as written** | **141** | 74 | 130 | **54** | 83 |
+
+**The 24,107-identity production frame**, same question at n=400:
+
+| design | cells | n<20 | share<1 | share<2 |
+|---|---|---|---|---|
+| `tier · pass` | 10 | 2 | 2 | 2 |
+| `tier · pass · purpose` | 20 | 4 | 4 | 6 |
+| `tier · pass · purpose · margin` | 56 | 11 | 16 | 23 |
+| **§6b.3 plus dollar** | **206** | 54 | 120 | **159** |
+
+A 400-case draw over 206 cells in which 120 receive less than one case is not
+a stratified sample. Enlarging the frame does not fix it — the production frame
+is 24x the dry-run frame and the full cross gets *worse*, because more passes
+exist to cross against.
+
+**Stage 1 stratifies on `tier · pass · purpose`.** The margin and dollar bands
+are **recorded on every drawn case** instead, which is what they are actually
+needed for: reading the realized distribution, and topping up thin cells in
+stage 2 once there is something to top up from.
+
+## 4. The two T8 flags, measured
+
+Neither flag exists in code — `ADJUDICATION-PLAN.md` §7 step 4 is unbuilt — so
+both were computed here on the 1,006-case dry-run frame. `flag_arm_shape` from
+`pf_is_arm()` and `pf_arm_core()` on pick against runner-up; `flag_ntee_support`
+from `ntee_common_code` in `data-dev/BMF-AUGMENTED-unified-fixed.csv`, support
+being `11` / `12` / `19`, joined on all 1,006 picks and all 969 runners-up with
+no misses.
+
+| flag | population | of frame | §6b.3 floor |
+|---|---|---|---|
+| `flag_arm_shape` | **156** | 15.5% | 100 — **met** |
+| `flag_ntee_support` | **60** | 6.0% | 100 — **short** |
+
+They overlap on 31 cases. The flagged arm-shape pairs are the shape the plan
+describes: `CHRIST THE KING SCHOOL FOUNDATION` against `CHRIST THE KING
+SCHOOL`, `CENTRA HEALTH FOUNDATION` against `CENTRA HEALTH`. Of the 60
+NTEE-support picks, 50 are code `11`, 9 are `12`, 1 is `19`.
+
+Asked for a floor of 100 on a population of 60, `pf_round_sample()` stops and
+says why:
+
+    `flag_ntee_support` has 60 cases in the frame but a floor of 100 was asked
+    for. At 60 the Wilson interval is about 24 points wide, which is why the
+    floor exists; a short cell cannot carry the finding.
+
+That refusal was written against a synthetic fixture last night. This is it
+firing on the real frame, and it is correct to fire: at n=60 and p=.60 the
+interval is 0.47–0.71, against 0.50–0.69 at 100 and 0.52–0.68 at 156. T8 exists
+because 60% on n=15 cannot carry a decision; 60% on n=60 cannot either.
+
+Scaled to the production tier the rate would put `flag_ntee_support` near 1,400
+cases, comfortably past the floor — but that is an extrapolation of a GT-vintage
+rate, not a measurement, and it cannot be checked, which is §5.
+
+## 5. The blocker, stated precisely
+
+**Both flags compare the pick to the runner-up. Nothing else in the design
+does.** The strata, the bands, the fingerprint and the dollar totals all come
+off the status and grants frames. So:
+
+* the production run supports the whole design **except** the two flags;
+* the pair-complete runs support the flags and **cannot be fingerprinted**;
+* no run on disk supports both.
+
+The unblocker is one serialization, not a re-design: re-run or re-save the
+production cascade keeping `$result` with its `pairs` attribute. Then
+`pf_round_sample()` takes it as a `pf_match`, the flags are computable, and the
+floors are reachable. Until then T8 waits for stage 2 and stage 1 draws without
+flag oversampling — which costs stage 1 nothing, because §6b.2 sizes stage 1
+off the per-arm high-confidence precision claim and T8 is a separate cut.
+
+## 6. The draw
+
+    drew 400 of 24,107 MAYBE identities into 16 strata (seed 20261102)
+    population cb3c78ff0f1a9546 -- pf_grade_verdicts() will enforce it
+
+| | |
+|---|---|
+| cases | 400 |
+| frame | 24,107 MAYBE identities |
+| strata | 16 (8 passes × 2 purpose bands) |
+| grant dollars | $66,688,015 |
+| median identity | $6,010 |
+| purpose / bare | 227 / 173 |
+| margin tie / narrow / clear | 148 / 123 / 129 |
+| dollar q1–q4 | 102 / 106 / 99 / 93 |
+
+**Two of the ten passes are absent, and no round size fixes that.** The MAYBE
+tier holds **11** `A4-dba-name` identities and **3** `D2-prefix` identities in
+total. Their proportional share of 400 is 0.18 and 0.05. They are absent from
+stage 1 because they barely exist, not because 400 is too small, and a per-pass
+accuracy claim for either is not available at any round size.
+
+The eight that are present, with their share of the tier:
+
+| pass | identities | % of tier | drawn |
+|---|---|---|---|
+| `B1-token-state` | 13,198 | 54.8% | 219 |
+| `C1-name-any` | 3,035 | 12.6% | 50 |
+| `A1-name-zip5` | 2,947 | 12.2% | 49 |
+| `B2-token-concat` | 1,521 | 6.3% | 26 |
+| `C2-dba-any` | 1,384 | 5.7% | 23 |
+| `A2-name-state` | 1,373 | 5.7% | 23 |
+| `D1-acronym` | 440 | 1.8% | 7 |
+| `A3-name-dba` | 195 | 0.8% | 3 |
+
+Proportional allocation puts 219 of 400 in one pass, which is right for
+estimating the tier and wrong for comparing passes: §6b.2 wants 250–300 per arm
+and this gives one arm 219 and the next 50. **Stage 1 is not sized to compare
+passes.** It reads the realized confidence and evidence-class distribution,
+which is what §6b.1c says it is for, and the per-arm comparison is stage 2's
+job with floors set from what stage 1 shows.
+
+## 7. What is now true
+
+* The round has a frame: 400 cases, fingerprinted, reproducible from the seed
+  and the script, tracked in the repository because the labels will key to it.
+* It is **not labelled**. No code produces the labels, which is the whole point
+  of T1.
+* The flags are measured on the dry-run frame and unavailable on the production
+  one, pending one re-save.
+* `pf_round_sample()` gained a status-frame input, a required fingerprint, an
+  all-NA refusal and realized oversample counts, all four because drawing a
+  real frame demanded them.
