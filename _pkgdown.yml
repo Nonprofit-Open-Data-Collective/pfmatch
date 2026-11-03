@@ -192,6 +192,19 @@ reference:
   - pf_grade_levels
   - pf_wilson
 
+- title: Dealing a labelling round out to several labelers
+  desc: >
+    Split a draw into shards with a blinded overlap, so two labelers' agreement
+    is measurable without either knowing which rows are being compared — and
+    agreement is not accuracy.
+  contents:
+  - pf_truth_shards
+  - pf_write_shards
+  - pf_read_truth
+  - pf_shard_schema
+  - pf_labeler_agreement
+  - pf_consolidate_truth
+
 - title: Affiliates, dyads and sibling structure
   desc: >
     Parent, chapter and auxiliary relationships — the dominant source of
