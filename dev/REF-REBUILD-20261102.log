@@ -1,0 +1,18 @@
+==============================================================================
+rebuild REF-augmented.rds under v1-d49b18cc81ab79fb   2026-11-01 23:12:25
+==============================================================================
+npnormalize 0.1.6, npmatch 0.1.1.9000
+source : BMF-AUGMENTED-unified-fixed.csv (3809 MB)
+keeping the outgoing bundle (stamp unstamped) as REF-augmented-unstamped.rds
+---------------------------------------------------------------------- 
+STAGE 2  reference (building) 
+  3,880,431 records | elapsed 1351.8 s 
+==============================================================================
+VERIFY
+==============================================================================
+built in 23.2 min, 2.90 GB
+rows   : 3,880,431
+stamp  : NONE
+installed: v1-d49b18cc81ab79fb
+Error: the rebuilt bundle does not carry the installed signature; refusing to let the triangulation run behind this
+Execution halted

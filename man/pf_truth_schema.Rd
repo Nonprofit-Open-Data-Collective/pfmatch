@@ -2,9 +2,12 @@
 % Please edit documentation in R/truth.R
 \name{pf_truth_schema}
 \alias{pf_truth_schema}
+\alias{pf_truth_levels}
 \title{Ground-truth table columns}
 \usage{
 pf_truth_schema()
+
+pf_truth_levels()
 }
 \value{
 A character vector of required column names.
@@ -18,3 +21,15 @@ run's pick. That distinction is the whole reason this table exists: a label
 saying "the pipeline's choice was right" cannot score a different
 configuration, because a different configuration chooses differently.
 }
+\section{The levels, and why they are not the verdict levels}{
+
+A truth row answers "what is the right answer for this grant", so its
+verdicts are states of the world: \code{ORG_FOUND}, three distinct reasons no
+organisation exists, and \code{UNRESOLVED}. \code{\link[=pf_verdict_levels]{pf_verdict_levels()}} answers a
+different question — what a reviewer concluded from a five-candidate packet
+— so its \code{MATCH} / \code{NONE} / \code{AMBIGUOUS} are deliberately not these. Mapping
+one onto the other is \code{\link[=pf_grade_verdicts]{pf_grade_verdicts()}}'s job and nothing else's: a
+round that conflates them scores \code{NONE} as wrong wherever the organisation
+exists and is simply not among the candidates, which was 24 of 82 hard cases.
+}
+

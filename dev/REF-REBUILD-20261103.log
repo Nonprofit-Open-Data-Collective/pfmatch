@@ -1,0 +1,33 @@
+==============================================================================
+rebuild REF-augmented.rds under v1-5e901add4a04a5d6   2026-11-02 21:04:29
+==============================================================================
+npnormalize 0.1.9, npmatch 0.1.1.9000, matchdb 0.1.1.9000
+pfmatch    : loaded from source (C:/Users/jlecy/Dropbox/00 - URBAN/00-GITHUB/pfmatch)
+source     : BMF-AUGMENTED-unified-fixed.csv (3809 MB)
+outgoing bundle: 2.90 GB, mtime 2026-11-01 23:37:03 (kept until the new one verifies)
+==============================================================================
+BUILD
+==============================================================================
+built in 24.4 min
+rows       : 3,880,431
+in-memory  : reference, name_freq, token_idf, ref_index, normalizer, timing
+stamp      : v1-5e901add4a04a5d6
+timing     : read 102s, normalize 955s, index 404s
+saved in 0.5 min, 2.66 GB
+==============================================================================
+VERIFY (re-read from disk -- the check that failed last time)
+==============================================================================
+re-read in 0.7 min
+rows on disk : 3,880,431
+stamp on disk: v1-5e901add4a04a5d6
+name_freq    : 2,796,717
+token_idf    : 397,556
+pf_check_reference(): accepted
+==============================================================================
+SWAP
+==============================================================================
+outgoing bundle kept as REF-augmented-prev-20261101-unstamped.rds
+REF-augmented.rds is now the v1-5e901add4a04a5d6 bundle, 2.66 GB
+==============================================================================
+DONE
+==============================================================================

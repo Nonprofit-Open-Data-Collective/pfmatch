@@ -102,6 +102,7 @@ reference:
   - pf_reference
   - pf_build_reference
   - pf_check_reference
+  - pf_check_schema
   - pf_bmf_augment
   - pf_collapse_reference
   - pf_partition
@@ -182,12 +183,27 @@ reference:
   - pf_validate_grants
   - pf_truth_schema
   - pf_population_id
+  - pf_identity_id
+  - pf_frame_id
   - pf_round_sample
   - pf_grade_verdicts
   - pf_grade_by
   - pf_grade_layers
   - pf_grade_levels
   - pf_wilson
+
+- title: Dealing a labelling round out to several labelers
+  desc: >
+    Split a draw into shards with a blinded overlap, so two labelers' agreement
+    is measurable without either knowing which rows are being compared — and
+    agreement is not accuracy.
+  contents:
+  - pf_truth_shards
+  - pf_write_shards
+  - pf_read_truth
+  - pf_shard_schema
+  - pf_labeler_agreement
+  - pf_consolidate_truth
 
 - title: Affiliates, dyads and sibling structure
   desc: >

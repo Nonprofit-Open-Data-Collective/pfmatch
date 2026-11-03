@@ -1,0 +1,122 @@
+draw-round-stage1  rerun  2026-11-03 03:00:57
+npnormalize 0.1.9 / npmatch 0.1.1.9000 / signature v1-5e901add4a04a5d6
+
+run data-dev/TRI-V2-MATCH.rds: 91,008 identities, 596,539 grants
+frame matched under v1-5e901add4a04a5d6 (built 2026-11-03 02:14:08)
+installed now    v1-5e901add4a04a5d6
+join check on 500 sampled identities: name 500/500, tier 500/500
+MAYBE dollar quartiles:  1,170 /  7,000 / 40,000
+
+MAYBE frame: 23,340 identities
+design                         cells    n<20   share<1   share<2
+tier.pass                          9       2         2         2
+tier.pass.purpose                 18       4         4         4
+tier.pass.purpose.margin          51       9        14        22
+6b.3 full (plus dollar)          184      49        93       138
+---------------------------------------------------------------------- 
+drew 400 of 23,340 MAYBE identities into 14 strata (seed 20261102) 
+  population cb3c78ff0f1a9546 -- pf_grade_verdicts() will enforce it 
+  normalizer v1-5e901add4a04a5d6 -- the signature the frame was matched under 
+  frame 89a2a597ed0ea128 -- the identity numbering these ids are positions in 
+  confidence and evidence class are NOT stratifiable: the reviewer 
+  assigns them, so stage this round (PREREQS 6b.1c) 
+
+population cb3c78ff0f1a9546  frame_id 89a2a597ed0ea128  normalizer v1-5e901add4a04a5d6
+frame 23,340 identities  drawn 400
+
+      MAYBE | A1-name-zip5 | bare    MAYBE | A1-name-zip5 | purpose 
+                               21                                29 
+     MAYBE | A2-name-state | bare   MAYBE | A2-name-state | purpose 
+                               14                                18 
+       MAYBE | A3-name-dba | bare     MAYBE | A3-name-dba | purpose 
+                                2                                 3 
+    MAYBE | B1-token-state | bare  MAYBE | B1-token-state | purpose 
+                               94                               131 
+   MAYBE | B2-token-concat | bare MAYBE | B2-token-concat | purpose 
+                               11                                15 
+       MAYBE | C1-name-any | bare     MAYBE | C1-name-any | purpose 
+                               26                                28 
+        MAYBE | D1-acronym | bare      MAYBE | D1-acronym | purpose 
+                                4                                 4 
+
+margin band (recorded, not stratified):
+
+   tie narrow  clear 
+   143    117    140 
+dollar band (recorded, not stratified):
+
+ q1  q2  q3  q4 
+123  95  95  87 
+dollars drawn: 146,301,632 (median identity 5,000)
+
+wrote data-dev/ADJ-ROUND-STAGE1.rds and data-dev/ADJ-ROUND-STAGE1.csv
+reproduce with: seed 20261102, n 400, run data-dev/TRI-V2-MATCH.rds
+  normalizer v1-5e901add4a04a5d6 | frame_id 89a2a597ed0ea128
+  the frame_id is the one to check: grant_id is a POSITION in this run's
+  identity numbering, and the population cannot see that numbering move.
+
+finished 2026-11-03 03:01:17 OK
+
+================================================================================
+4. FIXED, SAME DAY: THE IDS ARE NO LONGER POSITIONS
+================================================================================
+
+Point 2 is closed at the source rather than only made detectable.
+
+pf_dedup() now derives each identity's id from the identity's own content: the
+lexicographically smallest EXACT dedup key in its cluster, hashed, as
+PFI-<16 hex> (pf_identity_id()). Exact keys partition the rows, so each belongs
+to exactly one identity and the minimum is canonical -- independent of row
+order, of which uid a fuzzy component happened to take, and of how many other
+identities exist. Rows with neither name nor address have no content to hash;
+they are keyed on OBJECTID and marked PFX-, and are always out of scope.
+
+What that buys is not merely stability. It is that a collision with a different
+organisation becomes impossible: if the id matches, the key matches, so the
+organisation matches by construction. An identity whose key set really did
+change gets a different id, and the old label is then VISIBLY ABSENT rather
+than silently re-attached. Absent is recoverable; wrong is not.
+
+  recipient_id   the stable id; what the cascade and every label key on
+  recipient_key  the canonical key it hashes, kept so an id can be re-derived
+  recipient_uid  the old integer, kept for cheap within-run grouping only
+
+pf_recipients() keys the cascade on recipient_id (and warns if it has to fall
+back), pf_propagate_matches() joins on whichever key the status frame was built
+with and stops rather than joining nothing, pf_queue() prices on it, and
+pf_read_truth() REFUSES a label carrying an R<k> id -- the shape of the id is
+the last place the hazard is visible, and the refusal lands before the labels
+are graded rather than after.
+
+TRI-V2-MATCH.rds was rekeyed in place, with no rematch: the id is a function of
+the exact keys, and every grant row of every identity is in the artifact's own
+`grants` frame. dev/rekey-tri-v2.R recomputes them through .pf_exact_keys() and
+.pf_identity_keys() -- the same functions pf_dedup() calls, not a copy, because
+a reimplementation that drifted by one character would hand out ids that look
+right and name other organisations. It checks the installed normalizer against
+the frame's run stamp first, since the keys are normalizer-derived.
+
+  596,539 grant rows -> 91,134 identity ids, 0 not content-identified
+  map one-to-one: 91,134 old ids -> 91,134 new, nothing merged
+  all 91,008 status identities found
+  new id lands on a row carrying the same name: 91,008 of 91,008
+  frame_id 72edafa8f2114af9 -> 89a2a597ed0ea128
+
+Stage 1 was then redrawn and picked THE SAME 400 identities -- verified by
+mapping the previous draw's ids through the frame's own uid-to-id
+correspondence and comparing the sets. Only the keys changed, which is the
+result worth having: the round is unchanged and now re-attachable.
+
+Dealt into 8 shards of 50 primaries, 40 blinded overlap cases (10%), seed
+20261103, key written to data-dev/round-stage1-key/ rather than beside the
+shards. The case files carry the identity and the cascade's pick, the latter
+because TRUTH-LABELING-PROTOCOL section 4 asks for `wrong_ein` "especially when
+it is the cascade's pick", which a labeler cannot supply without being told it.
+
+Full suite: 0 failures, 1 legitimate skip.
+
+STILL OPEN, unchanged: C2-dba-any (point 1), and the grant-ROW id, which
+pf_prepare_grants() still numbers positionally when a file carries no key of
+its own. That is the same hazard one level down; it is left alone because
+changing a grant-row key would silently invalidate the labels already written
+against it, and it needs its own migration rather than a quiet edit.

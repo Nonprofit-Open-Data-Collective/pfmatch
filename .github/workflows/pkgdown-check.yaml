@@ -1,0 +1,92 @@
+# Verify that the pkgdown site still builds. This job DOES NOT deploy and DOES
+# NOT commit: docs/ is tracked in this repo (315 files) and rebuilt deliberately
+# by hand, so the site is built into a scratch destination outside the checkout
+# and thrown away. The last step fails if the working tree moved at all, which
+# is the tripwire for an accidental write into docs/.
+#
+# What this covers: _pkgdown.yml is hand-curated, exactly like NAMESPACE. A
+# newly exported function that nobody added to the `reference:` section makes
+# pkgdown abort with "N topics missing from index" -- a breakage that otherwise
+# only shows up if the author happens to rebuild the site before pushing.
+#
+# That is not hypothetical here. When this workflow was added, check_pkgdown()
+# reported six topics missing from the index -- pf_truth_shards,
+# pf_write_shards, pf_read_truth, pf_shard_schema, pf_labeler_agreement and
+# pf_consolidate_truth, the whole shard harness, exported earlier the same day.
+# Two more, pf_identity_id and pf_frame_id, had already been found by hand that
+# morning. This is the step that would have found all eight.
+#
+# Adapted from npmatch's workflow of the same name, minus its quarto setup:
+# pfmatch's vignettes are .Rmd under `VignetteBuilder: knitr`, so pandoc alone
+# is enough and the quarto CLI is not needed.
+name: pkgdown-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pkgdown-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pkgdown-check:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      # `needs: website` picks up Config/Needs/website, which names
+      # Nonprofit-Open-Data-Collective/pkgstyle -- the template that
+      # _pkgdown.yml selects with `template: package: pkgstyle`. pkgdown
+      # resolves that package eagerly in as_pkgdown(), so it has to be
+      # installed before either step below runs. `local::.` installs pfmatch
+      # itself so pkgdown can read its topics, and brings npmatch, npnormalize
+      # and matchdb in from the `Remotes:` field on the way.
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgdown, local::.
+          needs: website
+
+      # This is the check that would have caught the missing reference: topics.
+      - name: Check _pkgdown.yml against the package index
+        run: pkgdown::check_pkgdown()
+        shell: Rscript {0}
+
+      # build_site() has no dest_dir argument -- that one belongs to
+      # build_site_github_pages(). The destination otherwise comes from
+      # _pkgdown.yml (`destination: docs`), which is tracked, so it is
+      # overridden here to an absolute scratch path well outside the checkout.
+      - name: Build the site into a scratch directory and discard it
+        run: |
+          pkgdown::build_site(
+            override = list(
+              destination = file.path(Sys.getenv("RUNNER_TEMP"), "pkgdown-site")
+            ),
+            install = FALSE,
+            new_process = FALSE,
+            preview = FALSE
+          )
+        shell: Rscript {0}
+
+      - name: Confirm the checkout is unchanged (nothing written to docs/)
+        if: always()
+        run: |
+          git status --porcelain
+          git diff --exit-code
+          test -z "$(git status --porcelain)"

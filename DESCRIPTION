@@ -24,7 +24,7 @@ Imports:
     data.table,
     stringi,
     npmatch (>= 0.1.1),
-    npnormalize (>= 0.1.8),
+    npnormalize (>= 0.1.9),
     stats,
     utils
 Suggests:
@@ -35,7 +35,9 @@ Suggests:
     pkgdown,
     matchdb,
     digest,
+    reclin2,
     stringdist,
+    withr,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 LazyData: true
@@ -44,5 +46,8 @@ RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Remotes:
     Nonprofit-Open-Data-Collective/npmatch,
-    Nonprofit-Open-Data-Collective/matchdb
+    Nonprofit-Open-Data-Collective/npnormalize,
+    Nonprofit-Open-Data-Collective/matchdb,
+    Nonprofit-Open-Data-Collective/panel990,
+    Nonprofit-Open-Data-Collective/concordance990
 Config/Needs/website: Nonprofit-Open-Data-Collective/pkgstyle

@@ -57,10 +57,11 @@ to the runner-up, so they can only be supplied from a pair-complete run.}
 \value{
 A data frame of one row per drawn case: \code{grant_id}, \code{stratum},
 \code{stage}, plus the \code{by} columns and anything from \code{extra}. Carries
-\code{attr(, "population")}, \code{attr(, "seed")}, \code{attr(, "allocation")},
-\code{attr(, "frame_size")} and \code{attr(, "oversample")} — the last a frame of
-\code{column}, \code{floor} and \code{realized}, which differ whenever one floor's draw
-already satisfied another's.
+\code{attr(, "population")}, \code{attr(, "frame_id")}, \code{attr(, "normalizer")},
+\code{attr(, "seed")}, \code{attr(, "allocation")}, \code{attr(, "frame_size")} and
+\code{attr(, "oversample")} — the last a frame of \code{column}, \code{floor} and
+\code{realized}, which differ whenever one floor's draw already satisfied
+another's.
 }
 \description{
 Builds the case frame for \code{ADJUDICATION-PREREQS.md} T1 and draws a
@@ -91,6 +92,46 @@ outlive the frame, so an unfingerprintable frame is a stop: its labels could
 never be re-attached to a grant. \code{require_population = FALSE} is for a dry
 run whose labels will be thrown away — the archived GT extracts have no
 \code{OBJECTID} and are the case it exists for.
+}
+
+\section{Why a population is not enough on its own}{
+
+The population fingerprints the grant \emph{file}, and a label also has to name
+an organisation within it. Identity ids used to be \verb{R<k>} — positions among
+the deduplicated recipients — so they were local to the run: rebuilding one
+population after a normalizer change merged 682 duplicates and renumbered
+everything downstream, leaving the population identical
+(\code{cb3c78ff0f1a9546} both times) while \code{R10000} moved from \verb{Childrens Guardian} to \verb{CONGREGATION ATERES YESHAYA}. A label from the first run
+passed the population check against the second and attached to the wrong
+organisation.
+
+\code{\link[=pf_identity_id]{pf_identity_id()}} replaced that: an id is now a hash of the identity's own
+dedup key, so an id that matches names the same organisation by construction
+and one whose identity changed is \strong{absent} rather than wrong. A frame still
+carries \code{\link[=pf_frame_id]{pf_frame_id()}} as \code{attr(, "frame_id")}, which fingerprints the whole
+id-to-name pairing — a cheap check that two artifacts are the same run, and
+the thing that catches a frame built before the ids were content-derived.
+}
+
+\section{Why the normalizer is recorded but not required}{
+
+The population says which grant file these ids mean something in. It does
+not say which normalizer produced the \code{tier} and \code{pass} the draw stratifies
+on, and those move with it: rematching one population under npnormalize
+0.1.9 gave 23,340 \code{MAYBE} identities where 0.1.6 gave 24,107, which is a
+different frame and so a different draw. The signature is therefore recorded
+as \code{attr(, "normalizer")}, taken from the run stamp \code{\link[=pf_run_batches]{pf_run_batches()}}
+leaves on the status frame.
+
+It is recorded rather than required because the two failures are not the
+same size. An unfingerprinted population makes the labels unattachable to
+any grant, so they are worthless -- hence a stop. An unstamped normalizer
+leaves the labels perfectly attachable; what it costs is the ability to show
+that this draw's strata could be redrawn, which is a weaker claim and a
+recoverable one. \code{NA} is reported where the frame predates stamping, and is
+never filled in from the installed signature: that would assert the frame
+was matched under whatever happens to be installed at draw time, which is
+the one thing it cannot be known to have been.
 }
 
 \examples{

@@ -7,7 +7,9 @@
 pf_wilson(k, n, conf = 0.95)
 }
 \arguments{
-\item{k}{Successes. @param n Trials.}
+\item{k}{Successes.}
+
+\item{n}{Trials.}
 
 \item{conf}{Confidence level.}
 }

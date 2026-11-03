@@ -53,6 +53,14 @@ NULL
 #' @param states Which states to build. Defaults to every state present.
 #' @param min_rows States with fewer rows than this are merged into a single
 #'   `"_SMALL"` shard, so the territories do not each pay a process.
+#' @param token_cols Columns to build a per-shard inverted index over. One index
+#'   per column, because the token passes do not all block on the same string:
+#'   `B1`/`B2` tokenize `name_key` while `D1-acronym` tokenizes `name_acro`, and
+#'   an index built on one cannot serve the other. The first is the default the
+#'   returned bundle's `ref_index` points at; the rest are reachable through
+#'   `ref_index_by`. Document-frequency totals are taken over the whole corpus
+#'   rather than the shard, since a token's rarity is a property of the
+#'   reference, not of the slice it happens to be counted in.
 #' @param verbose Report the shard sizes.
 #' @return A list of bundles, one per shard, each holding a sliced `reference`
 #'   and a hybrid `ref_index`. `name_freq` and `token_idf` are shared unchanged —

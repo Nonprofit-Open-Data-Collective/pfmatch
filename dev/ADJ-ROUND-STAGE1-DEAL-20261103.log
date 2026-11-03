@@ -1,0 +1,36 @@
+draw data-dev/ADJ-ROUND-STAGE1.rds: 400 cases
+  population cb3c78ff0f1a9546 | frame_id 89a2a597ed0ea128 | normalizer v1-5e901add4a04a5d6
+case features: grant_id, recip_name, recip_city, recip_state, recip_zip5, n_grants, dollars, purpose_band, cascade_pass, cascade_ein, cascade_name, cascade_city, cascade_state, cascade_score, cascade_margin, n_close
+
+---------------------------------------------------------------------- 
+dealt 400 cases into 8 shards (440 rows, seed 20261103) 
+  shard sizes: 1:53 2:57 3:56 4:57 5:55 6:55 7:56 8:51 
+  40 cases (10%) dealt to a second shard as the blinded overlap 
+  population cb3c78ff0f1a9546 -- pf_read_truth() will enforce it 
+
+shard sizes (rows, so an overlap case counts twice):
+     primary
+shard FALSE TRUE
+    1     3   50
+    2     7   50
+    3     6   50
+    4     7   50
+    5     5   50
+    6     5   50
+    7     6   50
+    8     1   50
+---------------------------------------------------------------------- 
+wrote 16 files for 8 shards into data-dev/round-stage1 
+  case files carry no overlap column and are shuffled 
+  key: data-dev/round-stage1-key/SHARD-KEY.csv 
+  blinding holds only if each labeler is given its own two files 
+
+wrote 17 files
+  shards: data-dev/round-stage1
+  key:    data-dev/round-stage1-key   <- do NOT give this to a labeler
+  object: data-dev/ADJ-ROUND-STAGE1-SHARDS.rds
+
+reproduce with: seed 20261103, k 8, overlap 0.10, draw data-dev/ADJ-ROUND-STAGE1.rds
+  population cb3c78ff0f1a9546 | frame_id 89a2a597ed0ea128 | normalizer v1-5e901add4a04a5d6
+
+OK

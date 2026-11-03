@@ -35,6 +35,15 @@ pf_run_partitioned(
 \item{min_rows}{States with fewer rows than this are merged into a single
 \code{"_SMALL"} shard, so the territories do not each pay a process.}
 
+\item{token_cols}{Columns to build a per-shard inverted index over. One index
+per column, because the token passes do not all block on the same string:
+\code{B1}/\code{B2} tokenize \code{name_key} while \code{D1-acronym} tokenizes \code{name_acro}, and
+an index built on one cannot serve the other. The first is the default the
+returned bundle's \code{ref_index} points at; the rest are reachable through
+\code{ref_index_by}. Document-frequency totals are taken over the whole corpus
+rather than the shard, since a token's rarity is a property of the
+reference, not of the slice it happens to be counted in.}
+
 \item{verbose}{Per-shard progress.}
 
 \item{query}{A normalized \code{np_query}.}

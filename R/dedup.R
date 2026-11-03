@@ -102,8 +102,12 @@ NULL
 #' @param max_block Blocks larger than this are compared exactly only, not
 #'   fuzzily — a guard against a quadratic blow-up on a huge shared ZIP.
 #' @param verbose Print the collapse ratio.
-#' @return `grants` with two columns added: `recipient_uid` (the identity a match
-#'   is computed for) and `recipient_n` (how many grant rows share it).
+#' @return `grants` with four columns added: `recipient_id` (the identity's
+#'   stable, content-derived id — the key the cascade and every label use; see
+#'   [pf_identity_id()]), `recipient_key` (the canonical dedup key it hashes),
+#'   `recipient_uid` (an integer position, kept for cheap within-run grouping
+#'   and **not** safe to key a label on) and `recipient_n` (how many grant rows
+#'   share the identity).
 #' @export
 pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
                      max_block = 2000L, verbose = TRUE) {
@@ -113,12 +117,12 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
   q <- npmatch::np_normalize(npmatch::np_query(grants, pf_map_grants()))
   q$ident_key <- .pf_identity_key(q$name_full)
   q$aff_tok   <- .pf_affiliate_tokens(q$name_full)
-  key <- paste(q$ident_key,
-               ifelse(is.na(q$street_key), "", q$street_key),
-               ifelse(is.na(q$zip5), "", q$zip5), sep = "\r")
+  # One definition of the exact key, shared with the rekey path. See
+  # .pf_exact_keys().
+  ek    <- .pf_exact_keys(grants)
+  key   <- ek$key
   # rows with no name AND no address are not an identity -- keep them separate
-  empty <- !nzchar(q$ident_key) &
-           (is.na(q$street_key) | !nzchar(q$street_key))
+  empty <- ek$empty
   key[empty] <- paste0("singleton", seq_len(sum(empty)))[seq_len(sum(empty))]
   uid <- match(key, unique(key))
   say("exact dedup: %s grant rows -> %s distinct keys (%.2fx collapse)",
@@ -232,9 +236,94 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
     say("fuzzy dedup: -> %s distinct identities (%.2fx total collapse)",
         format(max(uid), big.mark = ","), nrow(grants) / max(uid))
   }
+  # --- the identity's stable id ----------------------------------------------
+  #
+  # `uid` is a POSITION. `match(key, unique(key))` numbers identities in order
+  # of first appearance, and the fuzzy pass renumbers again by taking each
+  # component's smallest uid, so both depend on which rows happen to be
+  # present. Merging one pair of duplicates renumbers every identity after it.
+  #
+  # That is not theoretical. Two builds of the same grant population, the
+  # second after a normalizer change merged 682 duplicates: joined on R<uid>
+  # the recipient names did not agree at all -- R10000 was "Childrens
+  # Guardian" in one and "CONGREGATION ATERES YESHAYA" in the other -- while
+  # pf_population_id() was identical both times, because the grant file really
+  # was the same one. A label keyed on a position therefore passed every check
+  # available and landed on a different organisation
+  # (dev/ADJ-ROUND-STAGE1-20261103.log).
+  #
+  # So the id is derived from the identity's own content: the lexicographically
+  # smallest EXACT key in its cluster. Exact keys partition the rows, so each
+  # belongs to exactly one identity and the minimum is canonical -- independent
+  # of row order, of which uid the fuzzy component happened to take, and of how
+  # many other identities exist. An identity whose key set changes gets a
+  # different id, and that is the honest answer rather than a defect: a label
+  # carrying the old id is then visibly absent instead of silently re-attached.
+  #
+  # Rows with neither a name nor an address are not an identity and have no
+  # content to hash. They are keyed on OBJECTID, which is stable within a grant
+  # file, and marked PFX- so a reader can see they are not content-identified.
+  # They are always out of scope, so they never reach a round.
+  ki <- .pf_identity_keys(key, uid, empty, grants$OBJECTID)
   grants$recipient_uid <- uid
+  grants$recipient_key <- ki$key
+  grants$recipient_id  <- ki$id
   grants$recipient_n   <- as.integer(table(uid)[as.character(uid)])
+  say("identity ids: %s distinct, content-derived (%s not content-identified)",
+      format(length(unique(ki$id)), big.mark = ","),
+      format(sum(startsWith(ki$id, "PFX-")), big.mark = ","))
   grants
+}
+
+# The canonical key and stable id of every row's identity. Factored out of
+# pf_dedup() so that rekeying an artifact built before these columns existed
+# runs this code rather than a copy of it: a reimplementation that drifted by
+# one character would hand out ids that look right and name other
+# organisations, which is the failure the scheme exists to remove.
+#
+# `empty` marks rows with neither a name nor an address. They are not an
+# identity and have nothing to hash, so they are keyed on OBJECTID -- stable
+# within a grant file -- and prefixed PFX- so a reader can see they are not
+# content-identified. They are always out of scope and never reach a round.
+.pf_identity_keys <- function(key, uid, empty, objectid = NULL) {
+  if (any(empty)) {
+    oid <- if (is.null(objectid)) NULL else as.character(objectid)
+    key[empty] <- if (!is.null(oid) && !anyDuplicated(oid[empty]))
+                    paste0("\r\rPFX", oid[empty])
+                  else paste0("\r\rPFXrow", which(empty))
+  }
+  ord <- order(uid, key)
+  f1  <- !duplicated(uid[ord])
+  canon <- character(max(uid))
+  canon[uid[ord][f1]] <- key[ord][f1]
+  ids <- ifelse(startsWith(canon, "\r\rPFX"),
+                pf_identity_id(canon, prefix = "PFX-"),
+                pf_identity_id(canon))
+  # A collision would put two identities under one id -- the very failure this
+  # removes -- so it is checked rather than assumed.
+  seen <- nzchar(canon)
+  if (anyDuplicated(ids[seen]))
+    stop(sprintf(paste0(
+      "%d of %d identity ids collide, so two identities would share one id.\n",
+      "  The exact keys are meant to partition the rows; this means they did",
+      " not.\n  Report it with the colliding keys: %s"),
+      sum(duplicated(ids[seen])), sum(seen),
+      paste(utils::head(canon[seen][duplicated(ids[seen]) |
+                                    duplicated(ids[seen], fromLast = TRUE)], 2),
+            collapse = " / ")), call. = FALSE)
+  list(key = canon[uid], id = ids[uid])
+}
+
+# The exact dedup key of every row, as pf_dedup() computes it. Shared for the
+# same reason as .pf_identity_keys(): one definition, so a rekey cannot drift.
+.pf_exact_keys <- function(grants) {
+  q <- npmatch::np_normalize(npmatch::np_query(grants, pf_map_grants()))
+  ident <- .pf_identity_key(q$name_full)
+  key <- paste(ident,
+               ifelse(is.na(q$street_key), "", q$street_key),
+               ifelse(is.na(q$zip5), "", q$zip5), sep = "\r")
+  empty <- !nzchar(ident) & (is.na(q$street_key) | !nzchar(q$street_key))
+  list(key = key, empty = empty)
 }
 #' The distinct recipient frame to actually match
 #'
@@ -254,7 +343,15 @@ pf_recipients <- function(grants) {
   ord <- order(grants$recipient_uid, -score)
   out <- grants[ord, , drop = FALSE]
   out <- out[!duplicated(out$recipient_uid), , drop = FALSE]
-  out$grant_id <- paste0("R", out$recipient_uid)   # match key for the cascade
+  # The match key for the cascade, and the key every label is written against.
+  # Content-derived, not `paste0("R", recipient_uid)`: see pf_identity_id().
+  out$grant_id <- if (!is.null(out$recipient_id)) as.character(out$recipient_id)
+                  else paste0("R", out$recipient_uid)
+  if (is.null(out$recipient_id))
+    warning(paste0(
+      "this frame has no recipient_id, so the cascade is keyed on R<position> ",
+      "again.\n  Those ids are not stable across rebuilds and must not be ",
+      "labelled against; re-run pf_dedup()."), call. = FALSE)
   rownames(out) <- NULL
   out
 }
@@ -265,7 +362,20 @@ pf_recipients <- function(grants) {
 #' @return `grants` with the identity-level outcome joined onto every row.
 #' @export
 pf_propagate_matches <- function(grants, status) {
-  i <- match(paste0("R", grants$recipient_uid), status$grant_id)
+  # Join on whichever key the status frame was computed over. A frame keyed on
+  # recipient_id joined by R<position> would match nothing, or -- worse, after a
+  # rebuild -- match the wrong identities, so the two are never mixed.
+  k <- if (!is.null(grants$recipient_id) &&
+           any(as.character(grants$recipient_id) %in% as.character(status$grant_id)))
+         as.character(grants$recipient_id)
+       else paste0("R", grants$recipient_uid)
+  i <- match(k, status$grant_id)
+  if (all(is.na(i)))
+    stop(paste0(
+      "no grant row's identity key is in the status frame, so nothing would\n",
+      "  propagate. The two were built from different runs, or the frame is\n",
+      "  keyed on R<position> and these rows on recipient_id (or the reverse).\n",
+      "  Check pf_frame_id() on both."), call. = FALSE)
   for (col in c("status", "ein", "bmf_name", "score", "match_pass"))
     grants[[col]] <- status[[col]][i]
   grants

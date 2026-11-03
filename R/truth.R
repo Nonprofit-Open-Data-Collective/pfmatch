@@ -31,6 +31,23 @@ pf_truth_schema <- function() {
     "confidence")  # high | medium | low
 }
 
+#' @rdname pf_truth_schema
+#' @section The levels, and why they are not the verdict levels:
+#' A truth row answers "what is the right answer for this grant", so its
+#' verdicts are states of the world: `ORG_FOUND`, three distinct reasons no
+#' organisation exists, and `UNRESOLVED`. [pf_verdict_levels()] answers a
+#' different question — what a reviewer concluded from a five-candidate packet
+#' — so its `MATCH` / `NONE` / `AMBIGUOUS` are deliberately not these. Mapping
+#' one onto the other is [pf_grade_verdicts()]'s job and nothing else's: a
+#' round that conflates them scores `NONE` as wrong wherever the organisation
+#' exists and is simply not among the candidates, which was 24 of 82 hard cases.
+#' @export
+pf_truth_levels <- function()
+  list(verdict    = c("ORG_FOUND", "NO_ORG_INDIVIDUAL", "NO_ORG_NOT_EXEMPT",
+                      "NO_ORG_UNFINDABLE", "UNRESOLVED"),
+       basis      = c("web", "reference", "inference"),
+       confidence = c("high", "medium", "low"))
+
 #' Fingerprint a grant population
 #'
 #' Labels are not portable between grant vintages: `grant_id` is positional, so
@@ -50,6 +67,102 @@ pf_population_id <- function(grants) {
          call. = FALSE)
   oid[is.na(oid)] <- ""
   substr(digest::digest(sort(unique(oid)), algo = "md5"), 1, 16)
+}
+
+#' The stable id of a recipient identity
+#'
+#' Hashes an identity's canonical dedup key into the id the cascade, the round
+#' and every label are keyed on. [pf_dedup()] calls this; it is exported so
+#' that an id can be recomputed from a key without re-running a match.
+#'
+#' @section Why an identity is not numbered:
+#' It used to be. `R<k>` was `k = match(key, unique(key))` — a position among
+#' the deduplicated recipients — and the fuzzy pass renumbered again by taking
+#' each component's smallest `k`. Both depend on which rows are present, so
+#' merging one pair of duplicates renumbers every identity after it.
+#'
+#' Two builds of the same grant population, the second after a normalizer
+#' change merged 682 duplicates, measured that: joined on `R<k>` the recipient
+#' names did not agree at all, while [pf_population_id()] was identical both
+#' times — correctly, the grant file was the same. A label keyed on a position
+#' passed every check that existed and attached to a different organisation.
+#'
+#' A content hash cannot do that. If the id matches, the key matches, so the
+#' organisation matches by construction. If the identity's key set changed, the
+#' id changed and the old label is **visibly absent** rather than silently
+#' re-attached — which is the property worth having, and the reason this is
+#' preferred over trying to keep a number stable across rebuilds.
+#'
+#' @param key Canonical dedup key(s) — for an identity, the lexicographically
+#'   smallest exact key in its cluster, which is what [pf_dedup()] records as
+#'   `recipient_key`.
+#' @param prefix Id prefix. `"PFI-"` for a content-identified identity;
+#'   [pf_dedup()] uses `"PFX-"` for a row with neither name nor address, which
+#'   has no content to hash and is keyed on `OBJECTID` instead.
+#' @return A character vector of ids, one per `key`.
+#' @seealso [pf_frame_id()] for the numbering a run used,
+#'   [pf_population_id()] for the grant file.
+#' @examples
+#' pf_identity_id(c("SMITH FAMILY\r100 MAIN ST\r59715", "OTHER\r\r"))
+#' @export
+pf_identity_id <- function(key, prefix = "PFI-") {
+  k <- as.character(key)
+  k[is.na(k)] <- ""
+  vd <- digest::getVDigest(algo = "md5")
+  paste0(prefix, substr(vd(k, serialize = FALSE), 1L, 16L))
+}
+
+#' Fingerprint the identity numbering of a run
+#'
+#' [pf_population_id()] fingerprints the grant *file*. This fingerprints the
+#' *run*, and the two are not substitutes.
+#'
+#' @section What it is for:
+#' Identity ids used to be `R<k>`, a position among the deduplicated
+#' recipients, so the numbering was local to the run. Rebuilding the same grant
+#' population under npnormalize 0.1.9 merged 682 duplicate identities and
+#' renumbered everything after the first merge: joined on `grant_id` across the
+#' two runs the recipient names did not agree at all (`Childrens Guardian`
+#' against `CONGREGATION ATERES YESHAYA`), while joined on the recipient name
+#' the tier was unchanged on 97.5% of identities. The population fingerprint
+#' was **identical** across both — `cb3c78ff0f1a9546` — because the grants
+#' really were the same file, so a label from the first run passed every check
+#' available and attached to a different organisation.
+#'
+#' [pf_identity_id()] fixed that at the source, and this remains for the two
+#' jobs it still does: telling cheaply whether two artifacts are the same run,
+#' and catching a frame or draw built **before** the ids were content-derived,
+#' whose `R<k>` ids will re-attach silently and wrongly. A frame whose ids are
+#' not `PFI-`/`PFX-` shaped is that case.
+#'
+#' @param status A [pf_status()]-shaped frame, or a list with a `status`
+#'   component holding one.
+#' @return A 16-character hash of the `grant_id`-to-recipient-name pairing,
+#'   lightly normalized so that case and spacing do not move it.
+#' @seealso [pf_population_id()] for the grant file, [pf_round_sample()] which
+#'   records both on a draw.
+#' @examples
+#' st <- data.frame(grant_id = c("R1", "R2"), recip_name = c("A ORG", "B ORG"))
+#' pf_frame_id(st)
+#' @export
+pf_frame_id <- function(status) {
+  if (is.list(status) && !is.data.frame(status) && !is.null(status$status))
+    status <- status$status
+  id <- as.character(status$grant_id)
+  nm <- as.character(status$recip_name)
+  if (!length(id) || all(is.na(id)))
+    stop("no grant_id column: cannot fingerprint this run's identity numbering.",
+         call. = FALSE)
+  if (is.null(nm) || !length(nm))
+    stop(paste0(
+      "no recip_name column, so there is nothing to pair the ids against.\n",
+      "  An id hashed alone would agree between two runs that number the same\n",
+      "  count of different identities, which is exactly this case."),
+      call. = FALSE)
+  nm <- toupper(trimws(gsub(" +", " ", gsub("[^A-Za-z0-9 ]", " ", nm))))
+  nm[is.na(nm)] <- ""
+  id[is.na(id)] <- ""
+  substr(digest::digest(sort(paste(id, nm, sep = "|")), algo = "md5"), 1, 16)
 }
 
 .pf_e9 <- function(v) {

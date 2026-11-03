@@ -1,0 +1,23 @@
+reading data-dev/TRI-V2-MATCH.rds ...
+  status 91,008 identities | grants 596,539 rows
+  frame matched under v1-5e901add4a04a5d6
+  installed now      v1-5e901add4a04a5d6
+  distinct uids in grants: 91,134 (status holds 91,008)
+
+recomputing exact dedup keys over 596,539 grant rows ...
+  67.9 s
+  91,134 distinct identity ids (0 not content-identified)
+
+old ids mapping to more than one new id: 0
+map: 91,134 old ids -> 91,134 new ids
+status ids found in the map: 91,008 of 91,008
+new id lands on a row carrying the same name: 91,008 of 91,008
+
+frame_id: 72edafa8f2114af9 -> 89a2a597ed0ea128
+verifying from disk ...
+  91,008 identities, all keyed PFI-/PFX-, no duplicates
+  frame_id 89a2a597ed0ea128
+
+swapped in; the positional-id frame is kept as TRI-V2-MATCH-positional-ids.rds
+
+OK

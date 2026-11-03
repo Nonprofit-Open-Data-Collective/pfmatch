@@ -313,3 +313,135 @@ test_that("a status frame missing a case feature leaves it NA rather than failin
   expect_error(pf_round_sample(x, n = 10, by = c("tier", "dollar_band"),
                                seed = 1, verbose = FALSE), "not in the frame")
 })
+
+## ---- the normalizer stamp ---------------------------------------------------
+#
+# A population says which grant file the ids mean something in. It says nothing
+# about which normalizer produced the tiers and passes being stratified on, and
+# those move: the same population rematched under npnormalize 0.1.9 gave 23,340
+# MAYBE identities where 0.1.6 gave 24,107. The stamp is what lets a later
+# reader tell a redraw from a different draw, so the test that matters is that
+# it is never INVENTED -- a draw that filled it in from the installed signature
+# would read as provenance while asserting nothing.
+
+test_that("the normalizer travels from the run stamp onto the draw", {
+  x <- round_status(n = 60L)
+  attr(x$status, "pf_stamp") <- list(ref_rows = 100L,
+                                     normalizer = "v1-deadbeefdeadbeef")
+  r <- pf_round_sample(x, n = 30, by = c("tier", "pass"), seed = 9,
+                       verbose = FALSE)
+  expect_equal(attr(r, "normalizer"), "v1-deadbeefdeadbeef")
+})
+
+test_that("an unstamped frame reports NA rather than the installed signature", {
+  # the whole point: substituting what happens to be installed at draw time
+  # would claim the frame was matched under it, which is unknowable
+  x <- round_status(n = 60L)
+  r <- pf_round_sample(x, n = 30, by = c("tier", "pass"), seed = 9,
+                       verbose = FALSE)
+  expect_true(is.na(attr(r, "normalizer")))
+  live <- tryCatch(npmatch::np_normalize_signature(), error = function(e) NULL)
+  if (!is.null(live)) expect_false(identical(attr(r, "normalizer"), live))
+})
+
+test_that("an unstamped normalizer does not stop the draw", {
+  # unlike the population: unattachable labels are worthless, un-redrawable
+  # strata are a weaker and recoverable loss
+  x <- round_status(n = 60L)
+  expect_equal(nrow(pf_round_sample(x, n = 30, by = c("tier", "pass"),
+                                    seed = 9, verbose = FALSE)), 30L)
+})
+
+test_that("a stamp read as the status frame's own attribute is found too", {
+  # pf_run_batches() returns the status frame stamped; a caller may pass that
+  # frame directly rather than the list(status, grants) wrapper
+  x <- round_status(n = 40L)
+  st <- x$status
+  attr(st, "pf_stamp") <- list(normalizer = "v1-0123456789abcdef")
+  r <- pf_round_sample(st, n = 10, grants = x$grants, seed = 1, verbose = FALSE)
+  expect_equal(attr(r, "normalizer"), "v1-0123456789abcdef")
+})
+
+test_that("an empty or NA stamp is NA, not an empty string", {
+  x <- round_status(n = 40L)
+  attr(x$status, "pf_stamp") <- list(normalizer = NA_character_)
+  r <- pf_round_sample(x, n = 10, by = c("tier", "pass"), seed = 1,
+                       verbose = FALSE)
+  expect_true(is.na(attr(r, "normalizer")))
+  attr(x$status, "pf_stamp") <- list(normalizer = "")
+  r2 <- pf_round_sample(x, n = 10, by = c("tier", "pass"), seed = 1,
+                        verbose = FALSE)
+  expect_true(is.na(attr(r2, "normalizer")))
+})
+
+## ---- the identity-numbering fingerprint -------------------------------------
+#
+# The failure this closes is the one that nearly produced a false finding:
+# `R<k>` is positional among the deduplicated recipients, so a rebuild that
+# merged 682 duplicates renumbered everything downstream while the population
+# stayed identical. Joined on grant_id the two runs' recipient names did not
+# agree at all; joined on the name, the tier was unchanged on 97.5%. A label
+# from the first run passes a population check against the second and attaches
+# to a different organisation, so the numbering needs its own fingerprint.
+
+test_that("the frame id moves when the numbering moves but the names do not", {
+  a <- data.frame(grant_id = c("R1", "R2", "R3"),
+                  recip_name = c("A ORG", "B ORG", "C ORG"))
+  b <- a; b$recip_name <- c("B ORG", "C ORG", "A ORG")   # same names, renumbered
+  expect_false(identical(pf_frame_id(a), pf_frame_id(b)))
+})
+
+test_that("the frame id ignores case and spacing, which are not renumbering", {
+  a <- data.frame(grant_id = "R1", recip_name = "The  Smith Fund")
+  b <- data.frame(grant_id = "R1", recip_name = "THE SMITH FUND")
+  expect_equal(pf_frame_id(a), pf_frame_id(b))
+})
+
+test_that("the frame id does not depend on row order", {
+  a <- data.frame(grant_id = c("R1", "R2"), recip_name = c("A ORG", "B ORG"))
+  expect_equal(pf_frame_id(a), pf_frame_id(a[2:1, ]))
+})
+
+test_that("an id hashed with no names to pair against is refused", {
+  # two runs numbering the same count of different identities would otherwise
+  # fingerprint identically, which is precisely the case being guarded
+  expect_error(pf_frame_id(data.frame(grant_id = c("R1", "R2"))),
+               "nothing to pair the ids against")
+})
+
+test_that("a list(status, grants) run is accepted, like the runs on disk", {
+  x <- round_status(n = 10L)
+  x$status$recip_name <- sprintf("ORG %d", seq_len(10L))
+  expect_equal(pf_frame_id(x), pf_frame_id(x$status))
+})
+
+test_that("the draw records the frame id, and it matches the frame it drew from", {
+  x <- round_status(n = 60L)
+  x$status$recip_name <- sprintf("ORG %d", seq_len(60L))
+  r <- pf_round_sample(x, n = 30, by = c("tier", "pass"), seed = 9,
+                       verbose = FALSE)
+  expect_match(attr(r, "frame_id"), "^[0-9a-f]{16}$")
+  expect_equal(attr(r, "frame_id"), pf_frame_id(x$status))
+})
+
+test_that("a frame with no recip_name draws, recording NA rather than stopping", {
+  # the fingerprint is a detection aid; losing it must not block a draw the way
+  # an unfingerprintable population does
+  x <- round_status(n = 60L)
+  r <- pf_round_sample(x, n = 30, by = c("tier", "pass"), seed = 9,
+                       verbose = FALSE)
+  expect_true(is.na(attr(r, "frame_id")))
+  expect_equal(nrow(r), 30L)
+})
+
+test_that("two runs of the same population still differ in frame id", {
+  # the whole point: the population cannot see this, so it must not be relied on
+  x <- round_status(n = 60L)
+  x$status$recip_name <- sprintf("ORG %d", seq_len(60L))
+  y <- x
+  y$status$recip_name <- sprintf("ORG %d", c(2:60, 1L))  # one merge, renumbered
+  ra <- pf_round_sample(x, n = 10, by = c("tier", "pass"), seed = 1, verbose = FALSE)
+  rb <- pf_round_sample(y, n = 10, by = c("tier", "pass"), seed = 1, verbose = FALSE)
+  expect_equal(attr(ra, "population"), attr(rb, "population"))
+  expect_false(identical(attr(ra, "frame_id"), attr(rb, "frame_id")))
+})

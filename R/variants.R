@@ -36,7 +36,7 @@
 #' Pairs where either side is a person rather than an organization are
 #' excluded, so the table carries no individual's name or home address.
 #'
-#' @format A data frame with 5,410 rows and 57 columns. `a_*` is the anchor —
+#' @format A data frame with 5,410 rows and 58 columns. `a_*` is the anchor —
 #'   the best-scoring `YES` rendering at the address. `b_*` is the candidate
 #'   that came back `MAYBE`.
 #' \describe{
@@ -54,11 +54,20 @@
 #'   \item{`a_unit`, `b_unit`, `a_city`, `b_city`, `a_state`, `b_state`,
 #'     `a_zip`, `b_zip`, `a_zip5`, `b_zip5`}{The rest of the address, filed and
 #'     derived.}
-#'   \item{`a_ein`, `a_bmf`}{The anchor's matched EIN and the BMF name behind
-#'     it. `b_ein` is the candidate's own EIN where it has one.}
-#'   \item{`a_score`, `b_score`, `a_pass`, `b_pass`}{Score and winning pass for
-#'     each side. `a_pass_rank` and `b_pass_rank` grade the pass: 6 for an
-#'     exact name + ZIP5 hit down to 1 for an unblocked token sweep.}
+#'   \item{`a_ein`, `b_ein`, `a_bmf`}{The EIN each side matched, and the BMF
+#'     name behind the anchor's. Both EINs are populated on every row.}
+#'   \item{`a_status`, `b_status`}{The tier each side was assigned: `YES` on
+#'     every anchor and `MAYBE` on every candidate, which is what the pair is
+#'     drawn to be. Carried so that framing can be checked rather than assumed.}
+#'   \item{`a_score`, `b_score`, `a_pass`, `b_pass`, `a_pass_rank`,
+#'     `b_pass_rank`}{Score and winning pass for each side. The ranks grade the
+#'     pass by strength: 6 for an exact name + ZIP5 hit down to 1 for an
+#'     unblocked token sweep, and **0 for a pass the strength table does not
+#'     rank** — the stage-4 recovery passes, or no pass at all. 0 on 22 anchors
+#'     and 82 candidates, so a comparison of ranks must not read 0 as weakest.}
+#'   \item{`unit_evidence`}{How the two sides' suite identifiers stand:
+#'     `absent` (5,254), `one_sided` (121), `agree` (26) or `conflict` (9). A
+#'     tie-breaker, and deliberately not part of any flag count.}
 #'   \item{`a_grants`, `b_grants`}{Grant rows behind each identity.}
 #'   \item{`name_class`}{What separates the names: `identical normalized`,
 #'     `spacing or punctuation`, `leading THE`, `corporate suffix`,

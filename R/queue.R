@@ -83,7 +83,7 @@ pf_review_queue <- function(x, grants = NULL, tiers = "MAYBE",
   # cascade on "R<recipient_uid>" and keeps one row per identity, so a match
   # whose own grants frame carries recipient_uid cannot price an identity from
   # its own rows. Detected, so the caller is told rather than quietly misled.
-  deduped <- !is.null(x$grants$recipient_uid)
+  deduped <- !is.null(x$grants$recipient_uid) || !is.null(x$grants$recipient_id)
   if (deduped && is.null(grants))
     stop(paste0(
       "this match was built from deduped identities, so the amount on each row ",
@@ -102,7 +102,10 @@ pf_review_queue <- function(x, grants = NULL, tiers = "MAYBE",
     if (is.null(g$recipient_uid) && is.null(g$grant_id))
       stop("`grants` needs recipient_uid (from pf_prepare()) or grant_id.",
            call. = FALSE)
-    key <- if (!is.null(g$recipient_uid)) paste0("R", g$recipient_uid)
+    # recipient_id first: it is what pf_recipients() keys the cascade on, and
+    # R<recipient_uid> is a position that no longer agrees with it.
+    key <- if (!is.null(g$recipient_id)) as.character(g$recipient_id)
+           else if (!is.null(g$recipient_uid)) paste0("R", g$recipient_uid)
            else as.character(g$grant_id)
   }
   if (is.null(g[[amount_col]]))

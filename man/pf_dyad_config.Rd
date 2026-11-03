@@ -28,6 +28,11 @@ drops are reported by \code{\link[=pf_dyad_collapse]{pf_dyad_collapse()}}.}
 \code{"substitutable"} only; \code{c("substitutable", "related")} is available for
 measurement but see \link{pf_dyads} for why it should not be shipped.}
 
+\item{policy}{Which member to report when a dyad is collapsed: one of
+\code{"query"} (the default), \code{"operating"}, \code{"arm"} or \code{"top"}. See
+\emph{Which member a policy reports} below for what each one does and what it
+costs.}
+
 \item{keep_soft_veto}{Carry a soft veto from a merged-away member onto the
 surviving representative, so the grant stays in review. A soft veto is
 npmatch's "do not auto-accept this" signal, and \code{affiliate_suffix} is the
@@ -45,6 +50,29 @@ A list.
 \description{
 Dyad collapse settings
 }
+\section{Which member a policy reports}{
+
+\describe{
+\item{\code{"query"}}{\strong{Default.} Follow the grant record's own name: report
+the arm when the recorded recipient name carries a support marker, the
+operating entity when it does not. The funder wrote a name down, and it
+is evidence on \emph{every} case rather than on the 15 that were adjudicated.}
+\item{\code{"operating"}}{Always the non-arm member. This was the previous
+default and it \strong{contradicts the source document on 134 of the 155}
+collapsed grants whose recorded name carries a support marker (86\%) --
+reporting \verb{CRAIG HOSPITAL} for a grant written as \verb{CRAIG HOSPITAL FOUNDATION}.}
+\item{\code{"arm"}}{Always the support arm. The mirror error: it reports an arm
+on 41\% of grants whose recorded name has no marker at all.}
+\item{\code{"top"}}{Whatever the cascade ranked first. Promotes least, because
+it keeps the arm and inherits the \code{affiliate_suffix} soft veto -- see
+\emph{Why the policies differ}.}
+}
+
+On 15 adjudicated arm pairs the flat operating rule scored 60\% against the
+cascade's 27\%; that 60\% has a 32-84\% interval and is not settled.
+\code{pf_arm_order()} implements the purpose-conditional alternative.
+}
+
 \section{Why the policies differ}{
 
 On the 50k run, \code{operating} promotes 629 MAYBE grants to YES, \code{top} 388 and

@@ -37,6 +37,14 @@ NULL
 #'   run stamp matches this call**. A checkpoint written under different
 #'   settings is an error, not a cache hit; see *Checkpoints are stamped*.
 #' @param verbose Per-batch progress.
+#' @param check_reference How hard to insist that the reference is usable, from
+#'   [pf_check_reference()] and [pf_check_schema()]. `"auto"` (the default)
+#'   stops on a bundle stamped by a different normalizer, warns on an unstamped
+#'   one, and refuses the run outright when a pass blocks on a column the
+#'   reference does not have. `"stop"` and `"warn"` force the severity of the
+#'   stamp check; `"ignore"` skips both checks, which is what the per-batch
+#'   calls to [pf_match_grants()] pass, since this function has already run
+#'   them once for the whole run.
 #' @return A data frame: the concatenated per-identity [pf_status()] frames, with
 #'   a `batch` column. Timings are attached as `attr(, "timing")`.
 #'
@@ -81,6 +89,30 @@ pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
   pf_check_reference(ref, check_reference)
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   say <- function(...) if (verbose) cat(sprintf(...), "\n")
+  # pf_check_reference() above catches keys that MOVED. This catches keys that
+  # were never written, which is a different failure with no symptom: the pass
+  # blocks on a column that does not exist and returns nothing, and a pass that
+  # finds nothing looks exactly like a pass that had nothing to find.
+  #
+  # Run it on the reference AS IT ARRIVED -- before the recovery keys are built
+  # below -- so an incomplete saved bundle is reported rather than silently
+  # repaired. The normalizer row is dropped because pf_check_reference() has
+  # already acted on it, at the severity the caller chose.
+  if (!identical(check_reference, "ignore")) {
+    sch <- pf_check_schema(ref, passes = passes, recover = recover,
+                           strict = FALSE, verbose = FALSE)
+    bad <- sch[sch$status %in% c("WARN", "FAIL") &
+                 sch$check != "normalizer stamp", , drop = FALSE]
+    for (i in seq_len(nrow(bad)))
+      say("  schema %-5s %-18s %s", bad$status[i], bad$check[i], bad$detail[i])
+    f <- bad[bad$status == "FAIL", , drop = FALSE]
+    if (nrow(f))
+      stop("pf_run_batches(): the reference lacks columns these passes block ",
+           "on, so each would return no candidates: ",
+           paste(f$check, collapse = "; "),
+           ".\n  Run pf_check_schema(ref, passes) for the detail.",
+           call. = FALSE)
+  }
   n <- nrow(grants)
   idx <- split(seq_len(n), ceiling(seq_len(n) / batch_size))
   say("pf_run_batches: %s rows in %d batches of %s",
@@ -149,6 +181,14 @@ pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
   attr(res, "timing") <- timing
   attr(res, "n_batches") <- length(idx)
   attr(res, "n_failed") <- sum(!done)
+  # The stamp travels with the RESULT, not only with the checkpoints. The
+  # checkpoint directory is emptied or moved once a run finishes; what survives
+  # is the status frame, and that is what a draw, a grade or a benchmark reads
+  # months later, when the installed normalizer is no longer the one that
+  # produced it. Without this the normalizer is recoverable only from a
+  # checkpoint that may no longer exist, so a frame could not say what matched
+  # it -- the gap dev/ADJ-ROUND-STAGE1-20261103.log was written about.
+  attr(res, "pf_stamp") <- stamp
   res
 }
 #' Summarize a batched run
@@ -207,6 +247,24 @@ pf_batch_report <- function(status) {
     dyad_config = if (is.null(dyads)) NULL else dyad_config)
 }
 
+# Does a stamped setting still mean the same thing? identical() is the fast
+# path, but it is the wrong final answer here: a cached stamp has been through
+# saveRDS()/readRDS() while the one it is compared against is live, and
+# identical() distinguishes objects that differ only in internal
+# representation. The stamp exists to answer "would this call produce the same
+# output", which is a question about VALUES, so a difference identical() sees
+# and all.equal() does not is not a difference in settings.
+#
+# That is not hypothetical. R CMD check on ubuntu / R 4.6.2 refused a checkpoint
+# written seconds earlier in the same session, reporting `differs in: config`
+# over two np_config() lists whose printed heads were the same; on Windows /
+# R 4.5.3 the two serialize to identical bytes. all.equal() is value-based and
+# reports which component moved, so a real change in a threshold or a weight
+# still stops the resume and now says what it was.
+.pf_same_setting <- function(a, b) {
+  identical(a, b) || isTRUE(all.equal(a, b))
+}
+
 # Refuse a checkpoint that cannot be shown to belong to this run. Erring on the
 # side of stopping is deliberate: recomputing wastes time, reusing wrong output
 # produces a result that looks correct and is not.
@@ -218,9 +276,12 @@ pf_batch_report <- function(status) {
       "overwrite, or delete the directory."), basename(f)), call. = FALSE)
   if (identical(have, want)) return(invisible(TRUE))
   keys <- union(names(want), names(have))
-  bad  <- keys[!vapply(keys, function(k) identical(have[[k]], want[[k]]), logical(1))]
-  # name the offending setting AND its two values where they are small enough to
-  # print, because "the config changed" sends the reader back to guessing.
+  bad  <- keys[!vapply(keys, function(k) .pf_same_setting(have[[k]], want[[k]]),
+                       logical(1))]
+  if (!length(bad)) return(invisible(TRUE))
+  # name the offending setting AND what moved inside it, because "the config
+  # changed" sends the reader back to guessing. all.equal() reports the
+  # component; str() is the fallback for the keys it cannot summarise.
   detail <- vapply(bad, function(k) {
     one <- function(v) {
       if (is.null(v)) return("NULL")
@@ -230,7 +291,13 @@ pf_batch_report <- function(status) {
       s <- gsub("\\s+", " ", s)
       if (nchar(s) > 90) paste0(substr(s, 1, 87), "...") else s
     }
-    sprintf("    %-12s cached: %s\n    %-12s now:    %s", k, one(have[[k]]), "", one(want[[k]]))
+    ae <- tryCatch(all.equal(have[[k]], want[[k]]), error = function(e) NULL)
+    if (is.character(ae) && length(ae))
+      sprintf("    %-12s %s", k,
+              paste(utils::head(ae, 4L), collapse = sprintf("\n    %-12s ", "")))
+    else
+      sprintf("    %-12s cached: %s\n    %-12s now:    %s", k, one(have[[k]]),
+              "", one(want[[k]]))
   }, character(1))
   stop(sprintf(paste0(
     "%s was written under different settings and cannot be resumed.\n",

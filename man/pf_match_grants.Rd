@@ -32,6 +32,15 @@ before matching. Required by \code{\link[=pf_recovery_passes]{pf_recovery_passes
 it costs a pass over both frames, so it is \code{FALSE} by default.}
 
 \item{verbose}{Print the per-stage cascade report.}
+
+\item{check_reference}{How hard to insist that the reference is usable, from
+\code{\link[=pf_check_reference]{pf_check_reference()}} and \code{\link[=pf_check_schema]{pf_check_schema()}}. \code{"auto"} (the default)
+stops on a bundle stamped by a different normalizer and warns on an
+unstamped one, and in every mode but \code{"ignore"} refuses the call when a
+pass blocks on a column the reference does not have. Note that \code{recover}
+is \code{FALSE} here by default, so the stage-4 keys are not repaired in
+flight: with recovery passes in \code{passes} their absence is fatal rather
+than a warning.}
 }
 \value{
 A \code{pf_match} object: the \code{np_tiered} result plus the in-scope /

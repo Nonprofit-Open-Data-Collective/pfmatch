@@ -39,6 +39,17 @@ data-dev/*
 # key to these grant_ids, so losing the draw would orphan them, which puts it
 # in the same class as the audit samples above.
 !data-dev/ADJ-ROUND-STAGE1.csv
+# ... and the dealt shards. The case files and the EMPTY templates regenerate
+# from the draw plus dev/deal-round-stage1.R and seed 20261103; a FILLED
+# template is hand adjudication, which the header above says is the one thing
+# here that cannot be regenerated at any price, and it arrives by being written
+# into these same files. So they are tracked from the moment they are dealt
+# rather than from the moment someone remembers to add them. SHARD-KEY names
+# the blinded overlap and pf_read_truth() needs it to validate what comes back;
+# keeping it out of round-stage1/ is about what a labeler is handed, not about
+# what is in git.
+!data-dev/round-stage1
+!data-dev/round-stage1-key
 
 !data-dev/TRIANGULATION-GROUPS.csv
 !data-dev/TRIANGULATION-SAMPLE.csv

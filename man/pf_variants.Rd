@@ -5,7 +5,7 @@
 \alias{pf_variants}
 \title{Name and address variants that survive normalization}
 \format{
-A data frame with 5,410 rows and 57 columns. \verb{a_*} is the anchor —
+A data frame with 5,410 rows and 58 columns. \verb{a_*} is the anchor —
 the best-scoring \code{YES} rendering at the address. \verb{b_*} is the candidate
 that came back \code{MAYBE}.
 \describe{
@@ -23,11 +23,20 @@ filed, and as normalized.}
 \item{\code{a_unit}, \code{b_unit}, \code{a_city}, \code{b_city}, \code{a_state}, \code{b_state},
 \code{a_zip}, \code{b_zip}, \code{a_zip5}, \code{b_zip5}}{The rest of the address, filed and
 derived.}
-\item{\code{a_ein}, \code{a_bmf}}{The anchor's matched EIN and the BMF name behind
-it. \code{b_ein} is the candidate's own EIN where it has one.}
-\item{\code{a_score}, \code{b_score}, \code{a_pass}, \code{b_pass}}{Score and winning pass for
-each side. \code{a_pass_rank} and \code{b_pass_rank} grade the pass: 6 for an
-exact name + ZIP5 hit down to 1 for an unblocked token sweep.}
+\item{\code{a_ein}, \code{b_ein}, \code{a_bmf}}{The EIN each side matched, and the BMF
+name behind the anchor's. Both EINs are populated on every row.}
+\item{\code{a_status}, \code{b_status}}{The tier each side was assigned: \code{YES} on
+every anchor and \code{MAYBE} on every candidate, which is what the pair is
+drawn to be. Carried so that framing can be checked rather than assumed.}
+\item{\code{a_score}, \code{b_score}, \code{a_pass}, \code{b_pass}, \code{a_pass_rank},
+\code{b_pass_rank}}{Score and winning pass for each side. The ranks grade the
+pass by strength: 6 for an exact name + ZIP5 hit down to 1 for an
+unblocked token sweep, and \strong{0 for a pass the strength table does not
+rank} — the stage-4 recovery passes, or no pass at all. 0 on 22 anchors
+and 82 candidates, so a comparison of ranks must not read 0 as weakest.}
+\item{\code{unit_evidence}}{How the two sides' suite identifiers stand:
+\code{absent} (5,254), \code{one_sided} (121), \code{agree} (26) or \code{conflict} (9). A
+tie-breaker, and deliberately not part of any flag count.}
 \item{\code{a_grants}, \code{b_grants}}{Grant rows behind each identity.}
 \item{\code{name_class}}{What separates the names: \verb{identical normalized},
 \verb{spacing or punctuation}, \verb{leading THE}, \verb{corporate suffix},

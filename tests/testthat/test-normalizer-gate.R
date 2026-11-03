@@ -63,7 +63,15 @@ test_that("the declared floor is not behind the shipped fixture", {
   # releases back and satisfy the floor. It could not be caught transitively
   # either -- npmatch's released v0.1.1 does not import npnormalize at all --
   # and the gate above would have reported it as skips.
-  d <- read.dcf(testthat::test_path("..", "..", "DESCRIPTION"), fields = "Imports")[1, 1]
+  # Under R CMD check the tests run from <pkg>.Rcheck/tests, where
+  # test_path("..", "..") is the check directory and holds no DESCRIPTION at
+  # all -- so the source-tree path fails the whole file. The installed
+  # package's own DESCRIPTION is the better source anyway: it is what a fresh
+  # install declares, which is exactly what this test is about. devtools
+  # resolves system.file() into the source tree, so one path serves both.
+  f <- system.file("DESCRIPTION", package = "pfmatch")
+  if (!nzchar(f)) f <- testthat::test_path("..", "..", "DESCRIPTION")
+  d <- read.dcf(f, fields = "Imports")[1, 1]
   floor <- sub(".*npnormalize \\(>= ([0-9.]+)\\).*", "\\1", gsub("\n", " ", d))
   expect_match(floor, "^[0-9.]+$")
 

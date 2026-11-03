@@ -61,6 +61,14 @@ pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
 
   if (dedup == "none") {
     g$recipient_uid <- seq_len(nrow(g))
+    # Every row is its own identity here, so the identity id is the grant id --
+    # which pf_prepare_grants() takes from the file's own grant_id when it has
+    # one and otherwise numbers positionally. That fallback is the same hazard
+    # pf_identity_id() exists to remove, one level up; it is left alone because
+    # changing a grant-row key would silently invalidate the labels already
+    # written against it. Pass grants carrying a real key, or dedup.
+    g$recipient_id <- as.character(g$grant_id)
+    g$recipient_key <- NA_character_
     g$recipient_n <- 1L
     recips <- g[g$in_scope, , drop = FALSE]
   } else {

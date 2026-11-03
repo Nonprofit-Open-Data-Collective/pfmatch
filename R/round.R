@@ -13,6 +13,14 @@
 # function therefore refuses a `by` column it cannot see at draw time, and the
 # design compensates by staging the round instead.
 #
+# A POPULATION IS NOT A PROVENANCE. The fingerprint says which grant file the
+# ids mean something in. It says nothing about which normalizer produced the
+# tiers and passes the draw stratifies on, and those move: rematching the same
+# population under npnormalize 0.1.9 gave 23,340 MAYBE identities where 0.1.6
+# gave 24,107 (dev/ADJ-ROUND-STAGE1-20261103.log). A draw recording only the
+# population would therefore claim a reproducibility it does not have, so the
+# signature the frame was matched under is recorded beside it.
+
 # THE FRAME IS NOT ALWAYS A pf_match. Drawing §6b.3's frame against the runs on
 # disk (dev/ADJ-ROUND-STAGE1-20261102.log) found that the current production run
 # is serialized as `list(status, grants)` -- the identity-grain status frame and
@@ -21,6 +29,25 @@
 # that can be fingerprinted. Requiring a `pf_match` here would have sent the
 # round to a frame whose labels cannot be re-attached, so a status frame is a
 # first-class input.
+
+# Where a frame says what matched it. pf_run_batches() stamps the status frame
+# it returns, so a production run carries the signature inside the artifact.
+# A frame written before that stamp existed says nothing, and NA is then the
+# honest answer: reading the installed signature instead would assert that this
+# draw's tiers came from it, which is precisely the claim nobody could check.
+.pf_frame_normalizer <- function(x) {
+  ok <- function(v) {
+    v <- tryCatch(as.character(v), error = function(e) NULL)
+    if (length(v) != 1L || is.na(v) || !nzchar(v)) NULL else v
+  }
+  hit <- ok(attr(x, "pf_stamp")$normalizer)
+  if (is.null(hit) && is.list(x) && !is.data.frame(x)) {
+    hit <- ok(attr(x$status, "pf_stamp")$normalizer)
+    if (is.null(hit)) hit <- ok(attr(x$result, "pf_stamp")$normalizer)
+    if (is.null(hit)) hit <- ok(x$normalizer)
+  }
+  if (is.null(hit)) NA_character_ else hit
+}
 
 #' Draw a stratified labelling round
 #'
@@ -49,6 +76,43 @@
 #' run whose labels will be thrown away — the archived GT extracts have no
 #' `OBJECTID` and are the case it exists for.
 #'
+#' @section Why a population is not enough on its own:
+#' The population fingerprints the grant *file*, and a label also has to name
+#' an organisation within it. Identity ids used to be `R<k>` — positions among
+#' the deduplicated recipients — so they were local to the run: rebuilding one
+#' population after a normalizer change merged 682 duplicates and renumbered
+#' everything downstream, leaving the population identical
+#' (`cb3c78ff0f1a9546` both times) while `R10000` moved from `Childrens
+#' Guardian` to `CONGREGATION ATERES YESHAYA`. A label from the first run
+#' passed the population check against the second and attached to the wrong
+#' organisation.
+#'
+#' [pf_identity_id()] replaced that: an id is now a hash of the identity's own
+#' dedup key, so an id that matches names the same organisation by construction
+#' and one whose identity changed is **absent** rather than wrong. A frame still
+#' carries [pf_frame_id()] as `attr(, "frame_id")`, which fingerprints the whole
+#' id-to-name pairing — a cheap check that two artifacts are the same run, and
+#' the thing that catches a frame built before the ids were content-derived.
+#'
+#' @section Why the normalizer is recorded but not required:
+#' The population says which grant file these ids mean something in. It does
+#' not say which normalizer produced the `tier` and `pass` the draw stratifies
+#' on, and those move with it: rematching one population under npnormalize
+#' 0.1.9 gave 23,340 `MAYBE` identities where 0.1.6 gave 24,107, which is a
+#' different frame and so a different draw. The signature is therefore recorded
+#' as `attr(, "normalizer")`, taken from the run stamp [pf_run_batches()]
+#' leaves on the status frame.
+#'
+#' It is recorded rather than required because the two failures are not the
+#' same size. An unfingerprinted population makes the labels unattachable to
+#' any grant, so they are worthless -- hence a stop. An unstamped normalizer
+#' leaves the labels perfectly attachable; what it costs is the ability to show
+#' that this draw's strata could be redrawn, which is a weaker claim and a
+#' recoverable one. `NA` is reported where the frame predates stamping, and is
+#' never filled in from the installed signature: that would assert the frame
+#' was matched under whatever happens to be installed at draw time, which is
+#' the one thing it cannot be known to have been.
+#'
 #' @param x A `pf_match`, or a [pf_status()]-shaped data frame, or a list with
 #'   a `status` component holding one (how the production runs on disk are
 #'   serialized). From a status frame the case features are read off its own
@@ -75,10 +139,11 @@
 #' @param verbose Print the allocation.
 #' @return A data frame of one row per drawn case: `grant_id`, `stratum`,
 #'   `stage`, plus the `by` columns and anything from `extra`. Carries
-#'   `attr(, "population")`, `attr(, "seed")`, `attr(, "allocation")`,
-#'   `attr(, "frame_size")` and `attr(, "oversample")` — the last a frame of
-#'   `column`, `floor` and `realized`, which differ whenever one floor's draw
-#'   already satisfied another's.
+#'   `attr(, "population")`, `attr(, "frame_id")`, `attr(, "normalizer")`,
+#'   `attr(, "seed")`, `attr(, "allocation")`, `attr(, "frame_size")` and
+#'   `attr(, "oversample")` — the last a frame of `column`, `floor` and
+#'   `realized`, which differ whenever one floor's draw already satisfied
+#'   another's.
 #' @seealso [pf_grade_verdicts()] for scoring the round once it comes back.
 #' @examples
 #' \dontrun{
@@ -118,6 +183,17 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
   }
   if (is.null(st$grant_id) || is.null(st$status))
     stop("the status frame needs `grant_id` and `status` columns.", call. = FALSE)
+
+  # Read off `x` before any subsetting: `[`, `as.data.frame()` and the tier
+  # filter below all drop attributes they do not know about, so the stamp has
+  # to be taken from the object as it arrived.
+  nrm <- .pf_frame_normalizer(x)
+
+  # The identity numbering, which the population fingerprint does not cover:
+  # `R<k>` is positional among the deduplicated recipients, so a rebuild that
+  # merges duplicates renumbers everything after the first merge while the
+  # population stays identical. See pf_frame_id() for the measurement.
+  frm <- tryCatch(pf_frame_id(st), error = function(e) NA_character_)
 
   # --- the fingerprint, before anything is drawn -----------------------------
   pop <- if (is.null(gr)) NA_character_
@@ -284,6 +360,8 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
       row.names = NULL, stringsAsFactors = FALSE)
 
   attr(out, "population") <- pop
+  attr(out, "frame_id")   <- frm
+  attr(out, "normalizer") <- nrm
   attr(out, "seed")       <- seed
   attr(out, "frame_size") <- nrow(fr)
   attr(out, "allocation") <- table(out$stratum)
@@ -302,6 +380,14 @@ pf_round_sample <- function(x, n = 1000L, tiers = "MAYBE",
       .pf_say(verbose, "  population UNFINGERPRINTED: a dry run, these labels cannot be re-attached")
     else
       .pf_say(verbose, "  population %s -- pf_grade_verdicts() will enforce it", pop)
+    if (is.na(nrm))
+      .pf_say(verbose, "  normalizer UNSTAMPED: the frame does not record what matched it, so")
+    if (is.na(nrm))
+      .pf_say(verbose, "    these strata cannot be shown to be redrawable")
+    else
+      .pf_say(verbose, "  normalizer %s -- the signature the frame was matched under", nrm)
+    if (!is.na(frm))
+      .pf_say(verbose, "  frame %s -- fingerprints this run's id-to-name pairing", frm)
     .pf_say(verbose, "  confidence and evidence class are NOT stratifiable: the reviewer")
     .pf_say(verbose, "  assigns them, so stage this round (PREREQS 6b.1c)")
   }

@@ -4,9 +4,19 @@
 # produces output nothing distinguishes from a real run
 # (dev/REFIT-1K-FINDINGS.md 3a).
 
+# Complete enough to be matched against: pf_run_batches() now refuses a
+# reference that is missing a column its passes block on, and a stub that could
+# not survive the cascade is the wrong fixture for testing the cascade's driver.
 fake_ref <- function(n = 3L) list(
   reference = data.frame(ein = sprintf("%09d", seq_len(n)),
                          name_key = letters[seq_len(n)],
+                         dba_key = letters[seq_len(n)],
+                         street_key = letters[seq_len(n)],
+                         zip5 = sprintf("%05d", seq_len(n)),
+                         state = rep("NY", n),
+                         name_acro = letters[seq_len(n)],
+                         name_pre = letters[seq_len(n)],
+                         name_is_acro = rep(FALSE, n),
                          stringsAsFactors = FALSE),
   # Stamped so pf_check_reference() stays quiet: these tests are about
   # checkpoint reuse, and an unstamped bundle would warn on every one of them.
@@ -49,7 +59,10 @@ test_that("every setting that changes the answer changes the stamp", {
 })
 
 test_that("a reference gaining a column stamps differently", {
-  r <- fake_ref(); r2 <- r; r2$reference$name_acro <- "x"
+  # not name_acro, which the fixture now carries: a reference missing the
+  # recovery keys no longer reaches a stamp at all, because pf_run_batches()
+  # either rebuilds them (and stamps after, deliberately) or refuses the run
+  r <- fake_ref(); r2 <- r; r2$reference$street_unit_id <- "x"
   expect_false(identical(mk(ref = r), mk(ref = r2)))
 })
 
@@ -187,4 +200,43 @@ test_that("a missing key column is an error, not a silent no-op", {
   expect_error(pf_collapse_reference(toy_ref(), by = c("name_key", "nope"),
                                      rebuild = FALSE, verbose = FALSE),
                "no column")
+})
+
+## Settings compared by value, not by representation -------------------------
+# A cached stamp has been through saveRDS()/readRDS(); the one it is checked
+# against is live. identical() separates objects that differ only in internal
+# representation, and R CMD check on ubuntu / R 4.6.2 refused a checkpoint
+# written seconds earlier in the same session over exactly that.
+
+test_that("a setting equal in value but not identical is accepted", {
+  expect_false(identical(1L, 1))
+  expect_true(pfmatch:::.pf_same_setting(1L, 1))
+  expect_true(pfmatch:::.pf_same_setting(npmatch::np_config(),
+                                         npmatch::np_config()))
+})
+
+test_that("a setting that really moved is still refused, and named", {
+  expect_false(pfmatch:::.pf_same_setting(
+    npmatch::np_config(),
+    npmatch::np_config(thresholds = c(yes = 0.80, maybe = 0.60))))
+  # names are part of the value, not representation
+  expect_false(pfmatch:::.pf_same_setting(c(yes = 0.78), c(0.78)))
+  expect_false(pfmatch:::.pf_same_setting("name", "score"))
+})
+
+test_that("a changed threshold stops a resume and says which component moved", {
+  dir <- file.path(tempdir(), "pf-config-moved")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  write_ckpt(dir, mk())
+  err <- tryCatch(
+    pf_run_batches(data.frame(x = 1), fake_ref(), dir = dir, batch_size = 10L,
+                   passes = pf_staged_passes("lean"),
+                   config = npmatch::np_config(thresholds = c(yes = 0.80,
+                                                              maybe = 0.60)),
+                   verbose = FALSE),
+    error = function(e) conditionMessage(e))
+  expect_match(err, "different settings")
+  expect_match(err, "differs in: config")
+  # all.equal names the component rather than printing two truncated str()s
+  expect_match(err, "thresholds")
 })

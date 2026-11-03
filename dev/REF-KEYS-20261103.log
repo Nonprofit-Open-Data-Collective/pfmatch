@@ -1,0 +1,36 @@
+==============================================================================
+complete-reference-keys   2026-11-03 09:33:34
+==============================================================================
+npnormalize 0.1.9, npmatch 0.1.1.9000
+
+reading data-dev/REF-augmented.rds (2.66 GB) ...
+  3,880,431 rows, 38 reference columns, read in 1.1 min
+  bundle stamp : v1-5e901add4a04a5d6
+  installed    : v1-5e901add4a04a5d6
+
+adding name_acro, name_pre, name_is_acro ...
+  done in 2.2 min, 41 reference columns now
+writing data-dev/REF-augmented-COMPLETING.rds ...
+  2.90 GB in 0.4 min
+
+==============================================================================
+VERIFY (re-read from disk)
+==============================================================================
+re-read in 0.6 min
+  PASS  rows unchanged             3,880,431
+  PASS  stamp unchanged            v1-5e901add4a04a5d6
+  PASS  recovery keys present      name_acro, name_pre, name_is_acro
+  PASS  companions present         name_freq, token_idf, ref_index
+  PASS  recomputes: name_acro      100,000 rows sampled
+  PASS  recomputes: name_pre       100,000 rows sampled
+  PASS  recomputes: name_is_acro   100,000 rows sampled
+  PASS  pf_check_reference         accepted
+  PASS  pf_check_schema            11 passes, 0 FAIL, 0 WARN
+
+==============================================================================
+SWAP
+==============================================================================
+data-dev/REF-augmented.rds is now the completed bundle, 2.90 GB
+
+done in 4.6 min
+

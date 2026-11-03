@@ -48,6 +48,15 @@ run stamp matches this call}. A checkpoint written under different
 settings is an error, not a cache hit; see \emph{Checkpoints are stamped}.}
 
 \item{verbose}{Per-batch progress.}
+
+\item{check_reference}{How hard to insist that the reference is usable, from
+\code{\link[=pf_check_reference]{pf_check_reference()}} and \code{\link[=pf_check_schema]{pf_check_schema()}}. \code{"auto"} (the default)
+stops on a bundle stamped by a different normalizer, warns on an unstamped
+one, and refuses the run outright when a pass blocks on a column the
+reference does not have. \code{"stop"} and \code{"warn"} force the severity of the
+stamp check; \code{"ignore"} skips both checks, which is what the per-batch
+calls to \code{\link[=pf_match_grants]{pf_match_grants()}} pass, since this function has already run
+them once for the whole run.}
 }
 \value{
 A data frame: the concatenated per-identity \code{\link[=pf_status]{pf_status()}} frames, with
