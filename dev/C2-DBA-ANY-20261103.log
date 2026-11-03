@@ -14,11 +14,31 @@ here because each looked like an answer: see WHAT I GOT WRONG at the end.
 1. FIRST, A CORRECTION TO HOW THE REBUILD WAS FRAMED
 --------------------------------------------------------------------------------
 dev/ADJ-ROUND-STAGE1-20261103.log says the rebuild ran "under npnormalize 0.1.9
-... so only the match differs". True but misleading: the two runs differ in
-npnormalize AND npmatch AND the reference layout. The Oct-25 build log has no
-"built stage-4 reference keys once" line, and the Oct-25 reference carried 41
-columns against the current 38 (recovery keys pre-baked vs built at run time).
-Nothing here is attributable to the normalizer, and nothing below is.
+... so only the match differs". That is wrong, and so was this section's first
+attempt at correcting it, which said the reference layout differed because
+"the Oct-25 reference carried 41 columns against the current 38". It did not:
+41 is the Nov-3 stamp's own count (38 on disk plus the 3 recovery keys added in
+flight), so that was one reference counted at two moments of the SAME run. See
+dev/COMPARABILITY-PLAN.md section 2.
+
+What is true, read today:
+
+  * The Oct-25 artifact carries NO run stamp at all -- no normalizer, no
+    reference, no config. Nothing about that run can be compared to anything.
+  * It matched against the bundle built 2026-08-21 under v1-6dcb298522cc5118,
+    pre-split npmatch. dev/REF-REBUILD.log said so at the time: "the
+    triangulation run (population cb3c78ff0f1a9546) [was] matched against the
+    old bundle ... a rerun will not reproduce [it]".
+  * np_signature_history() puts EIGHT signatures between the two runs, ending
+    at v1-5e901add4a04a5d6 (npnormalize 0.1.8).
+  * Direct evidence that the keys moved: identical input both runs (596,539
+    grant rows, population cb3c78ff0f1a9546), yet 91,690 identities in October
+    against 91,008 in November. The dedup key is name_key plus street_key, so
+    only the normalizer can do that.
+
+So the normalizer DID move, and this log's earlier claim that nothing was
+attributable to it is withdrawn. Sections 2 and 3 are measured on the current
+frame alone and do not depend on it.
 
 --------------------------------------------------------------------------------
 2. THE CURRENT STATE, MEASURED
@@ -117,6 +137,23 @@ rescored with distinct_name_main_only = FALSE, which was not done.
 
 Not knowing the trigger does not weaken sections 2 and 3: what the pass finds,
 and that it cannot clear the floor on 457 of 458, are measured directly.
+
+ADDED 2026-11-03, after section 1 was corrected: there is now a mechanism worth
+testing, which there was not when this was written. `promote` requires
+name_freq <= distinct_name_maxfreq (3) -- the normalized PRIMARY name must be
+rare in the reference. Folding spellings together makes names LESS rare, and
+the distinct-name count has fallen at every rebuild:
+
+  2,797,423   Aug-21 bundle, the one the Oct-25 run matched against
+  2,797,111   Oct-26 rebuild   (dev/REF-REBUILD.log)
+  2,796,717   Nov-2 rebuild, current (dev/REF-REBUILD-20261103.log)
+
+npnormalize 0.1.7 folding eleven spellings of FOUNDATION is exactly the shape
+of change that moves a name from name_freq 3 to 4 and withdraws the promotion.
+This is a better candidate than on_primary, because unlike
+distinct_name_main_only it dates from the window in question. Still untested:
+it needs the retained pairs rescored, or name_freq read for the 1,384 names
+against both bundles.
 
 --------------------------------------------------------------------------------
 5. WHERE THE AFFECTED ORGANISATIONS WENT
@@ -218,3 +255,11 @@ d) A first attempt at section 5 joined the two runs on grant_id and produced
    "6 of 400 cases in common" and "182 of the old 400 are now YES" -- both base
    rates, because the ids are positions in two different runs. See
    pfmatch-identity-ids.
+
+e) "The two runs differ in the reference layout: 41 columns against 38." Both
+   numbers are the Nov-3 run's -- 38 as saved, 41 as matched after
+   pf_run_batches() adds the three recovery keys. A within-run difference was
+   reported as a between-run one, in the very section written to correct
+   somebody else's framing. The real between-run difference is that the Oct-25
+   run recorded nothing at all; see section 1 as it now stands.
+
