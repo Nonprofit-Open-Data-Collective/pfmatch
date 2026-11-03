@@ -405,7 +405,25 @@ pf_match_grants <- function(grants, ref, config = npmatch::np_config(),
                             recover = FALSE, verbose = TRUE,
                             check_reference = c("auto", "stop", "warn", "ignore")) {
   stopifnot(!is.null(grants$in_scope), !is.null(grants$grant_id))
-  pf_check_reference(ref, match.arg(check_reference))
+  check_reference <- match.arg(check_reference)
+  pf_check_reference(ref, check_reference)
+  # A pass that blocks on a column the reference does not have returns nothing
+  # and says nothing. Note that `recover` is FALSE by default here, so the
+  # stage-4 keys are NOT repaired in flight unless asked for: with recovery
+  # passes in `passes` and recover = FALSE, their absence is fatal rather than
+  # a warning. pf_run_batches() passes check_reference = "ignore" because it
+  # has already run this once for the whole run.
+  if (!identical(check_reference, "ignore")) {
+    sch <- pf_check_schema(ref, passes = passes, recover = recover,
+                           strict = FALSE, verbose = FALSE)
+    f <- sch[sch$status == "FAIL" & sch$check != "normalizer stamp", , drop = FALSE]
+    if (nrow(f))
+      stop("pf_match_grants(): the reference lacks columns these passes block ",
+           "on, so each would return no candidates: ",
+           paste(f$check, collapse = "; "),
+           ".\n  Run pf_check_schema(ref, passes) for the detail.",
+           call. = FALSE)
+  }
   bundle <- if (is.list(ref) && !is.null(ref$reference)) ref
             else list(reference = ref, name_freq = NULL, token_idf = NULL,
                       ref_index = NULL)

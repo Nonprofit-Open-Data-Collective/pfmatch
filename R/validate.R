@@ -180,3 +180,211 @@ pf_validate_grants <- function(grants, strict = FALSE, verbose = TRUE) {
          paste(fails$check, collapse = "; "), call. = FALSE)
   invisible(out)
 }
+
+# ============================================================================
+# Does this frame carry the columns the cascade is about to block on?
+#
+# pf_check_reference() refuses a reference whose normalizer disagrees with the
+# installed one, which catches keys that MOVED. It says nothing about keys that
+# are ABSENT, and from the outside the two failures look nothing alike: a moved
+# key stops matching, a missing key stops the pass.
+#
+# That gap cost a run. REF-augmented.rds was rebuilt on 2026-11-02 by a script
+# that called pf_build_reference() and saveRDS() directly rather than going
+# through pf_reference(), which adds the stage-4 recovery keys on the line
+# before it saves. The bundle lost name_acro, name_pre and name_is_acro and
+# nothing said so: pf_run_batches() rebuilt them in flight and charged the run
+# 197.5 s (dev/REF-REBUILD-20261103.log). Any caller that reads that bundle
+# WITHOUT going through pf_run_batches() or pf_match_grants(recover = TRUE)
+# blocks D1-acronym and D2-prefix on columns that are not there, and gets an
+# empty pass rather than an error.
+#
+# The required columns are read out of the pass specifications themselves, not
+# from a list maintained by hand here, so a pass cannot be added without this
+# check learning what it blocks on.
+# ============================================================================
+
+# Which columns does each pass block on, for one side of the join? `by` is
+# shared, so it counts on both sides. A token pass blocks on its `token_col`,
+# which defaults to `name_key` because that is np_block()'s own default.
+.pf_pass_columns <- function(passes, side = c("y", "x")) {
+  side <- match.arg(side)
+  nm <- vapply(passes, function(p) as.character(p$name %||% "")[1], character(1))
+  out <- lapply(passes, function(p) {
+    a <- if (is.list(p$args)) p$args else list()
+    cols <- c(a$by, if (identical(side, "x")) a$by_x else a$by_y)
+    if (isTRUE(a$token)) cols <- c(cols, a$token_col %||% "name_key")
+    cols <- as.character(unique(cols))
+    cols[!is.na(cols) & nzchar(cols)]
+  })
+  names(out) <- nm
+  out
+}
+
+# The only reference columns a run can supply for itself: pf_add_recovery_keys()
+# derives all three from name_key. That is why their absence is a warning when
+# the run is going to call it anyway, and a failure when it is not.
+.pf_derivable_cols <- function() c("name_acro", "name_pre", "name_is_acro")
+
+# Name the release a signature belongs to rather than printing a bare hash. A
+# hash is a good fingerprint and a poor label, and npnormalize 0.1.9 can date
+# one. Degrades to the hash alone wherever it cannot.
+.pf_sig_label <- function(sig) {
+  sig <- as.character(sig)[1]
+  if (is.na(sig) || !nzchar(sig)) return("(none recorded)")
+  h <- tryCatch(npnormalize::np_signature_history(sig), error = function(e) NULL)
+  if (!is.data.frame(h) || !nrow(h)) return(sig)
+  v <- as.character(h$version[1])
+  if (is.na(v) || !nzchar(v))
+    sprintf("%s (%s, version not recorded)", sig, as.character(h$package[1]))
+  else sprintf("%s (%s %s)", sig, as.character(h$package[1]), v)
+}
+
+#' Check a frame against the columns its passes block on
+#'
+#' Reports, one row per check, whether a reference bundle or a query frame
+#' carries every column the given cascade passes need -- and for a bundle, also
+#' whether it is stamped with the installed normalizer and whether it ships the
+#' precomputed companions ([npmatch::np_cascade()] recomputes those on every
+#' call when they are absent).
+#'
+#' @section Why absence is not the same failure as drift:
+#' [pf_check_reference()] compares the bundle's `np_normalize_signature()` to
+#' the installed one, which catches keys that moved under a reference built
+#' earlier. A column that was never written is invisible to that check, and the
+#' symptom is different in kind: the pass blocks on a column that does not
+#' exist, produces no candidates, and the cascade carries on. A pass that finds
+#' nothing is indistinguishable from a pass that had nothing to find.
+#'
+#' @section Severity:
+#' `name_acro`, `name_pre` and `name_is_acro` are derived from `name_key` by
+#' [pf_add_recovery_keys()], so a run that is going to call it can repair them
+#' itself: absent, they are a `WARN` saying the saved bundle is incomplete.
+#' With `recover = FALSE` nothing will repair them and the same absence is a
+#' `FAIL`. Every other column comes out of normalization and cannot be rebuilt
+#' here, so its absence is always a `FAIL`.
+#'
+#' A frame with no `name_key` has not been normalized at all, which is not a
+#' defect: [npmatch::np_cascade()] normalizes a reference whose `name_key` is
+#' `NULL`, and normalizes the query on every call. Such a frame gets one `WARN`
+#' saying its blocking columns could not be checked, and the per-pass rows are
+#' skipped rather than reported as failures.
+#'
+#' @param x A reference bundle (a list with a `reference` element), a reference
+#'   frame, or a query frame.
+#' @param passes Pass specifications, as [pf_staged_passes()] and
+#'   [pf_recovery_passes()] return them. The default is the cascade
+#'   [pf_run_batches()] runs.
+#' @param side Which side of the join `x` is. `"auto"` reads a bundle as the
+#'   reference side and a bare frame as the query side.
+#' @param recover Will the caller add the recovery keys itself? See Severity.
+#' @param strict When `TRUE`, any `FAIL` raises an error instead of returning.
+#' @param verbose Print the report.
+#' @return A `data.frame` with columns `check`, `status`
+#'   (`PASS` / `WARN` / `FAIL` / `INFO`) and `detail`, invisibly.
+#' @seealso [pf_check_reference()] for the normalizer stamp,
+#'   [pf_validate_grants()] for the grant file.
+#' @export
+pf_check_schema <- function(x, passes = c(pf_staged_passes("lean"),
+                                          pf_recovery_passes(state = TRUE)),
+                            side = c("auto", "reference", "query"),
+                            recover = TRUE, strict = FALSE, verbose = TRUE) {
+  side <- match.arg(side)
+  bundle <- is.list(x) && !is.data.frame(x) && !is.null(x$reference)
+  if (identical(side, "auto")) side <- if (bundle) "reference" else "query"
+  d <- if (bundle) x$reference else x
+  if (is.null(d) || !length(names(d)))
+    stop("pf_check_schema(): `x` has no columns to check.", call. = FALSE)
+  have <- names(d)
+
+  res <- list()
+  add <- function(check, status, detail)
+    res[[length(res) + 1L]] <<- data.frame(check = check, status = status,
+                                           detail = detail,
+                                           stringsAsFactors = FALSE)
+  fmt <- function(v) format(v, big.mark = ",")
+
+  add("side", "INFO", side)
+  add("rows", "INFO", fmt(nrow(d)))
+  add("columns", "INFO", fmt(length(have)))
+
+  if (bundle) {
+    sig  <- .pf_ref_signature(x)
+    live <- tryCatch(npmatch::np_normalize_signature(),
+                     error = function(e) NA_character_)
+    add("normalizer stamp",
+        if (is.null(sig)) "WARN"
+        else if (identical(as.character(sig)[1], live)) "PASS" else "FAIL",
+        if (is.null(sig))
+          "absent -- the bundle cannot be shown to match the installed normalizer"
+        else if (identical(as.character(sig)[1], live)) .pf_sig_label(sig)
+        else paste0("bundle ", .pf_sig_label(sig), ", installed ",
+                    .pf_sig_label(live)))
+    # Absent, each of these is recomputed by np_cascade() on EVERY call -- the
+    # reason a bundle carries them at all is that the whole reference has to be
+    # read to build one.
+    for (el in c("name_freq", "token_idf", "ref_index"))
+      add(paste("bundle", el), if (is.null(x[[el]])) "WARN" else "PASS",
+          if (is.null(x[[el]]))
+            "absent -- np_cascade() will recompute it on every call"
+          else "present")
+    tc <- x$ref_index$token_col
+    if (!is.null(tc)) add("ref_index token_col", "INFO", as.character(tc)[1])
+  }
+
+  # An un-normalized frame has none of the keys yet and that is not a defect:
+  # np_cascade() normalizes a reference whose name_key is NULL, and normalizes
+  # the query every time. `is.null(name_key)` is npmatch's own test for it
+  # (npmatch R/cascade.R), so it is the one used here. Checking blocking columns
+  # against such a frame would report every pass as broken, so the per-pass
+  # check is skipped and said to be skipped.
+  if (!("name_key" %in% have)) {
+    add("normalized", "WARN",
+        paste0("no name_key -- np_cascade() will normalize this frame at run ",
+               "time, so its blocking columns cannot be checked here"))
+  } else {
+    need <- .pf_pass_columns(passes,
+                             side = if (identical(side, "query")) "x" else "y")
+    derivable <- .pf_derivable_cols()
+    for (i in seq_along(need)) {
+      cols <- need[[i]]
+      nm <- names(need)[i]
+      if (!nzchar(nm)) nm <- sprintf("pass %d", i)
+      if (!length(cols)) {
+        add(nm, "INFO", "blocks on no named column")
+        next
+      }
+      miss <- setdiff(cols, have)
+      if (!length(miss)) {
+        add(nm, "PASS", paste(cols, collapse = ", "))
+        next
+      }
+      only_derived <- all(miss %in% derivable)
+      add(nm, if (only_derived && isTRUE(recover)) "WARN" else "FAIL",
+          if (only_derived && isTRUE(recover))
+            paste0(paste(miss, collapse = ", "),
+                   " absent -- pf_add_recovery_keys() will rebuild it in flight;",
+                   " the saved bundle is incomplete")
+          else paste0(paste(miss, collapse = ", "), " absent",
+                      if (only_derived) " and recover = FALSE" else "",
+                      " -- this pass would return no candidates"))
+    }
+  }
+
+  out <- do.call(rbind, res)
+  if (verbose) {
+    message(strrep("-", 76))
+    message("pf_check_schema")
+    message(strrep("-", 76))
+    for (i in seq_len(nrow(out)))
+      message(sprintf("  %-5s %-22s %s", out$status[i], out$check[i], out$detail[i]))
+    message(strrep("-", 76))
+    message(sprintf("  %d FAIL | %d WARN", sum(out$status == "FAIL"),
+                    sum(out$status == "WARN")))
+  }
+  fails <- out[out$status == "FAIL", , drop = FALSE]
+  if (isTRUE(strict) && nrow(fails))
+    stop("pf_check_schema() found ", nrow(fails), " failure(s): ",
+         paste(fails$check, collapse = "; "), call. = FALSE)
+  invisible(out)
+}

@@ -4,9 +4,19 @@
 # produces output nothing distinguishes from a real run
 # (dev/REFIT-1K-FINDINGS.md 3a).
 
+# Complete enough to be matched against: pf_run_batches() now refuses a
+# reference that is missing a column its passes block on, and a stub that could
+# not survive the cascade is the wrong fixture for testing the cascade's driver.
 fake_ref <- function(n = 3L) list(
   reference = data.frame(ein = sprintf("%09d", seq_len(n)),
                          name_key = letters[seq_len(n)],
+                         dba_key = letters[seq_len(n)],
+                         street_key = letters[seq_len(n)],
+                         zip5 = sprintf("%05d", seq_len(n)),
+                         state = rep("NY", n),
+                         name_acro = letters[seq_len(n)],
+                         name_pre = letters[seq_len(n)],
+                         name_is_acro = rep(FALSE, n),
                          stringsAsFactors = FALSE),
   # Stamped so pf_check_reference() stays quiet: these tests are about
   # checkpoint reuse, and an unstamped bundle would warn on every one of them.
@@ -49,7 +59,10 @@ test_that("every setting that changes the answer changes the stamp", {
 })
 
 test_that("a reference gaining a column stamps differently", {
-  r <- fake_ref(); r2 <- r; r2$reference$name_acro <- "x"
+  # not name_acro, which the fixture now carries: a reference missing the
+  # recovery keys no longer reaches a stamp at all, because pf_run_batches()
+  # either rebuilds them (and stamps after, deliberately) or refuses the run
+  r <- fake_ref(); r2 <- r; r2$reference$street_unit_id <- "x"
   expect_false(identical(mk(ref = r), mk(ref = r2)))
 })
 

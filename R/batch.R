@@ -81,6 +81,30 @@ pf_run_batches <- function(grants, ref, dir = "data-dev/batches",
   pf_check_reference(ref, check_reference)
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   say <- function(...) if (verbose) cat(sprintf(...), "\n")
+  # pf_check_reference() above catches keys that MOVED. This catches keys that
+  # were never written, which is a different failure with no symptom: the pass
+  # blocks on a column that does not exist and returns nothing, and a pass that
+  # finds nothing looks exactly like a pass that had nothing to find.
+  #
+  # Run it on the reference AS IT ARRIVED -- before the recovery keys are built
+  # below -- so an incomplete saved bundle is reported rather than silently
+  # repaired. The normalizer row is dropped because pf_check_reference() has
+  # already acted on it, at the severity the caller chose.
+  if (!identical(check_reference, "ignore")) {
+    sch <- pf_check_schema(ref, passes = passes, recover = recover,
+                           strict = FALSE, verbose = FALSE)
+    bad <- sch[sch$status %in% c("WARN", "FAIL") &
+                 sch$check != "normalizer stamp", , drop = FALSE]
+    for (i in seq_len(nrow(bad)))
+      say("  schema %-5s %-18s %s", bad$status[i], bad$check[i], bad$detail[i])
+    f <- bad[bad$status == "FAIL", , drop = FALSE]
+    if (nrow(f))
+      stop("pf_run_batches(): the reference lacks columns these passes block ",
+           "on, so each would return no candidates: ",
+           paste(f$check, collapse = "; "),
+           ".\n  Run pf_check_schema(ref, passes) for the detail.",
+           call. = FALSE)
+  }
   n <- nrow(grants)
   idx <- split(seq_len(n), ceiling(seq_len(n) / batch_size))
   say("pf_run_batches: %s rows in %d batches of %s",
