@@ -50,6 +50,20 @@ data-dev/*
 # what is in git.
 !data-dev/round-stage1
 !data-dev/round-stage1-key
+# ... and two files of the superseded k=8 deal, which is otherwise worthless --
+# its templates were empty and the cases regenerate. The key is the only record
+# of the overlap imbalance that pf_truth_shards() now deals around (7 and 15
+# cases on two labelers against an expectation of 10), and that figure is cited
+# in R/shards.R, its roxygen and ADJUDICATION-PREREQS.md 6b.6. The deal is NOT
+# reproducible from its seed any more -- the overlap is dealt rather than
+# sampled now -- so without this file those three citations point at nothing,
+# which is the defect dev/FIGURE-PROVENANCE.md exists to catch.
+# Re-include the directory first, then re-exclude its contents: the header
+# above says git cannot re-include a file whose parent is excluded.
+!data-dev/round-stage1-k8-superseded
+data-dev/round-stage1-k8-superseded/*
+!data-dev/round-stage1-k8-superseded/SHARD-KEY.csv
+!data-dev/round-stage1-k8-superseded/README.md
 
 !data-dev/TRIANGULATION-GROUPS.csv
 !data-dev/TRIANGULATION-SAMPLE.csv

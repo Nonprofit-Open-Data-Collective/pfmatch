@@ -353,8 +353,9 @@ comparison whose arms cover different cases, so the design is enforced in code.
 ### 6b.4 Status
 
 Built and merged: the grading harness (§6a), which makes every cut above a
-function call. Designed here. **Stage 1 is drawn** — §6b.5 — and **not
-labelled**, which is the step no code performs.
+function call. Designed here. **Stage 1 is drawn** — §6b.5 — and **dealt to
+five named labelers** — §6b.6 — and **not labelled**, which is the step no
+code performs. The shard files are stamped and ready to hand out.
 
 ### 6b.5 Drawn, 2026-11-02 — and what the real frame changed
 
@@ -399,6 +400,100 @@ for the tier estimate and for reading the confidence and class distribution —
 with floors set from what stage 1 shows. Separately, the MAYBE tier holds
 **11** `A4-dba-name` identities and **3** `D2-prefix` identities in total: no
 round size buys a per-pass claim for either.
+
+### 6b.6 Dealt, and re-dealt — 2026-11-03
+
+`dev/ADJ-ROUND-STAGE1-DEAL-20261103.log` dealt the 400 cases to eight
+labelers; `dev/ADJ-ROUND-STAGE1-REDEAL-20261103.log` re-dealt them to five.
+The **draw did not change** — same 400 cases, same population
+`cb3c78ff0f1a9546`, same `frame_id` `89a2a597ed0ea128`, same normalizer
+`v1-5e901add4a04a5d6`. What changed is how many labelers work it and how the
+blinded overlap reaches them.
+
+**(a) The first deal could not answer the question the overlap exists for.**
+k=8 at overlap 0.10 put **7, 15, 11, 10, 12, 10, 9 and 6** overlap cases on
+the eight labelers, against an expectation of 10 and against
+`pf_labeler_agreement()`'s `min_n` of 20. Every per-labeler cell would have
+come back `usable = FALSE`, leaving only the pooled rate — n=40, ±11 points —
+which is exactly where a single bad labeler is invisible. The per-labeler
+figure is the one `R/shards.R`'s own header says the overlap is *for*, so the
+round would have spent 440 labels and not bought it.
+
+**(b) That was chance, not sample size.** The *primary* deal was already
+round-robin within stratum and landed within one case of even. The overlap was
+not dealt at all: the cases were a uniform sample of the frame and each second
+shard a uniform draw from the other seven. Balanced in expectation, not
+balanced. `pf_truth_shards()` now deals both halves — each shard gives up its
+own share of the overlap cases, and the second copies travel on a rotation of
+*lags* rather than a coin flip — so every shard gives and receives the same
+number, exactly when `k` divides the overlap.
+
+**(c) The round is now k=5 at overlap 0.15,** and the balance is exact rather
+than approximate: 92 cases per labeler, 460 label-rows for 400 cases,
+**24 overlap cases on every one of the five**, and all ten labeler pairs
+represented at six cases each — so the agreement figure is about the round and
+not about one pair. The cost of the change is **60 extra labels**, 15% on top
+of the 400.
+
+*What 24 buys, stated so nobody reads more into it later:* it clears `min_n`,
+so the per-labeler cut exists. It detects a **gross** outlier — a labeler at
+0.40 against a pool at 0.85 separates at this n — and not a subtle one.
+§6b.2's table puts separating a 25-point degradation at n ≥ 75, which would
+need 600 overlap rows on a 400-case round: no stage-1 deal buys it at five
+labelers. `by_labeler` is a screen, not a quality claim.
+
+**(d) Five labelers, all models — so the accuracy slice is still missing, and
+deliberately so.** `TRUTH-LABELING-PROTOCOL.md` §6 step 4 is unchanged: until
+a hand-labelled slice is scored against the labelers with
+`pf_grade_verdicts()`, this round reports **agreement**, and the truth set has
+an unknown error rate. Choosing five model shards defers that step rather than
+removing it.
+
+**(e) Two defects the redeal exposed, both now fixed and tested.**
+`pf_write_shards()` wrote k=5 over the k=8 directory, overwrote shards 1–5 and
+left `shard-06` through `shard-08` in it — files indistinguishable from work to
+hand out, whose rows `pf_read_truth()` refuses only *after* a labeler has done
+them. It now removes them and reports the removal. Separately, `sample(x)` on
+a length-one `x` permutes `seq_len(x)` rather than `x`, and the first balanced
+draft recycled one case into three shards because of it.
+
+**(f) The roster, and the check that was documented but absent.** The five
+labelers are `claude-fable-5-1/truth-01` through `-05` — five instances of one
+truth-producing procedure, **not** of either graded arm's model. The arms this
+round grades are `claude-haiku-5-5` (light) and `claude-opus-5-5` (deep);
+truth on `claude-opus-5-5` would grade the deep arm partly against its own
+model, and the shared blind spots of one model are invisible to an overlap
+between two instances of it. Cost does not argue the other way: the deep arm
+measured $0.033–$0.066/case (`dev/ADJ-EXP-DEEP-RUN.log`,
+`dev/ADJ-CAL-DEEP-RUN.log`), so 460 label-rows is tens of dollars on either
+model.
+
+*So say what this roster measures and what it does not.* Five instances of one
+procedure means `pf_labeler_agreement()` reports **run-to-run stability** — a
+drifted prompt, a truncated session, a bad day. It is not a cross-model second
+opinion. It is still not accuracy, by the same §6 step 4 that (d) names.
+
+Naming the roster was verified to be a **re-stamp and not a redeal**: dealing
+with and without `labelers` under seed `20261103` gives an identical
+`(grant_id, shard, overlap, primary)` assignment.
+
+And it exposed a third defect, the worst of the three because it was a claim
+rather than an omission: `pf_truth_shards(labelers = )`'s roxygen has said
+since it was written that *"`pf_read_truth()` enforces the `labeler` stamp
+against it"*, and **that check was never in `pf_read_truth()`**. A shard
+returned under the wrong name — the wrong labeler's work, or one labeler's
+file reaching another — read in clean, and every per-labeler figure built on
+it would have named the wrong producer. The check now exists, refuses with the
+shard, the name that arrived and the name dealt, and leaves an unrostered key
+reporting what arrived rather than refusing it. Three tests, including the
+two-labelers-swapped-files case the overlap check cannot see, because both
+files are complete and internally consistent and merely attributed to each
+other.
+
+The superseded k=8 deal is kept at
+`data-dev/round-stage1-k8-superseded/` — not as a round in progress, but
+because its key is now the only record of (a): the overlap is dealt rather
+than sampled, so `seed 20261103, k 8, overlap 0.10` no longer reproduces it.
 
 ## 7. What needs no further test
 
@@ -455,6 +550,8 @@ can start today, and the rest are free if T1 is designed for them.**
 | 206 cells, 120 starved at n=400 | `dev/ADJ-ROUND-STAGE1-20261102.log` §3 |
 | flags at 156 and 60 on the dry-run frame | `dev/ADJ-ROUND-STAGE1-20261102.log` §4 |
 | `A4-dba-name` 11, `D2-prefix` 3 | `dev/ADJ-ROUND-STAGE1-20261102.log` §6 |
+| deep arm $0.033-$0.066/case | `dev/ADJ-EXP-DEEP-RUN.log`, `dev/ADJ-CAL-DEEP-RUN.log` |
+| overlap 7/15 on eight labelers; 24 on five | `dev/ADJ-ROUND-STAGE1-DEAL-20261103.log`, `-REDEAL-20261103.log` |
 
 See also `dev/PLAUSIBLE-WRONG-NUMBERS.md` for the defect class §3 refers to,
 and `dev/METRIC-SHAPES.md` for the practice that a metric which cannot come out

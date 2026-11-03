@@ -12,7 +12,11 @@ list of frames.}
 
 \item{key}{The \code{pf_shards} assignment or a path to \code{SHARD-KEY.csv}. Without
 it the per-row checks still run; the cross-checks against what was dealt
-do not.}
+do not. Those are: rows for a (case, shard) pair that was never dealt, a
+case back from two labelers that was dealt to one shard, and -- when the
+key carries a roster -- a shard returned under a name the key did not deal
+it to. An unrostered key leaves the last of those with nothing to check,
+which is reported rather than treated as a failure.}
 
 \item{population}{Fingerprint to enforce.}
 
