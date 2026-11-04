@@ -55,7 +55,18 @@ SEED    <- 20261103L
 # second opinion, and it is still not accuracy: TRUTH-LABELING-PROTOCOL.md
 # section 6 step 4's hand-labelled slice remains the only thing that turns
 # either figure into an error rate.
-LABELERS <- sprintf("claude-fable-5-1/truth-%02d", 1:5)
+# Shard 1 is all-fable: it was labelled before the gate existed, and fable
+# labelling every case is strictly stronger than the gate, so it keeps its
+# name. Shards 2-5 are the gated pipeline -- haiku's `high` rows accepted,
+# everything else re-labelled by fable (dev/gate-shard-truth.R, evidence in
+# dev/SHADOW-HAIKU-SHARD01-20261103.log). The name has to describe the
+# PIPELINE because the key deals one labeler per shard and pf_read_truth()
+# enforces it; which of the two models produced any given row is recorded
+# per-row in the merged file's `model` column, so the blinded overlap between
+# a gated shard and shard 1 can be read as the two comparisons it really is
+# rather than one blended number.
+LABELERS <- c("claude-fable-5-1/truth-01",
+              sprintf("claude-haiku-5-5-high+claude-fable-5-1/truth-%02d", 2:5))
 
 d <- readRDS(DRAW)
 say("draw %s: %d cases", DRAW, nrow(d))

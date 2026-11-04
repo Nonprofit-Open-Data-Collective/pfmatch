@@ -35,4 +35,4 @@ wrote 11 files
 reproduce with: seed 20261103, k 5, overlap 0.15, draw data-dev/ADJ-ROUND-STAGE1.rds
   population cb3c78ff0f1a9546 | frame_id 89a2a597ed0ea128 | normalizer v1-5e901add4a04a5d6
 
-roster: claude-fable-5-1/truth-01, claude-fable-5-1/truth-02, claude-fable-5-1/truth-03, claude-fable-5-1/truth-04, claude-fable-5-1/truth-05
+roster: claude-fable-5-1/truth-01, claude-haiku-5-5-high+claude-fable-5-1/truth-02, claude-haiku-5-5-high+claude-fable-5-1/truth-03, claude-haiku-5-5-high+claude-fable-5-1/truth-04, claude-haiku-5-5-high+claude-fable-5-1/truth-05

@@ -1,0 +1,120 @@
+﻿============================================================================== 
+HIGH-ONLY GATE  shard 02 
+============================================================================== 
+pass 1: shard-02-truth-claude-haiku-5-5-pass1-02.csv  (92 rows) 
+  accepted at confidence in {high}: 38 
+  to escalate: 54 
+          accepted
+confidence FALSE TRUE
+    high       0   38
+    low       16    0
+    medium    38    0
+
+pass 2: shard-02-truth-claude-fable-5-1-pass2-02.csv  (54 rows) 
+
+stamped as claude-haiku-5-5-high+claude-fable-5-1/truth-02 (92 rows) 
+model
+pass1 pass2 
+   38    54 
+
+wrote ./data-dev/round-stage1-labelled/shard-02-truth-GATED.csv 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5-high+claude-fable-5-1/truth-02 92 
+  basis: inference 4 | web 88 
+  0 cases carry two labelers (the overlap) 
+  308 dealt cases came back unlabelled, reported not counted wrong 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+============================================================================== 
+============================================================================== 
+HIGH-ONLY GATE  shard 03 
+============================================================================== 
+pass 1: shard-03-truth-claude-haiku-5-5-pass1-03.csv  (92 rows) 
+  accepted at confidence in {high}: 42 
+  to escalate: 50 
+          accepted
+confidence FALSE TRUE
+    high       0   42
+    low       14    0
+    medium    36    0
+
+pass 2: shard-03-truth-claude-fable-5-1-pass2-03.csv  (50 rows) 
+
+stamped as claude-haiku-5-5-high+claude-fable-5-1/truth-03 (92 rows) 
+model
+pass1 pass2 
+   42    50 
+
+wrote ./data-dev/round-stage1-labelled/shard-03-truth-GATED.csv 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5-high+claude-fable-5-1/truth-03 92 
+  basis: inference 2 | reference 1 | web 89 
+  0 cases carry two labelers (the overlap) 
+  308 dealt cases came back unlabelled, reported not counted wrong 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+============================================================================== 
+============================================================================== 
+HIGH-ONLY GATE  shard 04 
+============================================================================== 
+pass 1: shard-04-truth-claude-haiku-5-5-pass1-04.csv  (92 rows) 
+  accepted at confidence in {high}: 33 
+  to escalate: 59 
+          accepted
+confidence FALSE TRUE
+    high       0   33
+    low       18    0
+    medium    41    0
+
+pass 2: shard-04-truth-claude-fable-5-1-pass2-04.csv  (59 rows) 
+
+stamped as claude-haiku-5-5-high+claude-fable-5-1/truth-04 (92 rows) 
+model
+pass1 pass2 
+   33    59 
+
+wrote ./data-dev/round-stage1-labelled/shard-04-truth-GATED.csv 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5-high+claude-fable-5-1/truth-04 92 
+  basis: inference 1 | web 91 
+  0 cases carry two labelers (the overlap) 
+  308 dealt cases came back unlabelled, reported not counted wrong 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+============================================================================== 
+============================================================================== 
+HIGH-ONLY GATE  shard 05 
+============================================================================== 
+pass 1: shard-05-truth-claude-haiku-5-5-pass1-05.csv  (92 rows) 
+  accepted at confidence in {high}: 32 
+  to escalate: 60 
+          accepted
+confidence FALSE TRUE
+    high       0   32
+    low       19    0
+    medium    41    0
+
+pass 2: shard-05-truth-claude-fable-5-1-pass2-05.csv  (60 rows) 
+
+stamped as claude-haiku-5-5-high+claude-fable-5-1/truth-05 (92 rows) 
+model
+pass1 pass2 
+   32    60 
+
+wrote ./data-dev/round-stage1-labelled/shard-05-truth-GATED.csv 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5-high+claude-fable-5-1/truth-05 92 
+  basis: inference 2 | reference 1 | web 89 
+  0 cases carry two labelers (the overlap) 
+  308 dealt cases came back unlabelled, reported not counted wrong 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+============================================================================== 

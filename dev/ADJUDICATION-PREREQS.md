@@ -354,8 +354,9 @@ comparison whose arms cover different cases, so the design is enforced in code.
 
 Built and merged: the grading harness (§6a), which makes every cut above a
 function call. Designed here. **Stage 1 is drawn** — §6b.5 — and **dealt to
-five named labelers** — §6b.6 — and **not labelled**, which is the step no
-code performs. The shard files are stamped and ready to hand out.
+five named labelers** — §6b.6 — and **labelled** — §6b.7. All 400 cases
+carry truth. What stage 1 still lacks is the hand-labelled slice that would
+turn its agreement figures into accuracy (§6b.7e).
 
 ### 6b.5 Drawn, 2026-11-02 — and what the real frame changed
 
@@ -495,10 +496,132 @@ The superseded k=8 deal is kept at
 because its key is now the only record of (a): the overlap is dealt rather
 than sampled, so `seed 20261103, k 8, overlap 0.10` no longer reproduces it.
 
+### 6b.7 Labelled — 2026-11-03. Stage 1 has truth, and it moves a closed number
+
+`dev/ROUND-STAGE1-READOUT-20261103.log` is the record;
+`dev/read-round-stage1.R` reproduces it. All 400 cases carry truth: shard 1
+from `claude-fable-5-1` on every case, shards 2–5 from the high-only gate of
+§6b.8. 460 label-rows, 446 of them `basis = web`, 60 overlap cases.
+
+**(a) The blinded overlap is readable, and that is the redeal paying for
+itself.** 56/60 = **93.3% [84.1, 97.4]** effective, and — the point of §6b.6 —
+**every labeler has 24 overlap cases, so every per-labeler cell is usable**:
+91.7%, 87.5%, 95.8%, 95.8%, 95.8%. Under the k=8 deal all eight cells would
+have been `usable = FALSE`.
+
+It is also **not one comparison**, and is not reported as one. Shard 1 is
+all-fable and shards 2–5 are a two-model pipeline, so the 60 cases decompose:
+
+| the two rows came from | n | agree | |
+|---|---|---|---|
+| fable and fable (one escalated) | 36 | 33 = 92% | usable |
+| haiku and fable | 13 | 12 = 92% | n < 20 |
+| haiku and haiku | 11 | 11 = 100% | n < 20 |
+
+The first is run-to-run stability of one procedure; the others are
+cross-model. Pooling them into one 93.3% would be a rate over a heterogeneous
+denominator, which is why `gate-shard-truth.R` records per-row `model`
+provenance.
+
+**(b) MAYBE-tier pick precision is 48.6% [43.7, 53.5], against a published
+72% [65, 78].** 189 of 389 scoreable cases (11 `UNRESOLVED` dropped, as
+`pf_grade_verdicts()` drops them). On the looser denominator — only the 318
+cases where an organisation was found at all — **59.4% [54.0, 64.7]**. Both
+intervals are disjoint from the published one.
+
+The published 72% is `ADJUDICATION-PLAN.md` §1: 200 hand-labelled cases of the
+**unenriched** packet on a different population, so this is not a
+contradiction of a like-for-like measurement. It is, though, the first
+measurement of this figure on the current population, at four times the
+sample, with truth produced under the protocol — and §7 lists the 72% as
+settled and closed.
+
+*What it does and does not disturb.* §7's decision — do not auto-accept MAYBE
+— is made safer, not wrong. What moves is every downstream figure that prices
+the MAYBE tier: the review queue's dollar coverage (T9) rests on how much of
+the tier is recoverable, and half the picks being wrong is a different queue
+from a quarter.
+
+**(c) Two blocking passes behave very differently, and one barely works.**
+
+| pass | n | right | |
+|---|---|---|---|
+| `A1-name-zip5` | 49 | 69% | |
+| `D1-acronym` | 8 | 62% | n < 20 |
+| `A3-name-dba` | 5 | 60% | n < 20 |
+| `B1-token-state` | 222 | 50% | |
+| `A2-name-state` | 32 | 50% | |
+| `C1-name-any` | 48 | 35% | |
+| **`B2-token-concat`** | **25** | **12%** | |
+
+`B2-token-concat` is right on 3 of 25. `C1-name-any` at 35% matches what the
+hand read of six rejections found: two of the six were same-name-
+different-state collisions, which is what matching on name alone produces.
+These are the cascade's own cells, so they are a statement about the passes
+rather than about the round.
+
+**(d) A 29-point gap that is selection, not bias.** Pick precision is 69% on
+rows haiku labelled and 40% on rows fable labelled, which looks like the gate
+bending the figure. It is not: haiku marks `high` on the cases it finds easy,
+easy cases are the ones the cascade also tends to get right, and the split was
+made on haiku's confidence before any outcome was known. The check that
+settles it is that **shard 1, all-fable, gives 48.9% against the round's
+48.6%** — the all-fable shard and the gated shards agree on the figure. §6b.8's
+38/38 is the direct evidence for the same point.
+
+**(e) Truth here is model-produced.** Two Claude models wrote every label, and
+where they agree they can be wrong together — which no figure above can see.
+`TRUTH-LABELING-PROTOCOL.md` §6 step 4's hand-labelled slice remains the only
+thing that converts any of this into an error rate, and it is now the single
+most valuable unspent measurement in the round: a few dozen hand labels would
+price all of (a) through (d).
+
+### 6b.8 The high-only gate, and what it actually saved
+
+Measured in `dev/SHADOW-HAIKU-SHARD01-20261103.log`: `claude-haiku-5-5` and
+`claude-fable-5-1` labelling the same 92 cases of shard 1. Effective agreement
+73/92 = 79.3%, and the shape rather than the number is the finding — on the 60
+cases where both found an organisation they named the **same EIN 60 times out
+of 60**, and no case in 92 had both resolve and disagree. 19 of 20
+disagreements are haiku declining what fable settled: the known-price failure,
+not the silent one. Haiku's own confidence separates them: high **38/38 = 100%
+[90.8, 100]**, medium 30/33 = 90.9%, low 4/21 = 19.0%.
+
+Hence the gate: accept haiku's `high`, escalate the rest to fable. Realised
+over shards 2–5, 368 cases:
+
+| | |
+|---|---|
+| haiku on all 368 | **$5.15** |
+| accepted `high` | 145 (39%) |
+| escalated to fable | **223 (61%)** |
+| fable on the 223 | **$45.23** |
+| **gated total** | **$50.38** |
+| all-fable, at shard 1's $0.153/case | $56.44 |
+| **saved** | **$6.06 — 11%** |
+
+**The saving is a tenth of what the agreement figure implies, and the reason
+generalises.** Escalated cases cost **$0.205/case** against $0.153 for an
+average case, because the cases haiku cannot settle are the hard ones and hard
+cases are where fable spends its searches. So the gate's economics are not
+`(1 − high_rate) × cost`; they are `(1 − high_rate) × cost_of_the_hard_cases`,
+and that is strictly worse. Any cheap-model gate on this task should be costed
+that way.
+
+*For stage 2.* The looser high+medium gate would escalate ~23% rather than
+61%, and on these numbers lands near 50% saving rather than the 69% a flat
+per-case price suggested. That remains the live option if stage 2's ~600 cases
+need to be cheaper, at the cost of ~9% disagreement entering the truth set.
+
 ## 7. What needs no further test
 
 * **Auto-accepting MAYBE.** Settled at 72% precision (95% CI 65–78%) on 200
-  fresh cases against a first estimate of 18/18. Closed.
+  fresh cases against a first estimate of 18/18. Closed -- and the decision is
+  now *safer* than when it was taken: §6b.7 measures **48.6% [43.7, 53.5]** on
+  the current population over 389 scoreable cases, with truth produced under
+  the protocol. The 72% stands as what it always was, a figure on the
+  unenriched packet and another population, and should not be quoted for this
+  one.
 * **Scoping production to the MAYBE tier.** $11,635 for every grant row,
   $3,092 for every identity, **$680** for MAYBE identities only — a 17x saving
   before any model or pricing decision (Phase 4 step 5).

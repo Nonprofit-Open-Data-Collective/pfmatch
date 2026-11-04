@@ -74,6 +74,7 @@ SHARD   <- as.integer(Sys.getenv("PF_LABEL_SHARD", "0"))
 MODEL   <- Sys.getenv("PF_LABEL_MODEL", "claude-fable-5-1")
 LABELER <- Sys.getenv("PF_LABEL_LABELER", "")
 LIMIT   <- as.integer(Sys.getenv("PF_ADJ_LIMIT", "0"))
+ONLY    <- Sys.getenv("PF_LABEL_ONLY", "")
 WORKERS <- as.integer(Sys.getenv("PF_ADJ_WORKERS", "4"))
 EFFORT  <- Sys.getenv("PF_LABEL_EFFORT", "high")
 MAXSEARCH <- as.integer(Sys.getenv("PF_ADJ_MAXSEARCH", "12"))
@@ -129,6 +130,29 @@ if (!nzchar(LABELER)) {
 }
 shadow <- !identical(LABELER, if (length(roster)) roster[1L] else "")
 
+# A SUBSET, for the second pass of a gated round. The high-only gate accepts a
+# cheap labeler's `high` rows and sends the rest to the expensive one, so the
+# second pass labels 40-60 of a shard's 92 rather than all of it. Restricting
+# by grant_id and not by row number matters: the case files are shuffled per
+# shard (pf_write_shards() reshuffles with seed + shard), so a positional
+# subset would select different cases on a re-run.
+if (nzchar(ONLY)) {
+  if (!file.exists(ONLY))
+    stop(sprintf("PF_LABEL_ONLY=%s does not exist.", ONLY), call. = FALSE)
+  want <- utils::read.csv(ONLY, colClasses = "character")
+  want <- if (!is.null(want$grant_id)) want$grant_id else want[[1L]]
+  want <- unique(trimws(want))
+  miss <- setdiff(want, cases$grant_id)
+  if (length(miss))
+    stop(sprintf(paste0(
+      "%d id(s) in PF_LABEL_ONLY are not in shard %d: %s\n",
+      "  A second pass over cases this shard was not dealt is not a second",
+      " pass over it."),
+      length(miss), SHARD, paste(utils::head(miss, 4), collapse = ", ")),
+      call. = FALSE)
+  cases <- cases[grant_id %in% want]
+  say("subset: %d of the shard's cases, from %s", nrow(cases), basename(ONLY))
+}
 if (LIMIT > 0) cases <- head(cases, LIMIT)
 say("model=%s  effort=%s  search=max %d  workers=%d%s", MODEL, EFFORT,
     MAXSEARCH, WORKERS,

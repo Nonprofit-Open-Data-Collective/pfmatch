@@ -1,0 +1,84 @@
+﻿============================================================================== 
+ADJUDICATION ROUND, STAGE 1 -- READ-OUT 
+============================================================================== 
+460 label-rows over 400 cases 
+ 
+---------------------------------------------------------------------- 
+read 460 labelled rows over 400 cases from 5 labelers 
+  claude-fable-5-1/truth-01 92 | claude-haiku-5-5-high+claude-fable-5-1/truth-02 92 | claude-haiku-5-5-high+claude-fable-5-1/truth-03 92 | claude-haiku-5-5-high+claude-fable-5-1/truth-04 92 | claude-haiku-5-5-high+claude-fable-5-1/truth-05 92 
+  basis: inference 12 | reference 2 | web 446 
+  60 cases carry two labelers (the overlap) 
+ 
+============================================================================== 
+THE BLINDED OVERLAP 
+============================================================================== 
+<pf_agreement>  60 cases dealt to two labelers
+  strict      56/60   =  93.3% [84.1, 97.4]
+  effective   56/60   =  93.3% [84.1, 97.4]
+  per labeler, on the effective basis:
+    claude-fable-5-1/truth-01  22/24  =  91.7% [74.2, 97.7]
+    claude-haiku-5-5-high+claude-fable-5-1/truth-02  21/24  =  87.5% [69.0, 95.7]
+    claude-haiku-5-5-high+claude-fable-5-1/truth-03  23/24  =  95.8% [79.8, 99.3]
+    claude-haiku-5-5-high+claude-fable-5-1/truth-04  23/24  =  95.8% [79.8, 99.3]
+    claude-haiku-5-5-high+claude-fable-5-1/truth-05  23/24  =  95.8% [79.8, 99.3]
+
+  Agreement is NOT accuracy: two labelers sharing a training
+  distribution and a tool will be wrong together. What converts this
+  into accuracy is a hand-labelled slice scored with pf_grade_verdicts().
+
+the 60 overlap cases, by which models actually produced the two rows: 
+           models     n agree   rate    usable
+           <char> <int> <int> <char>    <char>
+1: pass2-vs-pass2    36    33    92%       yes
+2: pass1-vs-pass2    13    12    92% no (n<20)
+3: pass1-vs-pass1    11    11   100% no (n<20)
+
+Each subset is a different question. pass2-vs-pass2 is two runs of ONE 
+procedure (fable twice, once as shard 1 and once as an escalation), which 
+is run-to-run stability. Anything involving pass1 is cross-model. Neither 
+is accuracy. 
+ 
+============================================================================== 
+MAYBE-TIER PICK PRECISION, ALL 400 CASES 
+============================================================================== 
+400 cases, deduplicated to one label each 
+
+verdicts: 
+verdict
+NO_ORG_INDIVIDUAL NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE         ORG_FOUND 
+               11                35                25               318 
+       UNRESOLVED 
+               11 
+
+scoreable 389 (dropped 11 UNRESOLVED) 
+pick precision: 189/389 = 48.6% [43.7, 53.5] 
+  ADJUDICATION-PLAN section 1 published 72% [65, 78] on 200 hand-labelled 
+  cases of the UNENRICHED packet, a different population. 
+
+on the looser denominator -- only cases where an org was found at all: 
+  189/318 = 59.4% [54.0, 64.7] 
+
+by blocking pass (the cascade's own, so these are ITS cells): 
+      cascade_pass     n right   rate    usable
+            <char> <int> <int> <char>    <char>
+1:  B1-token-state   222   111    50%       yes
+2:    A1-name-zip5    49    34    69%       yes
+3:     C1-name-any    48    17    35%       yes
+4:   A2-name-state    32    16    50%       yes
+5: B2-token-concat    25     3    12%       yes
+6:      D1-acronym     8     5    62% no (n<20)
+7:     A3-name-dba     5     3    60% no (n<20)
+
+by which model produced the label, as a check that the gate did not 
+bend the figure: 
+    model     n right   rate
+   <char> <int> <int> <char>
+1:  pass2   268   106    40%
+2:  pass1   121    83    69%
+============================================================================== 
+TRUTH HERE IS MODEL-PRODUCED. Every figure above is measured against 
+labels two Claude models wrote, and where they agree they can be wrong 
+together. TRUTH-LABELING-PROTOCOL.md section 6 step 4 -- a hand-labelled 
+slice scored with pf_grade_verdicts() -- is still the only thing that 
+turns any of this into an error rate. 
+============================================================================== 
