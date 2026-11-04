@@ -63,6 +63,10 @@
 #   PF_LABEL_SHARD=1 Rscript dev/label-shard.R                  # the roster model
 #   PF_LABEL_SHARD=1 PF_LABEL_MODEL=claude-haiku-5-5 \
 #     PF_LABEL_LABELER=claude-haiku-5-5/shadow-01 Rscript dev/label-shard.R
+#   PF_LABEL_SHARD=1 PF_LABEL_DIR=data-dev/round-b2-topup \
+#     PF_LABEL_KEY=data-dev/round-b2-topup-key/SHARD-KEY.csv \
+#     PF_LABEL_OUTDIR=data-dev/round-b2-topup-labelled \
+#     Rscript dev/label-shard.R                                 # another draw
 # ============================================================================
 suppressWarnings(suppressMessages(library(data.table)))
 PF <- Sys.getenv("PFMATCH_DIR", ".")
@@ -79,11 +83,15 @@ WORKERS <- as.integer(Sys.getenv("PF_ADJ_WORKERS", "4"))
 EFFORT  <- Sys.getenv("PF_LABEL_EFFORT", "high")
 MAXSEARCH <- as.integer(Sys.getenv("PF_ADJ_MAXSEARCH", "12"))
 ROUNDS  <- as.integer(Sys.getenv("PF_ADJ_ROUNDS", "4"))
-DIR     <- file.path(DD, "round-stage1")
-KEY     <- file.path(DD, "round-stage1-key", "SHARD-KEY.csv")
-OUTDIR  <- file.path(DD, "round-stage1-labelled")
 RUN     <- file.path(DD, "TRI-V2-MATCH.rds")
-IDCACHE <- file.path(DD, "ADJ-ROUND-STAGE1-TRUTHIDS.rds")
+# Overridable so the harness can label a draw other than stage 1 -- the
+# B2-token-concat top-up (dev/draw-b2-topup.R) is the first -- without a copy
+# of this file drifting from it. Defaults are stage 1, so every existing
+# invocation is unchanged.
+DIR     <- Sys.getenv("PF_LABEL_DIR",    file.path(DD, "round-stage1"))
+KEY     <- Sys.getenv("PF_LABEL_KEY",    file.path(DD, "round-stage1-key",
+                                                   "SHARD-KEY.csv"))
+OUTDIR  <- Sys.getenv("PF_LABEL_OUTDIR", file.path(DD, "round-stage1-labelled"))
 
 say <- function(...) { cat(sprintf(...), "\n"); flush.console() }
 hr  <- function() cat(strrep("=", 78), "\n")

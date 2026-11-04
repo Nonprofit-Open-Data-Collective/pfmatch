@@ -552,9 +552,14 @@ from a quarter.
 | `B1-token-state` | 222 | 50% | |
 | `A2-name-state` | 32 | 50% | |
 | `C1-name-any` | 48 | 35% | |
-| **`B2-token-concat`** | **25** | **12%** | |
+| **`B2-token-concat`** | **25** | **12%** | **superseded — §6b.9** |
 
-`B2-token-concat` is right on 3 of 25. `C1-name-any` at 35% matches what the
+`B2-token-concat` read as right on 3 of 25 here. **That did not hold: §6b.9
+re-measured it at 28.2% on 71 cases, and the 12% was substantially a
+small-sample artefact.** It is left in the table because it is what stage 1
+measured and because the correction is the point — a 25-case cell with a
+[4.2, 30.0] interval was never evidence for 12% specifically.
+`C1-name-any` at 35% matches what the
 hand read of six rejections found: two of the six were same-name-
 different-state collisions, which is what matching on name alone produces.
 These are the cascade's own cells, so they are a statement about the passes
@@ -612,6 +617,53 @@ that way.
 61%, and on these numbers lands near 50% saving rather than the 69% a flat
 per-case price suggested. That remains the live option if stage 2's ~600 cases
 need to be cheaper, at the cost of ~9% disagreement entering the truth set.
+
+### 6b.9 The B2-token-concat top-up — 2026-11-03. 12% did not hold
+
+`dev/B2-TOPUP-RUN-20261103.log` and `dev/B2-TOPUP-READOUT-20261103.log` are the
+record; `dev/draw-b2-topup.R` and `dev/read-b2-topup.R` reproduce it.
+
+§6b.7c put this pass at 3 of 25. 50 more cases were drawn from the same frame
+and population, disjoint from stage 1's 26 by construction, and labelled by the
+same model under the same protocol — $9.78 of tokens plus 295 web searches, at
+$0.196/case, which is the hard-case rate §6b.8 predicts and not the round's
+$0.153 average.
+
+| | n | right | |
+|---|---|---|---|
+| stage 1 | 25 | 3 = **12.0%** | [4.2, 30.0] |
+| top-up | 46 | 17 = **37.0%** | [24.5, 51.4] |
+| **pooled** | **71** | **20 = 28.2%** | **[19.0, 39.5]** |
+
+**The 12% was substantially a small-sample artefact.** The two intervals
+overlap only over 24.5–30.0, and the pooled estimate is more than twice the
+stage-1 figure. What a 25-case cell with a 26-point interval supported was
+"this pass is bad", never "this pass is right one time in eight".
+
+**What survives, and it is the part that matters.** Pooled B2 at [19.0, 39.5]
+is **disjoint** from `B1-token-state` at 50.0% [43.5, 56.5], so the difference
+between the two passes is real at 95% — which is what §6b.2 says 71 cases buys
+against a 22-point gap. B2 is roughly *half* as precise as B1, not a *quarter*
+as precise.
+
+It is also not one stratum: 25% on `purpose` (n=40) against 32% on `bare`
+(n=31).
+
+*Why it still argues against the pass rather than for better scoring.* Of the
+51 wrong scoreable cases, **17 are `NO_ORG_*`** — no exempt organisation exists
+to match at all, so the cascade produced a false positive. A third of this
+pass's errors are not "picked the wrong one of two real candidates" and cannot
+be scored away; they are the key matching things that are not organisations.
+The remaining 34 are real-organisation-wrong-EIN.
+
+*What this does not fix.* Truth is still model-produced, so this figure
+inherits whatever error rate the hand slice finds in stage 1's labels. More
+cases narrowed the interval; they did not touch the accuracy.
+
+*The lesson for stage 2's floors.* Every other sub-20 cell in §6b.7c —
+`D1-acronym` at n=8, `A3-name-dba` at n=5 — is now a cell whose point estimate
+has been shown capable of moving by 25 points. §6b.3's floors exist for this
+reason, and this is the measured demonstration.
 
 ## 7. What needs no further test
 
@@ -675,6 +727,8 @@ can start today, and the rest are free if T1 is designed for them.**
 | `A4-dba-name` 11, `D2-prefix` 3 | `dev/ADJ-ROUND-STAGE1-20261102.log` §6 |
 | deep arm $0.033-$0.066/case | `dev/ADJ-EXP-DEEP-RUN.log`, `dev/ADJ-CAL-DEEP-RUN.log` |
 | overlap 7/15 on eight labelers; 24 on five | `dev/ADJ-ROUND-STAGE1-DEAL-20261103.log`, `-REDEAL-20261103.log` |
+| B2 pooled 20/71 = 28.2%; stage 1's 12% did not hold | `dev/B2-TOPUP-READOUT-20261103.log` |
+| B2 top-up $9.78 + 295 searches, $0.196/case | `dev/B2-TOPUP-RUN-20261103.log` |
 
 See also `dev/PLAUSIBLE-WRONG-NUMBERS.md` for the defect class §3 refers to,
 and `dev/METRIC-SHAPES.md` for the practice that a metric which cannot come out

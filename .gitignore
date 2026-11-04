@@ -127,3 +127,25 @@ desktop.ini
 
 # docs/ IS committed: GitHub Pages serves the site from main:/docs.
 # Rebuild with pkgdown::build_site() and commit the result.
+
+# The hand-labelled slice (dev/draw-hand-slice.R). Re-include the directory
+# first: git cannot re-include a file whose parent directory is excluded.
+!data-dev/round-stage1-handslice
+data-dev/round-stage1-handslice/*
+!data-dev/round-stage1-handslice/*.csv
+!data-dev/round-stage1-handslice/README.md
+
+# The B2-token-concat top-up (dev/draw-b2-topup.R). Same re-include-the-
+# directory-first pattern, and the same exclusions as stage 1: the .rds beside
+# each labelled CSV carries the raw API usage/response columns, and a
+# -limitN.csv is a smoke test over a few cases rather than the shard.
+!data-dev/round-b2-topup
+data-dev/round-b2-topup/*
+!data-dev/round-b2-topup/*.csv
+!data-dev/round-b2-topup-key
+data-dev/round-b2-topup-key/*
+!data-dev/round-b2-topup-key/*.csv
+!data-dev/round-b2-topup-labelled
+data-dev/round-b2-topup-labelled/*
+!data-dev/round-b2-topup-labelled/*.csv
+data-dev/round-b2-topup-labelled/*-limit[0-9]*.csv
