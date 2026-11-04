@@ -39,6 +39,21 @@
 # says so in its own output rather than leaving the reader to remember.
 # ============================================================================
 
+# Spread n items over k shards as evenly as n allows, giving the remainder to
+# shards drawn at random rather than to the first few: the overlap is dealt
+# shard by shard, and handing the extra always to shards 1..r would make the
+# low-numbered labelers systematically better measured than the others.
+.pf_spread <- function(n, k) {
+  out <- rep(n %/% k, k)
+  rem <- n %% k
+  if (rem > 0L) {
+    # sample.int, so a length-one candidate set is not read as seq_len(x)
+    i <- sample.int(k, rem)
+    out[i] <- out[i] + 1L
+  }
+  as.integer(out)
+}
+
 #' The shard-file contract
 #'
 #' What a labeler's returned truth file has to carry: [pf_truth_schema()] plus
@@ -82,6 +97,16 @@ pf_shard_schema <- function()
 #' stratum makes a bad labeler show up as a labeler, where
 #' [pf_labeler_agreement()] can see it.
 #'
+#' @section The overlap is dealt on the same principle:
+#' Each shard gives up its own share of the overlap cases and the second
+#' copies travel on a rotation of lags, so every shard both gives and receives
+#' the same number -- exactly when `k` divides the overlap, within one
+#' otherwise. Sampling both halves uniformly, which is what this did first,
+#' is balanced only in expectation: the 400-case stage-1 deal landed one
+#' labeler 7 overlap cases and another 15 against an expectation of 10, and
+#' [pf_labeler_agreement()] reads a per-labeler cell under `min_n` as unusable
+#' -- leaving only the pooled rate, which is where a single bad labeler hides.
+#'
 #' @section What it refuses, and why each is a stop:
 #' * **No `seed`.** The same refusal as [pf_round_sample()], for the same
 #'   reason: an assignment that cannot be redealt cannot be audited, and these
@@ -97,16 +122,31 @@ pf_shard_schema <- function()
 #'
 #' @param draw The frame from [pf_round_sample()], a path to a CSV of it, or a
 #'   character vector of `grant_id`s.
-#' @param k Number of shards. This divides by labeler capacity, not by
-#'   anything statistical: 6-8 shards of 50-60 cases is a working size.
+#' @param k Number of shards. Mostly this divides by labeler capacity --
+#'   6-8 shards of 50-60 cases is a working size -- but it is not free of the
+#'   statistics: `k` multiplies the overlap the per-labeler cut needs, because
+#'   each labeler only sees `overlap * n / k` of it. Stage 1 went to five
+#'   labelers rather than eight for that reason (`dev/ADJUDICATION-PREREQS.md`
+#'   6b.6), trading 92 cases a labeler for an overlap that clears `min_n`.
 #' @param overlap Fraction of cases dealt to a second shard as well. Default
 #'   `0.1`. `0` turns the agreement read off, which is worth doing
-#'   deliberately rather than by default.
+#'   deliberately rather than by default. Size it against
+#'   [pf_labeler_agreement()]'s `min_n` rather than by taste: the per-labeler
+#'   cut needs `overlap * n / k >= min_n / 2` cases on every shard, so 400
+#'   cases over 8 labelers need `0.2` and over 5 need `0.15`. The deal prints
+#'   what each labeler got and says when it is short.
 #' @param seed Required. Recorded on the result.
 #' @param labelers Optional character vector of length `k` naming who gets
-#'   each shard. When given, [pf_read_truth()] enforces the `labeler` stamp
-#'   against it; when absent, it still requires a stamp and reports what
-#'   arrived.
+#'   each shard, and **required to be distinct** when there is an overlap: two
+#'   shards under one name make the overlap between them unreadable, since
+#'   [pf_labeler_agreement()] needs two different names on a case and
+#'   [pf_read_truth()] refuses one labeler answering a case twice. When given,
+#'   it is written onto the key and the templates, and [pf_read_truth()]
+#'   refuses a shard that comes back under a name the key did not deal it to.
+#'   When absent, a stamp is still required of the returned rows and what
+#'   arrived is reported rather than checked. Naming them is a **re-stamp, not
+#'   a redeal**: `labelers` decorates an assignment the seed already fixed, so
+#'   a round dealt without one can be re-dealt with one and nothing moves.
 #' @param population The fingerprint these ids are valid in. Taken from
 #'   `attr(draw, "population")` when the draw still carries it.
 #' @param require_population Set `FALSE` only for a dry run whose labels will
@@ -177,6 +217,22 @@ pf_truth_shards <- function(draw, k = 8L, overlap = 0.1, seed = NULL,
   if (!is.null(labelers) && length(labelers) != k)
     stop(sprintf("`labelers` names %d labelers for %d shards.",
                  length(labelers), k), call. = FALSE)
+  # A name on two shards is not extra capacity, it is a hole in the overlap.
+  # pf_labeler_agreement() counts a case as having a second opinion only when
+  # two DIFFERENT names carry it, and pf_read_truth() refuses one labeler
+  # answering the same case twice outright -- so the overlap cases shared by
+  # those two shards come back unusable, and they come back that way after the
+  # labelling is paid for. Refused here, where it is still free.
+  if (!is.null(labelers) && overlap > 0 && anyDuplicated(labelers)) {
+    d <- unique(labelers[duplicated(labelers)])
+    stop(sprintf(paste0(
+      "`labelers` repeats %s. Two shards under one name make the overlap",
+      " between\n  them unreadable: pf_labeler_agreement() needs two",
+      " different names on a case,\n  and pf_read_truth() refuses one labeler",
+      " answering a case twice."),
+      paste(sprintf("`%s`", utils::head(d, 3)), collapse = ", ")),
+      call. = FALSE)
+  }
 
   pop <- if (!is.null(population)) as.character(population)
          else attr(draw, "population")
@@ -206,18 +262,44 @@ pf_truth_shards <- function(draw, k = 8L, overlap = 0.1, seed = NULL,
 
   n_ov <- as.integer(round(overlap * nrow(fr)))
   if (n_ov > 0L) {
-    pick <- sample(a$grant_id, n_ov)
-    i <- match(pick, a$grant_id)
-    a$overlap[i] <- TRUE
-    # The second shard is drawn from the others rather than fixed at
-    # shard + 1: a fixed offset pairs the same two labelers every time, and
-    # the agreement figure is then about one pair rather than about the round.
-    second <- vapply(a$shard[i], function(p) {
-      other <- setdiff(seq_len(k), p)
-      if (length(other) == 1L) other else sample(other, 1L)
-    }, integer(1))
-    a <- rbind(a, data.frame(grant_id = pick, shard = second, overlap = TRUE,
-                             primary = FALSE, stringsAsFactors = FALSE))
+    # BOTH HALVES OF THE OVERLAP ARE DEALT, NOT SAMPLED. The first version of
+    # this drew the overlap cases uniformly and then drew each second shard
+    # uniformly from the others. Both are balanced in expectation and neither
+    # is balanced, and the cost falls on the only cheap read the round has on
+    # its own truth: pf_labeler_agreement() reports a per-labeler cell below
+    # `min_n` as unusable, and the pooled rate it reports instead is exactly
+    # where a single bad labeler hides. The 400-case stage-1 deal came out at
+    # 7 overlap cases for one labeler and 15 for another against an
+    # expectation of 10 (dev/ADJ-ROUND-STAGE1-DEAL-20261103.log), so three of
+    # the eight sat under min_n by chance alone.
+    #
+    # So each shard gives up its own share of the overlap, and the second
+    # copies go out on a rotation of LAGS rather than a coin flip: every shard
+    # draws from the same multiset of lags, so every shard receives as many
+    # second copies as it gives up -- exactly when k divides n_ov, within one
+    # otherwise. The lag and not the partner, because a fixed offset pairs the
+    # same two labelers every time and the agreement figure is then about one
+    # pair rather than about the round.
+    per  <- .pf_spread(n_ov, k)
+    lags <- seq_len(k - 1L)
+    base <- rep_len(lags[sample.int(k - 1L)], max(per))
+    sec <- do.call(rbind, lapply(seq_len(k), function(p) {
+      cand <- a$grant_id[a$shard == p]
+      np <- min(per[p], length(cand))
+      if (np < 1L) return(NULL)
+      # sample.int and not sample(): sample(x) on a length-one x permutes
+      # seq_len(x) instead of x, which recycled one case into three shards.
+      off <- base[seq_len(np)][sample.int(np)]
+      data.frame(grant_id = cand[sample.int(length(cand), np)],
+                 shard = ((p - 1L + off) %% k) + 1L,
+                 overlap = TRUE, primary = FALSE, stringsAsFactors = FALSE)
+    }))
+    a$overlap[match(sec$grant_id, a$grant_id)] <- TRUE
+    a <- rbind(a, sec[, names(a), drop = FALSE])
+    # what was dealt, not what was asked for: the clamp above can only bind on
+    # a frame too small to give one shard its share, and the attribute is what
+    # a later redeal is checked against.
+    n_ov <- nrow(sec)
   }
 
   a$stratum <- fr$stratum[match(a$grant_id, fr$grant_id)]
@@ -257,6 +339,22 @@ pf_truth_shards <- function(draw, k = 8L, overlap = 0.1, seed = NULL,
                           as.integer(attr(a, "sizes"))), collapse = " "))
     .pf_say(verbose, "  %d cases (%.0f%%) dealt to a second shard as the blinded overlap",
             n_ov, 100 * n_ov / max(1L, nrow(fr)))
+    # The number the deal used to leave the reader to compute off the key, and
+    # the one that decides whether the per-labeler agreement cut exists at all:
+    # pf_labeler_agreement()'s min_n is 20, and a cell under it comes back
+    # usable = FALSE. Said here because this is the last moment it is free to
+    # change -- after the shards go out it costs a relabel.
+    if (n_ov > 0L) {
+      ovs <- as.integer(table(factor(a$shard[a$overlap], levels = seq_len(k))))
+      .pf_say(verbose, "  overlap per labeler: %s (min %d, max %d)",
+              paste(ovs, collapse = " "), min(ovs), max(ovs))
+      if (min(ovs) < 20L)
+        .pf_say(verbose, paste0(
+          "  under pf_labeler_agreement()'s min_n of 20, so the PER-LABELER\n",
+          "  cut will read unusable and only the pooled rate will survive --\n",
+          "  which is the rate a single bad labeler hides in. Raise `overlap`",
+          "\n  or lower `k`."))
+    }
     if (is.na(pop))
       .pf_say(verbose, "  population UNFINGERPRINTED: these labels cannot be re-attached")
     else
@@ -317,6 +415,22 @@ pf_write_shards <- function(shards, dir, cases = NULL, key_dir = dir,
       "  Pass overwrite = TRUE only when re-dealing the round from scratch."),
       dir, length(have), paste(utils::head(have, 4), collapse = ", ")),
       call. = FALSE)
+
+
+  # A REDEAL WITH FEWER SHARDS LEAVES THE OLD ONES BEHIND. Writing k = 5 over a
+  # k = 8 round overwrites shards 1-5 and says nothing about 6-8, which then sit
+  # in the live directory looking exactly like work to hand out. pf_read_truth()
+  # does refuse their rows -- the key no longer deals those cases -- but it
+  # refuses them on the way back in, after a labeler has done the work. So the
+  # stale files go now, and the removal is reported rather than silent.
+  will <- as.vector(outer(sprintf("shard-%02d", sort(unique(shards$shard))),
+                          c("-cases.csv", "-truth.csv"), paste0))
+  stale <- setdiff(have, will)
+  if (length(stale)) {
+    file.remove(file.path(dir, stale))
+    .pf_say(verbose, "removed %d file(s) from a wider deal: %s",
+            length(stale), paste(stale, collapse = ", "))
+  }
 
   pop   <- attr(shards, "population")
   seed  <- attr(shards, "seed")
@@ -410,7 +524,11 @@ pf_write_shards <- function(shards, dir, cases = NULL, key_dir = dir,
 #'   list of frames.
 #' @param key The `pf_shards` assignment or a path to `SHARD-KEY.csv`. Without
 #'   it the per-row checks still run; the cross-checks against what was dealt
-#'   do not.
+#'   do not. Those are: rows for a (case, shard) pair that was never dealt, a
+#'   case back from two labelers that was dealt to one shard, and -- when the
+#'   key carries a roster -- a shard returned under a name the key did not deal
+#'   it to. An unrostered key leaves the last of those with nothing to check,
+#'   which is reported rather than treated as a failure.
 #' @param population Fingerprint to enforce.
 #' @param verbose Print the per-labeler counts.
 #' @return A data frame classed `pf_truth_rows`, one row per (case, labeler),
@@ -590,6 +708,40 @@ pf_read_truth <- function(x, key = NULL, population = NULL, verbose = TRUE) {
         " read as agreement."),
         length(bad), paste(utils::head(bad, 5), collapse = ", ")),
         call. = FALSE)
+
+    # THE ROSTER, WHEN THE KEY CARRIES ONE. pf_truth_shards(labelers = ) exists
+    # so that a shard cannot come back under a name nobody agreed to, and the
+    # roxygen for it has claimed this check since the function was written --
+    # but the check itself was never here. A wrong name is not cosmetic: it
+    # means the shard was labelled by something other than what the round
+    # records, or that one labeler's file reached another labeler, and either
+    # way every per-labeler figure downstream is attributed to the wrong
+    # producer. An unrostered key (labeler NA or blank, which is what a round
+    # dealt without a roster writes) has nothing to enforce, and that stays a
+    # report rather than a refusal.
+    kl <- as.character(key$labeler)
+    kl[!nzchar(trimws(kl))] <- NA_character_
+    if (any(!is.na(kl))) {
+      roster <- tapply(kl, as.integer(key$shard), function(z)
+        unique(stats::na.omit(z))[1L])
+      want <- roster[as.character(as.integer(v$shard))]
+      off <- which(!is.na(want) & v$labeler != want)
+      if (length(off)) {
+        d <- unique(data.frame(shard = as.integer(v$shard)[off],
+                               got = v$labeler[off], want = want[off],
+                               stringsAsFactors = FALSE))
+        stop(sprintf(paste0(
+          "%d rows carry a labeler the key did not deal that shard to:\n%s\n",
+          "  The round records who labelled what, so a shard returned under",
+          " another\n  name is either the wrong labeler's work or the wrong",
+          " labeler's file --\n  and every per-labeler figure built on it",
+          " would name the wrong producer."),
+          length(off),
+          paste(sprintf("    shard %d: got `%s`, dealt to `%s`",
+                        d$shard, d$got, d$want), collapse = "\n")),
+          call. = FALSE)
+      }
+    }
 
     missing_ids <- unique(c(missing_ids,
                             setdiff(as.character(key$grant_id), v$grant_id)))

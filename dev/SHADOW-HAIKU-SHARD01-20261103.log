@@ -1,0 +1,181 @@
+﻿============================================================================== 
+SHADOW LABELER vs REFERENCE LABELER  shard 01 
+============================================================================== 
+reference: shard-01-truth-claude-fable-5-1-truth-01.csv 
+shadow:    shard-01-truth-claude-haiku-5-5-shadow-01.csv 
+---------------------------------------------------------------------- 
+read 184 labelled rows over 92 cases from 2 labelers 
+  claude-fable-5-1/truth-01 92 | claude-haiku-5-5/shadow-01 92 
+  basis: inference 20 | web 164 
+  92 cases carry two labelers (the overlap) 
+ 
+<pf_agreement>  92 cases dealt to two labelers
+  strict      72/92   =  78.3% [68.8, 85.5]
+  effective   73/92   =  79.3% [70.0, 86.4]
+  per labeler, on the effective basis:
+    claude-fable-5-1/truth-01  73/92  =  79.3% [70.0, 86.4]
+    claude-haiku-5-5/shadow-01  73/92  =  79.3% [70.0, 86.4]
+
+  Agreement is NOT accuracy: two labelers sharing a training
+  distribution and a tool will be wrong together. What converts this
+  into accuracy is a hand-labelled slice scored with pf_grade_verdicts().
+
+92 of 92 cases carry a verdict from both 
+
+verdict agreement, reference (rows) against shadow (columns): 
+                   shadow
+reference           NO_ORG_INDIVIDUAL NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE
+  NO_ORG_INDIVIDUAL                 3                 1                 0
+  NO_ORG_NOT_EXEMPT                 0                 5                 0
+  NO_ORG_UNFINDABLE                 0                 0                 4
+  ORG_FOUND                         0                 3                 5
+  UNRESOLVED                        1                 0                 1
+                   shadow
+reference           ORG_FOUND UNRESOLVED
+  NO_ORG_INDIVIDUAL         0          0
+  NO_ORG_NOT_EXEMPT         0          2
+  NO_ORG_UNFINDABLE         1          1
+  ORG_FOUND                60          5
+  UNRESOLVED                0          0
+
+both said ORG_FOUND on 60 cases; same EIN on 60 = 100.0% [94.0, 100.0] 
+
+what each labeler did with the cases the other settled: 
+  reference ORG_FOUND, shadow did not resolve: 10 
+  shadow ORG_FOUND, reference did not resolve: 1 
+
+sourcing: basis=web with a url -- reference 89/92, shadow 75/92 
+confidence: reference high=64 low=6 medium=22 | shadow high=38 low=21 medium=33 
+
+shadow's agreement with the reference, by the SHADOW's own confidence: 
+  high   38/38 = 100.0% [90.8, 100.0] 
+  medium 30/33 =  90.9% [76.4, 96.9] 
+  low     4/21 =  19.0% [7.7, 40.0] 
+
+20 disagreements, every one listed so they can be read: 
+
+  PFI-081f998cc1893073 
+    reference: ORG_FOUND 133039601 (web/medium) 
+       Mountain View 94043 (1060 La Avenida) was the Northern California & Northern Nevada chapter office, and the chapter's own page states its federal tax  
+    shadow:    UNRESOLVED  (web/low) 
+       The filed name is a Mountain View office (1060 La Avenida) of the Northern California & Northern Nevada Chapter, but sources conflict on its EIN: Caus 
+
+  PFI-0933e64fe6cb93b1 
+    reference: ORG_FOUND 741761309 (web/medium) 
+       "UT Health School of Nursing" is the Cizik School of Nursing, a school within The University of Texas Health Science Center at Houston (EIN 74-1761309 
+    shadow:    NO_ORG_NOT_EXEMPT  (web/medium) 
+       The payee is the Cizik (UTH) School of Nursing, a unit of the state-agency UT Health Science Center at Houston (EIN 74-1761309), which files no 990 an 
+
+  PFI-09e80cc8c7469c4e 
+    reference: NO_ORG_UNFINDABLE  (web/low) 
+       Cascade pick (Opioid Alliance) is clearly wrong; two real animal-rescue orgs fit and the packet cannot separate them: South Florida Pet Rescue and Reh 
+    shadow:    ORG_FOUND 593826119 (web/medium) 
+       The filed name is a truncation of South Florida Pet Rescue & Rehabilitation, whose own site says it is a 501(c)(3) operating as Get A Life Pet Rescue; 
+
+  PFI-29a186108cf026ec 
+    reference: NO_ORG_UNFINDABLE  (web/medium) 
+       Filed ZIP 10005 matches the NAACP New York State Conference at 44 Wall St Ste 604 (a 501(c)(4) NAACP unit), not NAACP LDF (separate org at 40 Rector S 
+    shadow:    UNRESOLVED  (web/low) 
+       Ruled out NAACP LDF (13-1655255), which is a separate legal entity at 40 Rector St 10006 and not the filed "NAACP" at 10005; the 10005 address matches 
+
+  PFI-3e4df7bf3c714151 
+    reference: ORG_FOUND 951684089 (web/medium) 
+       Scripps Mercy fundraising is run by Scripps Health Foundation, which is a DBA of Scripps Health (EIN 95-1684089); the legacy 'Mercy Hospital Foundatio 
+    shadow:    NO_ORG_UNFINDABLE  (inference/low) 
+       The cascade pick is the medical staff body, not a foundation or fund, so it is ruled out; the grant most likely went to a Scripps fundraising entity,  
+
+  PFI-442cc90e0a367b85 
+    reference: ORG_FOUND 112965575 (web/high) 
+       Distinctive name uniquely identifies the Northwell Health Foundation (fka North Shore LIJ Health System Foundation, Westbury NY, EIN 11-2965575); the  
+    shadow:    UNRESOLVED  (inference/low) 
+       The cascade pick (EIN 11-2965575, Westbury NY, formerly North Shore LIJ Health System Foundation) matches the name, but the filed Norcross GA 30092 ad 
+
+  PFI-44b50454f262b51f 
+    reference: NO_ORG_NOT_EXEMPT  (web/low) 
+       Only "Tri Community" body in Buffalo City WI 54622 is the Tri-Community (volunteer) Fire Department, run by a municipal fire board with city represent 
+    shadow:    UNRESOLVED  (inference/low) 
+       Filed TRI COMMUNITY in Buffalo City WI 54622 most likely means the Tri-Community Fire Department (a volunteer department listed as a city service, whi 
+
+  PFI-5ab3d34d355dcc83 
+    reference: UNRESOLVED  (web/low) 
+       Cascade pick LEAH FOUNDATION is a Milwaukee WI entity with no Indiana tie; searches for a "LEAH" organisation at Indianapolis 46202 found only individ 
+    shadow:    NO_ORG_INDIVIDUAL  (inference/low) 
+       Filed payee is a bare first name "LEAH" with a $300 grant and no purpose, which reads as a person; the only BMF candidate, Leah Foundation Inc in Milw 
+
+  PFI-6be0c9f7af7cc6ff 
+    reference: UNRESOLVED  (web/low) 
+       "Rock Springs" in Denver NC 28037 could be the public Rock Springs Elementary (government), its PTO (EIN 58-1595577), or the Methodist Rock Spring Cam 
+    shadow:    NO_ORG_UNFINDABLE  (inference/low) 
+       The cascade pick (Rock Springs Foundation, Bethesda MD) is a different body in a different state; the payee is almost certainly a Denver NC organizati 
+
+  PFI-792c91f2144f37de 
+    reference: ORG_FOUND 141340095 (web/medium) 
+       "Rensselaer Institute" is RPI's historic name and no such entity exists in South Yarmouth MA; the filed address is likely the filer's own, and the cas 
+    shadow:    NO_ORG_UNFINDABLE  (inference/low) 
+       Searches found no organization named "Rensselaer Institute" in South Yarmouth MA; Rensselaer Polytechnic Institute (EIN 14-1340095, Troy NY) is a diff 
+
+  PFI-80d52e230b0a7adb 
+    reference: NO_ORG_INDIVIDUAL  (inference/medium) 
+       Recipient is a named person (Nicole Greenberg) tagged with her school, a $1,000 scholarship/award pattern; Sequoia High School itself is a public scho 
+    shadow:    NO_ORG_NOT_EXEMPT  (inference/low) 
+       Filed name reads as a named fund administered by the public Sequoia High School (Sequoia Union HSD, a government body with no exemption of its own); s 
+
+  PFI-8800de985a33b029 
+    reference: ORG_FOUND 362365900 (web/medium) 
+       Multiple obituaries place "West Suburban Association for the Retarded, Inc." at 1005 E Division St, Lombard IL 60148, and Instrumentl's 990 report lis 
+    shadow:    NO_ORG_UNFINDABLE  (inference/low) 
+       The cascade pick is in Groves TX, a different state and ZIP from the Lombard IL 60148 filing, so it is ruled out; an organization in Lombard almost ce 
+
+  PFI-b064693c781c4489 
+    reference: ORG_FOUND 363172591 (web/high) 
+       "HOME" at Chicago 60607 is H.O.M.E. (Housing Opportunities & Maintenance for the Elderly), EIN 36-3172591, whose address is Chicago IL 60607 per Guide 
+    shadow:    UNRESOLVED  (inference/low) 
+       The filed name "HOME" with Chicago IL 60607 is too generic to identify, my searches returned nothing for it, and the cascade pick is a Decatur IL "HOM 
+
+  PFI-b9d55b3bbd8b1163 
+    reference: ORG_FOUND 450948896 (web/high) 
+       Brightside Inc. is a Louisville Metro Government program with no exemption of its own; Louisville Metro's site states Brightside Foundation Inc. (EIN  
+    shadow:    NO_ORG_UNFINDABLE  (inference/low) 
+       Filed "BRIGHTSIDE" is most likely the operating charity Brightside, Inc. (brightsideinc.org), which the cascade's Brightside Foundation Inc (45-094889 
+
+  PFI-bb1434fece4c7000 
+    reference: ORG_FOUND 916001537 (web/medium) 
+       The Haring Center is an unincorporated center of the University of Washington (haringcenter.org / washington.edu), which is in the BMF under EIN 91-60 
+    shadow:    NO_ORG_NOT_EXEMPT  (web/medium) 
+       The Haring Center is a unit of the University of Washington, a governmental entity that states it is not a 501(c)(3) and lists its own EIN as 91-60015 
+
+  PFI-bf91d886e39e7698 
+    reference: ORG_FOUND 237442596 (web/medium) 
+       Filed name "Cong Kahal Yeshaye Kerestur" is a transliteration-exact match for BMF "CONG KAHAL JESHAJE OF KERESTUR" (EIN 23-7442596, Brooklyn, also a g 
+    shadow:    NO_ORG_UNFINDABLE  (web/low) 
+       A Kerestur congregation in ZIP 11206 exists ("Be Er Yeshaye of Kerestur", 215 Middleton St) but the filed "Kahal Yeshaye" name does not match it, and  
+
+  PFI-d942791d627114e5 
+    reference: ORG_FOUND 650623649 (web/high) 
+       "Season to Share" is the Palm Beach Post's holiday giving program, incorporated as The Palm Beach Post Season to Share Fund Inc (501(c)(3), EIN 65-062 
+    shadow:    UNRESOLVED  (web/low) 
+       The cascade's Palm Beach Post Season To Share Fund (65-0623649) matches the filed 33405 ZIP and near-identical name, but the Community Foundation for  
+
+  PFI-dedeecf19a59d56c 
+    reference: NO_ORG_NOT_EXEMPT  (web/medium) 
+       Filed name is the public school itself (Omaha Public Schools, a government unit, same 4410 N 36th St address as the foundation); the foundation's 990  
+    shadow:    UNRESOLVED  (web/low) 
+       The cascade's pick (EIN 47-0762209, Omaha North High School Foundation, same 4410 N 36th St address) is the school's support arm, but I could not link 
+
+  PFI-e13012a1cb811123 
+    reference: ORG_FOUND 223462113 (web/high) 
+       ProPublica lists "Yagdiyl Torah Publications Inc, D B A Sephardic Press" (EIN 22-3462113), a tax-deductible 501(c)(3) with 990 filings 2010-2022; Seph 
+    shadow:    NO_ORG_NOT_EXEMPT  (web/low) 
+       Sephardic Press is Rabbi Michael Haber's imprint at 1741 E 3rd St, Brooklyn, with no exemption of its own found, and the tribute page footer describes 
+
+  PFI-f479a60ffbf6ec38 
+    reference: ORG_FOUND 452763577 (web/medium) 
+       Chabad of Austin Inc (EIN 45-2763577, Rabbi Levertov) was headquartered at 4205 Venado Dr, Austin TX 78731, matching the filed ZIP; the cascade's Phoe 
+    shadow:    UNRESOLVED  (inference/low) 
+       The filed "CHABAD HOUSE" in Austin 78731 fits two Austin Chabad entities equally poorly: Ut Chabad House (EIN 45-2530523, literal name but 78705 addre 
+============================================================================== 
+AGREEMENT IS NOT ACCURACY. Both labelers are models and can be wrong 
+together; this cannot see that. A high figure says the cheap labeler can 
+stand in for the expensive one, not that either is right. What converts 
+it is the hand-labelled slice (TRUTH-LABELING-PROTOCOL.md section 6.4). 
+============================================================================== 
