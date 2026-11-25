@@ -7,8 +7,15 @@
 pf_placeholder_pattern()
 }
 \value{
-A single regular expression, matched case-insensitively.
+A single regular expression, matched against an upper-cased name.
 }
 \description{
 Patterns that mark a recipient name as a pointer rather than a name
 }
+\section{Why \code{MISC} is spelled out}{
+
+\verb{^MISC} was the pattern until 2026-11-24, and it matched \verb{MISCARRIAGE ABORTION HOTLINE} — a real organisation with an EIN, discarded as a pointer.
+\verb{^MISC\\\\b} alone would fix that but drops \code{MISCELLEANOUS}, a filer's
+misspelling that is a genuine pointer, so both branches are needed.
+}
+

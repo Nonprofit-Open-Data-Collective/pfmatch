@@ -19,19 +19,34 @@ pf_truth_shards(
 \item{draw}{The frame from \code{\link[=pf_round_sample]{pf_round_sample()}}, a path to a CSV of it, or a
 character vector of \code{grant_id}s.}
 
-\item{k}{Number of shards. This divides by labeler capacity, not by
-anything statistical: 6-8 shards of 50-60 cases is a working size.}
+\item{k}{Number of shards. Mostly this divides by labeler capacity --
+6-8 shards of 50-60 cases is a working size -- but it is not free of the
+statistics: \code{k} multiplies the overlap the per-labeler cut needs, because
+each labeler only sees \code{overlap * n / k} of it. Stage 1 went to five
+labelers rather than eight for that reason (\code{dev/ADJUDICATION-PREREQS.md}
+6b.6), trading 92 cases a labeler for an overlap that clears \code{min_n}.}
 
 \item{overlap}{Fraction of cases dealt to a second shard as well. Default
 \code{0.1}. \code{0} turns the agreement read off, which is worth doing
-deliberately rather than by default.}
+deliberately rather than by default. Size it against
+\code{\link[=pf_labeler_agreement]{pf_labeler_agreement()}}'s \code{min_n} rather than by taste: the per-labeler
+cut needs \code{overlap * n / k >= min_n / 2} cases on every shard, so 400
+cases over 8 labelers need \code{0.2} and over 5 need \code{0.15}. The deal prints
+what each labeler got and says when it is short.}
 
 \item{seed}{Required. Recorded on the result.}
 
 \item{labelers}{Optional character vector of length \code{k} naming who gets
-each shard. When given, \code{\link[=pf_read_truth]{pf_read_truth()}} enforces the \code{labeler} stamp
-against it; when absent, it still requires a stamp and reports what
-arrived.}
+each shard, and \strong{required to be distinct} when there is an overlap: two
+shards under one name make the overlap between them unreadable, since
+\code{\link[=pf_labeler_agreement]{pf_labeler_agreement()}} needs two different names on a case and
+\code{\link[=pf_read_truth]{pf_read_truth()}} refuses one labeler answering a case twice. When given,
+it is written onto the key and the templates, and \code{\link[=pf_read_truth]{pf_read_truth()}}
+refuses a shard that comes back under a name the key did not deal it to.
+When absent, a stamp is still required of the returned rows and what
+arrived is reported rather than checked. Naming them is a \strong{re-stamp, not
+a redeal}: \code{labelers} decorates an assignment the seed already fixed, so
+a round dealt without one can be re-dealt with one and nothing moves.}
 
 \item{population}{The fingerprint these ids are valid in. Taken from
 \code{attr(draw, "population")} when the draw still carries it.}
@@ -63,6 +78,18 @@ that drifted -- the weakness arrives as a \emph{stratum} effect, and a stratum
 effect is exactly what the round is being run to measure. Dealing within
 stratum makes a bad labeler show up as a labeler, where
 \code{\link[=pf_labeler_agreement]{pf_labeler_agreement()}} can see it.
+}
+
+\section{The overlap is dealt on the same principle}{
+
+Each shard gives up its own share of the overlap cases and the second
+copies travel on a rotation of lags, so every shard both gives and receives
+the same number -- exactly when \code{k} divides the overlap, within one
+otherwise. Sampling both halves uniformly, which is what this did first,
+is balanced only in expectation: the 400-case stage-1 deal landed one
+labeler 7 overlap cases and another 15 against an expectation of 10, and
+\code{\link[=pf_labeler_agreement]{pf_labeler_agreement()}} reads a per-labeler cell under \code{min_n} as unusable
+-- leaving only the pooled rate, which is where a single bad labeler hides.
 }
 
 \section{What it refuses, and why each is a stop}{

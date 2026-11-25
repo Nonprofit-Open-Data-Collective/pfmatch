@@ -2,18 +2,24 @@
 % Please edit documentation in R/attached.R
 \name{pf_is_placeholder}
 \alias{pf_is_placeholder}
-\title{Flag grant rows whose recipient is a pointer to an attachment}
+\title{Flag grant rows whose recipient is a pointer rather than a name}
 \usage{
-pf_is_placeholder(grants, name_col = "recip_name")
+pf_is_placeholder(grants, name_col = "recip_name", use_model = TRUE)
 }
 \arguments{
 \item{grants}{A prepared frame from \code{\link[=pf_prepare_grants]{pf_prepare_grants()}}.}
 
 \item{name_col}{Column holding the recipient name.}
+
+\item{use_model}{Set \code{FALSE} for the regular expression alone.}
 }
 \value{
-A logical vector.
+A logical vector, one element per row.
 }
 \description{
-Flag grant rows whose recipient is a pointer to an attachment
+Fires on both the hand-written pattern in \code{\link[=pf_placeholder_pattern]{pf_placeholder_pattern()}} and
+peopleparser's \code{placeholder} class, which disagree in both directions; see
+\code{vignette("identifying-people")} for the measurement and for the one shape
+this over-reaches on — a named recipient with a pointer appended, as in
+\verb{WEILL CORNELL MEDICAL COLLEGE- SEE ATTACHMENT}.
 }

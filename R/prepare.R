@@ -55,79 +55,64 @@ NULL
   grepl("^\\s*(ATTN|ATTENTION|C\\s*[/-]?\\s*O|CARE OF|IN CARE OF)\\b", x,
         ignore.case = TRUE)
 }
-# Tokens that mark a name as institutional. Used only for the diagnostic
-# person-name flag, never to decide scope.
-.pf_org_tokens <- function() c(
-  "INC", "INCORPORATED", "CORP", "CORPORATION", "CO", "COMPANY", "LLC", "LTD",
-  "FOUNDATION", "FDN", "FUND", "TRUST", "ASSOCIATION", "ASSN", "SOCIETY",
-  "INSTITUTE", "INSTITUTION", "CENTER", "CENTRE", "COUNCIL", "COMMITTEE",
-  "CHURCH", "TEMPLE", "SYNAGOGUE", "MOSQUE", "MINISTRY", "MINISTRIES",
-  "MISSION", "MISSIONS", "SCHOOL", "SCHOOLS", "ACADEMY", "COLLEGE",
-  "UNIVERSITY", "SEMINARY", "HOSPITAL", "CLINIC", "HEALTH", "MUSEUM",
-  "LIBRARY", "THEATRE", "THEATER", "ORCHESTRA", "CHORUS", "BALLET", "GALLERY",
-  "CLUB", "LEAGUE", "ALLIANCE", "COALITION", "NETWORK", "PARTNERSHIP",
-  "PROJECT", "PROGRAM", "SERVICES", "SERVICE", "ORGANIZATION", "GROUP",
-  "SOCIETIES", "CHAPTER", "CHARITIES", "CHARITABLE", "AMERICAN", "NATIONAL",
-  "INTERNATIONAL", "COMMUNITY", "UNITED", "FRIENDS", "BOARD", "AUTHORITY",
-  "DISTRICT", "COUNTY", "CITY", "STATE", "PUBLIC", "OF", "THE", "AND",
-  "FOR", "USA", "US", "INSTITUTO", "ASSOCIATES", "ENDOWMENT"
-)
-# Common US given names, used only to raise the precision of the person-name
-# diagnostic. Deliberately short and common-only: a rare given name that is not
-# on the list simply fails to fire the flag, which is the safe direction.
-.pf_given_names <- function() c(
-  "JAMES", "JOHN", "ROBERT", "MICHAEL", "WILLIAM", "DAVID", "RICHARD", "JOSEPH",
-  "THOMAS", "CHARLES", "CHRISTOPHER", "DANIEL", "MATTHEW", "ANTHONY", "DONALD",
-  "MARK", "PAUL", "STEVEN", "ANDREW", "KENNETH", "JOSHUA", "GEORGE", "KEVIN",
-  "BRIAN", "EDWARD", "RONALD", "TIMOTHY", "JASON", "JEFFREY", "RYAN", "JACOB",
-  "GARY", "NICHOLAS", "ERIC", "STEPHEN", "JONATHAN", "LARRY", "JUSTIN", "SCOTT",
-  "BRANDON", "FRANK", "BENJAMIN", "GREGORY", "SAMUEL", "RAYMOND", "PATRICK",
-  "ALEXANDER", "JACK", "DENNIS", "JERRY", "TYLER", "AARON", "JOSE", "ADAM",
-  "NATHAN", "HENRY", "ZACHARY", "DOUGLAS", "PETER", "KYLE", "WALTER", "ETHAN",
-  "JEREMY", "HAROLD", "KEITH", "CHRISTIAN", "ROGER", "NOAH", "GERALD", "CARL",
-  "TERRY", "SEAN", "AUSTIN", "ARTHUR", "LAWRENCE", "JESSE", "DYLAN", "BRYAN",
-  "JOE", "JORDAN", "BILLY", "BRUCE", "ALBERT", "WILLIE", "GABRIEL", "LOGAN",
-  "ALAN", "JUAN", "WAYNE", "RALPH", "ROY", "EUGENE", "RANDY", "VINCENT",
-  "RUSSELL", "LOUIS", "PHILIP", "BOBBY", "JOHNNY", "BRADLEY",
-  "MARY", "PATRICIA", "JENNIFER", "LINDA", "ELIZABETH", "BARBARA", "SUSAN",
-  "JESSICA", "SARAH", "KAREN", "NANCY", "LISA", "MARGARET", "BETTY", "SANDRA",
-  "ASHLEY", "DOROTHY", "KIMBERLY", "EMILY", "DONNA", "MICHELLE", "CAROL",
-  "AMANDA", "MELISSA", "DEBORAH", "STEPHANIE", "REBECCA", "LAURA", "SHARON",
-  "CYNTHIA", "KATHLEEN", "AMY", "SHIRLEY", "ANGELA", "HELEN", "ANNA", "BRENDA",
-  "PAMELA", "NICOLE", "SAMANTHA", "KATHERINE", "EMMA", "RUTH", "CHRISTINE",
-  "CATHERINE", "DEBRA", "RACHEL", "CAROLYN", "JANET", "VIRGINIA", "MARIA",
-  "HEATHER", "DIANE", "JULIE", "JOYCE", "VICTORIA", "KELLY", "CHRISTINA",
-  "JOAN", "EVELYN", "LAUREN", "JUDITH", "OLIVIA", "FRANCES", "MARTHA",
-  "CHERYL", "MEGAN", "ANDREA", "HANNAH", "JACQUELINE", "ANN", "JEAN", "ALICE",
-  "KATHRYN", "GLORIA", "TERESA", "DORIS", "SARA", "JANICE", "MARIE", "JULIA",
-  "GRACE", "JUDY", "THERESA", "MADISON", "BEVERLY", "DENISE", "MARILYN",
-  "AMBER", "DANIELLE", "ABIGAIL", "BRITTANY", "ROSE", "NATALIE", "SOPHIA",
-  "ALEXIS", "LORI", "KAYLA", "JANE", "TIFFANY", "MARILYN", "CRYSTAL"
-)
+# Score below which a recipient name reads as a natural person. See
+# [.pf_looks_personal] for how it was chosen.
+.pf_personal_cutoff <- 0.05
+
 # Cheap "does this look like a natural person" diagnostic. Reported for context
 # only -- it never drives the scope decision, which comes from SIGOCPYRFSTA.
 #
-# Fires on a 2-3 token name with no institutional token AND one of two positive
-# signals: a single-letter middle/trailing initial ("SMITH JOHN A", "JOHN A
-# SMITH"), which is near-absent from organization names, or a token on the
-# common-given-name list. Requiring a positive signal rather than merely the
-# absence of an org keyword is what keeps names like "HARLEM CHILDRENS ZONE"
-# from flagging.
-.pf_looks_personal <- function(name) {
-  v <- toupper(trimws(as.character(name)))
-  v[is.na(v)] <- ""
-  v <- trimws(gsub("\\s+", " ", gsub("[^A-Z ]+", " ", v)))
-  toks <- strsplit(v, " ", fixed = TRUE)
-  org  <- .pf_org_tokens()
-  give <- .pf_given_names()
-  vapply(toks, function(t) {
-    t <- t[nzchar(t)]
-    if (length(t) < 2L || length(t) > 3L) return(FALSE)
-    if (any(t %in% org)) return(FALSE)
-    has_initial <- any(nchar(t[-1]) == 1L)
-    has_given   <- any(t %in% give)
-    has_initial || has_given
-  }, logical(1))
+# Delegates to peopleparser::classify_names(), whose logistic model scores each
+# token on how much more often it appears in organisation names than in people's
+# names, combines that with token count and with given-name and surname hits in
+# the 2020 Census name lists, and was trained on Form 990 Part VII names
+# 2009-2025: 982,000 filer names against 9.4 million person-field names.
+#
+# Two things sit on top of the model, and both matter:
+#
+#   * Read `org_score`, never `name_type`. classify_names() only *labels* a name
+#     an organisation once the score clears 0.99 for one- and two-word names, a
+#     default tuned for officer lists where most two-word entries are people.
+#     Grant recipients are full of acronyms and short institutional names, so
+#     ASPCA (0.839), KQED (0.839), BARNARD COLLEGE (0.874) and CHARITY NAVIGATOR
+#     (0.954) all come back `name_type == "person"`. Taking the label at face
+#     value flags 7.7% of filer-declared public charities; reading the score at
+#     0.05 flags 0.4%.
+#   * Keep the 2-3 token precondition the whitelist rule had. A one-token
+#     recipient is never a person's full name, and without the constraint bare
+#     surnames and acronyms flag (FRICK, CHIP, CISA, MARC, CHOW).
+#
+# Measured 2026-11-24 on inputs/ef100k_grants.csv against the filed status
+# (3,211 declared individual, 71,762 declared public charity): 73.7% recall at a
+# 0.4% flag rate on declared charities, against 30.7% at 0.9% for the 202-name
+# given-name whitelist this replaces -- more than double the recall at half the
+# false-positive rate. Six of the seven people the whitelist is documented to
+# miss in dev/NO-RESIDUAL-AUDIT.md now flag (JOEL BASS, JONES MAURICE, SMALL
+# RANDALL, MITCHELL MILLER, BETH SMITH, TANNER JONES); BROOKLYN GARRISON-OSBORN
+# scores 0.115 and still does not. Both label sets are filer-declared and noisy
+# in both directions, so 0.4% is an upper bound on the true false-positive rate.
+#
+# An institutional-token veto was measured on top of the score and moved one row
+# in 71,762: the model already encodes what a keyword list encodes, learned from
+# 10 million names rather than 90 hand-chosen words, so no veto is applied.
+.pf_looks_personal <- function(name, cutoff = .pf_personal_cutoff) {
+  raw <- toupper(trimws(as.character(name)))
+  raw[is.na(raw)] <- ""
+  # Token count is judged on letters only, so punctuation and digits cannot
+  # inflate it; the model is handed the name as filed, since it does its own
+  # cleaning.
+  v <- trimws(gsub("[[:space:]]+", " ", gsub("[^A-Z ]+", " ", raw)))
+  ntok <- vapply(strsplit(v, " ", fixed = TRUE),
+                 function(t) sum(nzchar(t)), integer(1))
+  out <- logical(length(raw))
+  ok <- ntok >= 2L & ntok <= 3L
+  if (!any(ok)) return(out)
+  # classify_names() is vectorised but not free -- score each distinct name once.
+  u <- unique(raw[ok])
+  cl <- peopleparser::classify_names(u)
+  score <- cl$org_score[match(u, cl$name)]
+  out[ok] <- (!is.na(score) & score < cutoff)[match(raw[ok], u)]
+  out
 }
 #' Schema map from prepared grant columns onto npmatch canonical fields
 #'
@@ -153,8 +138,18 @@ pf_map_grants <- function() {
 #'   (columns `SIGOCPYRPNAM`, `SIGOCPYRBNBN1`, ..., `SIGOCPYRFSTA`).
 #' @param id_prefix Prefix for the generated `grant_id` when the input has none.
 #' @return A data frame with the original columns plus the prepared recipient
-#'   name / address fields, the standardized recipient type, and the scope
-#'   decision (`in_scope`, `oos_reason`).
+#'   name / address fields, the standardized recipient type, the scope decision
+#'   (`in_scope`, `oos_reason`), and four flags that describe the recipient
+#'   without deciding scope:
+#'   \describe{
+#'     \item{`looks_personal`}{the name reads as a natural person, scored with
+#'       `peopleparser::classify_names()`. Never fires on a placeholder.}
+#'     \item{`flag_placeholder`}{the name is a pointer to an attachment rather
+#'       than a name — see [pf_is_placeholder()].}
+#'     \item{`flag_individual`, `flag_government`}{what the *filer* said the
+#'       recipient was, from the status field.}
+#'   }
+#'   `vignette("identifying-people")` covers what each one is worth.
 #' @export
 pf_prepare_grants <- function(grants, id_prefix = "G") {
   g <- as.data.frame(grants, stringsAsFactors = FALSE)
@@ -246,9 +241,18 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   out$recipient_type        <- ty$recipient_type
   out$recipient_type_detail <- detail
   out$status_norm           <- ty$status_norm
-  out$looks_personal        <- .pf_looks_personal(name)
+  # A pointer to an attachment is not a name, so it cannot be a person's name
+  # either. Without this precedence the person flag fires on 99 rows per 100k
+  # that are all SEE ATTACHED variants: `SEE ATTACHED` is two tokens with no
+  # institutional word in it, which is exactly the shape the score rewards.
+  placeholder <- .pf_placeholder(name)
+  out$flag_placeholder      <- placeholder
+  out$looks_personal        <- .pf_looks_personal(name) & !placeholder
   # Flags, not filters. These record what the filer *said* the recipient was so
   # results can be split by it, without that claim deciding whether we look.
+  # `flag_placeholder` is the one that is read off the name rather than the
+  # filed status, and it stays a flag too: the pointer rows carry 4.0% of all
+  # grant dollars, which should be visible rather than silently dropped.
   out$flag_individual <- ty$recipient_type_detail == "individual"
   out$flag_government <- ty$recipient_type_detail == "government"
   out$has_name    <- has_name

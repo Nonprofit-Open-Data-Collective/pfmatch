@@ -1,0 +1,52 @@
+﻿
+============================================================================== 
+TRUTH LABELER  shard 01 
+============================================================================== 
+model=claude-fable-5-1  effort=high  search=max 12  workers=4 
+labeler=claude-fable-5-1/b2-01 
+50 cases, population cb3c78ff0f1a9546 
+truth_id: left blank, deliberately -- see the note above. 
+system prompt: 18,256 characters 
+
+round 1: 50 requests ... 
+  50 finished, 0 paused mid-turn 
+
+373.2 s elapsed (7.5 s/case wall) 
+============================================================================== 
+verdicts returned: 50 of 50  (tool call used on 50) 
+ 
+verdict
+NO_ORG_INDIVIDUAL NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE         ORG_FOUND 
+                1                 4                 5                36 
+       UNRESOLVED 
+                4 
+ 
+           confidence
+basis       high low medium
+  inference    0   2      0
+  web         28   6     14
+
+source_url given on 48 of 50 rows 
+wrong_ein recorded on 34 
+
+searches: 295 total, 5.9/case, 0 case(s) with none 
+
+tokens: 19,965 in, 86,404 out   cache: 3,946,126 read, 342,274 WRITTEN 
+requests: 31 short-prompt, 19 long-prompt (haiku prices by whole prompt) 
+token cost: $9.7848 over 50 cases ($0.195696/case) 
+  projected for all 50 cases of this shard: $9.78 
+  PLUS 295 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/round-b2-topup-labelled/shard-01-truth-claude-fable-5-1-b2-01.csv 
+      ./data-dev/round-b2-topup-labelled/shard-01-truth-claude-fable-5-1-b2-01.rds   (with usage and api columns) 
+ 
+---------------------------------------------------------------------- 
+read 50 labelled rows over 50 cases from 1 labelers 
+  claude-fable-5-1/b2-01 50 
+  basis: inference 2 | web 48 
+  0 cases carry two labelers (the overlap) 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+============================================================================== 
+
+

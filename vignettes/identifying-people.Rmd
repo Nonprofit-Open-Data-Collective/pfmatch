@@ -1,0 +1,266 @@
+---
+title: "Identifying people in the grant recipient list"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Identifying people in the grant recipient list}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set( collapse = TRUE, comment = "#>" )
+library(pfmatch)
+tab <- function(d, ...) knitr::kable(d, format = "html", ...)
+```
+
+```{r data, echo = FALSE}
+# Measured, not illustrative. Every figure on this page comes from
+# inputs/ef100k_grants.csv (100,000 grant rows) scored against the filed
+# recipient-status field, except where the text says otherwise. Embedded as
+# literals so the vignette builds without the inputs directory, which is not
+# shipped in the package.
+rule_tbl <- data.frame(
+  rule = c("filed status code alone",
+           "202-name given-name whitelist (removed)",
+           "two tokens both in `census.names`",
+           "`org_score < 0.05`, no token constraint",
+           "**`org_score < 0.05` on a 2-3 token name**"),
+  recall = c("100% by construction", "30.7%", "49.4%", "76.0%", "**73.6%**"),
+  fp     = c("—", "0.9%", "2.0%", "0.5%", "**0.4%**"),
+  check.names = FALSE, stringsAsFactors = FALSE)
+names(rule_tbl) <- c("How the recipient is judged a person",
+                     "Caught, of 3,211 declared individuals",
+                     "Fired, of 71,762 declared charities")
+
+flag_tbl <- data.frame(
+  flag = c("`flag_individual`", "`flag_government`",
+           "`looks_personal`", "`flag_placeholder`"),
+  source = c("the filed status field", "the filed status field",
+             "the recipient name", "the recipient name"),
+  what = c("the filer coded this payee `I` / `INDIVIDUAL`",
+           "the filer coded it a government body",
+           "the name reads as a natural person",
+           "the name is a pointer to an attachment, not a name"),
+  n = c("3,211", "783", "5,209", "283"),
+  stringsAsFactors = FALSE)
+names(flag_tbl) <- c("Flag", "Read from", "Means", "Rows per 100k")
+
+ph_tbl <- data.frame(
+  detector = c("`pf_placeholder_pattern()` alone",
+               "peopleparser `placeholder` class alone",
+               "**the union, which is what fires**"),
+  rows = c("272", "147", "**283**"),
+  stringsAsFactors = FALSE)
+names(ph_tbl) <- c("Detector", "Rows caught per 100k")
+```
+
+A 990-PF filer reports who it paid, and some of those payees are people:
+scholarship and fellowship recipients, prize winners, hardship grants. A person
+has no EIN and no Business Master File record, so a person routed into the
+matching cascade can only do one of two things — fail, or match an organisation
+that happens to share a surname. Both are wrong, and the first is worse than it
+looks, because it is counted as a match failure.
+
+This is a **denominator** problem rather than a matching problem. Individuals
+sitting in the population make every clear rate in the project read low, and
+the error does not get smaller as matching improves. Identifying them is
+therefore worth doing carefully, and worth measuring rather than assuming.
+
+## The four flags
+
+`pf_prepare_grants()` attaches four flags to every row. Two are what the filer
+*said*; two are read off the name itself.
+
+```{r flags, echo = FALSE}
+tab( flag_tbl )
+```
+
+All four are flags, not filters. None of them removes a row from the matching
+population — `in_scope` is decided by geography and by whether there is
+anything to match on at all. That separation is deliberate: the filed status
+field is wrong often enough in both directions that letting it decide scope
+would silently discard real organisations.
+
+## What the filed status field is worth
+
+`SIGOCPYRFSTA` is uncontrolled text, and filers use it loosely. It is still the
+single strongest signal available — a filer who writes `I` usually does mean an
+individual — but it cannot be trusted alone, in either direction:
+
+* Of 100 hand-adjudicated recipients in the residual (`dev/NO-RESIDUAL-AUDIT.md`),
+  the pipeline's own signals flagged **28** as individual payees. Adjudication
+  put the true count at **37**.
+* The same audit found seven payees that are not organisations at all
+  affirmatively coded `public_charity`.
+* An earlier audit found the out-of-scope flag wrong **24%** of the time in the
+  opposite sense, coding real organisations as individuals.
+
+So the name has to be read as well. Everything below is about doing that.
+
+## Reading the name
+
+The name signal comes from `peopleparser::classify_names()`, whose model scores
+each token on how much more often it appears in organisation names than in
+people's names, combines that with token count and with given-name and surname
+hits in the 2020 Census name lists, and was trained on Form 990 Part VII names
+from 2009 to 2025 — 982,000 filer names against 9.4 million person names.
+
+```{r classify}
+x <- c( "BETH SMITH",
+        "JONES MAURICE",
+        "HARLEM CHILDRENS ZONE",
+        "ASPCA",
+        "BARNARD COLLEGE",
+        "SEE ATTACHED SCHEDULE" )
+
+peopleparser::classify_names( x ) |> tab()
+```
+
+### Read `org_score`, never `name_type`
+
+This is the trap, and it is worth stating plainly because the column that looks
+right is the wrong one. `classify_names()` only *labels* a name an organisation
+once its score clears **0.99** for one- and two-word names — a threshold tuned
+for officer lists, where most two-word entries really are people. Grant
+recipient fields are full of acronyms and short institutional names, so the
+label is far too generous:
+
+```{r trap}
+x <- c( "ASPCA", "KQED", "BARNARD COLLEGE", "CHARITY NAVIGATOR", "SMITH COLLEGE" )
+
+# every one of these is an organisation, and every one is labelled "person"
+peopleparser::classify_names( x ) |> tab()
+```
+
+On the 100,000-row file, **5,264 of the 13,348 rows labelled `person` score
+above 0.8**. Taking the label at face value fires on 7.7% of filer-declared
+public charities. Reading the score at 0.05 fires on 0.4%. Same model, same
+call, twenty-fold difference in precision — the whole of it in which column you
+read.
+
+### Why a token count is still needed
+
+The score alone is not enough. A one-token recipient is never a person's full
+name, but the model will happily score a bare surname or an unfamiliar acronym
+as person-like: `FRICK`, `CHIP`, `CISA`, `MARC`, `CHOW`. Requiring **2 to 3
+tokens**, which the rule this replaced also did, costs 2.3 points of recall and
+removes that whole class. On the shipped `pf_variants` corpus it cuts false
+positives from 39 names to 16.
+
+### How the rules compare
+
+Measured against the filed status on 100,000 rows. Recall is the share of
+declared individuals caught; the last column is the share of declared public
+charities the rule fires on, which is the cost side.
+
+```{r rules, echo = FALSE}
+tab( rule_tbl )
+```
+
+The shipped rule is the last row. Two things to note. The whitelist it replaced
+was not merely beaten — it was beaten on **both** axes at once, more than
+double the recall for less than half the false-positive rate, which is why
+there was no trade-off to debate. And the two-token census-match rule, the
+obvious thing to build by hand from the same Census tables, is worse than
+either: matching a given name against a surname is one of the inputs the model
+already weighs, and weighing it alone over-fires on names like `GUILD HALL`.
+
+### What it still misses
+
+Of the seven people the old whitelist was documented to miss, six now flag.
+`BROOKLYN GARRISON-OSBORN` scores 0.115 and still does not. A 0.25 cutoff
+catches it, and also drags in `RONALD MCDONALD HOUSE`, `DANA FARBER` and
+`Y M C A`, so 0.05 is where the cutoff sits.
+
+## Placeholders: the third kind of recipient
+
+Some filers decline to itemize Part XIV Table 3a and file one row whose
+recipient name is a pointer — `SEE ATTACHED SCHEDULE`, `VARIOUS`,
+`AVAILABLE UPON REQUEST` — carrying the whole year's total. There is no
+recipient to find, on paper or anywhere else; see `vignette("outside-the-bmf")`
+and `pf_attached_report()`.
+
+These matter here for two reasons.
+
+**First, they look like people.** `SEE ATTACHED` is two tokens with no
+institutional word in it, which is exactly the shape the person score rewards.
+Before `flag_placeholder` existed, 99 rows per 100k were flagged as natural
+persons, every one of them a `SEE ...` variant. A placeholder now always wins:
+
+```{r precedence}
+x <- c( "SEE ATTACHED", "SEE SCHEDULE ATTACHED", "BETH SMITH" )
+
+pf_is_placeholder( data.frame(recip_name = x) )
+```
+
+**Second, neither detector finds them all.** `pf_placeholder_pattern()` is a
+hand-written regular expression, and peopleparser has its own `placeholder`
+class. They disagree in both directions, so the flag is their union:
+
+```{r ph, echo = FALSE}
+tab( ph_tbl )
+```
+
+The pattern keeps the larger share, because it was written against this corpus.
+What the model adds is the shapes a keyword list did not anticipate — the
+`ALL OTHER(S) ...` family (`ALL OTHERS 1000 OR LESS PER DONEE`,
+`ALL OTHER MEDICAL MISSIONS`), `THE BOARD OF TRUSTEES`, and bare `SEE` and `X`.
+
+```{r pattern}
+pf_placeholder_pattern()
+```
+
+Together they account for 283 rows per 100k across 166 distinct names, carrying
+**4.0% of all grant dollars** in the file — $201.8M of $5.06B. That is the
+reason this is a flag and not a filter: those dollars should be visible in a
+report, not silently dropped from the population.
+
+### Two defects this surfaced
+
+Writing the flag turned up two problems in the pattern that had been there all
+along.
+
+`^MISC` matched `MISCARRIAGE ABORTION HOTLINE`, a real organisation with an
+EIN, and discarded it as a pointer. The fix is two branches rather than one,
+because `^MISC\b` alone would drop `MISCELLEANOUS` — a filer's misspelling that
+is a genuine pointer.
+
+The pattern also over-reaches on a named recipient with a pointer appended:
+`WEILL CORNELL MEDICAL COLLEGE- SEE ATTACHMENT` and
+`COLLEGE OF WESTERN IDAHO - SEE ADDENDUM FOR A` are both matchable
+organisations whose names are right there. This one is **not fixed**. It costs
+nothing while the flag is diagnostic, and it is the strongest argument against
+promoting placeholders to a scope exclusion without first separating "a pointer
+instead of a name" from "a name with a pointer stuck to it".
+
+## Caveats worth carrying
+
+**The labels are the filed status field, which is itself unreliable.** Both
+populations are noisy, and in both directions, so the 0.4% is an *upper* bound
+on the true false-positive rate. The declared-charity rows that the person flag
+fires on include genuine filer miscodes — `JOEL OSTEEN`, `VIOLA WATSON`,
+`PHELPS MICHAEL` — alongside genuine model errors — `MSPCA-ANGELL`,
+`CHOATE ROSEMARY HALL`, `826 VALENCIA`. A clean read of precision needs hand
+adjudication on a fresh stratified sample, which has not been done.
+
+**The model was trained on filer and officer names, not grant recipients.** It
+transfers well, but it was not fitted to this population, and the 0.99 default
+threshold is direct evidence of that mismatch.
+
+**The irreducible shape is the short two-token institutional name.**
+`BETH ISRAEL` is a top-200 given name beside a census surname; `MECHON HADAR`,
+`KEREN EZRA`, `SHAARE BINA` and `YISMACH MOSHE` are the same problem. No
+name-only rule separates these from people, and 16 of them are allowlisted by
+name in the package's own tests so that a genuinely personal name entering the
+shipped corpus still trips the privacy guard there.
+
+**Nicknames do not help.** peopleparser also ships `first_name_pairs`, 24,967
+nickname and spelling-variant pairs. It is a within-person canonicalisation
+table — both forms of a name are person names either way — so it contributes
+nothing to telling people from organisations. Its use is on the matching side.
+
+**The denominator has moved.** Every clear rate computed before this flag
+changed was computed on the old one. Re-run before re-quoting.

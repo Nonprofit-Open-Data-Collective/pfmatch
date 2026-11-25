@@ -50,6 +50,34 @@ data-dev/*
 # what is in git.
 !data-dev/round-stage1
 !data-dev/round-stage1-key
+# ... and two files of the superseded k=8 deal, which is otherwise worthless --
+# its templates were empty and the cases regenerate. The key is the only record
+# of the overlap imbalance that pf_truth_shards() now deals around (7 and 15
+# cases on two labelers against an expectation of 10), and that figure is cited
+# in R/shards.R, its roxygen and ADJUDICATION-PREREQS.md 6b.6. The deal is NOT
+# reproducible from its seed any more -- the overlap is dealt rather than
+# sampled now -- so without this file those three citations point at nothing,
+# which is the defect dev/FIGURE-PROVENANCE.md exists to catch.
+# Re-include the directory first, then re-exclude its contents: the header
+# above says git cannot re-include a file whose parent is excluded.
+!data-dev/round-stage1-k8-superseded
+data-dev/round-stage1-k8-superseded/*
+!data-dev/round-stage1-k8-superseded/SHARD-KEY.csv
+!data-dev/round-stage1-k8-superseded/README.md
+
+# ... and the labels that come BACK from a labeler. The dealt templates above
+# are tracked because a filled one is adjudication that cannot be regenerated
+# at any price; these are those templates filled in. They are model-produced
+# rather than hand-produced, so "any price" is really ~$15 and ~700 web
+# searches per shard -- but they are still the round's truth, every figure the
+# round reports is measured against them, and a web search is not reproducible
+# in the way a seed is: re-running the labeler next month queries a different
+# web. Same re-include-the-directory-first dance as above. The -limitN files
+# are smoke-test output over the first few cases and are deliberately left out.
+!data-dev/round-stage1-labelled
+data-dev/round-stage1-labelled/*
+!data-dev/round-stage1-labelled/*.csv
+data-dev/round-stage1-labelled/*-limit[0-9]*.csv
 
 !data-dev/TRIANGULATION-GROUPS.csv
 !data-dev/TRIANGULATION-SAMPLE.csv
@@ -99,3 +127,25 @@ desktop.ini
 
 # docs/ IS committed: GitHub Pages serves the site from main:/docs.
 # Rebuild with pkgdown::build_site() and commit the result.
+
+# The hand-labelled slice (dev/draw-hand-slice.R). Re-include the directory
+# first: git cannot re-include a file whose parent directory is excluded.
+!data-dev/round-stage1-handslice
+data-dev/round-stage1-handslice/*
+!data-dev/round-stage1-handslice/*.csv
+!data-dev/round-stage1-handslice/README.md
+
+# The B2-token-concat top-up (dev/draw-b2-topup.R). Same re-include-the-
+# directory-first pattern, and the same exclusions as stage 1: the .rds beside
+# each labelled CSV carries the raw API usage/response columns, and a
+# -limitN.csv is a smoke test over a few cases rather than the shard.
+!data-dev/round-b2-topup
+data-dev/round-b2-topup/*
+!data-dev/round-b2-topup/*.csv
+!data-dev/round-b2-topup-key
+data-dev/round-b2-topup-key/*
+!data-dev/round-b2-topup-key/*.csv
+!data-dev/round-b2-topup-labelled
+data-dev/round-b2-topup-labelled/*
+!data-dev/round-b2-topup-labelled/*.csv
+data-dev/round-b2-topup-labelled/*-limit[0-9]*.csv

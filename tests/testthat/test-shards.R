@@ -88,6 +88,37 @@ test_that("a draw with a repeated case is refused", {
                "appear twice in the draw")
 })
 
+
+test_that("a repeated labeler name is refused, because it holes the overlap", {
+  # Not extra capacity: pf_labeler_agreement() needs two DIFFERENT names on a
+  # case, and pf_read_truth() refuses one labeler answering a case twice -- so
+  # the overlap between the two shards sharing a name comes back unusable,
+  # after the labelling is paid for.
+  expect_error(
+    pf_truth_shards(shard_draw(60L), k = 4, overlap = 0.1, seed = 1,
+                    labelers = c("a", "b", "a", "c"), verbose = FALSE),
+    "repeats `a`")
+  # with the overlap deliberately off there is no agreement read to hole
+  expect_silent(
+    pf_truth_shards(shard_draw(60L), k = 4, overlap = 0, seed = 1,
+                    labelers = c("a", "b", "a", "c"), verbose = FALSE))
+})
+
+test_that("a named roster stamps the key and the templates", {
+  dir <- withr::local_tempdir()
+  roster <- sprintf("m/truth-%02d", 1:5)
+  s <- pf_truth_shards(shard_draw(400L), k = 5, overlap = 0.15, seed = 1,
+                       labelers = roster, verbose = FALSE)
+  expect_equal(sort(unique(s$labeler)), sort(roster))
+  # every row of a shard carries that shard's labeler, overlap rows included
+  for (i in 1:5)
+    expect_equal(unique(s$labeler[s$shard == i]), roster[i])
+  pf_write_shards(s, dir, verbose = FALSE)
+  tf <- utils::read.csv(file.path(dir, "shard-03-truth.csv"),
+                        colClasses = "character")
+  expect_equal(unique(tf$labeler), roster[3])
+})
+
 test_that("an impossible overlap or labeler list is refused", {
   expect_error(pf_truth_shards(shard_draw(), k = 4, overlap = 0.9, seed = 1,
                                verbose = FALSE), "fraction in \\[0, 0.5\\]")
@@ -132,6 +163,72 @@ test_that("the overlap goes to a different shard and is marked in the key", {
   expect_true(all(table(s$grant_id[!s$overlap]) == 1L))
 })
 
+test_that("overlap load is balanced across labelers, not just in expectation", {
+  # The regression this guards: sampling both halves of the overlap uniformly
+  # left stage 1 with 7 overlap cases on one labeler and 15 on another against
+  # an expectation of 10, and pf_labeler_agreement() reads a per-labeler cell
+  # under min_n as unusable. Checked over many seeds because the defect it
+  # replaces passed any single seed roughly half the time.
+  for (seed in 1:40) {
+    s <- pf_truth_shards(shard_draw(400L), k = 5, overlap = 0.15, seed = seed,
+                         verbose = FALSE)
+    ovs <- as.integer(table(factor(s$shard[s$overlap], levels = 1:5)))
+    expect_equal(sum(ovs), 2L * attr(s, "overlap_n"))
+    expect_lte(max(ovs) - min(ovs), 1L)        # k divides 60: exact
+    expect_gte(min(ovs), 20L)                  # clears min_n, every seed
+  }
+})
+
+test_that("a shard gives up as many overlap cases as it receives", {
+  s <- pf_truth_shards(shard_draw(400L), k = 5, overlap = 0.15, seed = 7,
+                       verbose = FALSE)
+  gave <- table(factor(s$shard[s$overlap & s$primary], levels = 1:5))
+  got  <- table(factor(s$shard[s$overlap & !s$primary], levels = 1:5))
+  expect_equal(as.integer(gave), as.integer(got))
+})
+
+test_that("the overlap is not a fixed pairing of labelers", {
+  # A fixed lag makes the agreement figure about one pair of labelers rather
+  # than about the round, so every available lag should be in use.
+  s <- pf_truth_shards(shard_draw(400L), k = 5, overlap = 0.15, seed = 3,
+                       verbose = FALSE)
+  ov <- unique(s$grant_id[s$overlap])
+  lag <- vapply(ov, function(id) {
+    sh <- s$shard[s$grant_id == id]
+    (diff(range(sh)) %% 5L)
+  }, integer(1))
+  expect_gt(length(unique(lag)), 1L)
+  pairs <- vapply(ov, function(id)
+    paste(sort(s$shard[s$grant_id == id]), collapse = "-"), character(1))
+  # no pair carries more than half the overlap
+  expect_lt(max(table(pairs)), length(ov) / 2)
+})
+
+test_that("an uneven overlap is spread rather than stacked on shard 1", {
+  # 7 does not divide by 4, so somebody gets the extra; it must not always be
+  # the low-numbered labelers, who would then be systematically better
+  # measured than the rest.
+  first <- vapply(1:30, function(seed) {
+    s <- pf_truth_shards(shard_draw(100L), k = 4, overlap = 0.07, seed = seed,
+                         verbose = FALSE)
+    as.integer(table(factor(s$shard[s$overlap & s$primary], levels = 1:4)))[1]
+  }, integer(1))
+  expect_gt(length(unique(first)), 1L)
+})
+
+test_that("the deal says what each labeler got, and warns when it is short", {
+  out <- capture.output(
+    pf_truth_shards(shard_draw(400L), k = 8, overlap = 0.1, seed = 1,
+                    verbose = TRUE))
+  expect_true(any(grepl("overlap per labeler", out)))
+  expect_true(any(grepl("min_n of 20", out)))
+  quiet <- capture.output(
+    pf_truth_shards(shard_draw(400L), k = 5, overlap = 0.15, seed = 1,
+                    verbose = TRUE))
+  expect_true(any(grepl("overlap per labeler", quiet)))
+  expect_false(any(grepl("min_n of 20", quiet)))
+})
+
 test_that("the same seed deals the same assignment", {
   a <- pf_truth_shards(shard_draw(), k = 4, seed = 99, verbose = FALSE)
   b <- pf_truth_shards(shard_draw(), k = 4, seed = 99, verbose = FALSE)
@@ -161,6 +258,28 @@ test_that("the case file is blinded and the template is pre-keyed", {
   expect_true(all(tf$labeler == "lab1"))
   expect_true(all(tf$verdict == ""))          # nothing pre-answered
   expect_true(file.exists(file.path(d, "SHARD-KEY.csv")))
+})
+
+
+test_that("a narrower redeal takes the wider deal's leftover shards with it", {
+  # Writing k = 5 over a k = 8 round used to overwrite shards 1-5 and leave
+  # 6-8 in the live directory, where they look exactly like work to hand out.
+  # pf_read_truth() refuses their rows, but only once a labeler has done them.
+  dir <- withr::local_tempdir()
+  wide <- pf_truth_shards(shard_draw(400L), k = 8, overlap = 0.2, seed = 1,
+                          verbose = FALSE)
+  pf_write_shards(wide, dir, verbose = FALSE)
+  expect_true(file.exists(file.path(dir, "shard-08-truth.csv")))
+
+  narrow <- pf_truth_shards(shard_draw(400L), k = 5, overlap = 0.15, seed = 1,
+                            verbose = FALSE)
+  out <- capture.output(
+    pf_write_shards(narrow, dir, overwrite = TRUE, verbose = TRUE))
+  expect_false(file.exists(file.path(dir, "shard-06-truth.csv")))
+  expect_false(file.exists(file.path(dir, "shard-08-cases.csv")))
+  expect_true(file.exists(file.path(dir, "shard-05-truth.csv")))
+  expect_true(any(grepl("removed 6 file", out, fixed = TRUE)))
+  expect_length(list.files(dir, pattern = "^shard-"), 10L)
 })
 
 test_that("writing over a labeler's part-written file is refused", {
@@ -249,6 +368,54 @@ test_that("two labelers on a case the key dealt once is a stop", {
              shard_rows(one, "lab2", shard = 1L))
   expect_error(pf_read_truth(r, key = s, verbose = FALSE),
                "dealt to one shard")
+})
+
+
+test_that("a shard returned under an unrostered name is refused", {
+  # pf_truth_shards(labelers = )'s roxygen has always claimed pf_read_truth()
+  # enforces the roster; the check was not there. A wrong name means the wrong
+  # labeler's work or the wrong labeler's file, and every per-labeler figure
+  # built on it names the wrong producer.
+  roster <- sprintf("m/truth-%02d", 1:4)
+  s <- pf_truth_shards(shard_draw(80L), k = 4, overlap = 0.1, seed = 1,
+                       labelers = roster, verbose = FALSE)
+  rows <- do.call(rbind, lapply(1:4, function(i)
+    shard_rows(s$grant_id[s$shard == i], roster[i], shard = i)))
+  expect_s3_class(pf_read_truth(rows, key = s, verbose = FALSE),
+                  "pf_truth_rows")
+
+  wrong <- rows
+  wrong$labeler[wrong$shard == 3] <- "m/truth-99"
+  expect_error(pf_read_truth(wrong, key = s, verbose = FALSE),
+               "shard 3: got `m/truth-99`, dealt to `m/truth-03`")
+})
+
+test_that("two labelers swapping shard files is caught by the roster", {
+  # The copied-file case the overlap check cannot see: both files are complete
+  # and internally consistent, they are just attributed to each other.
+  roster <- sprintf("m/truth-%02d", 1:4)
+  s <- pf_truth_shards(shard_draw(80L), k = 4, overlap = 0.1, seed = 2,
+                       labelers = roster, verbose = FALSE)
+  swap <- c(2L, 1L, 3L, 4L)
+  rows <- do.call(rbind, lapply(1:4, function(i)
+    shard_rows(s$grant_id[s$shard == i], roster[swap[i]], shard = i)))
+  expect_error(pf_read_truth(rows, key = s, verbose = FALSE),
+               "did not deal that shard to")
+})
+
+test_that("an unrostered key reports what arrived instead of refusing it", {
+  # What a round dealt without a roster writes: labeler NA in the object and
+  # blank in the CSV. There is nothing to enforce, and that is not an error.
+  s <- pf_truth_shards(shard_draw(80L), k = 4, overlap = 0.1, seed = 1,
+                       verbose = FALSE)
+  rows <- do.call(rbind, lapply(1:4, function(i)
+    shard_rows(s$grant_id[s$shard == i], sprintf("whoever-%02d", i), shard = i)))
+  expect_s3_class(pf_read_truth(rows, key = s, verbose = FALSE),
+                  "pf_truth_rows")
+  blank <- s
+  blank$labeler <- ""
+  expect_s3_class(pf_read_truth(rows, key = blank, verbose = FALSE),
+                  "pf_truth_rows")
 })
 
 test_that("a row for a case the shard was not dealt is a stop", {

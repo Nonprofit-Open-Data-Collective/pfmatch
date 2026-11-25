@@ -1,0 +1,57 @@
+﻿============================================================================== 
+B2-TOKEN-CONCAT, POOLED 
+============================================================================== 
+population cb3c78ff0f1a9546 | frame_id 89a2a597ed0ea128 | normalizer v1-5e901add4a04a5d6 
+the two sets are disjoint, same frame, same normalizer, same model -- pooling is sound 
+ 
+stage 1 B2: 26 drawn | top-up: 50 drawn | pooled 76 
+ 
+============================================================================== 
+PICK PRECISION 
+============================================================================== 
+  stage 1      3/ 25 =  12.0% [ 4.2, 30.0]   (1 UNRESOLVED dropped) 
+  top-up      17/ 46 =  37.0% [24.5, 51.4]   (4 UNRESOLVED dropped) 
+ 
+  POOLED      20/ 71 =  28.2% [19.0, 39.5]   (5 UNRESOLVED dropped) 
+ 
+============================================================================== 
+AGAINST THE PASS IT HAS TO BE SEPARATED FROM 
+============================================================================== 
+  B1-token-state  111/222 = 50.0% [43.5, 56.5] 
+  B2-token-concat 20/71 = 28.2% [19.0, 39.5] 
+ 
+  DISJOINT. B2 is separated from B1 at 95%, so the difference is real 
+ 
+============================================================================== 
+WHY IT FAILS, FROM THE VERDICTS 
+============================================================================== 
+             verdict     N    pct
+              <char> <int> <char>
+1:         ORG_FOUND    54    71%
+2: NO_ORG_UNFINDABLE     8    11%
+3: NO_ORG_NOT_EXEMPT     6     8%
+4:        UNRESOLVED     5     7%
+5: NO_ORG_INDIVIDUAL     3     4%
+ 
+the 51 wrong scoreable cases, by verdict: 
+             verdict     N
+              <char> <int>
+1:         ORG_FOUND    34
+2: NO_ORG_UNFINDABLE     8
+3: NO_ORG_NOT_EXEMPT     6
+4: NO_ORG_INDIVIDUAL     3
+ 
+  A NO_ORG_* verdict means no exempt organisation exists to match, so the 
+  cascade produced a FALSE POSITIVE. That is a different failure from 
+  picking the wrong one of two real organisations, and it is not fixed by 
+  better scoring -- only by not blocking on this key. 
+ 
+by purpose band, as a check that the result is not one stratum: 
+   purpose_band     n right   rate
+         <char> <int> <int> <char>
+1:      purpose    40    10    25%
+2:         bare    31    10    32%
+============================================================================== 
+Truth is model-produced. This figure inherits stage 1's unpriced truth 
+error, which only the hand slice can measure. 
+============================================================================== 

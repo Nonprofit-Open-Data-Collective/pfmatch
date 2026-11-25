@@ -639,6 +639,14 @@ given-name list simply has to get longer. Seven payees that are not
 organisations at all are affirmatively coded `public_charity` by the filed
 status field, which is why that field cannot be trusted on its own.
 
+> **Acted on, 2026-11-24.** The given-name list did not get longer; it was
+> removed. `looks_personal` now scores the name with
+> `peopleparser::classify_names()` and flags it below an `org_score` of 0.05.
+> Measured against the filed status on 100,000 grants, recall on declared
+> individuals goes from 30.7% to 73.7% while the flag rate on declared public
+> charities falls from 0.9% to 0.4%. The table above records the old rule, and
+> the figures either side of it were computed under it.
+
 ### A real body with no exemption of its own (6.6%)
 
 The honest floor. Two churches (`SEVIER HEIGHTS BAPTIST CHURCH`, `ST AGNES

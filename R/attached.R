@@ -26,24 +26,62 @@ NULL
 
 #' Patterns that mark a recipient name as a pointer rather than a name
 #'
-#' @return A single regular expression, matched case-insensitively.
+#' @section Why `MISC` is spelled out:
+#' `^MISC` was the pattern until 2026-11-24, and it matched `MISCARRIAGE
+#' ABORTION HOTLINE` — a real organisation with an EIN, discarded as a pointer.
+#' `^MISC\\b` alone would fix that but drops `MISCELLEANOUS`, a filer's
+#' misspelling that is a genuine pointer, so both branches are needed.
+#'
+#' @return A single regular expression, matched against an upper-cased name.
 #' @export
 pf_placeholder_pattern <- function() {
   paste0("SEE ATTACH|SEE SCHED|SEE PART|SEE STATEMENT|SEE LIST|ATTACHED LIST|",
-         "^VARIOUS$|^VARIOUS |^SEVERAL|^MISC|AVAILABLE UPON|SEE EXHIBIT|",
-         "SCHEDULE ATTACHED|SEE ABOVE|SEE FOOTNOTE|SEE SUPPLEMENT|",
+         "^VARIOUS$|^VARIOUS |^SEVERAL|^MISCELL|^MISC\\b|AVAILABLE UPON|",
+         "SEE EXHIBIT|SCHEDULE ATTACHED|SEE ABOVE|SEE FOOTNOTE|SEE SUPPLEMENT|",
          "PER ATTACHED|AS ATTACHED|SEE ANNEX|SEE ADDENDUM|SEE BELOW")
 }
 
-#' Flag grant rows whose recipient is a pointer to an attachment
+# Vector-level placeholder test. `pf_prepare_grants()` works on bare name
+# vectors, so the frame-taking export below delegates here.
+#
+# The regex and peopleparser's placeholder class each catch what the other
+# misses, so the flag is their union. Measured on inputs/ef100k_grants.csv:
+# the regex alone catches 272 rows, the model alone 147, the union 284. The
+# model's contribution is the `ALL OTHER(S) ...` family (ALL OTHERS 1000 OR
+# LESS PER DONEE, ALL OTHER MEDICAL MISSIONS), plus THE BOARD OF TRUSTEES,
+# bare SEE and bare X -- shapes a keyword list did not anticipate. The regex
+# keeps the far larger share because it was written against this corpus.
+.pf_placeholder <- function(name, use_model = TRUE) {
+  v <- toupper(trimws(as.character(name)))
+  v[is.na(v)] <- ""
+  out <- grepl(pf_placeholder_pattern(), v)
+  if (!use_model || !length(v)) return(out)
+  nz <- nzchar(v)
+  if (!any(nz)) return(out)
+  u <- unique(v[nz])
+  cl <- peopleparser::classify_names(u)
+  ph <- cl$name_type[match(u, cl$name)] == "placeholder"
+  ph[is.na(ph)] <- FALSE
+  out[nz] <- out[nz] | ph[match(v[nz], u)]
+  out
+}
+
+#' Flag grant rows whose recipient is a pointer rather than a name
+#'
+#' Fires on both the hand-written pattern in [pf_placeholder_pattern()] and
+#' peopleparser's `placeholder` class, which disagree in both directions; see
+#' `vignette("identifying-people")` for the measurement and for the one shape
+#' this over-reaches on — a named recipient with a pointer appended, as in
+#' `WEILL CORNELL MEDICAL COLLEGE- SEE ATTACHMENT`.
 #'
 #' @param grants A prepared frame from [pf_prepare_grants()].
 #' @param name_col Column holding the recipient name.
-#' @return A logical vector.
+#' @param use_model Set `FALSE` for the regular expression alone.
+#' @return A logical vector, one element per row.
 #' @export
-pf_is_placeholder <- function(grants, name_col = "recip_name") {
-  v <- toupper(ifelse(is.na(grants[[name_col]]), "", grants[[name_col]]))
-  grepl(pf_placeholder_pattern(), v)
+pf_is_placeholder <- function(grants, name_col = "recip_name",
+                              use_model = TRUE) {
+  .pf_placeholder(grants[[name_col]], use_model = use_model)
 }
 
 #' Report on returns that do not itemize their grants

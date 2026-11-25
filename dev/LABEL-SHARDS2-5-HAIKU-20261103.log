@@ -1,0 +1,202 @@
+﻿##### shard 02 #####
+============================================================================== 
+TRUTH LABELER  shard 02 
+============================================================================== 
+model=claude-haiku-5-5  effort=high  search=max 12  workers=4 
+labeler=claude-haiku-5-5/pass1-02   <- SHADOW: not the key's roster for this shard 
+92 cases, population cb3c78ff0f1a9546 
+truth_id: left blank, deliberately -- see the note above. 
+system prompt: 18,256 characters 
+
+round 1: 92 requests ... 
+  92 finished, 0 paused mid-turn 
+
+598.6 s elapsed (6.5 s/case wall) 
+============================================================================== 
+verdicts returned: 92 of 92  (tool call used on 92) 
+ 
+verdict
+NO_ORG_INDIVIDUAL NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE         ORG_FOUND 
+                3                 7                14                61 
+       UNRESOLVED 
+                7 
+ 
+           confidence
+basis       high low medium
+  inference    1  13      2
+  web         37   3     36
+
+source_url given on 76 of 92 rows 
+wrong_ein recorded on 52 
+
+searches: 356 total, 3.9/case, 1 case(s) with none 
+
+tokens: 443,274 in, 203,797 out   cache: 6,057,264 read, 1,897,860 WRITTEN 
+requests: 62 short-prompt, 30 long-prompt (haiku prices by whole prompt) 
+token cost: $1.3670 over 92 cases ($0.014859/case) 
+  projected for all 92 cases of this shard: $1.37 
+  PLUS 356 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/round-stage1-labelled/shard-02-truth-claude-haiku-5-5-pass1-02.csv 
+      ./data-dev/round-stage1-labelled/shard-02-truth-claude-haiku-5-5-pass1-02.rds   (with usage and api columns) 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5/pass1-02 92 
+  basis: inference 16 | web 76 
+  0 cases carry two labelers (the overlap) 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+read without the key: a shadow labeler is not on the key's roster. 
+============================================================================== 
+##### shard 03 #####
+============================================================================== 
+TRUTH LABELER  shard 03 
+============================================================================== 
+model=claude-haiku-5-5  effort=high  search=max 12  workers=4 
+labeler=claude-haiku-5-5/pass1-03   <- SHADOW: not the key's roster for this shard 
+92 cases, population cb3c78ff0f1a9546 
+truth_id: left blank, deliberately -- see the note above. 
+system prompt: 18,256 characters 
+
+round 1: 92 requests ... 
+  92 finished, 0 paused mid-turn 
+
+350.2 s elapsed (3.8 s/case wall) 
+============================================================================== 
+verdicts returned: 92 of 92  (tool call used on 92) 
+ 
+verdict
+NO_ORG_INDIVIDUAL NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE         ORG_FOUND 
+                1                12                 8                64 
+       UNRESOLVED 
+                7 
+ 
+           confidence
+basis       high low medium
+  inference    0  10      3
+  web         42   4     33
+
+source_url given on 80 of 92 rows 
+wrong_ein recorded on 56 
+
+searches: 328 total, 3.6/case, 0 case(s) with none 
+
+tokens: 331,936 in, 186,403 out   cache: 5,601,414 read, 1,686,091 WRITTEN 
+requests: 67 short-prompt, 25 long-prompt (haiku prices by whole prompt) 
+token cost: $1.0450 over 92 cases ($0.011359/case) 
+  projected for all 92 cases of this shard: $1.05 
+  PLUS 328 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/round-stage1-labelled/shard-03-truth-claude-haiku-5-5-pass1-03.csv 
+      ./data-dev/round-stage1-labelled/shard-03-truth-claude-haiku-5-5-pass1-03.rds   (with usage and api columns) 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5/pass1-03 92 
+  basis: inference 13 | web 79 
+  0 cases carry two labelers (the overlap) 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+read without the key: a shadow labeler is not on the key's roster. 
+============================================================================== 
+##### shard 04 #####
+============================================================================== 
+TRUTH LABELER  shard 04 
+============================================================================== 
+model=claude-haiku-5-5  effort=high  search=max 12  workers=4 
+labeler=claude-haiku-5-5/pass1-04   <- SHADOW: not the key's roster for this shard 
+92 cases, population cb3c78ff0f1a9546 
+truth_id: left blank, deliberately -- see the note above. 
+system prompt: 18,256 characters 
+
+round 1: 92 requests ... 
+  92 finished, 0 paused mid-turn 
+
+370.5 s elapsed (4.0 s/case wall) 
+============================================================================== 
+verdicts returned: 92 of 92  (tool call used on 92) 
+ 
+verdict
+NO_ORG_INDIVIDUAL NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE         ORG_FOUND 
+                1                 9                 9                61 
+       UNRESOLVED 
+               12 
+ 
+           confidence
+basis       high low medium
+  inference    0  14      7
+  web         33   4     34
+
+source_url given on 73 of 92 rows 
+wrong_ein recorded on 51 
+
+searches: 346 total, 3.8/case, 0 case(s) with none 
+
+tokens: 260,013 in, 215,349 out   cache: 6,019,526 read, 2,149,271 WRITTEN 
+requests: 63 short-prompt, 29 long-prompt (haiku prices by whole prompt) 
+token cost: $1.4003 over 92 cases ($0.015221/case) 
+  projected for all 92 cases of this shard: $1.40 
+  PLUS 346 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/round-stage1-labelled/shard-04-truth-claude-haiku-5-5-pass1-04.csv 
+      ./data-dev/round-stage1-labelled/shard-04-truth-claude-haiku-5-5-pass1-04.rds   (with usage and api columns) 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5/pass1-04 92 
+  basis: inference 21 | web 71 
+  0 cases carry two labelers (the overlap) 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+read without the key: a shadow labeler is not on the key's roster. 
+============================================================================== 
+##### shard 05 #####
+============================================================================== 
+TRUTH LABELER  shard 05 
+============================================================================== 
+model=claude-haiku-5-5  effort=high  search=max 12  workers=4 
+labeler=claude-haiku-5-5/pass1-05   <- SHADOW: not the key's roster for this shard 
+92 cases, population cb3c78ff0f1a9546 
+truth_id: left blank, deliberately -- see the note above. 
+system prompt: 18,256 characters 
+
+round 1: 92 requests ... 
+  92 finished, 0 paused mid-turn 
+
+339.7 s elapsed (3.7 s/case wall) 
+============================================================================== 
+verdicts returned: 92 of 92  (tool call used on 92) 
+ 
+verdict
+NO_ORG_NOT_EXEMPT NO_ORG_UNFINDABLE         ORG_FOUND        UNRESOLVED 
+               10                 9                65                 8 
+ 
+           confidence
+basis       high low medium
+  inference    0  13      4
+  web         32   6     37
+
+source_url given on 75 of 92 rows 
+wrong_ein recorded on 51 
+
+searches: 347 total, 3.8/case, 0 case(s) with none 
+
+tokens: 355,370 in, 217,284 out   cache: 5,921,126 read, 1,931,894 WRITTEN 
+requests: 63 short-prompt, 29 long-prompt (haiku prices by whole prompt) 
+token cost: $1.3374 over 92 cases ($0.014537/case) 
+  projected for all 92 cases of this shard: $1.34 
+  PLUS 347 web searches, billed per search and NOT in that figure. 
+
+wrote ./data-dev/round-stage1-labelled/shard-05-truth-claude-haiku-5-5-pass1-05.csv 
+      ./data-dev/round-stage1-labelled/shard-05-truth-claude-haiku-5-5-pass1-05.rds   (with usage and api columns) 
+ 
+---------------------------------------------------------------------- 
+read 92 labelled rows over 92 cases from 1 labelers 
+  claude-haiku-5-5/pass1-05 92 
+  basis: inference 17 | web 75 
+  0 cases carry two labelers (the overlap) 
+  no overlap returned: pf_labeler_agreement() has nothing to read 
+pf_read_truth() accepts it. 
+read without the key: a shadow labeler is not on the key's roster. 
+============================================================================== 

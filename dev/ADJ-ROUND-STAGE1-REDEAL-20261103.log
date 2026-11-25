@@ -1,0 +1,38 @@
+﻿draw data-dev/ADJ-ROUND-STAGE1.rds: 400 cases
+  population cb3c78ff0f1a9546 | frame_id 89a2a597ed0ea128 | normalizer v1-5e901add4a04a5d6
+case features: grant_id, recip_name, recip_city, recip_state, recip_zip5, n_grants, dollars, purpose_band, cascade_pass, cascade_ein, cascade_name, cascade_city, cascade_state, cascade_score, cascade_margin, n_close
+
+---------------------------------------------------------------------- 
+dealt 400 cases into 5 shards (460 rows, seed 20261103) 
+  shard sizes: 1:92 2:92 3:92 4:92 5:92 
+  60 cases (15%) dealt to a second shard as the blinded overlap 
+  overlap per labeler: 24 24 24 24 24 (min 24, max 24) 
+  population cb3c78ff0f1a9546 -- pf_read_truth() will enforce it 
+
+shard sizes (rows, so an overlap case counts twice):
+     primary
+shard FALSE TRUE
+    1    12   80
+    2    12   80
+    3    12   80
+    4    12   80
+    5    12   80
+
+overlap per labeler: 24 24 24 24 24
+  clears pf_labeler_agreement()'s min_n of 20, so the PER-LABELER cut
+  exists for this round and not only the pooled rate
+---------------------------------------------------------------------- 
+wrote 10 files for 5 shards into data-dev/round-stage1 
+  case files carry no overlap column and are shuffled 
+  key: data-dev/round-stage1-key/SHARD-KEY.csv 
+  blinding holds only if each labeler is given its own two files 
+
+wrote 11 files
+  shards: data-dev/round-stage1
+  key:    data-dev/round-stage1-key   <- do NOT give this to a labeler
+  object: data-dev/ADJ-ROUND-STAGE1-SHARDS.rds
+
+reproduce with: seed 20261103, k 5, overlap 0.15, draw data-dev/ADJ-ROUND-STAGE1.rds
+  population cb3c78ff0f1a9546 | frame_id 89a2a597ed0ea128 | normalizer v1-5e901add4a04a5d6
+
+roster: claude-fable-5-1/truth-01, claude-haiku-5-5-high+claude-fable-5-1/truth-02, claude-haiku-5-5-high+claude-fable-5-1/truth-03, claude-haiku-5-5-high+claude-fable-5-1/truth-04, claude-haiku-5-5-high+claude-fable-5-1/truth-05
