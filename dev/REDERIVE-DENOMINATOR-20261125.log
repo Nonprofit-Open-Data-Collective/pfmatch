@@ -1,0 +1,140 @@
+﻿grant rows            4903   (MANIFEST.md: 4,903)
+population id         0b5126ef02f2a8b0   (MANIFEST.md: 0b5126ef02f2a8b0)
+
+== joining both arms ==
+  benchmark-1k-active.rds      4687 identities   (report §3b: 4,687)
+  name agreement               98.27%
+  benchmark-1k-augmented.rds   4748 identities   (report §3b: 4,748)
+  name agreement               98.25%
+  (join residual is abbreviation expansion: UNIV->UNIVERSITY,
+   ASSN->ASSOCIATION, FDN->FOUNDATION, ST->SAINT, & -> AND)
+
+
+================ the active arm ================
+
+== flagged-personal identities by tier ==
+     tier identities   old   new placeholder
+   <fctr>      <int> <int> <int>       <int>
+1:    YES       2667    22     4           1
+2:  MAYBE        986    13     5           0
+3:     NO       1034    89   184           4
+
+== clear rate ==
+as published (§3b)         2667 /  4687 =  56.90%  [55.48, 58.31]
+minus old_personal         2645 /  4563 =  57.97%  [56.53, 59.39]
+minus new_personal         2663 /  4494 =  59.26%  [57.81, 60.68]
+minus persons + pointers   2662 /  4489 =  59.30%  [57.86, 60.73]
+delta from the new flag alone: +2.35 pt
+
+flagged persons landing in NO: 184 of 193 (95.3%) new, 89 of 124 (71.8%) old
+
+
+================ the augmented arm ================
+
+== flagged-personal identities by tier ==
+     tier identities   old   new placeholder
+   <fctr>      <int> <int> <int>       <int>
+1:    YES       2979    26     6           2
+2:  MAYBE       1044    12     6           0
+3:     NO        725    95   196           4
+
+== clear rate ==
+as published (§3b)         2979 /  4748 =  62.74%  [61.36, 64.11]
+minus old_personal         2953 /  4615 =  63.99%  [62.59, 65.36]
+minus new_personal         2973 /  4540 =  65.48%  [64.09, 66.85]
+minus persons + pointers   2971 /  4534 =  65.53%  [64.13, 66.90]
+delta from the new flag alone: +2.74 pt
+
+flagged persons landing in NO: 196 of 208 (94.2%) new, 95 of 133 (71.4%) old
+
+
+== cross-arm check on the shared identities ==
+identities in both arms: 4682
+flag disagrees on:       0  (must be 0 -- the flag reads only the name)
+
+tier movement between arms, among flagged persons:
+   a_tier g_tier     N
+   <fctr> <fctr> <int>
+1:     NO     NO   181
+2:  MAYBE  MAYBE     4
+3:    YES    YES     4
+4:     NO  MAYBE     2
+5:     NO    YES     1
+6:  MAYBE    YES     1
+
+== what the new flag adds in the NO tier, augmented arm, 15 of them ==
+added in the NO tier: 105
+              recip_name
+                  <char>
+ 1:      SUMMER PHILLIPS
+ 2:     FLORES ALEJANDRA
+ 3:        JADE PETERSON
+ 4:            HUI HANNA
+ 5:       Bridget Fenger
+ 6:         CARTER EVENS
+ 7:       CARMEN JARRETT
+ 8:           ISAAC BENZ
+ 9:   CHELSIE BARRIENTOS
+10:           DAWN SPINA
+11: TRISTEN RIE FUJIMOTO
+12:             KAVI RAJ
+13:  TRISTAN STOTTSBERRY
+14:             YURI HAN
+15:          DREW HORTON
+
+A person cannot match an organisation, so a flag that is right puts almost
+all of its hits in NO. That is the internal check on the figures above.
+
+
+================ §3a, the production frame ================
+built        2026-11-03 02:14:08
+normalizer   v1-5e901add4a04a5d6
+id_scheme    recipient_id
+rekeyed      2026-11-03 03:00:08
+identities   91,008   (report §3a: 91,008)
+
+== tier counts, against the published figures ==
+  YES    41,341 published 41,341   reconciles
+  MAYBE  23,340 published 23,340   reconciles
+  NO     26,327 published 26,327   reconciles
+
+stored looks_personal      2,395
+old flag recomputed here   2,395   (should equal the stored one)
+new flag                   4,276
+pointer rows               279
+
+== flagged-personal identities by tier ==
+   status identities   old   new pointer
+   <fctr>      <int> <int> <int>   <int>
+1:    YES      41341   248    73       3
+2:     NO      26327  1851  4069     275
+3:  MAYBE      23340   296   134       1
+
+== clear rate on the production frame ==
+as published (§3a)        41341 / 91008 =  45.43%  [45.10, 45.75]
+minus old_personal        41093 / 88613 =  46.37%  [46.05, 46.70]
+minus new_personal        41268 / 86732 =  47.58%  [47.25, 47.91]
+minus persons + pointers  41265 / 86453 =  47.73%  [47.40, 48.06]
+delta from the new flag alone: +2.16 pt
+
+flagged persons landing in NO: 4,069 of 4,276 (95.2%) new, 1,851 of 2,395 (77.3%) old
+
+== 15 of what the new flag adds in the NO tier ==
+added in the NO tier: 2,478
+                 recip_name recipient_type_detail
+                     <char>                <char>
+ 1:           RILEY RICHTER            individual
+ 2:             KB KITTRELL            individual
+ 3:          ISABELLA WHITE            individual
+ 4:          BRENDAN BERMAN                 blank
+ 5:            Johanna Wahl            individual
+ 6:         Maddie Lukomski            individual
+ 7:           BROOKE SHAMON            individual
+ 8:           Mazket Halfon        public_charity
+ 9:      KENDALL WEATHERSBY                 blank
+10: CLARK MORGAN - BUCKNELL                 blank
+11:           KENZIE DUNCAN            individual
+12:                A ROBLES            individual
+13:            PHONG NGUYEN        public_charity
+14:            HANAH HAMZAH            individual
+15:             SYDNEY CASH                 blank
