@@ -14,8 +14,18 @@ pf_prepare_grants(grants, id_prefix = "G")
 }
 \value{
 A data frame with the original columns plus the prepared recipient
-name / address fields, the standardized recipient type, and the scope
-decision (\code{in_scope}, \code{oos_reason}).
+name / address fields, the standardized recipient type, the scope decision
+(\code{in_scope}, \code{oos_reason}), and four flags that describe the recipient
+without deciding scope:
+\describe{
+\item{\code{looks_personal}}{the name reads as a natural person, scored with
+\code{peopleparser::classify_names()}. Never fires on a placeholder.}
+\item{\code{flag_placeholder}}{the name is a pointer to an attachment rather
+than a name — see \code{\link[=pf_is_placeholder]{pf_is_placeholder()}}.}
+\item{\code{flag_individual}, \code{flag_government}}{what the \emph{filer} said the
+recipient was, from the status field.}
+}
+\code{vignette("identifying-people")} covers what each one is worth.
 }
 \description{
 Prepare a raw 990-PF grants extract

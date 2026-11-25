@@ -27,6 +27,8 @@ navbar:
           href: articles/adjudicating-maybe.html
         - text: What lives outside the BMF
           href: articles/outside-the-bmf.html
+        - text: Identifying people in the recipient list
+          href: articles/identifying-people.html
         - text: Choosing a matching dictionary
           href: articles/matching-dictionaries.html
         - text: Matching against your own YES tier
@@ -37,14 +39,16 @@ articles:
   desc: >
     How the cascade resolves a grant, what the variation it has to absorb
     actually looks like, how renderings of one recipient are grouped in the
-    first place, what the two tiers it cannot clear are worth reviewing, and
-    which database to match against — including the run's own YES tier.
+    first place, what the two tiers it cannot clear are worth reviewing, which
+    recipients are not organisations at all, and which database to match
+    against — including the run's own YES tier.
   contents:
   - cascade-workflow
   - name-and-address-variants
   - clustering-by-address
   - adjudicating-maybe
   - outside-the-bmf
+  - identifying-people
   - matching-dictionaries
   - yes-tier-dictionary
 

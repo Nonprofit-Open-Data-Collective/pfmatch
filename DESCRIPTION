@@ -25,6 +25,7 @@ Imports:
     stringi,
     npmatch (>= 0.1.1),
     npnormalize (>= 0.1.9),
+    peopleparser (>= 0.2.5),
     stats,
     utils
 Suggests:
@@ -47,6 +48,7 @@ VignetteBuilder: knitr
 Remotes:
     Nonprofit-Open-Data-Collective/npmatch,
     Nonprofit-Open-Data-Collective/npnormalize,
+    Nonprofit-Open-Data-Collective/peopleparser,
     Nonprofit-Open-Data-Collective/matchdb,
     Nonprofit-Open-Data-Collective/panel990,
     Nonprofit-Open-Data-Collective/concordance990
