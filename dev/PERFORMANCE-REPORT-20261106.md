@@ -1,17 +1,22 @@
-# Standardized performance report — 2026-11-06
+# Standardized performance report — 2026-11-06, amended 2026-11-25
 
     generated      2026-11-06 14:15, by hand; see §9 for the function this
                    should become
-    R              4.5.1
+    amended        2026-11-25, §3a / §3b / §5 / §6 / §8 only -- see §12. The
+                   rest of this report was NOT re-derived on that date and still
+                   carries its 2026-11-06 provenance.
+    R              4.5.1           4.5.3 for the §12 amendment
     npnormalize    0.1.9
     npmatch        0.1.1.9000      RemoteSha 169ba81, built 2026-11-03 00:38 UTC
                                    np_signature_stamp() ABSENT from this install
                                    upstream main is 8b2d92e -- five merged PRs ahead
     matchdb        0.1.1.9000
-    pfmatch        0.1.0           main @ 1b2c485
-                                   work branch overlap-dealt-not-sampled @ 4bb832b
+    peopleparser   0.2.5           RemoteSha 6635503; added to Imports by 5f73dcd
+    pfmatch        0.1.0           main @ 1b2c485 at generation
+                                   main @ bcc9940 at amendment (PR #55 merged)
     normalizer     v1-5e901add4a04a5d6      read, not quoted
-    suite          1048 pass / 0 fail / 1 skip, 25 files
+    suite          1048 pass / 0 fail / 1 skip, 25 files at generation
+                   1081 pass / 0 fail / 1 skip, 27 files at amendment
 
 **This supersedes `dev/PERFORMANCE-REPORT-20261103.md`** (commit `9fe7c84`,
 cherry-picked into this branch as `373e700`, then renamed to this file). That
@@ -120,7 +125,8 @@ stage-1 draw reports independently.
 > sponsors and DAF custodians (`dev/build-triangulation-v2.R:56-60`). It is
 > deliberately enriched for the hardest thing the matcher does. A frame selected
 > for name ambiguity should clear *worse* than the corpus, and it does, by about
-> 17 points.
+> 17 points — though only about 6 of those 17 are the candidate crowding that
+> phrase suggests. The decomposition is immediately below.
 >
 > `OOS 0` is the same story: the draw pre-filters to in-scope identities, so the
 > out-of-scope class never enters. The benchmark in §3b has a real OOS class
@@ -130,6 +136,102 @@ stage-1 draw reports independently.
 >
 > **Everything in §4b is measured on this frame**, so every precision figure in
 > this report inherits the enrichment too.
+
+#### Why it clears 17 points lower, decomposed — MEASURED 2026-11-25
+
+The box above asserts the 17 points and attributes them to the enrichment. That
+is directionally right and accounts for about **a third** of the gap. Both
+frames were matched against the same `REF-augmented.rds`, so the reference is
+not a confounder. `dev/decompose-frame-gap.R` →
+`dev/DECOMPOSE-FRAME-GAP-20261125.log`.
+
+**The gap lands in NO, not MAYBE.** YES −17.31 pt, NO **+13.66 pt**, MAYBE
++3.66 pt. If the frame merely offered too many plausible candidates to choose
+between, MAYBE would absorb it. It does not, which is the first sign the
+mechanism is retrieval rather than discrimination.
+
+Direct standardization on `n_close`, the count of candidates in the close band:
+
+| | |
+|---|---:|
+| production, as is | 45.43% |
+| benchmark, as is | 62.74% |
+| total gap | **17.32 pt** |
+| production rates on the **benchmark's** crowding mix | 51.55% |
+| → explained by crowding composition | **6.13 pt (35%)** |
+| → production clears worse within a stratum | **11.19 pt (65%)** |
+
+**The other two thirds is the blocking pass mix.** Among identities with exactly
+one close candidate, production clears 66.6% against the benchmark's 81.0%, and
+the reason is visible in which key retrieved the record:
+
+| pass | production | benchmark |
+|---|---:|---:|
+| `A1-name-zip5` — exact name + ZIP5 | 29.6% | **49.1%** |
+| `B1-token-state` — token overlap + state | **41.8%** | 26.1% |
+| nothing retrieved at all | 3.0% | 0.1% |
+
+`A1` is the strongest key the cascade has. The benchmark clears half its
+identities on it; this frame clears under a third that way and falls through to
+token-level matching. That follows directly from how the frame is drawn:
+**address groups carrying two or more distinct recipient names are a selection
+for names that do not render consistently**, so the exact-name keys that carry
+the benchmark are precisely the keys that fail here.
+
+The consequence is a pile-up under the cutoff. Of the 62,069 uncrowded
+identities, 20,735 (33.4%) do not clear; their score quartiles are 0.38 / **0.72**
+/ **0.78** against a YES cutoff of 0.78, median name similarity 0.852, near-exact
+on only 23%, and state agrees on 88.5%. The benchmark's uncrowded misses have
+the *same* shape — median score 0.720, median name similarity 0.870 — there are
+simply far fewer of them. This is the same conclusion §3c's audit reached from
+the other end: the right record is usually in the reference, and the failure is
+retrieval and scoring rather than absence.
+
+> **A second close candidate is fatal in both frames.** Clear rate goes from
+> 66.6% / 81.0% at `n_close == 1` to **0.1% / 0.7%** at `n_close == 2`, and
+> 0.0% above that. That is not a property of either population — it is the tie
+> and margin policy acting as a veto. **31.8%** of the production frame sits in
+> that dead zone against 22.6% of the benchmark, and that difference is where
+> the 6.13 composition points come from. Whether a near-tie should veto rather
+> than demote is a policy question this report has never put a figure on.
+
+**Limit.** These are two different corpora — 596,539 grant rows against 4,903 —
+not one corpus split two ways, so the 11.19-point within-stratum term mixes the
+`n_names > 1` filter with whatever else differs between the draws. Separating
+them needs that filter applied to the benchmark population as a control, which
+has not been run.
+
+#### With individual payees out of the denominator — MEASURED-vs-MODEL 2026-11-25
+
+No join and no re-match: `TRI-V2-MATCH.rds`'s `status` frame carries
+`recip_name` in the same row as the tier, and carries the old `looks_personal`
+as it stood when the run was built, so the two flags are compared in place.
+Recomputing the pre-`5f73dcd` rule on this frame returns **2,395**, exactly the
+stored count — which is what licenses the comparison.
+
+| denominator | identities | YES | clear rate | Wilson 95% |
+|---|---:|---:|---:|---|
+| as published above | 91,008 | 41,341 | **45.43%** | 45.10 – 45.75 |
+| minus flagged persons | 86,732 | 41,268 | **47.58%** | 47.25 – 47.91 |
+| minus persons and pointer rows | 86,453 | 41,265 | 47.73% | 47.40 – 48.06 |
+| *for comparison:* minus the **old** flag's hits | 88,613 | 41,093 | 46.37% | 46.05 – 46.70 |
+
+**+2.16 points.** The new flag finds **4,276** individual payees here against
+the old flag's 2,395, and **4,069 of them (95.2%) sit in the NO tier** — 15.5%
+of that tier — against the old flag's 77.3%. The old flag put **248 in YES**;
+the new one puts 73.
+
+This is the same correction as §3b on a frame 19 times larger, and it lands in
+the same place: **+2.16 here, +2.35 active, +2.74 augmented**, against the ~3
+that §5 and §6 projected. Three populations, three measurements, all a little
+under the projection and none of them a matching improvement.
+
+The 2,478 identities the new flag adds to this frame's NO tier are
+overwhelmingly plain person names, and a majority of them are recipients the
+*filer* already declared `individual` — `RILEY RICHTER`, `ISABELLA WHITE`,
+`KENZIE DUNCAN`. A few are declared `public_charity` and are people anyway
+(`PHONG NGUYEN`, `Mazket Halfon`), which is the filer-coding unreliability §3c's
+audit found, visible here at scale.
 
 ### 3b. The frozen 1k benchmark — the comparable, random-population figure
 
@@ -155,6 +257,64 @@ this benchmark has **one confirmed arm, not three**.
 YES+MAYBE is 84.73% augmented and 77.94% active. **That is not a clear rate**:
 there is no safe automatic acceptance of the MAYBE tier (§4a), and §4b now puts
 a number on how far from safe.
+
+#### Both arms with individual payees out of the denominator — MEASURED-vs-MODEL 2026-11-25
+
+A natural person has no EIN and no BMF record, so an individual payee in this
+population is a denominator defect: it can only fail. `looks_personal` was a
+202-name whitelist until `5f73dcd`; it now scores the name, so these can be
+counted rather than extrapolated. `dev/rederive-denominator.R`, logged in
+`dev/REDERIVE-DENOMINATOR-20261125.log`.
+
+**Nothing is re-matched here.** Each arm's frozen result frame already carries
+its tiers; the flag is recomputed from the grants and joined on. The normalizer
+question in the addendum above therefore does not arise — it governs *matching*,
+and no matching is done.
+
+| arm | denominator | identities | YES | clear rate | Wilson 95% |
+|---|---|---:|---:|---:|---|
+| active | as published | 4,687 | 2,667 | **56.90%** | 55.48 – 58.31 |
+| active | minus flagged persons | 4,494 | 2,663 | **59.26%** | 57.81 – 60.68 |
+| active | minus persons and pointers | 4,489 | 2,662 | 59.30% | 57.86 – 60.73 |
+| active | *minus the old flag's hits* | 4,563 | 2,645 | 57.97% | 56.53 – 59.39 |
+| augmented | as published | 4,748 | 2,979 | **62.74%** | 61.36 – 64.11 |
+| augmented | minus flagged persons | 4,540 | 2,973 | **65.48%** | 64.09 – 66.85 |
+| augmented | minus persons and pointers | 4,534 | 2,971 | 65.53% | 64.13 – 66.90 |
+| augmented | *minus the old flag's hits* | 4,615 | 2,953 | 63.99% | 62.59 – 65.36 |
+
+**+2.35 pt active, +2.74 pt augmented.** §6 had this as "lifts both arms ~3
+points"; measured, both are a little under that (§12). No identity changed tier
+in either arm — nothing here is a matching improvement.
+
+**Two internal checks.** The flag lands **196 of its 208 augmented hits (94.2%)
+and 184 of 193 active hits (95.3%) in the NO tier**, against the old flag's
+71.4% and 71.8%. A person cannot match an organisation, so a flag that is right
+lands almost everywhere in NO; the old flag put 26 hits in YES, where a flagged
+"person" that matched an organisation is likelier a mis-flagged organisation
+than a lucky person.
+
+And across the **4,682 identities the two arms share, the flag disagrees on
+zero**. It must, since it reads only the recipient name and the two arms are one
+grant population matched against two references — which is what makes both
+positional-id joins trustworthy, rather than only the name-agreement check.
+
+> The two intervals are **not** disjoint — 64.09 against 64.11, overlapping by
+> 0.02 points — and in any case these are nested denominators on one sample, not
+> two independent draws, so comparing their intervals is not a test of anything.
+> The point estimate moved by more than the published interval's half-width;
+> that is all that is claimed.
+
+**Why MEASURED-vs-MODEL and not MEASURED.** The 208 is a real count on a real
+population — the flag fired 208 times, and that is a fact about this frame. But
+`classify_names()` *is* a model, so whether those 208 are really people is a
+label a model wrote, and its error rate is priced only against the filed status
+field — which `dev/NO-RESIDUAL-AUDIT.md`, the source of §3c, found unreliable in
+both directions: seven payees that are not organisations at all coded
+`public_charity`, and an earlier audit found the out-of-scope flag wrong 24% of
+the time in the opposite sense. That is §1's definition of this status word for
+word, and it applies one level down
+from §4b: there the model labelled the *answer*, here it labels the
+*denominator*. A hand sample would move this to MEASURED; none exists.
 
 ### 3c. The NO residual — what survives both references
 
@@ -406,7 +566,7 @@ Each of these is a multiplication. None is a measurement.
 | deep-arm clearance of MAYBE | **70.7%** tie-adjusted, CI 59.4 – 81.9 | 47/68 raw = 69.12% (57.36 – 78.83), tie-corrected |
 | benchmark clear rate after adjudication | 62.74% → **78.28%**, +15.5 pt (CI +13.1 to +18.0) | §3b × clearance |
 | NO-residual recovery, if realized | +4.3 pt of clear rate | §3c |
-| individual-payee flag fix | 69.0% → ~72.3% | `dev/NO-RESIDUAL-AUDIT.md` |
+| ~~individual-payee flag fix~~ | ~~69.0% → ~72.3%~~ | **left this table 2026-11-25 — now MEASURED at +2.74 pt in §3b** |
 | Haiku on the whole MAYBE tier | $680 ($340 batched) | $0.000674/case × 1.01M |
 | + Opus no-search on the flagged 18% | **~$6,175** (~$3K batched) | vs $68,355 for Opus-with-search on every MAYBE |
 
@@ -461,7 +621,7 @@ $0.000674/case the §5 projection assumes for the cheap arm.
 | Flag precision at usable n | §4f: 60 cases against a floor of 100 | T8 |
 | Dollar-coverage curve | not re-derived since the v2 corpus | T9 |
 | Batch API behaviour at ~10k | no pilot run | T10 |
-| **The denominator itself** | ~37% of the NO residual are individual payees that arguably do not belong in it; removing them lifts both arms ~3 points | `NO-RESIDUAL-AUDIT.md` |
+| ~~**The denominator itself**~~ | ~~~37% of the NO residual are individual payees that arguably do not belong in it; removing them lifts both arms ~3 points~~ — **left this table 2026-11-25.** Measured in §3b on **both** arms: a flagged person is 27.0% of the augmented NO tier (196 of 725) and 17.8% of the active one (184 of 1,034), lifting them **+2.74** and **+2.35** points | `NO-RESIDUAL-AUDIT.md`, now `dev/rederive-denominator.R` |
 
 `T3` (confidence monotonicity on the enriched packet) **left this table** on
 2026-11-03: §4d measures it at n=92, as agreement rather than accuracy.
@@ -579,6 +739,7 @@ identities**. `pf_read_truth()` refuses a label carrying an `R<k>` id.
 | `C2-dba-any` matches on `name_key` ≤ 4 chars in 46.3% of cases | **open**, `dev/C2-DBA-ANY-20261103.log`; note `C2-dba-any` drew **0 of 400** in stage 1 — verified in the draw, which holds 7 passes — so §4b says nothing about it. It held 5.7% of the MAYBE tier of the *superseded* Oct-25 frame; its share of the current frame is unmeasured |
 | `pf_consistency()` — the one ground-truth-free metric — has **zero test coverage** | **open**, re-grepped today |
 | for 7 of 100 cases the close band holds more candidates than the packet's `k = 5` shows (41, in one case), so a `NONE` may mean "not in the five" | **open** |
+| **a second close candidate is an effective veto, not a demotion**: clear rate falls from 66.6% / 81.0% at `n_close == 1` to **0.1% / 0.7%** at `n_close == 2` and 0.0% above it, on the production frame and the benchmark alike. 31.8% of the production frame and 22.6% of the benchmark sit in that dead zone | **open, and newly quantified** 2026-11-25 (§3a). Whether a near-tie should veto or demote has never had a figure put on it; this is the largest single lever the decomposition found |
 
 ---
 
@@ -651,6 +812,8 @@ delete. Verified in `NAMESPACE` today: `pf_eval_frame`, `pf_compare_frames`,
 | defects §8 | `dev/COMPARABILITY-PLAN.md`, `dev/C2-DBA-ANY-20261103.log`; `npmatch` install compared against upstream `main` today; test coverage re-grepped today |
 | all Wilson intervals | `pf_wilson()`, computed today |
 | stack header | read live via `packageVersion()`, `packageDescription()` and `npmatch::np_normalize_signature()` |
+| **frame-gap decomposition §3a** | `dev/decompose-frame-gap.R` → `dev/DECOMPOSE-FRAME-GAP-20261125.log`. Direct standardization of the 17.32-point gap on `n_close`, plus the blocking-pass mix and the score distribution of the uncrowded misses. Both frames were matched against the same `REF-augmented.rds`. Nothing is re-matched |
+| **corrected denominator §3a, §3b, §12** | `dev/rederive-denominator.R` → `dev/REDERIVE-DENOMINATOR-20261125.log`. **No matching is re-run anywhere in it.** For §3b it joins both frozen benchmark frames to a fresh `pf_prepare_grants()` of `efv2_1k` on the positional grant-row id and **proves each join** before quoting it — 98%+ name agreement per arm, the residual being the normalizer's own abbreviation expansions, plus a cross-arm check that the name-only flag fires identically on the 4,682 identities the arms share. For §3a it needs no join: `TRI-V2-MATCH.rds`'s `status` frame holds the name beside the tier, its tier counts reconcile to the published 41,341 / 23,340 / 26,327, and the pre-`5f73dcd` rule recomputed on it returns the stored 2,395 exactly. The flag's own validation is `vignette("identifying-people")` |
 
 ---
 
@@ -677,3 +840,117 @@ wrong within seventy-two hours. The defect is not carelessness; it is that a
 hand-assembled report freezes the state of the work at the moment someone had
 time to write it down, and the work does not stop. A generated report is wrong
 for at most as long as it takes to re-run.
+
+---
+
+## 12. What changed on 2026-11-25 — two rows left their tables
+
+`5f73dcd` (PR #55, merged as `bcc9940`) replaced the individual-payee flag: the
+202-name given-name whitelist is gone and `looks_personal` now scores the name
+with `peopleparser::classify_names()`. On 100,000 grant rows, measured against
+the filed status, recall on declared individuals goes **30.7% → 73.6%** while
+the rate on declared public charities **falls** 0.9% → 0.4%; the measurement and
+its caveats are in `vignette("identifying-people")`.
+
+| § | said | now |
+|---|---|---|
+| 5 | PROJECTED: individual-payee flag fix, 69.0% → ~72.3% (+3.3 pt), from a 100-case extrapolation | **MEASURED-vs-MODEL** on all three populations: **+2.16 pt** production (§3a), **+2.35 pt** active, **+2.74 pt** augmented (§3b) |
+| 6 | UNMEASURED: "~37% of the NO residual are individual payees … lifts both arms ~3 points" | **15.5%** of the production NO tier, **27.0%** of the augmented, **17.8%** of the active |
+
+Both rows moved **one status**, not two: out of PROJECTED and UNMEASURED into
+MEASURED-vs-MODEL, because the thing doing the counting is a model. §3b says why.
+That the fourth status invented on 2026-11-06 for a model-labelled *answer* fits
+a model-labelled *denominator* without modification is the first evidence it was
+cut at the right joint.
+
+### And one claim that was asserted rather than measured
+
+§3a said the production frame is "enriched for the hardest thing the matcher
+does" and clears worse "by about 17 points". Nobody had split the 17. Doing it
+(§3a, `dev/decompose-frame-gap.R`) puts **6.13 points on candidate crowding and
+11.19 on the frame falling through to weaker blocking keys** — `A1-name-zip5`
+clears 49.1% of the benchmark and 29.6% of this frame. The explanation was a
+third of the story, and the phrase "name ambiguity" pointed at the wrong
+mechanism: the gap sits in NO, not MAYBE, so it is retrieval failing rather than
+discrimination failing.
+
+It also surfaced a defect now listed in §8: a second close candidate drops the
+clear rate from ~66–81% to **0.1–0.7%** in both frames, which makes the tie
+policy a veto rather than a demotion, and puts 31.8% of the production frame
+behind it.
+
+**The three populations agree.** +2.16, +2.35, +2.74 across frames of 91,008,
+4,687 and 4,748 identities, built against different references and at different
+times. The projection they replace was a single extrapolation from one 100-case
+audit of one cell, and it read ~3 — high, consistently, on all three. The spread
+between the three is itself informative: the correction is largest on the
+augmented benchmark, which is the least enriched population, and smallest on the
+production frame, which is the most.
+
+**The projection was close, and slightly optimistic** — 3.3 projected against
+2.74 measured. It was an extrapolation of a 37-of-100 hand audit onto a 592-case
+cell; the measurement counts the whole tier instead, and the honest reading is
+that the hand sample was drawn from the hardest cell and over-represented
+individuals relative to the arm as a whole.
+
+### What did *not* change, and this is the more important half
+
+**No clear rate in §3 moved on its own.** `looks_personal` is a flag and has
+never decided scope — `in_scope` is settled by geography and by whether there is
+anything to match on. Re-preparing the 100k file under the new flag leaves
+`in_scope` at 99,338 rows, exactly as before. So §3a, §3c, §4 and the §5 rows
+other than the one struck above are **unaffected**, not merely un-re-derived:
+the flag does not enter them.
+
+What the fix changes is the ability to *state* a corrected denominator, which is
+what §3b now does and what §6 had been tracking as unmeasurable. An earlier
+draft of this amendment claimed every rate in the report had been computed on
+the old flag and therefore needed re-running. That was wrong in the direction
+that would have caused the most wasted work, and it is recorded here because
+§9's argument cuts both ways: a hand-assembled report misstates what is stale as
+easily as it misstates a rate.
+
+### A wrong reason, recorded
+
+The first version of this section said the **active** arm "could not be re-run on
+the current normalizer in the first place (§3b addendum), so the corrected figure
+for it would mix a current flag with a stale match." Both halves were wrong.
+
+The addendum says the active arm **was not** re-run, and that the two *matchdb
+tiers* **could not be** — it is their published bundles that predate the
+normalizer and that matchdb declines to serve. The active arm matches against
+`REF-active.rds`, which is on disk and is the manifest's own Phase 1 target.
+The impossibility was attached to the wrong object.
+
+And it was irrelevant anyway: this measurement **re-matches nothing**. It reads
+tiers out of a frozen frame and joins a recomputed flag onto them, for the
+augmented arm exactly as much as for the active one. "It cannot be re-run" was
+not a reason to skip it, because re-running was never required.
+
+Both arms are in §3b above. The cost of the error was one sentence and one
+missing row; the cost of not checking it would have been a figure that stayed
+unmeasured on a stated impossibility that did not exist.
+
+An earlier version of this section also listed §3a's production frame as "real
+work rather than a second join", on the assumption that correcting it meant
+re-running `dev/build-triangulation-v2.R` over the corpus. It did not:
+`TRI-V2-MATCH.rds` keeps the recipient name beside the tier for all 91,008
+identities, so the flag is recomputed in place and the frame is the cheapest of
+the three, not the dearest. That is the same mistake as the active arm — assuming
+a figure needs the pipeline re-run when it only needs a column recomputed — made
+twice in one amendment.
+
+### Still open after this
+
+* The flag's own **precision** is still priced only against the filed status
+  field. See the status note in §3b. This is the one real gap, and it is a
+  drawing-and-adjudicating job, not a computation.
+* §4b's pick precision and everything else measured **on** the §3a frame still
+  carries that frame's old denominator. Those are rates over the MAYBE tier
+  rather than over the whole frame, and the flag moves only 134 of its 23,340
+  identities, so the effect is small — but it is not zero and has not been
+  computed.
+* The flag's own **precision** is measured only against the filed status field,
+  which is unreliable in both directions, so the 0.4% is an upper bound. A hand
+  sample would price it; none exists. This is the same shape of open gate as
+  `T1`/`T2` in §6, one level down.
