@@ -416,7 +416,8 @@ pf_propagate_matches <- function(grants, status) {
       "  propagate. The two were built from different runs, or the frame is\n",
       "  keyed on R<position> and these rows on recipient_id (or the reverse).\n",
       "  Check pf_frame_id() on both."), call. = FALSE)
-  for (col in c("status", "ein", "bmf_name", "score", "match_pass"))
+  for (col in c("status", "ein", "bmf_name", "score", "match_pass",
+                intersect("variant_screen", names(status))))
     grants[[col]] <- status[[col]][i]
   grants
 }

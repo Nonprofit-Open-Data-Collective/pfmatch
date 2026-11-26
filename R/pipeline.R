@@ -221,6 +221,12 @@ pf_reference <- function(bmf = NULL, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds"
 #'   FALSE` recomputes and overwrites. See [pf_run_batches()], *Checkpoints are
 #'   stamped*.
 #' @param verbose Print progress.
+#' @param variant_screen Also run the exact-name passes on every other distinct
+#'   spelling of each multi-variant cluster, and fold what they resolve into
+#'   the identity's result; see [pf_screen_variants()]. Off by default.
+#' @param variant_scope `"unresolved"` screens identities that ended `NO` or
+#'   `MAYBE`; `"all"` also audits `YES` identities. Passed to
+#'   [pf_screen_variants()] as `scope`.
 #' @return A list of class `pf_linked` with identity-level `status`, row-level
 #'   `grants`, and `timing`.
 #' @export
@@ -228,7 +234,8 @@ pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L
                     passes = NULL, config = npmatch::np_config(),
                     method = "hier", dyads = NULL,
                     dyad_config = pf_dyad_config(), resume = TRUE,
-                    verbose = TRUE) {
+                    verbose = TRUE, variant_screen = FALSE,
+                    variant_scope = c("unresolved", "all")) {
   stopifnot(inherits(prepared, "pf_prepared"))
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 3  link")
@@ -245,6 +252,13 @@ pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L
                            config = config, method = method,
                            dyads = dyads, dyad_config = dyad_config,
                            resume = resume, verbose = verbose)
+  if (isTRUE(variant_screen))
+    status <- pf_screen_variants(prepared$grants, status, ref,
+                                 scope = match.arg(variant_scope),
+                                 dir = file.path(dir, "variants"),
+                                 batch_size = batch_size, config = config,
+                                 method = method, resume = resume,
+                                 verbose = verbose)
   g <- pf_propagate_matches(prepared$grants, status)
   g$status[!g$in_scope] <- "OOS"
   if (!is.null(status$dyad_collapsed))

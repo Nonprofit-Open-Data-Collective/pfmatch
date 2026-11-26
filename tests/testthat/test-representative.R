@@ -92,3 +92,96 @@ test_that("the New Venture Fund cluster resolves on its common name", {
   expect_equal(as.character(st$status), "YES")
   expect_equal(st$ein, "201234567")
 })
+
+## ---- the variant screen ------------------------------------------------------
+
+screen_bmf <- function() data.frame(
+  ein = c("042103580", "111111111", "222222222"),
+  org_name_join = c("PRESIDENT AND FELLOWS OF HARVARD COLLEGE", "ALPHA FUND",
+                    "BETA TRUST"),
+  dba_name = c("HARVARD UNIVERSITY", "", ""),
+  org_addr_street = c("1350 MASSACHUSETTS AVE", "1 MAIN ST", "1 MAIN ST"),
+  org_addr_city = c("CAMBRIDGE", "BOSTON", "BOSTON"),
+  org_addr_state = c("MA", "MA", "MA"),
+  org_addr_zip5 = c("02138", "02108", "02108"), org_addr_zip4 = "",
+  stringsAsFactors = FALSE)
+
+# A status frame in which every identity failed, so the screen is the only
+# thing that can resolve it.
+failed_status <- function(r) {
+  data.frame(grant_id = r$grant_id, recip_name = r$recip_name,
+             status = factor("NO", pf_status_levels()), ein = NA_character_,
+             bmf_name = NA_character_, score = NA_real_,
+             match_pass = NA_character_, stringsAsFactors = FALSE)
+}
+
+screen_grants <- function() {
+  a <- rep_frame(c(rep("HARVARD GSE PROGRAM OFFICE", 3), "HARVARD UNIVERSITY"),
+                 street = "1350 MASSACHUSETTS AVE", city = "CAMBRIDGE",
+                 state = "MA", zip5 = "02138", uid = 1L)
+  b <- rep_frame(c("ALPHA FUND", "ALPHA FUND", "BETA TRUST", "GAMMA THING"),
+                 street = "1 MAIN ST", city = "BOSTON", state = "MA",
+                 zip5 = "02108", uid = 2L)
+  c <- rep_frame(c("DELTA SOLO", "DELTA SOLO"), street = "9 ELM ST",
+                 city = "BOSTON", state = "MA", zip5 = "02108", uid = 3L)
+  g <- rbind(a, b, c)
+  g$grant_id <- sprintf("G%04d", seq_len(nrow(g)))
+  g
+}
+
+test_that("a spelling the representative hid resolves the identity", {
+  skip_if_not_installed("npmatch")
+  ref <- pf_build_reference(screen_bmf())
+  g <- screen_grants()
+  r <- pf_recipients(g)
+  st <- pf_screen_variants(g, failed_status(r), ref, verbose = FALSE)
+  h <- st[st$grant_id == "ID1", ]
+  expect_equal(as.character(h$status), "YES")
+  expect_equal(h$ein, "042103580")
+  expect_equal(h$variant_screen, "resolved")
+  expect_equal(h$variant_name, "HARVARD UNIVERSITY")
+  expect_equal(as.character(h$status_main), "NO")
+  expect_match(h$match_pass, "^variant:A")
+})
+
+test_that("spellings that resolve to different EINs make the identity MAYBE", {
+  skip_if_not_installed("npmatch")
+  ref <- pf_build_reference(screen_bmf())
+  g <- screen_grants()
+  # make GAMMA THING the representative so both ALPHA and BETA are variants
+  g$recip_name[g$recipient_uid == 2L] <- c("GAMMA THING", "GAMMA THING",
+                                           "ALPHA FUND", "BETA TRUST")
+  r <- pf_recipients(g)
+  st <- pf_screen_variants(g, failed_status(r), ref, verbose = FALSE)
+  x <- st[st$grant_id == "ID2", ]
+  expect_equal(as.character(x$status), "MAYBE")
+  expect_equal(x$variant_screen, "conflict")
+  expect_setequal(strsplit(x$variant_eins, ";")[[1]], c("111111111", "222222222"))
+})
+
+test_that("a YES the variants contradict is audited down only with scope = 'all'", {
+  skip_if_not_installed("npmatch")
+  ref <- pf_build_reference(screen_bmf())
+  g <- screen_grants()
+  r <- pf_recipients(g)               # ID2 is represented by ALPHA FUND
+  st <- failed_status(r)
+  st$status[st$grant_id == "ID2"] <- "YES"
+  st$ein[st$grant_id == "ID2"] <- "111111111"
+  a <- pf_screen_variants(g, st, ref, verbose = FALSE)
+  expect_equal(as.character(a$status[a$grant_id == "ID2"]), "YES")
+  expect_true(is.na(a$variant_screen[a$grant_id == "ID2"]))
+  b <- pf_screen_variants(g, st, ref, scope = "all", verbose = FALSE)
+  expect_equal(as.character(b$status[b$grant_id == "ID2"]), "MAYBE")
+  expect_equal(b$variant_screen[b$grant_id == "ID2"], "conflict")
+  expect_equal(b$ein[b$grant_id == "ID2"], "111111111")
+})
+
+test_that("single-spelling identities are not screened", {
+  skip_if_not_installed("npmatch")
+  ref <- pf_build_reference(screen_bmf())
+  g <- screen_grants()
+  st <- pf_screen_variants(g, failed_status(pf_recipients(g)), ref,
+                           verbose = FALSE)
+  expect_true(is.na(st$variant_screen[st$grant_id == "ID3"]))
+  expect_equal(as.character(st$status[st$grant_id == "ID3"]), "NO")
+})
