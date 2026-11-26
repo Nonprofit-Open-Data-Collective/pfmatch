@@ -117,7 +117,7 @@ pf_screen_variants <- function(grants, status, ref,
   g <- g[!duplicated(paste(g$.rid, g$.vk, sep = "\r")), , drop = FALSE]
   # no whitespace in the id: np_cascade() normalizes it in `.id`, and pf_status()
   # would then fail to find its own rows
-  g$grant_id <- paste0(g$.rid, "|V", ave(seq_len(nrow(g)), g$.rid,
+  g$grant_id <- paste0(g$.rid, "|V", stats::ave(seq_len(nrow(g)), g$.rid,
                                          FUN = seq_along))
   rownames(g) <- NULL
   # spellings are keyed with decoration stripped, so match them stripped too,
