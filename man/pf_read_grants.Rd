@@ -7,7 +7,8 @@
 pf_read_grants(
   path = "inputs",
   pattern = "grants.*\\\\.csv$",
-  allow_mixed = FALSE
+  allow_mixed = FALSE,
+  placeholders = TRUE
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ pick one set.}
 
 \item{allow_mixed}{Set \code{TRUE} to suppress the vintage check described below.
 Only do this when the mixture is genuinely wanted.}
+
+\item{placeholders}{Passed to \code{\link[=pf_prepare_grants]{pf_prepare_grants()}}.}
 }
 \value{
 The prepared frame, with \code{source_file} recording provenance.

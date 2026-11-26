@@ -4,17 +4,54 @@
 \alias{pf_recipients}
 \title{The distinct recipient frame to actually match}
 \usage{
-pf_recipients(grants)
+pf_recipients(grants, strip = TRUE)
 }
 \arguments{
 \item{grants}{Output of \code{\link[=pf_dedup]{pf_dedup()}}.}
+
+\item{strip}{Remove decoration before counting spellings and matching (see
+above). Default \code{TRUE}.}
 }
 \value{
 A data frame with one row per identity, carrying \code{recipient_uid} as
-the match key.
+the match key, \code{recipient_name_n} (the number of grant rows in the cluster
+that carry the representative's spelling) and, with \code{strip = TRUE},
+\code{name_stripped} and \code{recip_name_filed}.
 }
 \description{
-One row per \code{recipient_uid}, choosing the \strong{most complete} representative of
-each cluster (longest name, then most address fields populated) so the match
-runs against the best available spelling rather than an arbitrary one.
+One row per \code{recipient_uid}: the representative of each cluster, which is
+the only row the cascade sees. The representative is the row whose name is
+the \strong{most common spelling in the cluster}, counted in grant rows over a
+lightly normalized name (upper case, punctuation to spaces, and with
+\code{strip = TRUE} decoration removed). Ties go to the row with the most address
+fields filled, then the latest tax year, then an undecorated row, then the
+longer name, and last the name itself, so the choice does not depend on row
+order.
 }
+\section{Why the most common name}{
+
+Until 2026-11 the representative was the \emph{longest} name, on the theory that
+it is the most complete. In a cluster of spelling variants the longest name
+is nearly always the most decorated one. New Venture Fund's 1,986 grant rows
+were matched as \verb{NEW VENTURE FUND FOR PROJECT UNLOADED} (one row) and came
+back NO, although 1,968 of them read \verb{NEW VENTURE FUND}, an exact BMF name.
+Rematching the 43,993 NO and MAYBE clusters whose representative was not
+their most common name moved 12,644 of them, and $42.7B, to YES on the
+TY2021-2024 file. See \code{dev/REPRESENTATIVE-NAME-NOTE.md}.
+}
+
+\section{Decoration}{
+
+Filers decorate payee names in ways no BMF name carries: a parenthetical
+(\verb{SCHWAB CHARITABLE FUND (JUDY FRANCIS ZANKEL ...)}), a care-of or
+attention tail (\verb{CHDI FOUNDATION INC ATTN KEN SLUTSKY ...}), an FBO or
+tribute tail, or a project tail (\verb{... FOR PROJECT UNLOADED}). With \code{strip = TRUE} these are removed before spellings are counted, so decorated rows
+count toward their plain spelling, and the representative is matched on the
+stripped name. That matters where frequency cannot help: a cluster whose
+every row is decorated differently, or a single-spelling identity such as
+CHDI, which the intermediaries second pass recovered ($1.16B over 20
+identities) by exactly this cleaning. The filed name moves to
+\code{recip_name_alt} when that slot is free, so the comparator still scores
+against it, and is kept in \code{recip_name_filed}. Compound names (\code{DAF - VANGUARD}) are not split.
+}
+

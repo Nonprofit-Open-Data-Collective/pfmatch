@@ -4,19 +4,28 @@
 \alias{pf_prepare_grants}
 \title{Prepare a raw 990-PF grants extract}
 \usage{
-pf_prepare_grants(grants, id_prefix = "G")
+pf_prepare_grants(grants, id_prefix = "G", placeholders = TRUE)
 }
 \arguments{
 \item{grants}{A data frame of the raw GTDC 990-PF current-grants extract
 (columns \code{SIGOCPYRPNAM}, \code{SIGOCPYRBNBN1}, ..., \code{SIGOCPYRFSTA}).}
 
 \item{id_prefix}{Prefix for the generated \code{grant_id} when the input has none.}
+
+\item{placeholders}{Run \code{\link[=pf_detect_placeholders]{pf_detect_placeholders()}} and set placeholder rows
+out of scope, with \code{oos_reason = "placeholder:<category>"}. On by default;
+\code{FALSE} restores the earlier scoping, in which they reach the cascade.
+Either way a reference that names a payee is not a placeholder; with the
+detector on, it is matched on the payee (\code{recip_name}) and the filed text
+is kept in \code{recip_name_filed}.}
 }
 \value{
 A data frame with the original columns plus the prepared recipient
 name / address fields, the standardized recipient type, the scope decision
-(\code{in_scope}, \code{oos_reason}), and four flags that describe the recipient
-without deciding scope:
+(\code{in_scope}, \code{oos_reason}), the placeholder decision (\code{placeholder_rule},
+\code{placeholder_category}, \code{placeholder_sink}, all \code{NA} when the detector is
+off or did not fire), and four flags that describe the recipient without
+deciding scope:
 \describe{
 \item{\code{looks_personal}}{the name reads as a natural person, scored with
 \code{peopleparser::classify_names()}. Never fires on a placeholder.}

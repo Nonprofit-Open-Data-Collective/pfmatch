@@ -9,7 +9,9 @@ pf_prepare(
   pattern = "grants.*[.]csv$",
   dedup = c("fuzzy", "exact", "none"),
   threshold = 0.92,
-  verbose = TRUE
+  verbose = TRUE,
+  placeholders = TRUE,
+  chain_guard = FALSE
 )
 }
 \arguments{
@@ -23,6 +25,13 @@ already-read data frame.}
 \item{threshold}{Name-similarity threshold for fuzzy clustering.}
 
 \item{verbose}{Print progress.}
+
+\item{placeholders}{Set placeholder rows ("SEE ATTACHED", "VARIOUS
+INDIVIDUALS", ...) out of scope before matching; see
+\code{\link[=pf_detect_placeholders]{pf_detect_placeholders()}}. On by default.}
+
+\item{chain_guard}{Passed to \code{\link[=pf_dedup]{pf_dedup()}}: hold every cluster member to the
+cluster's anchor so single linkage cannot chain. Off by default.}
 }
 \value{
 A list of class \code{pf_prepared} with \code{grants} (every row, scoped and
@@ -40,8 +49,9 @@ Turns the raw GTDC 990-PF "grants paid during year" extract (Part XIV Table
 \details{
 The dedup step is the scale lever, not a nicety: grants repeat heavily, and
 matching distinct recipient identities rather than grant rows removes most of
-the work without removing recall. It also \emph{adds} recall, because a match found
-for any cluster member propagates to all of them.
+the work without removing recall. Each cluster is matched on one
+representative, its most common spelling (see \code{\link[=pf_recipients]{pf_recipients()}}), and that
+one result propagates to every member.
 }
 \section{Name fields}{
 

@@ -15,7 +15,10 @@ pf_link(
   dyads = NULL,
   dyad_config = pf_dyad_config(),
   resume = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  variant_screen = FALSE,
+  variant_scope = c("unresolved", "all"),
+  sibling_guard = FALSE
 )
 }
 \arguments{
@@ -41,6 +44,18 @@ A checkpoint written under different settings stops the run; \code{resume = FALS
 stamped}.}
 
 \item{verbose}{Print progress.}
+
+\item{variant_screen}{Also run the exact-name passes on every other distinct
+spelling of each multi-variant cluster, and fold what they resolve into
+the identity's result; see \code{\link[=pf_screen_variants]{pf_screen_variants()}}. Off by default.}
+
+\item{variant_scope}{\code{"unresolved"} screens identities that ended \code{NO} or
+\code{MAYBE}; \code{"all"} also audits \code{YES} identities. Passed to
+\code{\link[=pf_screen_variants]{pf_screen_variants()}} as \code{scope}.}
+
+\item{sibling_guard}{Turn a \code{YES} whose BMF name is the query plus a sibling
+marker (\verb{STAFF ASSOCIATION}, \code{ALUMNI}, \code{AUXILIARY}, ...) into \code{MAYBE}; see
+\code{\link[=pf_sibling_guard]{pf_sibling_guard()}}. Off by default.}
 }
 \value{
 A list of class \code{pf_linked} with identity-level \code{status}, row-level
