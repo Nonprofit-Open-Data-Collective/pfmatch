@@ -5,10 +5,14 @@
 #' the same large charities — so matching distinct *recipient identities* rather
 #' than grant rows removes work without removing recall.
 #'
-#' It also buys recall outright. Because a cluster is one organization by
-#' construction, a match found for any member **propagates to every member**: a
-#' truncated, misspelled, or acronymic variant inherits the EIN resolved for an
-#' easier variant sitting in the same cluster. See [pf_propagate_matches()].
+#' It can also buy recall, but only as far as the matching step lets it. The
+#' cascade runs on **one representative row per cluster** ([pf_recipients()]),
+#' and [pf_propagate_matches()] copies that one result to every member. A
+#' truncated, misspelled or acronymic variant therefore inherits an EIN only
+#' when the representative resolves. A poor representative takes every member
+#' down with it, and the variants it merged contribute nothing. The variants
+#' are tried in their own right only when [pf_link()] runs with
+#' `variant_screen = TRUE`. See `dev/REPRESENTATIVE-NAME-NOTE.md`.
 #'
 #' @section Two levels:
 #' \describe{
@@ -327,21 +331,48 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
 }
 #' The distinct recipient frame to actually match
 #'
-#' One row per `recipient_uid`, choosing the **most complete** representative of
-#' each cluster (longest name, then most address fields populated) so the match
-#' runs against the best available spelling rather than an arbitrary one.
+#' One row per `recipient_uid`: the representative of each cluster, which is
+#' the only row the cascade sees. The representative is the row whose name is
+#' the **most common spelling in the cluster**, counted in grant rows over a
+#' lightly normalized name (upper case, punctuation to spaces). Ties go to the
+#' row with the most address fields filled, then the latest tax year, then the
+#' longer name, and last the name itself, so the choice does not depend on row
+#' order.
+#'
+#' @section Why the most common name:
+#' Until 2026-11 the representative was the *longest* name, on the theory that
+#' it is the most complete. In a cluster of spelling variants the longest name
+#' is nearly always the most decorated one. New Venture Fund's 1,986 grant rows
+#' were matched as `NEW VENTURE FUND FOR PROJECT UNLOADED` (one row) and came
+#' back NO, although 1,968 of them read `NEW VENTURE FUND`, an exact BMF name.
+#' Rematching the 43,993 NO and MAYBE clusters whose representative was not
+#' their most common name moved 12,644 of them, and $42.7B, to YES on the
+#' TY2021-2024 file. See `dev/REPRESENTATIVE-NAME-NOTE.md`.
 #'
 #' @param grants Output of [pf_dedup()].
 #' @return A data frame with one row per identity, carrying `recipient_uid` as
-#'   the match key.
+#'   the match key, and `recipient_name_n`: the number of grant rows in the
+#'   cluster that carry the representative's spelling.
 #' @export
 pf_recipients <- function(grants) {
   stopifnot(!is.null(grants$recipient_uid))
   n_addr <- rowSums(!is.na(grants[, c("recip_street", "recip_city",
                                       "recip_state", "recip_zip5")]))
-  score <- nchar(ifelse(is.na(grants$recip_name), "", grants$recip_name)) + 10 * n_addr
-  ord <- order(grants$recipient_uid, -score)
+  nm  <- ifelse(is.na(grants$recip_name), "", as.character(grants$recip_name))
+  key <- .pf_rep_key(grants)
+  # grant rows per (cluster, spelling); an empty name never wins on frequency
+  ck   <- paste(grants$recipient_uid, key, sep = "\r")
+  fk   <- match(ck, unique(ck))
+  freq <- tabulate(fk)[fk]
+  freq[!nzchar(key)] <- 0L
+  # v2 spells it TAX_YEAR, the GTDC/v1 extracts TAXYEAR
+  ty <- grants$TAX_YEAR %||% grants$TAXYEAR %||% rep(NA, nrow(grants))
+  ty <- suppressWarnings(as.integer(as.character(ty)))
+  ty[is.na(ty)] <- -1L
+  ord <- order(grants$recipient_uid, -freq, -n_addr, -ty, -nchar(nm), nm,
+               method = "radix")
   out <- grants[ord, , drop = FALSE]
+  out$recipient_name_n <- freq[ord]
   out <- out[!duplicated(out$recipient_uid), , drop = FALSE]
   # The match key for the cascade, and the key every label is written against.
   # Content-derived, not `paste0("R", recipient_uid)`: see pf_identity_id().
@@ -354,6 +385,15 @@ pf_recipients <- function(grants) {
       "labelled against; re-run pf_dedup()."), call. = FALSE)
   rownames(out) <- NULL
   out
+}
+
+# The spelling a representative is counted on: upper case, anything that is not
+# a letter or digit to a space, single spaces. Deliberately lighter than
+# npmatch's name_key, which drops legal suffixes and so would count
+# "X FOUNDATION" and "X" as one spelling.
+.pf_rep_key <- function(grants) {
+  x <- toupper(ifelse(is.na(grants$recip_name), "", as.character(grants$recip_name)))
+  gsub(" +", " ", trimws(gsub("[^A-Z0-9]+", " ", x)))
 }
 #' Propagate a match back from identities to grant rows
 #'

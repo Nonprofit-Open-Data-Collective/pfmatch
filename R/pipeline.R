@@ -32,8 +32,9 @@ NULL
 #'
 #' The dedup step is the scale lever, not a nicety: grants repeat heavily, and
 #' matching distinct recipient identities rather than grant rows removes most of
-#' the work without removing recall. It also *adds* recall, because a match found
-#' for any cluster member propagates to all of them.
+#' the work without removing recall. Each cluster is matched on one
+#' representative, its most common spelling (see [pf_recipients()]), and that
+#' one result propagates to every member.
 #'
 #' @param grants A directory of grant CSVs, a vector of file paths, or an
 #'   already-read data frame.
