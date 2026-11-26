@@ -42,23 +42,35 @@ NULL
 #' @param dedup `"fuzzy"` (default), `"exact"`, or `"none"`.
 #' @param threshold Name-similarity threshold for fuzzy clustering.
 #' @param verbose Print progress.
+#' @param placeholders Set placeholder rows ("SEE ATTACHED", "VARIOUS
+#'   INDIVIDUALS", ...) out of scope before matching; see
+#'   [pf_detect_placeholders()]. On by default.
 #' @return A list of class `pf_prepared` with `grants` (every row, scoped and
 #'   assigned a `recipient_uid`), `recipients` (one row per identity, in scope),
 #'   and `timing`.
 #' @export
 pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
                        dedup = c("fuzzy", "exact", "none"),
-                       threshold = 0.92, verbose = TRUE) {
+                       threshold = 0.92, verbose = TRUE, placeholders = TRUE) {
   dedup <- match.arg(dedup)
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 1  prepare")
 
-  g <- if (is.data.frame(grants)) pf_prepare_grants(grants)
-       else pf_read_grants(grants, pattern = pattern)
+  g <- if (is.data.frame(grants)) pf_prepare_grants(grants, placeholders = placeholders)
+       else pf_read_grants(grants, pattern = pattern, placeholders = placeholders)
   g <- pf_recover_name_from_street(g)
   .pf_say(verbose, "  grant rows ......... %s", format(nrow(g), big.mark = ","))
   .pf_say(verbose, "  in scope ........... %s (%.1f%%)",
           format(sum(g$in_scope), big.mark = ","), 100 * mean(g$in_scope))
+  ph <- startsWith(g$oos_reason %||% rep(NA_character_, nrow(g)), "placeholder:")
+  ph[is.na(ph)] <- FALSE
+  if (any(ph)) {
+    amt <- suppressWarnings(as.numeric(.pf_col(g, "PF_15_G_PAID_AMT")))
+    .pf_say(verbose, "  placeholders set aside %s rows, $%s (%.1f%% of dollars)",
+            format(sum(ph), big.mark = ","),
+            format(round(sum(amt[ph], na.rm = TRUE)), big.mark = ","),
+            100 * sum(amt[ph], na.rm = TRUE) / max(sum(amt, na.rm = TRUE), 1))
+  }
 
   if (dedup == "none") {
     g$recipient_uid <- seq_len(nrow(g))
@@ -311,7 +323,7 @@ pf_adjudicate <- function(x, bmf, ids = NULL, k = 5, tiebreak = FALSE,
 #'
 #' [pf_prepare()] -> [pf_reference()] -> [pf_link()] -> [pf_report()].
 #'
-#' @param grants,pattern,dedup Passed to [pf_prepare()].
+#' @param grants,pattern,dedup,placeholders Passed to [pf_prepare()].
 #' @param bmf,ref_cache Passed to [pf_reference()]. With no `bmf`, the reference
 #'   is the matchdb tier, falling back to the bundle at `ref_cache`.
 #' @param ref_source,tier Passed to [pf_reference()] as `source` and `tier`.
@@ -330,10 +342,11 @@ pf_run <- function(grants, bmf = NULL, pattern = "grants.*[.]csv$",
                    dir = "data-dev/batches", batch_size = 25000L,
                    dyads = NULL, report = TRUE, verbose = TRUE,
                    ref_source = c("auto", "matchdb", "local"),
-                   tier = getOption("pfmatch.matchdb_tier", "active-observed"), ...) {
+                   tier = getOption("pfmatch.matchdb_tier", "active-observed"),
+                   placeholders = TRUE, ...) {
   t0 <- .pf_tick()
   prep <- pf_prepare(grants, pattern = pattern, dedup = match.arg(dedup),
-                     verbose = verbose)
+                     verbose = verbose, placeholders = placeholders)
   ref  <- pf_reference(bmf, cache = ref_cache, verbose = verbose,
                        source = match.arg(ref_source), tier = tier)
   lnk  <- pf_link(prep, ref, dir = dir, batch_size = batch_size,

@@ -137,10 +137,18 @@ pf_map_grants <- function() {
 #' @param grants A data frame of the raw GTDC 990-PF current-grants extract
 #'   (columns `SIGOCPYRPNAM`, `SIGOCPYRBNBN1`, ..., `SIGOCPYRFSTA`).
 #' @param id_prefix Prefix for the generated `grant_id` when the input has none.
+#' @param placeholders Run [pf_detect_placeholders()] and set placeholder rows
+#'   out of scope, with `oos_reason = "placeholder:<category>"`. On by default;
+#'   `FALSE` restores the earlier scoping, in which they reach the cascade.
+#'   Either way a reference that names a payee is not a placeholder; with the
+#'   detector on, it is matched on the payee (`recip_name`) and the filed text
+#'   is kept in `recip_name_filed`.
 #' @return A data frame with the original columns plus the prepared recipient
 #'   name / address fields, the standardized recipient type, the scope decision
-#'   (`in_scope`, `oos_reason`), and four flags that describe the recipient
-#'   without deciding scope:
+#'   (`in_scope`, `oos_reason`), the placeholder decision (`placeholder_rule`,
+#'   `placeholder_category`, `placeholder_sink`, all `NA` when the detector is
+#'   off or did not fire), and four flags that describe the recipient without
+#'   deciding scope:
 #'   \describe{
 #'     \item{`looks_personal`}{the name reads as a natural person, scored with
 #'       `peopleparser::classify_names()`. Never fires on a placeholder.}
@@ -151,7 +159,7 @@ pf_map_grants <- function() {
 #'   }
 #'   `vignette("identifying-people")` covers what each one is worth.
 #' @export
-pf_prepare_grants <- function(grants, id_prefix = "G") {
+pf_prepare_grants <- function(grants, id_prefix = "G", placeholders = TRUE) {
   g <- as.data.frame(grants, stringsAsFactors = FALSE)
   # Columns are named by the current concordance990 v2 schema. .pf_col() falls
   # back to the legacy v1/GTDC name, so files built before the migration still
@@ -174,6 +182,18 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   bn1_clean[!is.na(bn1_clean) & !nzchar(bn1_clean)] <- bn1[!is.na(bn1_clean) & !nzchar(bn1_clean)]
   name <- ifelse(!is.na(pnam), pnam, bn1_clean)
   name_alt <- ifelse(keep2, trimws(paste(bn1_clean, bn2)), NA_character_)
+  name_filed <- name
+  # -- placeholders (see pf_detect_placeholders) ------------------------------
+  # A pointer, an aggregate or a privacy note is set aside below, before
+  # matching. A reference that names a payee ("FIDELITY CHARITABLE - SEE
+  # ATTACHMENT A") is matched on the payee instead; the filed name is kept in
+  # recip_name_filed.
+  ph <- if (isTRUE(placeholders)) pf_detect_placeholders(name) else NULL
+  if (!is.null(ph)) {
+    rw <- ph$category %in% "reference_with_name" & !is.na(name)
+    name[rw] <- ph$residual[rw]
+    name_alt[rw] <- NA_character_
+  }
   # -- address ---------------------------------------------------------------
   state <- toupper(trimws(.pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_STATE"))))
   zipr  <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_ZIP"))
@@ -210,10 +230,22 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   oos_reason[detail %in% pf_oos_details()] <- "foreign address"
   # nothing to match on at all -- no name AND no usable address
   oos_reason[!has_name & !has_addr & is.na(oos_reason)] <- "no name or address"
+  # A placeholder takes precedence over geography: it describes the row, and
+  # its dollars are reported under that reason. A blank name is left to the
+  # rule above, and a one-character name with a street is left for
+  # pf_recover_name_from_street(), which may find the payee there.
+  set_aside <- logical(nrow(g))
+  if (!is.null(ph)) {
+    set_aside <- ph$is_placeholder & has_name &
+      !(ph$category %in% "unknown_or_none" & nchar(trimws(name)) <= 1L &
+          !is.na(street))
+    oos_reason[set_aside] <- paste0("placeholder:", ph$category[set_aside])
+  }
   out <- g
   out$grant_id <- if (!is.null(g$grant_id)) as.character(g$grant_id)
                   else sprintf("%s%06d", id_prefix, seq_len(nrow(g)))
   out$recip_name     <- name
+  out$recip_name_filed <- name_filed
   out$recip_name_alt <- name_alt
   out$recip_name_l1  <- bn1_clean
   out$recip_name_l2  <- bn2
@@ -247,7 +279,10 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   # institutional word in it, which is exactly the shape the score rewards.
   placeholder <- .pf_placeholder(name)
   out$flag_placeholder      <- placeholder
-  out$looks_personal        <- .pf_looks_personal(name) & !placeholder
+  out$looks_personal        <- .pf_looks_personal(name) & !placeholder & !set_aside
+  out$placeholder_rule     <- if (is.null(ph)) NA_character_ else ph$rule_id
+  out$placeholder_category <- if (is.null(ph)) NA_character_ else ph$category
+  out$placeholder_sink     <- if (is.null(ph)) NA_character_ else ph$sink
   # Flags, not filters. These record what the filer *said* the recipient was so
   # results can be split by it, without that claim deciding whether we look.
   # `flag_placeholder` is the one that is read off the name rather than the
@@ -268,6 +303,7 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
 #'   the `*_grants*.csv` benchmark files and so will pull in **every** size
 #'   variant sitting in the folder — pass an explicit pattern or file vector to
 #'   pick one set.
+#' @param placeholders Passed to [pf_prepare_grants()].
 #' @param allow_mixed Set `TRUE` to suppress the vintage check described below.
 #'   Only do this when the mixture is genuinely wanted.
 #' @section Vintage check:
@@ -285,7 +321,7 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
 #' @return The prepared frame, with `source_file` recording provenance.
 #' @export
 pf_read_grants <- function(path = "inputs", pattern = "grants.*\\.csv$",
-                           allow_mixed = FALSE) {
+                           allow_mixed = FALSE, placeholders = TRUE) {
   files <- if (length(path) == 1L && dir.exists(path))
     list.files(path, pattern = pattern, full.names = TRUE) else path
   if (!length(files)) stop("no grant files found at: ", paste(path, collapse = ", "))
@@ -321,5 +357,5 @@ pf_read_grants <- function(path = "inputs", pattern = "grants.*\\.csv$",
     }
   }
   d <- as.data.frame(data.table::rbindlist(parts, fill = TRUE))
-  pf_prepare_grants(d)
+  pf_prepare_grants(d, placeholders = placeholders)
 }
