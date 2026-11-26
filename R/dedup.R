@@ -97,6 +97,36 @@ NULL
   }
   vapply(seq_len(n), find, integer(1))
 }
+# The diameter check behind pf_dedup(chain_guard = TRUE). `nk` and `w` are the
+# name key and grant-row weight of each candidate key, (ei, ej) the accepted
+# joins and `comp` their components. Each round, every member of a multi-member
+# component is compared with the component's anchor (heaviest member, ties to
+# the smaller name key); a member below `threshold` is detached, every join
+# that crosses between detached and kept members is dropped, and the
+# components are rebuilt. Detached members can still cluster among
+# themselves, and are checked against their own anchor the next round.
+.pf_chain_guard <- function(nk, w, ei, ej, comp, threshold, max_rounds = 5L) {
+  n_det <- 0L; n_split <- 0L; r <- 0L
+  while (r < max_rounds) {
+    r <- r + 1L
+    sz <- tabulate(comp, nbins = length(comp))
+    multi <- which(sz[comp] > 1L)
+    if (!length(multi)) break
+    o <- multi[order(comp[multi], -w[multi], nk[multi], method = "radix")]
+    anchor <- o[!duplicated(comp[o])]
+    a <- anchor[match(comp[multi], comp[anchor])]
+    sim <- 1 - stringdist::stringdist(nk[multi], nk[a], method = "jw", p = 0.1)
+    det <- logical(length(comp))
+    det[multi[sim < threshold]] <- TRUE
+    if (!any(det)) break
+    n_det <- n_det + sum(det)
+    n_split <- n_split + length(unique(comp[det]))
+    keep <- det[ei] == det[ej]
+    ei <- ei[keep]; ej <- ej[keep]
+    comp <- .pf_components(length(comp), ei, ej)
+  }
+  list(comp = comp, n_detached = n_det, n_split = n_split, rounds = r)
+}
 #' Deduplicate grant recipients
 #'
 #' @param grants A prepared frame from [pf_prepare_grants()].
@@ -106,6 +136,14 @@ NULL
 #' @param max_block Blocks larger than this are compared exactly only, not
 #'   fuzzily — a guard against a quadratic blow-up on a huge shared ZIP.
 #' @param verbose Print the collapse ratio.
+#' @param chain_guard Fuzzy only. Single linkage chains: on the TY2021-2024
+#'   file 41 different "CINCINNATI ..." organisations joined one cluster, each
+#'   within 0.08 of a neighbour but not of each other. With `chain_guard =
+#'   TRUE` every member must also clear `threshold` against its cluster's
+#'   **anchor**, the member key with the most grant rows; members that do not
+#'   are detached, the joins between the two sides are dropped, and the
+#'   components are rebuilt, up to five rounds. Off by default: it changes the
+#'   identities, and so the `recipient_id`s, of every cluster it splits.
 #' @return `grants` with four columns added: `recipient_id` (the identity's
 #'   stable, content-derived id — the key the cascade and every label use; see
 #'   [pf_identity_id()]), `recipient_key` (the canonical dedup key it hashes),
@@ -114,7 +152,7 @@ NULL
 #'   share the identity).
 #' @export
 pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
-                     max_block = 2000L, verbose = TRUE) {
+                     max_block = 2000L, verbose = TRUE, chain_guard = FALSE) {
   method <- match.arg(method)
   stopifnot(!is.null(grants$recip_name))
   say <- function(...) if (verbose) cat(sprintf(...), "\n")
@@ -227,6 +265,14 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
     say("  %s fuzzy joins accepted, %s rejected by the number/ordinal/direction veto",
         format(length(ei), big.mark = ","), format(n_veto, big.mark = ","))
     comp <- .pf_components(nrow(cand), ei, ej)
+    if (isTRUE(chain_guard) && length(ei)) {
+      w  <- tabulate(uid, nbins = max(uid))[cand$uid]
+      cg <- .pf_chain_guard(cand$name_key, w, ei, ej, comp, threshold)
+      comp <- cg$comp
+      say("  chain guard: %s keys detached from %s clusters in %d round(s)",
+          format(cg$n_detached, big.mark = ","),
+          format(cg$n_split, big.mark = ","), cg$rounds)
+    }
     # remap: every uid in a component takes the component's smallest uid
     newuid <- cand$uid
     for (c0 in unique(comp)) {

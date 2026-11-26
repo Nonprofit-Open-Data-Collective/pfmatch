@@ -41,6 +41,8 @@ NULL
 #' @param pattern Regex selecting files when `grants` is a directory.
 #' @param dedup `"fuzzy"` (default), `"exact"`, or `"none"`.
 #' @param threshold Name-similarity threshold for fuzzy clustering.
+#' @param chain_guard Passed to [pf_dedup()]: hold every cluster member to the
+#'   cluster's anchor so single linkage cannot chain. Off by default.
 #' @param verbose Print progress.
 #' @param placeholders Set placeholder rows ("SEE ATTACHED", "VARIOUS
 #'   INDIVIDUALS", ...) out of scope before matching; see
@@ -51,7 +53,8 @@ NULL
 #' @export
 pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
                        dedup = c("fuzzy", "exact", "none"),
-                       threshold = 0.92, verbose = TRUE, placeholders = TRUE) {
+                       threshold = 0.92, verbose = TRUE, placeholders = TRUE,
+                       chain_guard = FALSE) {
   dedup <- match.arg(dedup)
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 1  prepare")
@@ -85,7 +88,8 @@ pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
     g$recipient_n <- 1L
     recips <- g[g$in_scope, , drop = FALSE]
   } else {
-    g <- pf_dedup(g, method = dedup, threshold = threshold, verbose = verbose)
+    g <- pf_dedup(g, method = dedup, threshold = threshold, verbose = verbose,
+                  chain_guard = chain_guard)
     recips <- pf_recipients(g[g$in_scope, , drop = FALSE])
     .pf_say(verbose, "  distinct identities  %s (%.2fx collapse)",
             format(nrow(recips), big.mark = ","),

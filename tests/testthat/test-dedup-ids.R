@@ -155,3 +155,32 @@ test_that("propagating a frame against the wrong run stops rather than joining n
                    match_pass = "A1-name-zip5", stringsAsFactors = FALSE)
   expect_error(pf_propagate_matches(a, st), "nothing would")
 })
+
+## ---- the chain guard ----------------------------------------------------------
+
+chain_frame <- function() {
+  nm <- c(rep("CINCINNATI BALLET", 5), "CINCINNATI BA",
+          rep("CINCINNATI OPERA", 3), rep("CINCINNATI WORKS", 2))
+  # one street per name, so each name is one exact key weighted by its rows
+  dedup_frame(data.frame(name = nm, street = paste(match(nm, unique(nm)), "VINE ST"),
+                         city = "CINCINNATI", state = "OH", zip5 = "45202",
+                         stringsAsFactors = FALSE))
+}
+
+test_that("single linkage chains across a shared city token", {
+  skip_if_not_installed("stringdist")
+  a <- pf_dedup(chain_frame(), method = "fuzzy", verbose = FALSE)
+  # BALLET ~ BA ~ OPERA ~ WORKS, though BALLET and WORKS score 0.87
+  expect_equal(length(unique(a$recipient_uid)), 1L)
+})
+
+test_that("chain_guard holds every member to the cluster's anchor", {
+  skip_if_not_installed("stringdist")
+  a <- pf_dedup(chain_frame(), method = "fuzzy", verbose = FALSE, chain_guard = TRUE)
+  id <- function(n) unique(a$recipient_id[a$recip_name == n])
+  expect_equal(id("CINCINNATI BA"), id("CINCINNATI BALLET"))
+  expect_false(identical(id("CINCINNATI OPERA"), id("CINCINNATI BALLET")))
+  # the detached side still clusters within itself when it clears the anchor
+  expect_equal(id("CINCINNATI WORKS"), id("CINCINNATI OPERA"))
+  expect_equal(length(unique(a$recipient_id)), 2L)
+})
