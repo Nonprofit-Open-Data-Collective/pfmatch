@@ -243,6 +243,9 @@ pf_reference <- function(bmf = NULL, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds"
 #' @param variant_scope `"unresolved"` screens identities that ended `NO` or
 #'   `MAYBE`; `"all"` also audits `YES` identities. Passed to
 #'   [pf_screen_variants()] as `scope`.
+#' @param sibling_guard Turn a `YES` whose BMF name is the query plus a sibling
+#'   marker (`STAFF ASSOCIATION`, `ALUMNI`, `AUXILIARY`, ...) into `MAYBE`; see
+#'   [pf_sibling_guard()]. Off by default.
 #' @return A list of class `pf_linked` with identity-level `status`, row-level
 #'   `grants`, and `timing`.
 #' @export
@@ -251,7 +254,8 @@ pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L
                     method = "hier", dyads = NULL,
                     dyad_config = pf_dyad_config(), resume = TRUE,
                     verbose = TRUE, variant_screen = FALSE,
-                    variant_scope = c("unresolved", "all")) {
+                    variant_scope = c("unresolved", "all"),
+                    sibling_guard = FALSE) {
   stopifnot(inherits(prepared, "pf_prepared"))
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 3  link")
@@ -275,6 +279,11 @@ pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L
                                  batch_size = batch_size, config = config,
                                  method = method, resume = resume,
                                  verbose = verbose)
+  if (isTRUE(sibling_guard)) {
+    status <- pf_sibling_guard(status)
+    .pf_say(verbose, "  sibling guard: %s YES -> MAYBE",
+            format(sum(status$sibling_guard), big.mark = ","))
+  }
   g <- pf_propagate_matches(prepared$grants, status)
   g$status[!g$in_scope] <- "OOS"
   if (!is.null(status$dyad_collapsed))
