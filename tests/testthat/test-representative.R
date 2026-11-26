@@ -35,7 +35,9 @@ test_that("the representative is the cluster's most common spelling", {
   r <- pf_recipients(nvf_cluster())
   expect_equal(nrow(r), 1L)
   expect_equal(r$recip_name, "NEW VENTURE FUND")
-  expect_equal(r$recipient_name_n, 50L)
+  expect_equal(r$recipient_name_n, 51L)   # the decorated row counts too, stripped
+  expect_equal(pf_recipients(nvf_cluster(), strip = FALSE)$recipient_name_n, 50L)
+  expect_equal(pf_recipients(nvf_cluster(), strip = FALSE)$recip_name, "NEW VENTURE FUND")
   expect_equal(r$grant_id, "ID1")
 })
 
@@ -43,9 +45,10 @@ test_that("spellings are counted after case and punctuation are folded", {
   g <- rep_frame(c("Harvard University", "HARVARD UNIVERSITY", "HARVARD UNIVERSITY.",
                    "HARVARD UNIVERSITY (HARVARD GRADUATE SCHOOL OF EDUCATION)",
                    "HARVARD UNIVERSITY (HARVARD GRADUATE SCHOOL OF EDUCATION)"))
-  r <- pf_recipients(g)
-  expect_equal(pfmatch:::.pf_rep_key(r), "HARVARD UNIVERSITY")
+  r <- pf_recipients(g, strip = FALSE)
+  expect_equal(pfmatch:::.pf_rep_key(r, strip = FALSE), "HARVARD UNIVERSITY")
   expect_equal(r$recipient_name_n, 3L)
+  expect_equal(pf_recipients(g)$recipient_name_n, 5L)   # stripped, all five pool
 })
 
 test_that("ties go to address fields, then the latest tax year, then length", {
@@ -184,4 +187,71 @@ test_that("single-spelling identities are not screened", {
                            verbose = FALSE)
   expect_true(is.na(st$variant_screen[st$grant_id == "ID3"]))
   expect_equal(as.character(st$status[st$grant_id == "ID3"]), "NO")
+})
+
+## ---- decoration ----------------------------------------------------------------
+
+test_that("decoration is stripped from the tails a filer adds", {
+  x <- c("HARVARD UNIVERSITY (HARVARD GRADUATE SCHOOL OF EDUCATION)",
+         "CHDI FOUNDATION INC ATTN KEN SLUTSKY TAX EXEMPT",
+         "NEW VENTURE FUND FOR PROJECT UNLOADED",
+         "SCHWAB CHARITABLE FUND C/O JOHN SMITH",
+         "ROCKY MOUNTAIN COLLEGE F/B/O JANE DOE",
+         "ST JUDE CHILDRENS RESEARCH HOSPITAL IN MEMORY OF BOB",
+         "CHARTER FUND INC (DBA CHARTER SCHOOL GROWTH F")
+  expect_equal(pfmatch:::.pf_strip_decoration(x),
+               c("HARVARD UNIVERSITY", "CHDI FOUNDATION INC", "NEW VENTURE FUND",
+                 "SCHWAB CHARITABLE FUND", "ROCKY MOUNTAIN COLLEGE",
+                 "ST JUDE CHILDRENS RESEARCH HOSPITAL", "CHARTER FUND INC"))
+})
+
+test_that("names that only look decorated are left alone", {
+  x <- c("ACME CO", "CO OP HOUSING ALLIANCE", "C/O UNITED WAY", "(SEE BELOW)",
+         "BLACKBAUD GIVING FUND - YOURCAUSE", "CENTER FOR PROGRAM EVALUATION",
+         "FRIENDS OF ATTNA")
+  expect_equal(pfmatch:::.pf_strip_decoration(x), x)
+})
+
+test_that("decorated rows count toward their plain spelling", {
+  # no two rows share a filed spelling, so only stripping can pool them
+  g <- rep_frame(c("SCHWAB CHARITABLE FUND (JUDY ZANKEL)",
+                   "SCHWAB CHARITABLE FUND (SMITH FAMILY)",
+                   "SCHWAB CHARITABLE FUND C/O J DOE",
+                   "SCHWAB CHARITABLE"))
+  r <- pf_recipients(g)
+  expect_equal(r$recip_name, "SCHWAB CHARITABLE FUND")
+  expect_equal(r$recipient_name_n, 3L)
+  expect_true(r$name_stripped)
+  expect_match(r$recip_name_filed, "^SCHWAB CHARITABLE FUND")
+  expect_equal(r$recip_name_alt, r$recip_name_filed)
+  # strip = FALSE is the plain frequency rule: four spellings, one row each
+  r0 <- pf_recipients(g, strip = FALSE)
+  expect_equal(r0$recipient_name_n, 1L)
+  expect_null(r0$name_stripped)
+})
+
+test_that("an undecorated row is preferred within a stripped spelling", {
+  g <- rep_frame(c("NEW VENTURE FUND FOR PROJECT X", "NEW VENTURE FUND"))
+  r <- pf_recipients(g)
+  expect_equal(r$recip_name, "NEW VENTURE FUND")
+  expect_false(r$name_stripped)
+  expect_true(is.na(r$recip_name_alt))
+})
+
+test_that("a single-spelling decorated identity resolves once stripped", {
+  skip_if_not_installed("npmatch")
+  bmf <- data.frame(ein = "061234567", org_name_join = "CHDI FOUNDATION INC",
+                    dba_name = "", org_addr_street = "350 SEVENTH AVE",
+                    org_addr_city = "NEW YORK", org_addr_state = "NY",
+                    org_addr_zip5 = "10001", org_addr_zip4 = "",
+                    stringsAsFactors = FALSE)
+  ref <- pf_build_reference(bmf)
+  g <- rep_frame(rep("CHDI FOUNDATION INC ATTN KEN SLUTSKY TAX EXEMPT", 3),
+                 street = "350 SEVENTH AVE", city = "NEW YORK", state = "NY",
+                 zip5 = "10001")
+  st <- pf_status(pf_match_grants(pf_recipients(g), ref,
+                                  passes = pf_staged_passes("lean"),
+                                  verbose = FALSE, check_reference = "ignore"))
+  expect_equal(as.character(st$status), "YES")
+  expect_equal(st$ein, "061234567")
 })

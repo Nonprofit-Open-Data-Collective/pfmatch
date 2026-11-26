@@ -120,7 +120,9 @@ pf_screen_variants <- function(grants, status, ref,
   g$grant_id <- paste0(g$.rid, "|V", ave(seq_len(nrow(g)), g$.rid,
                                          FUN = seq_along))
   rownames(g) <- NULL
-  g
+  # spellings are keyed with decoration stripped, so match them stripped too,
+  # exactly as pf_recipients() does for the representative
+  .pf_strip_rows(g)
 }
 
 # Fold the variant results into the identity status. See pf_screen_variants(),

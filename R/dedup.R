@@ -334,8 +334,9 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
 #' One row per `recipient_uid`: the representative of each cluster, which is
 #' the only row the cascade sees. The representative is the row whose name is
 #' the **most common spelling in the cluster**, counted in grant rows over a
-#' lightly normalized name (upper case, punctuation to spaces). Ties go to the
-#' row with the most address fields filled, then the latest tax year, then the
+#' lightly normalized name (upper case, punctuation to spaces, and with
+#' `strip = TRUE` decoration removed). Ties go to the row with the most address
+#' fields filled, then the latest tax year, then an undecorated row, then the
 #' longer name, and last the name itself, so the choice does not depend on row
 #' order.
 #'
@@ -349,17 +350,36 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
 #' their most common name moved 12,644 of them, and $42.7B, to YES on the
 #' TY2021-2024 file. See `dev/REPRESENTATIVE-NAME-NOTE.md`.
 #'
+#' @section Decoration:
+#' Filers decorate payee names in ways no BMF name carries: a parenthetical
+#' (`SCHWAB CHARITABLE FUND (JUDY FRANCIS ZANKEL ...)`), a care-of or
+#' attention tail (`CHDI FOUNDATION INC ATTN KEN SLUTSKY ...`), an FBO or
+#' tribute tail, or a project tail (`... FOR PROJECT UNLOADED`). With `strip =
+#' TRUE` these are removed before spellings are counted, so decorated rows
+#' count toward their plain spelling, and the representative is matched on the
+#' stripped name. That matters where frequency cannot help: a cluster whose
+#' every row is decorated differently, or a single-spelling identity such as
+#' CHDI, which the intermediaries second pass recovered ($1.16B over 20
+#' identities) by exactly this cleaning. The filed name moves to
+#' `recip_name_alt` when that slot is free, so the comparator still scores
+#' against it, and is kept in `recip_name_filed`. Compound names (`DAF -
+#' VANGUARD`) are not split.
+#'
 #' @param grants Output of [pf_dedup()].
+#' @param strip Remove decoration before counting spellings and matching (see
+#'   above). Default `TRUE`.
 #' @return A data frame with one row per identity, carrying `recipient_uid` as
-#'   the match key, and `recipient_name_n`: the number of grant rows in the
-#'   cluster that carry the representative's spelling.
+#'   the match key, `recipient_name_n` (the number of grant rows in the cluster
+#'   that carry the representative's spelling) and, with `strip = TRUE`,
+#'   `name_stripped` and `recip_name_filed`.
 #' @export
-pf_recipients <- function(grants) {
+pf_recipients <- function(grants, strip = TRUE) {
   stopifnot(!is.null(grants$recipient_uid))
   n_addr <- rowSums(!is.na(grants[, c("recip_street", "recip_city",
                                       "recip_state", "recip_zip5")]))
   nm  <- ifelse(is.na(grants$recip_name), "", as.character(grants$recip_name))
-  key <- .pf_rep_key(grants)
+  key <- .pf_rep_key(grants, strip = strip)
+  dec <- if (strip) key != .pf_rep_key(grants, strip = FALSE) else logical(nrow(grants))
   # grant rows per (cluster, spelling); an empty name never wins on frequency
   ck   <- paste(grants$recipient_uid, key, sep = "\r")
   fk   <- match(ck, unique(ck))
@@ -369,11 +389,12 @@ pf_recipients <- function(grants) {
   ty <- grants$TAX_YEAR %||% grants$TAXYEAR %||% rep(NA, nrow(grants))
   ty <- suppressWarnings(as.integer(as.character(ty)))
   ty[is.na(ty)] <- -1L
-  ord <- order(grants$recipient_uid, -freq, -n_addr, -ty, -nchar(nm), nm,
+  ord <- order(grants$recipient_uid, -freq, -n_addr, -ty, dec, -nchar(nm), nm,
                method = "radix")
   out <- grants[ord, , drop = FALSE]
   out$recipient_name_n <- freq[ord]
   out <- out[!duplicated(out$recipient_uid), , drop = FALSE]
+  if (strip) out <- .pf_strip_rows(out)
   # The match key for the cascade, and the key every label is written against.
   # Content-derived, not `paste0("R", recipient_uid)`: see pf_identity_id().
   out$grant_id <- if (!is.null(out$recipient_id)) as.character(out$recipient_id)
@@ -387,13 +408,64 @@ pf_recipients <- function(grants) {
   out
 }
 
-# The spelling a representative is counted on: upper case, anything that is not
-# a letter or digit to a space, single spaces. Deliberately lighter than
-# npmatch's name_key, which drops legal suffixes and so would count
-# "X FOUNDATION" and "X" as one spelling.
-.pf_rep_key <- function(grants) {
+# The spelling a representative is counted on: decoration stripped (see
+# .pf_strip_decoration()), then upper case, anything that is not a letter or
+# digit to a space, single spaces. Deliberately lighter than npmatch's
+# name_key, which drops legal suffixes and so would count "X FOUNDATION" and
+# "X" as one spelling.
+.pf_rep_key <- function(grants, strip = TRUE) {
   x <- toupper(ifelse(is.na(grants$recip_name), "", as.character(grants$recip_name)))
+  if (strip) x <- .pf_strip_decoration(x)
   gsub(" +", " ", trimws(gsub("[^A-Z0-9]+", " ", x)))
+}
+
+# Decoration a filer adds to a payee's name, which no BMF name carries:
+#   parentheticals            HARVARD UNIVERSITY (GRADUATE SCHOOL OF EDUCATION)
+#   care-of / attention tails CHDI FOUNDATION INC ATTN KEN SLUTSKY TAX EXEMPT
+#   beneficiary tails         ROCKY MOUNTAIN COLLEGE FBO ALYSSA PATTERSON
+#   tribute tails             ST JUDE IN MEMORY OF ...
+#   project tails             NEW VENTURE FUND FOR PROJECT UNLOADED
+# npnormalize keeps all of these in name_key (checked against npnormalize
+# 0.1.9: np_name_core() and name_key both retain ATTN, C O and the
+# parenthetical's words), so they are stripped here. The care-of and FBO
+# alternations are the ones pf_prepare_grants() already uses on name line 2
+# and on line 1's trailing FBO, written as tails. Compound names
+# ("DAF - VANGUARD", "TCU - AWM SCHOOL OF MEDICINE") are left alone: which part
+# is the payee varies, and the intermediaries second pass found the longest
+# part was often the wrong one. A strip that would leave fewer than three
+# characters keeps the name as filed.
+.pf_strip_decoration <- function(x) {
+  x0 <- toupper(ifelse(is.na(x), "", as.character(x)))
+  y <- gsub("\\([^)]*\\)?|\\[[^]]*\\]?", " ", x0)
+  tail <- paste0(
+    "(ATTN|ATTENTION|C\\s*/\\s*O|C\\s+O|CARE OF|IN CARE OF|",
+    "F\\s*/?B\\s*/?O|F B O|FOR (THE )?BENEFIT OF|",
+    "IN (LOVING )?MEMORY OF|IN HONOU?R OF|",
+    "FOR (THE )?PROJECT)")
+  y <- sub(paste0("([^A-Z0-9])", tail, "([^A-Z0-9].*)?$"), "\\1", y, perl = TRUE)
+  y <- gsub("\\s+", " ", trimws(gsub("[-,;:/ ]+$", "", trimws(y))))
+  keep <- nchar(gsub("[^A-Z0-9]", "", y)) < 3L
+  y[keep] <- x0[keep]
+  y
+}
+
+# Rewrite rows whose name carries decoration: the stripped name becomes
+# recip_name, which is what pass A blocks on; the filed name moves into the
+# dba slot when that is free, so np_compare() still scores against it (it keeps
+# the better of name and dba), and is kept in recip_name_filed.
+.pf_strip_rows <- function(r) {
+  if (!nrow(r)) return(r)
+  s  <- .pf_strip_decoration(r$recip_name)
+  ch <- !is.na(r$recip_name) &
+        .pf_rep_key(data.frame(recip_name = s), strip = FALSE) !=
+        .pf_rep_key(r, strip = FALSE)
+  if (is.null(r$recip_name_filed)) r$recip_name_filed <- r$recip_name
+  if (is.null(r$recip_name_alt)) r$recip_name_alt <- NA_character_
+  free <- ch & is.na(r$recip_name_alt)
+  r$recip_name_alt[free] <- r$recip_name[free]
+  r$recip_name[ch] <- s[ch]
+  r$name_stripped <- ch
+  r
 }
 #' Propagate a match back from identities to grant rows
 #'
