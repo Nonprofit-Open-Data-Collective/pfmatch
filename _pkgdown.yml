@@ -84,6 +84,8 @@ reference:
   - pf_schedule_a_status
   - pf_is_placeholder
   - pf_placeholder_pattern
+  - pf_detect_placeholders
+  - pf_placeholder_lexicon
   - pf_attached
   - pf_attached_report
 
@@ -97,6 +99,7 @@ reference:
   - pf_recipients
   - pf_dedup_report
   - pf_propagate_matches
+  - pf_screen_variants
   - pf_group_siblings
 
 - title: Stage 3 — the reference
@@ -129,6 +132,8 @@ reference:
   - pf_recovery_passes
   - pf_add_recovery_keys
   - pf_drop_self_matches
+  - pf_sibling_guard
+  - pf_sibling_words
   - pf_status
   - pf_result_tiers
   - pf_crosstab

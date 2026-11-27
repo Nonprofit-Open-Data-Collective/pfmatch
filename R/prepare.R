@@ -50,6 +50,28 @@ NULL
   c(datasets::state.abb, "DC", "PR", "VI", "GU", "AS", "MP", "FM", "MH", "PW",
     "AA", "AE", "AP")
 }
+# Country values that mean "in the US" in the e-file country field
+# (`PF_15_G_PAID_RECIP_ADDR_CNTR`). The field uses IRS / FIPS 10-4 codes, in
+# which the territories are RQ (Puerto Rico), VQ (Virgin Islands), GQ (Guam),
+# AQ (American Samoa) and CQ (Northern Marianas). Note that "AS" there is
+# Australia, not American Samoa.
+.pf_us_countries <- function() {
+  c("US", "USA", "UNITED STATES", "UNITED STATES OF AMERICA",
+    "RQ", "VQ", "GQ", "AQ", "CQ")
+}
+# A name that reads as a unit of government. Kept deliberately narrow (whole-name
+# shapes only) because it is a flag: on TY2021-2024 it fires on 35.7k in-scope
+# rows, of which 7.9% matched YES (charter networks named "... PUBLIC SCHOOLS",
+# sheriff's community-service funds) and 49% came back MAYBE.
+.pf_looks_government <- function(name) {
+  nk <- gsub(" +", " ", trimws(gsub("[^A-Z0-9 ]", " ", toupper(ifelse(is.na(name), "", name)))))
+  shape <- paste0(
+    "^(THE )?(CITY|TOWN|TOWNSHIP|VILLAGE|COUNTY|STATE|COMMONWEALTH|BOROUGH|PARISH) OF [A-Z ]+$|",
+    "^[A-Z0-9 ]+ (SCHOOL DISTRICT|PUBLIC SCHOOLS|BOARD OF EDUCATION|SHERIFF S OFFICE|",
+    "SHERIFFS OFFICE|POLICE DEPARTMENT|FIRE DISTRICT)$")
+  org <- "FOUNDATION|FUND|FRIENDS|ASSOCIATION|AUXILIARY|BOOSTER|\\bPTA\\b|\\bPTO\\b|\\bINC$|ALUMNI|UNITED WAY|SOCIETY|CLUB|COUNCIL|VOLUNTEER"
+  nzchar(nk) & grepl(shape, nk, perl = TRUE) & !grepl(org, nk, perl = TRUE)
+}
 # Care-of / attention lines masquerading as name line 2.
 .pf_is_careof <- function(x) {
   grepl("^\\s*(ATTN|ATTENTION|C\\s*[/-]?\\s*O|CARE OF|IN CARE OF)\\b", x,
@@ -137,10 +159,21 @@ pf_map_grants <- function() {
 #' @param grants A data frame of the raw GTDC 990-PF current-grants extract
 #'   (columns `SIGOCPYRPNAM`, `SIGOCPYRBNBN1`, ..., `SIGOCPYRFSTA`).
 #' @param id_prefix Prefix for the generated `grant_id` when the input has none.
+#' @param placeholders Run [pf_detect_placeholders()] and set placeholder rows
+#'   out of scope, with `oos_reason = "placeholder:<category>"`. On by default;
+#'   `FALSE` restores the earlier scoping, in which they reach the cascade.
+#'   Either way a reference that names a payee is not a placeholder; with the
+#'   detector on, it is matched on the payee (`recip_name`) and the filed text
+#'   is kept in `recip_name_filed`.
 #' @return A data frame with the original columns plus the prepared recipient
 #'   name / address fields, the standardized recipient type, the scope decision
-#'   (`in_scope`, `oos_reason`), and four flags that describe the recipient
-#'   without deciding scope:
+#'   (`in_scope`, `oos_reason`), the placeholder decision (`placeholder_rule`,
+#'   `placeholder_category`, `placeholder_sink`, all `NA` when the detector is
+#'   off or did not fire), and flags that describe the recipient without
+#'   deciding scope. A recipient is set aside as foreign when its state field
+#'   holds a non-US value, or when the state is blank and the country field
+#'   (`PF_15_G_PAID_RECIP_ADDR_CNTR`, e-file source) holds a non-US code;
+#'   US territories count as US. The flags:
 #'   \describe{
 #'     \item{`looks_personal`}{the name reads as a natural person, scored with
 #'       `peopleparser::classify_names()`. Never fires on a placeholder.}
@@ -148,10 +181,21 @@ pf_map_grants <- function() {
 #'       than a name — see [pf_is_placeholder()].}
 #'     \item{`flag_individual`, `flag_government`}{what the *filer* said the
 #'       recipient was, from the status field.}
+#'     \item{`looks_government`}{the whole name has the shape of a unit of
+#'       government ("CITY OF ...", "... SCHOOL DISTRICT", "... POLICE
+#'       DEPARTMENT"). Still matched: 7.9% of such rows matched YES and 49% came
+#'       back MAYBE on TY2021-2024.}
+#'     \item{`flag_foreign_country`}{the country field holds a non-US code. Rows
+#'       where it does and the state is blank are already out of scope; the flag
+#'       also marks the contradictory rows that carry a US state code.}
 #'   }
+#'   People are flagged, not set aside, on the same evidence: on TY2021-2024
+#'   only 2.9% of `looks_personal` rows matched YES, but they held 13.1% of the
+#'   flagged dollars, because the name scorer also fires on organisations with
+#'   short or coined names.
 #'   `vignette("identifying-people")` covers what each one is worth.
 #' @export
-pf_prepare_grants <- function(grants, id_prefix = "G") {
+pf_prepare_grants <- function(grants, id_prefix = "G", placeholders = TRUE) {
   g <- as.data.frame(grants, stringsAsFactors = FALSE)
   # Columns are named by the current concordance990 v2 schema. .pf_col() falls
   # back to the legacy v1/GTDC name, so files built before the migration still
@@ -174,6 +218,18 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   bn1_clean[!is.na(bn1_clean) & !nzchar(bn1_clean)] <- bn1[!is.na(bn1_clean) & !nzchar(bn1_clean)]
   name <- ifelse(!is.na(pnam), pnam, bn1_clean)
   name_alt <- ifelse(keep2, trimws(paste(bn1_clean, bn2)), NA_character_)
+  name_filed <- name
+  # -- placeholders (see pf_detect_placeholders) ------------------------------
+  # A pointer, an aggregate or a privacy note is set aside below, before
+  # matching. A reference that names a payee ("FIDELITY CHARITABLE - SEE
+  # ATTACHMENT A") is matched on the payee instead; the filed name is kept in
+  # recip_name_filed.
+  ph <- if (isTRUE(placeholders)) pf_detect_placeholders(name) else NULL
+  if (!is.null(ph)) {
+    rw <- ph$category %in% "reference_with_name" & !is.na(name)
+    name[rw] <- ph$residual[rw]
+    name_alt[rw] <- NA_character_
+  }
   # -- address ---------------------------------------------------------------
   state <- toupper(trimws(.pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_STATE"))))
   zipr  <- .pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_ZIP"))
@@ -191,6 +247,14 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   full <- match(tolower(state), tolower(c(datasets::state.name, "District of Columbia", "Puerto Rico")))
   st_abb[!is.na(full)] <- c(datasets::state.abb, "DC", "PR")[full[!is.na(full)]]
   is_foreign <- !is.na(state) & !(st_abb %in% .pf_us_states())
+  # The e-file source does fill the country field, so a non-US country with a
+  # BLANK state is foreign too. Measured on TY2021-2024 (45.4k in-scope rows,
+  # $13.0B): 1.6% of rows and 4.2% of dollars matched YES, so the rule sets
+  # them aside like any foreign address. A non-US country beside a US state
+  # code is contradictory (7.1k rows, 3.5% YES): flagged, still matched.
+  cntr <- toupper(.pf_blank_to_na(get("PF_15_G_PAID_RECIP_ADDR_CNTR")))
+  cntr_foreign <- !is.na(cntr) & !(cntr %in% .pf_us_countries())
+  is_foreign <- is_foreign | (cntr_foreign & is.na(state))
   # -- recipient type --------------------------------------------------------
   ty <- pf_standardize_status(get("PF_15_G_PAID_RECIP_STAT"))
   # foreign geography overrides an otherwise-plausible status: a "PC" in London
@@ -210,10 +274,22 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   oos_reason[detail %in% pf_oos_details()] <- "foreign address"
   # nothing to match on at all -- no name AND no usable address
   oos_reason[!has_name & !has_addr & is.na(oos_reason)] <- "no name or address"
+  # A placeholder takes precedence over geography: it describes the row, and
+  # its dollars are reported under that reason. A blank name is left to the
+  # rule above, and a one-character name with a street is left for
+  # pf_recover_name_from_street(), which may find the payee there.
+  set_aside <- logical(nrow(g))
+  if (!is.null(ph)) {
+    set_aside <- ph$is_placeholder & has_name &
+      !(ph$category %in% "unknown_or_none" & nchar(trimws(name)) <= 1L &
+          !is.na(street))
+    oos_reason[set_aside] <- paste0("placeholder:", ph$category[set_aside])
+  }
   out <- g
   out$grant_id <- if (!is.null(g$grant_id)) as.character(g$grant_id)
                   else sprintf("%s%06d", id_prefix, seq_len(nrow(g)))
   out$recip_name     <- name
+  out$recip_name_filed <- name_filed
   out$recip_name_alt <- name_alt
   out$recip_name_l1  <- bn1_clean
   out$recip_name_l2  <- bn2
@@ -247,7 +323,10 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   # institutional word in it, which is exactly the shape the score rewards.
   placeholder <- .pf_placeholder(name)
   out$flag_placeholder      <- placeholder
-  out$looks_personal        <- .pf_looks_personal(name) & !placeholder
+  out$looks_personal        <- .pf_looks_personal(name) & !placeholder & !set_aside
+  out$placeholder_rule     <- if (is.null(ph)) NA_character_ else ph$rule_id
+  out$placeholder_category <- if (is.null(ph)) NA_character_ else ph$category
+  out$placeholder_sink     <- if (is.null(ph)) NA_character_ else ph$sink
   # Flags, not filters. These record what the filer *said* the recipient was so
   # results can be split by it, without that claim deciding whether we look.
   # `flag_placeholder` is the one that is read off the name rather than the
@@ -255,6 +334,11 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
   # grant dollars, which should be visible rather than silently dropped.
   out$flag_individual <- ty$recipient_type_detail == "individual"
   out$flag_government <- ty$recipient_type_detail == "government"
+  # Read off the name and the country field rather than the filed status. Both
+  # are flags for the same reason as the two above: on TY2021-2024 too many of
+  # the rows they fire on are matchable organisations to drop them unseen.
+  out$looks_government     <- .pf_looks_government(name) & !set_aside
+  out$flag_foreign_country <- cntr_foreign
   out$has_name    <- has_name
   out$has_address <- has_addr
   out$in_scope    <- is.na(oos_reason)
@@ -268,6 +352,7 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
 #'   the `*_grants*.csv` benchmark files and so will pull in **every** size
 #'   variant sitting in the folder — pass an explicit pattern or file vector to
 #'   pick one set.
+#' @param placeholders Passed to [pf_prepare_grants()].
 #' @param allow_mixed Set `TRUE` to suppress the vintage check described below.
 #'   Only do this when the mixture is genuinely wanted.
 #' @section Vintage check:
@@ -285,7 +370,7 @@ pf_prepare_grants <- function(grants, id_prefix = "G") {
 #' @return The prepared frame, with `source_file` recording provenance.
 #' @export
 pf_read_grants <- function(path = "inputs", pattern = "grants.*\\.csv$",
-                           allow_mixed = FALSE) {
+                           allow_mixed = FALSE, placeholders = TRUE) {
   files <- if (length(path) == 1L && dir.exists(path))
     list.files(path, pattern = pattern, full.names = TRUE) else path
   if (!length(files)) stop("no grant files found at: ", paste(path, collapse = ", "))
@@ -321,5 +406,5 @@ pf_read_grants <- function(path = "inputs", pattern = "grants.*\\.csv$",
     }
   }
   d <- as.data.frame(data.table::rbindlist(parts, fill = TRUE))
-  pf_prepare_grants(d)
+  pf_prepare_grants(d, placeholders = placeholders)
 }

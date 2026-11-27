@@ -238,7 +238,7 @@ HOSP`.
 
 ```{r eval = FALSE, echo = TRUE}
 g <- pf_dedup(grants, method = "fuzzy", threshold = 0.92)
-r <- pf_recipients(g)          # one row per identity, most complete rendering
+r <- pf_recipients(g)          # one row per identity, most common spelling
 s <- pf_match_grants(r, ref)   # the cascade runs once per identity
 g <- pf_propagate_matches(g, pf_status(s))   # back out to every grant row
 ```
@@ -261,15 +261,17 @@ fuzzy figure exists, because the production run used exact dedup. The 1k
 benchmark collapses 1.03x exact and 1.05x fuzzy, which is why cascade timings
 taken there understate what dedup is worth at scale.
 
-The **recall** gain is the better reason to run it. Because a cluster is one
-organisation by construction, a match found for any member propagates to every
-member: a truncated, misspelled or acronymic rendering inherits the EIN resolved
-for an easier rendering in the same cluster. That costs nothing once the clusters
-exist, and it is the cheapest recall the package has. `pf_recipients()` leans on
-the same property in the other direction, choosing the most complete
-representative of each cluster -- longest name, then most address fields
-populated -- so the cascade runs against the best available spelling rather than
-an arbitrary one.
+The **recall** gain depends on which member is matched. The cascade runs on one
+representative per cluster and the result propagates to every member, so a
+truncated, misspelled or acronymic rendering inherits an EIN only when the
+representative resolves. `pf_recipients()` therefore picks the cluster's **most
+common spelling**, then the row with the most address fields, then the latest
+tax year. It used to pick the longest name, which in a cluster of variants is
+nearly always the most decorated one: New Venture Fund's 1,986 rows were matched
+as `NEW VENTURE FUND FOR PROJECT UNLOADED` and came back NO
+(`dev/REPRESENTATIVE-NAME-NOTE.md`). For the variants themselves to count,
+run `pf_link(..., variant_screen = TRUE)`, which tries the exact-name passes on
+every distinct variant of a multi-variant cluster.
 
 Batching inherits it too: `pf_run_batches()` forms batches over `recipient_uid`,
 so a cluster is never split across batches and every row of a cluster inherits

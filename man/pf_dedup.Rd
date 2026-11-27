@@ -9,7 +9,8 @@ pf_dedup(
   method = c("exact", "fuzzy"),
   threshold = 0.92,
   max_block = 2000L,
-  verbose = TRUE
+  verbose = TRUE,
+  chain_guard = FALSE
 )
 }
 \arguments{
@@ -24,6 +25,14 @@ same geographic block. Default 0.92.}
 fuzzily — a guard against a quadratic blow-up on a huge shared ZIP.}
 
 \item{verbose}{Print the collapse ratio.}
+
+\item{chain_guard}{Fuzzy only. Single linkage chains: on the TY2021-2024
+file 41 different "CINCINNATI ..." organisations joined one cluster, each
+within 0.08 of a neighbour but not of each other. With \code{chain_guard = TRUE} every member must also clear \code{threshold} against its cluster's
+\strong{anchor}, the member key with the most grant rows; members that do not
+are detached, the joins between the two sides are dropped, and the
+components are rebuilt, up to five rounds. Off by default: it changes the
+identities, and so the \code{recipient_id}s, of every cluster it splits.}
 }
 \value{
 \code{grants} with four columns added: \code{recipient_id} (the identity's

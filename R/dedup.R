@@ -5,10 +5,14 @@
 #' the same large charities — so matching distinct *recipient identities* rather
 #' than grant rows removes work without removing recall.
 #'
-#' It also buys recall outright. Because a cluster is one organization by
-#' construction, a match found for any member **propagates to every member**: a
-#' truncated, misspelled, or acronymic variant inherits the EIN resolved for an
-#' easier variant sitting in the same cluster. See [pf_propagate_matches()].
+#' It can also buy recall, but only as far as the matching step lets it. The
+#' cascade runs on **one representative row per cluster** ([pf_recipients()]),
+#' and [pf_propagate_matches()] copies that one result to every member. A
+#' truncated, misspelled or acronymic variant therefore inherits an EIN only
+#' when the representative resolves. A poor representative takes every member
+#' down with it, and the variants it merged contribute nothing. The variants
+#' are tried in their own right only when [pf_link()] runs with
+#' `variant_screen = TRUE`. See `dev/REPRESENTATIVE-NAME-NOTE.md`.
 #'
 #' @section Two levels:
 #' \describe{
@@ -93,6 +97,36 @@ NULL
   }
   vapply(seq_len(n), find, integer(1))
 }
+# The diameter check behind pf_dedup(chain_guard = TRUE). `nk` and `w` are the
+# name key and grant-row weight of each candidate key, (ei, ej) the accepted
+# joins and `comp` their components. Each round, every member of a multi-member
+# component is compared with the component's anchor (heaviest member, ties to
+# the smaller name key); a member below `threshold` is detached, every join
+# that crosses between detached and kept members is dropped, and the
+# components are rebuilt. Detached members can still cluster among
+# themselves, and are checked against their own anchor the next round.
+.pf_chain_guard <- function(nk, w, ei, ej, comp, threshold, max_rounds = 5L) {
+  n_det <- 0L; n_split <- 0L; r <- 0L
+  while (r < max_rounds) {
+    r <- r + 1L
+    sz <- tabulate(comp, nbins = length(comp))
+    multi <- which(sz[comp] > 1L)
+    if (!length(multi)) break
+    o <- multi[order(comp[multi], -w[multi], nk[multi], method = "radix")]
+    anchor <- o[!duplicated(comp[o])]
+    a <- anchor[match(comp[multi], comp[anchor])]
+    sim <- 1 - stringdist::stringdist(nk[multi], nk[a], method = "jw", p = 0.1)
+    det <- logical(length(comp))
+    det[multi[sim < threshold]] <- TRUE
+    if (!any(det)) break
+    n_det <- n_det + sum(det)
+    n_split <- n_split + length(unique(comp[det]))
+    keep <- det[ei] == det[ej]
+    ei <- ei[keep]; ej <- ej[keep]
+    comp <- .pf_components(length(comp), ei, ej)
+  }
+  list(comp = comp, n_detached = n_det, n_split = n_split, rounds = r)
+}
 #' Deduplicate grant recipients
 #'
 #' @param grants A prepared frame from [pf_prepare_grants()].
@@ -102,6 +136,14 @@ NULL
 #' @param max_block Blocks larger than this are compared exactly only, not
 #'   fuzzily — a guard against a quadratic blow-up on a huge shared ZIP.
 #' @param verbose Print the collapse ratio.
+#' @param chain_guard Fuzzy only. Single linkage chains: on the TY2021-2024
+#'   file 41 different "CINCINNATI ..." organisations joined one cluster, each
+#'   within 0.08 of a neighbour but not of each other. With `chain_guard =
+#'   TRUE` every member must also clear `threshold` against its cluster's
+#'   **anchor**, the member key with the most grant rows; members that do not
+#'   are detached, the joins between the two sides are dropped, and the
+#'   components are rebuilt, up to five rounds. Off by default: it changes the
+#'   identities, and so the `recipient_id`s, of every cluster it splits.
 #' @return `grants` with four columns added: `recipient_id` (the identity's
 #'   stable, content-derived id — the key the cascade and every label use; see
 #'   [pf_identity_id()]), `recipient_key` (the canonical dedup key it hashes),
@@ -110,7 +152,7 @@ NULL
 #'   share the identity).
 #' @export
 pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
-                     max_block = 2000L, verbose = TRUE) {
+                     max_block = 2000L, verbose = TRUE, chain_guard = FALSE) {
   method <- match.arg(method)
   stopifnot(!is.null(grants$recip_name))
   say <- function(...) if (verbose) cat(sprintf(...), "\n")
@@ -223,6 +265,14 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
     say("  %s fuzzy joins accepted, %s rejected by the number/ordinal/direction veto",
         format(length(ei), big.mark = ","), format(n_veto, big.mark = ","))
     comp <- .pf_components(nrow(cand), ei, ej)
+    if (isTRUE(chain_guard) && length(ei)) {
+      w  <- tabulate(uid, nbins = max(uid))[cand$uid]
+      cg <- .pf_chain_guard(cand$name_key, w, ei, ej, comp, threshold)
+      comp <- cg$comp
+      say("  chain guard: %s keys detached from %s clusters in %d round(s)",
+          format(cg$n_detached, big.mark = ","),
+          format(cg$n_split, big.mark = ","), cg$rounds)
+    }
     # remap: every uid in a component takes the component's smallest uid
     newuid <- cand$uid
     for (c0 in unique(comp)) {
@@ -327,22 +377,70 @@ pf_dedup <- function(grants, method = c("exact", "fuzzy"), threshold = 0.92,
 }
 #' The distinct recipient frame to actually match
 #'
-#' One row per `recipient_uid`, choosing the **most complete** representative of
-#' each cluster (longest name, then most address fields populated) so the match
-#' runs against the best available spelling rather than an arbitrary one.
+#' One row per `recipient_uid`: the representative of each cluster, which is
+#' the only row the cascade sees. The representative is the row whose name is
+#' the **most common spelling in the cluster**, counted in grant rows over a
+#' lightly normalized name (upper case, punctuation to spaces, and with
+#' `strip = TRUE` decoration removed). Ties go to the row with the most address
+#' fields filled, then the latest tax year, then an undecorated row, then the
+#' longer name, and last the name itself, so the choice does not depend on row
+#' order.
+#'
+#' @section Why the most common name:
+#' Until 2026-11 the representative was the *longest* name, on the theory that
+#' it is the most complete. In a cluster of spelling variants the longest name
+#' is nearly always the most decorated one. New Venture Fund's 1,986 grant rows
+#' were matched as `NEW VENTURE FUND FOR PROJECT UNLOADED` (one row) and came
+#' back NO, although 1,968 of them read `NEW VENTURE FUND`, an exact BMF name.
+#' Rematching the 43,993 NO and MAYBE clusters whose representative was not
+#' their most common name moved 12,644 of them, and $42.7B, to YES on the
+#' TY2021-2024 file. See `dev/REPRESENTATIVE-NAME-NOTE.md`.
+#'
+#' @section Decoration:
+#' Filers decorate payee names in ways no BMF name carries: a parenthetical
+#' (`SCHWAB CHARITABLE FUND (JUDY FRANCIS ZANKEL ...)`), a care-of or
+#' attention tail (`CHDI FOUNDATION INC ATTN KEN SLUTSKY ...`), an FBO or
+#' tribute tail, or a project tail (`... FOR PROJECT UNLOADED`). With `strip =
+#' TRUE` these are removed before spellings are counted, so decorated rows
+#' count toward their plain spelling, and the representative is matched on the
+#' stripped name. That matters where frequency cannot help: a cluster whose
+#' every row is decorated differently, or a single-spelling identity such as
+#' CHDI, which the intermediaries second pass recovered ($1.16B over 20
+#' identities) by exactly this cleaning. The filed name moves to
+#' `recip_name_alt` when that slot is free, so the comparator still scores
+#' against it, and is kept in `recip_name_filed`. Compound names (`DAF -
+#' VANGUARD`) are not split.
 #'
 #' @param grants Output of [pf_dedup()].
+#' @param strip Remove decoration before counting spellings and matching (see
+#'   above). Default `TRUE`.
 #' @return A data frame with one row per identity, carrying `recipient_uid` as
-#'   the match key.
+#'   the match key, `recipient_name_n` (the number of grant rows in the cluster
+#'   that carry the representative's spelling) and, with `strip = TRUE`,
+#'   `name_stripped` and `recip_name_filed`.
 #' @export
-pf_recipients <- function(grants) {
+pf_recipients <- function(grants, strip = TRUE) {
   stopifnot(!is.null(grants$recipient_uid))
   n_addr <- rowSums(!is.na(grants[, c("recip_street", "recip_city",
                                       "recip_state", "recip_zip5")]))
-  score <- nchar(ifelse(is.na(grants$recip_name), "", grants$recip_name)) + 10 * n_addr
-  ord <- order(grants$recipient_uid, -score)
+  nm  <- ifelse(is.na(grants$recip_name), "", as.character(grants$recip_name))
+  key <- .pf_rep_key(grants, strip = strip)
+  dec <- if (strip) key != .pf_rep_key(grants, strip = FALSE) else logical(nrow(grants))
+  # grant rows per (cluster, spelling); an empty name never wins on frequency
+  ck   <- paste(grants$recipient_uid, key, sep = "\r")
+  fk   <- match(ck, unique(ck))
+  freq <- tabulate(fk)[fk]
+  freq[!nzchar(key)] <- 0L
+  # v2 spells it TAX_YEAR, the GTDC/v1 extracts TAXYEAR
+  ty <- grants$TAX_YEAR %||% grants$TAXYEAR %||% rep(NA, nrow(grants))
+  ty <- suppressWarnings(as.integer(as.character(ty)))
+  ty[is.na(ty)] <- -1L
+  ord <- order(grants$recipient_uid, -freq, -n_addr, -ty, dec, -nchar(nm), nm,
+               method = "radix")
   out <- grants[ord, , drop = FALSE]
+  out$recipient_name_n <- freq[ord]
   out <- out[!duplicated(out$recipient_uid), , drop = FALSE]
+  if (strip) out <- .pf_strip_rows(out)
   # The match key for the cascade, and the key every label is written against.
   # Content-derived, not `paste0("R", recipient_uid)`: see pf_identity_id().
   out$grant_id <- if (!is.null(out$recipient_id)) as.character(out$recipient_id)
@@ -354,6 +452,66 @@ pf_recipients <- function(grants) {
       "labelled against; re-run pf_dedup()."), call. = FALSE)
   rownames(out) <- NULL
   out
+}
+
+# The spelling a representative is counted on: decoration stripped (see
+# .pf_strip_decoration()), then upper case, anything that is not a letter or
+# digit to a space, single spaces. Deliberately lighter than npmatch's
+# name_key, which drops legal suffixes and so would count "X FOUNDATION" and
+# "X" as one spelling.
+.pf_rep_key <- function(grants, strip = TRUE) {
+  x <- toupper(ifelse(is.na(grants$recip_name), "", as.character(grants$recip_name)))
+  if (strip) x <- .pf_strip_decoration(x)
+  gsub(" +", " ", trimws(gsub("[^A-Z0-9]+", " ", x)))
+}
+
+# Decoration a filer adds to a payee's name, which no BMF name carries:
+#   parentheticals            HARVARD UNIVERSITY (GRADUATE SCHOOL OF EDUCATION)
+#   care-of / attention tails CHDI FOUNDATION INC ATTN KEN SLUTSKY TAX EXEMPT
+#   beneficiary tails         ROCKY MOUNTAIN COLLEGE FBO ALYSSA PATTERSON
+#   tribute tails             ST JUDE IN MEMORY OF ...
+#   project tails             NEW VENTURE FUND FOR PROJECT UNLOADED
+# npnormalize keeps all of these in name_key (checked against npnormalize
+# 0.1.9: np_name_core() and name_key both retain ATTN, C O and the
+# parenthetical's words), so they are stripped here. The care-of and FBO
+# alternations are the ones pf_prepare_grants() already uses on name line 2
+# and on line 1's trailing FBO, written as tails. Compound names
+# ("DAF - VANGUARD", "TCU - AWM SCHOOL OF MEDICINE") are left alone: which part
+# is the payee varies, and the intermediaries second pass found the longest
+# part was often the wrong one. A strip that would leave fewer than three
+# characters keeps the name as filed.
+.pf_strip_decoration <- function(x) {
+  x0 <- toupper(ifelse(is.na(x), "", as.character(x)))
+  y <- gsub("\\([^)]*\\)?|\\[[^]]*\\]?", " ", x0)
+  tail <- paste0(
+    "(ATTN|ATTENTION|C\\s*/\\s*O|C\\s+O|CARE OF|IN CARE OF|",
+    "F\\s*/?B\\s*/?O|F B O|FOR (THE )?BENEFIT OF|",
+    "IN (LOVING )?MEMORY OF|IN HONOU?R OF|",
+    "FOR (THE )?PROJECT)")
+  y <- sub(paste0("([^A-Z0-9])", tail, "([^A-Z0-9].*)?$"), "\\1", y, perl = TRUE)
+  y <- gsub("\\s+", " ", trimws(gsub("[-,;:/ ]+$", "", trimws(y))))
+  keep <- nchar(gsub("[^A-Z0-9]", "", y)) < 3L
+  y[keep] <- x0[keep]
+  y
+}
+
+# Rewrite rows whose name carries decoration: the stripped name becomes
+# recip_name, which is what pass A blocks on; the filed name moves into the
+# dba slot when that is free, so np_compare() still scores against it (it keeps
+# the better of name and dba), and is kept in recip_name_filed.
+.pf_strip_rows <- function(r) {
+  if (!nrow(r)) return(r)
+  s  <- .pf_strip_decoration(r$recip_name)
+  ch <- !is.na(r$recip_name) &
+        .pf_rep_key(data.frame(recip_name = s), strip = FALSE) !=
+        .pf_rep_key(r, strip = FALSE)
+  if (is.null(r$recip_name_filed)) r$recip_name_filed <- r$recip_name
+  if (is.null(r$recip_name_alt)) r$recip_name_alt <- NA_character_
+  free <- ch & is.na(r$recip_name_alt)
+  r$recip_name_alt[free] <- r$recip_name[free]
+  r$recip_name[ch] <- s[ch]
+  r$name_stripped <- ch
+  r
 }
 #' Propagate a match back from identities to grant rows
 #'
@@ -376,7 +534,8 @@ pf_propagate_matches <- function(grants, status) {
       "  propagate. The two were built from different runs, or the frame is\n",
       "  keyed on R<position> and these rows on recipient_id (or the reverse).\n",
       "  Check pf_frame_id() on both."), call. = FALSE)
-  for (col in c("status", "ein", "bmf_name", "score", "match_pass"))
+  for (col in c("status", "ein", "bmf_name", "score", "match_pass",
+                intersect("variant_screen", names(status))))
     grants[[col]] <- status[[col]][i]
   grants
 }

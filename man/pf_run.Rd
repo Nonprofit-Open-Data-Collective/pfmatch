@@ -17,11 +17,12 @@ pf_run(
   verbose = TRUE,
   ref_source = c("auto", "matchdb", "local"),
   tier = getOption("pfmatch.matchdb_tier", "active-observed"),
+  placeholders = TRUE,
   ...
 )
 }
 \arguments{
-\item{grants, pattern, dedup}{Passed to \code{\link[=pf_prepare]{pf_prepare()}}.}
+\item{grants, pattern, dedup, placeholders}{Passed to \code{\link[=pf_prepare]{pf_prepare()}}.}
 
 \item{bmf, ref_cache}{Passed to \code{\link[=pf_reference]{pf_reference()}}. With no \code{bmf}, the reference
 is the matchdb tier, falling back to the bundle at \code{ref_cache}.}

@@ -10,10 +10,14 @@ the same large charities — so matching distinct \emph{recipient identities} ra
 than grant rows removes work without removing recall.
 }
 \details{
-It also buys recall outright. Because a cluster is one organization by
-construction, a match found for any member \strong{propagates to every member}: a
-truncated, misspelled, or acronymic variant inherits the EIN resolved for an
-easier variant sitting in the same cluster. See \code{\link[=pf_propagate_matches]{pf_propagate_matches()}}.
+It can also buy recall, but only as far as the matching step lets it. The
+cascade runs on \strong{one representative row per cluster} (\code{\link[=pf_recipients]{pf_recipients()}}),
+and \code{\link[=pf_propagate_matches]{pf_propagate_matches()}} copies that one result to every member. A
+truncated, misspelled or acronymic variant therefore inherits an EIN only
+when the representative resolves. A poor representative takes every member
+down with it, and the variants it merged contribute nothing. The variants
+are tried in their own right only when \code{\link[=pf_link]{pf_link()}} runs with
+\code{variant_screen = TRUE}. See \code{dev/REPRESENTATIVE-NAME-NOTE.md}.
 }
 \section{Two levels}{
 

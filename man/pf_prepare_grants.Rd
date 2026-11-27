@@ -4,19 +4,31 @@
 \alias{pf_prepare_grants}
 \title{Prepare a raw 990-PF grants extract}
 \usage{
-pf_prepare_grants(grants, id_prefix = "G")
+pf_prepare_grants(grants, id_prefix = "G", placeholders = TRUE)
 }
 \arguments{
 \item{grants}{A data frame of the raw GTDC 990-PF current-grants extract
 (columns \code{SIGOCPYRPNAM}, \code{SIGOCPYRBNBN1}, ..., \code{SIGOCPYRFSTA}).}
 
 \item{id_prefix}{Prefix for the generated \code{grant_id} when the input has none.}
+
+\item{placeholders}{Run \code{\link[=pf_detect_placeholders]{pf_detect_placeholders()}} and set placeholder rows
+out of scope, with \code{oos_reason = "placeholder:<category>"}. On by default;
+\code{FALSE} restores the earlier scoping, in which they reach the cascade.
+Either way a reference that names a payee is not a placeholder; with the
+detector on, it is matched on the payee (\code{recip_name}) and the filed text
+is kept in \code{recip_name_filed}.}
 }
 \value{
 A data frame with the original columns plus the prepared recipient
 name / address fields, the standardized recipient type, the scope decision
-(\code{in_scope}, \code{oos_reason}), and four flags that describe the recipient
-without deciding scope:
+(\code{in_scope}, \code{oos_reason}), the placeholder decision (\code{placeholder_rule},
+\code{placeholder_category}, \code{placeholder_sink}, all \code{NA} when the detector is
+off or did not fire), and flags that describe the recipient without
+deciding scope. A recipient is set aside as foreign when its state field
+holds a non-US value, or when the state is blank and the country field
+(\code{PF_15_G_PAID_RECIP_ADDR_CNTR}, e-file source) holds a non-US code;
+US territories count as US. The flags:
 \describe{
 \item{\code{looks_personal}}{the name reads as a natural person, scored with
 \code{peopleparser::classify_names()}. Never fires on a placeholder.}
@@ -24,7 +36,18 @@ without deciding scope:
 than a name — see \code{\link[=pf_is_placeholder]{pf_is_placeholder()}}.}
 \item{\code{flag_individual}, \code{flag_government}}{what the \emph{filer} said the
 recipient was, from the status field.}
+\item{\code{looks_government}}{the whole name has the shape of a unit of
+government ("CITY OF ...", "... SCHOOL DISTRICT", "... POLICE
+DEPARTMENT"). Still matched: 7.9\% of such rows matched YES and 49\% came
+back MAYBE on TY2021-2024.}
+\item{\code{flag_foreign_country}}{the country field holds a non-US code. Rows
+where it does and the state is blank are already out of scope; the flag
+also marks the contradictory rows that carry a US state code.}
 }
+People are flagged, not set aside, on the same evidence: on TY2021-2024
+only 2.9\% of \code{looks_personal} rows matched YES, but they held 13.1\% of the
+flagged dollars, because the name scorer also fires on organisations with
+short or coined names.
 \code{vignette("identifying-people")} covers what each one is worth.
 }
 \description{

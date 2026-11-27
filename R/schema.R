@@ -44,11 +44,14 @@
   n <- if (is.data.frame(g)) nrow(g) else length(g[[1]])
   if (!is.null(g[[name]])) return(as.character(g[[name]]))
   # name given as v2 -> try its v1 alias
-  v1 <- .pf_v2_to_v1()[[name]]
-  if (!is.null(v1) && !is.null(g[[v1]])) return(as.character(g[[v1]]))
+  # (single-bracket lookups: `[[` on a named character vector errors on a
+  # name it lacks, which turned "absent in both schemas" into a crash instead
+  # of `default` for any name present in only one direction of the map)
+  v1 <- unname(.pf_v2_to_v1()[name])
+  if (!is.na(v1) && !is.null(g[[v1]])) return(as.character(g[[v1]]))
   # name given as v1 -> try its v2 form
-  v2 <- pf_efilepf_map()[[name]]
-  if (!is.null(v2) && !is.null(g[[v2]])) return(as.character(g[[v2]]))
+  v2 <- unname(pf_efilepf_map()[name])
+  if (!is.na(v2) && !is.null(g[[v2]])) return(as.character(g[[v2]]))
   rep(default, n)
 }
 

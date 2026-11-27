@@ -32,32 +32,48 @@ NULL
 #'
 #' The dedup step is the scale lever, not a nicety: grants repeat heavily, and
 #' matching distinct recipient identities rather than grant rows removes most of
-#' the work without removing recall. It also *adds* recall, because a match found
-#' for any cluster member propagates to all of them.
+#' the work without removing recall. Each cluster is matched on one
+#' representative, its most common spelling (see [pf_recipients()]), and that
+#' one result propagates to every member.
 #'
 #' @param grants A directory of grant CSVs, a vector of file paths, or an
 #'   already-read data frame.
 #' @param pattern Regex selecting files when `grants` is a directory.
 #' @param dedup `"fuzzy"` (default), `"exact"`, or `"none"`.
 #' @param threshold Name-similarity threshold for fuzzy clustering.
+#' @param chain_guard Passed to [pf_dedup()]: hold every cluster member to the
+#'   cluster's anchor so single linkage cannot chain. Off by default.
 #' @param verbose Print progress.
+#' @param placeholders Set placeholder rows ("SEE ATTACHED", "VARIOUS
+#'   INDIVIDUALS", ...) out of scope before matching; see
+#'   [pf_detect_placeholders()]. On by default.
 #' @return A list of class `pf_prepared` with `grants` (every row, scoped and
 #'   assigned a `recipient_uid`), `recipients` (one row per identity, in scope),
 #'   and `timing`.
 #' @export
 pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
                        dedup = c("fuzzy", "exact", "none"),
-                       threshold = 0.92, verbose = TRUE) {
+                       threshold = 0.92, verbose = TRUE, placeholders = TRUE,
+                       chain_guard = FALSE) {
   dedup <- match.arg(dedup)
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 1  prepare")
 
-  g <- if (is.data.frame(grants)) pf_prepare_grants(grants)
-       else pf_read_grants(grants, pattern = pattern)
+  g <- if (is.data.frame(grants)) pf_prepare_grants(grants, placeholders = placeholders)
+       else pf_read_grants(grants, pattern = pattern, placeholders = placeholders)
   g <- pf_recover_name_from_street(g)
   .pf_say(verbose, "  grant rows ......... %s", format(nrow(g), big.mark = ","))
   .pf_say(verbose, "  in scope ........... %s (%.1f%%)",
           format(sum(g$in_scope), big.mark = ","), 100 * mean(g$in_scope))
+  ph <- startsWith(g$oos_reason %||% rep(NA_character_, nrow(g)), "placeholder:")
+  ph[is.na(ph)] <- FALSE
+  if (any(ph)) {
+    amt <- suppressWarnings(as.numeric(.pf_col(g, "PF_15_G_PAID_AMT")))
+    .pf_say(verbose, "  placeholders set aside %s rows, $%s (%.1f%% of dollars)",
+            format(sum(ph), big.mark = ","),
+            format(round(sum(amt[ph], na.rm = TRUE)), big.mark = ","),
+            100 * sum(amt[ph], na.rm = TRUE) / max(sum(amt, na.rm = TRUE), 1))
+  }
 
   if (dedup == "none") {
     g$recipient_uid <- seq_len(nrow(g))
@@ -72,7 +88,8 @@ pf_prepare <- function(grants, pattern = "grants.*[.]csv$",
     g$recipient_n <- 1L
     recips <- g[g$in_scope, , drop = FALSE]
   } else {
-    g <- pf_dedup(g, method = dedup, threshold = threshold, verbose = verbose)
+    g <- pf_dedup(g, method = dedup, threshold = threshold, verbose = verbose,
+                  chain_guard = chain_guard)
     recips <- pf_recipients(g[g$in_scope, , drop = FALSE])
     .pf_say(verbose, "  distinct identities  %s (%.2fx collapse)",
             format(nrow(recips), big.mark = ","),
@@ -220,6 +237,15 @@ pf_reference <- function(bmf = NULL, cache = "data-dev/BMF-REFERENCE-BUNDLE.rds"
 #'   FALSE` recomputes and overwrites. See [pf_run_batches()], *Checkpoints are
 #'   stamped*.
 #' @param verbose Print progress.
+#' @param variant_screen Also run the exact-name passes on every other distinct
+#'   spelling of each multi-variant cluster, and fold what they resolve into
+#'   the identity's result; see [pf_screen_variants()]. Off by default.
+#' @param variant_scope `"unresolved"` screens identities that ended `NO` or
+#'   `MAYBE`; `"all"` also audits `YES` identities. Passed to
+#'   [pf_screen_variants()] as `scope`.
+#' @param sibling_guard Turn a `YES` whose BMF name is the query plus a sibling
+#'   marker (`STAFF ASSOCIATION`, `ALUMNI`, `AUXILIARY`, ...) into `MAYBE`; see
+#'   [pf_sibling_guard()]. Off by default.
 #' @return A list of class `pf_linked` with identity-level `status`, row-level
 #'   `grants`, and `timing`.
 #' @export
@@ -227,7 +253,9 @@ pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L
                     passes = NULL, config = npmatch::np_config(),
                     method = "hier", dyads = NULL,
                     dyad_config = pf_dyad_config(), resume = TRUE,
-                    verbose = TRUE) {
+                    verbose = TRUE, variant_screen = FALSE,
+                    variant_scope = c("unresolved", "all"),
+                    sibling_guard = FALSE) {
   stopifnot(inherits(prepared, "pf_prepared"))
   t0 <- .pf_tick()
   .pf_hr(verbose); .pf_say(verbose, "STAGE 3  link")
@@ -244,6 +272,18 @@ pf_link <- function(prepared, ref, dir = "data-dev/batches", batch_size = 25000L
                            config = config, method = method,
                            dyads = dyads, dyad_config = dyad_config,
                            resume = resume, verbose = verbose)
+  if (isTRUE(variant_screen))
+    status <- pf_screen_variants(prepared$grants, status, ref,
+                                 scope = match.arg(variant_scope),
+                                 dir = file.path(dir, "variants"),
+                                 batch_size = batch_size, config = config,
+                                 method = method, resume = resume,
+                                 verbose = verbose)
+  if (isTRUE(sibling_guard)) {
+    status <- pf_sibling_guard(status)
+    .pf_say(verbose, "  sibling guard: %s YES -> MAYBE",
+            format(sum(status$sibling_guard), big.mark = ","))
+  }
   g <- pf_propagate_matches(prepared$grants, status)
   g$status[!g$in_scope] <- "OOS"
   if (!is.null(status$dyad_collapsed))
@@ -296,7 +336,7 @@ pf_adjudicate <- function(x, bmf, ids = NULL, k = 5, tiebreak = FALSE,
 #'
 #' [pf_prepare()] -> [pf_reference()] -> [pf_link()] -> [pf_report()].
 #'
-#' @param grants,pattern,dedup Passed to [pf_prepare()].
+#' @param grants,pattern,dedup,placeholders Passed to [pf_prepare()].
 #' @param bmf,ref_cache Passed to [pf_reference()]. With no `bmf`, the reference
 #'   is the matchdb tier, falling back to the bundle at `ref_cache`.
 #' @param ref_source,tier Passed to [pf_reference()] as `source` and `tier`.
@@ -315,10 +355,11 @@ pf_run <- function(grants, bmf = NULL, pattern = "grants.*[.]csv$",
                    dir = "data-dev/batches", batch_size = 25000L,
                    dyads = NULL, report = TRUE, verbose = TRUE,
                    ref_source = c("auto", "matchdb", "local"),
-                   tier = getOption("pfmatch.matchdb_tier", "active-observed"), ...) {
+                   tier = getOption("pfmatch.matchdb_tier", "active-observed"),
+                   placeholders = TRUE, ...) {
   t0 <- .pf_tick()
   prep <- pf_prepare(grants, pattern = pattern, dedup = match.arg(dedup),
-                     verbose = verbose)
+                     verbose = verbose, placeholders = placeholders)
   ref  <- pf_reference(bmf, cache = ref_cache, verbose = verbose,
                        source = match.arg(ref_source), tier = tier)
   lnk  <- pf_link(prep, ref, dir = dir, batch_size = batch_size,
